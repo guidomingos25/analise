@@ -758,6 +758,7 @@ function listarAlmoxPendentes(){
       fornecedor: r["Fornecedor"] || "",
       destinatario: r["Destinatario"] || "",
       cliente: r["Cliente"] || "",
+      destino: r["Destino"] || "",
       checkin: r["Data de Check in"],
       entrada: r["Data de Entrada da Nota"],
       finalEntrega: r["Dt Final Entrega"]
@@ -814,7 +815,7 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
 
   const termoCliente = normalizar(document.getElementById("searchClientePopup")?.value || "");
   const filtroVeiculo = document.getElementById("filterVeiculoPopup")?.value || "all";
-
+  const termoDestino = normalizar(document.getElementById("searchDestinoPopup")?.value || "");
 
 
   // ===============================
@@ -828,6 +829,10 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
     if(termoCliente){
       const temCliente = info.notas.some(n => normalizar(n.cliente).includes(termoCliente));
       if(!temCliente) return;
+    }
+    if(termoDestino){
+      const temDestino = info.notas.some(n => normalizar(n.destino).includes(termoDestino));
+      if(!temDestino) return;
     }
 
 
@@ -1033,6 +1038,10 @@ html += `
   if(inputPopup){
     inputPopup.oninput = () => listarAlmoxPendentes();
   }
+  const inputDestinoPopup = document.getElementById("searchDestinoPopup");
+  if(inputDestinoPopup){
+    inputDestinoPopup.oninput = () => listarAlmoxPendentes();
+  }
 
   const filtroPopup = document.getElementById("filterVeiculoPopup");
   if(filtroPopup){
@@ -1100,6 +1109,11 @@ chkMostrarAtrasados.onchange = () => {
         placeholder="🔍 Filtrar por Cliente..."
         style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
       />
+      <input id="searchDestinoPopup" type="text"
+        placeholder="📍 Filtrar por Destino..."
+        style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
+      />
+
     </div>
 
     <div id="almoxList" style="margin-top:10px; font-size:13px;"></div>
