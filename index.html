@@ -848,18 +848,29 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
 
     let temVeiculoHojeOuAmanha = false;
 
-
-    if(veiculos.length){
-      const dtUltPrev = parsePossibleDate(veiculos[0].dtPrev);
-      if(dtUltPrev){
-        dtUltPrev.setHours(0,0,0,0);
-
-        if(dtUltPrev.getTime() >= hoje.getTime()){
-          temVeiculoHojeOuAmanha = true;
-        }
-
-      }
+    if (veiculos.length) {
+      // se existir qualquer veículo que:
+      // - dtPrev >= hoje
+      // OU
+      // - dtPrev < hoje mas NÃO tem dtCarreg
+      temVeiculoHojeOuAmanha = veiculos.some(v => {
+        const dtPrev = parsePossibleDate(v.dtPrev);
+        const dtCarreg = parsePossibleDate(v.dtCarreg);
+    
+        if (!dtPrev) return false;
+    
+        dtPrev.setHours(0,0,0,0);
+    
+        // Caso 1: previsão hoje ou futura
+        if (dtPrev.getTime() >= hoje.getTime()) return true;
+    
+        // Caso 2: previsão passada mas ainda não carregou
+        if (dtPrev.getTime() < hoje.getTime() && !dtCarreg) return true;
+    
+        return false;
+      });
     }
+
 
     // ✅ filtro por status de veículo programado
     if(filtroVeiculo === "programado" && !temVeiculoHojeOuAmanha) return;
