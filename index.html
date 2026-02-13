@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Confronto de Relatórios - Veículos Carregados x PVD</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    /* === SEU CSS ORIGINAL (INALTERADO) === */
+:root{
+  --bg:#f4f6f9;
+  --card:#ffffff;
+  --card2:#f8fafc;
+  --backcard:#ffffff;
+  --text:#0f172a;
+  --muted:#475569;
+  --border:#d1d5db;
+  --accent:#1e40af;
+  --accent2:#166534;
+  --danger:#b91c1c;
+  --warning:#b45309;
+}
+
+*{ box-sizing:border-box; font-family: system-ui, Segoe UI, Roboto, Arial; }
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  padding:24px;
+}
+
+.container{ max-width:1400px; margin:auto; }
+
+h1{
+  font-size:22px;
+  font-weight:700;
+  color:#0f172a;
+}
+
+.groupHeader b{
+  font-size:14px;
+}
+
+.sub{ color:var(--muted); font-size:13px; }
+
+.grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.08);
+}
+
+.card h2{ font-size:14px; margin-bottom:10px; }
+
+input[type="file"], .search, select{
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--text);
+  width:100%;
+}
+
+.btn{
+  cursor:pointer;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--accent);
+  color:#fff;
+  padding:10px 16px;
+  font-weight:700;
+}
+
+.btn.secondary{
+  background:#f9fafb;
+  color:#111827;
+}
+
+.btn.green{
+  background:var(--accent2);
+}
+
+.btn:disabled{ opacity:.5; }
+
+.status{ font-size:12px; color:var(--muted); }
+
+.toolbar{
+  display:flex;
+  gap:10px;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+
+.left{ display:flex; gap:10px; align-items:center; }
+
+.summary{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+
+.pill{
+  background:var(--card2);
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:6px 12px;
+  font-size:12px;
+}
+
+.results{ display:flex; flex-direction:column; gap:14px; }
+
+.group{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+}
+
+.groupHeader{
+  padding:12px 16px;
+  background:#e5e7eb;
+  border-bottom:2px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+  font-weight:700;
+}
+
+.badge{
+  padding:4px 10px;
+  border-radius:8px;
+  font-size:12px;
+  font-weight:600;
+}
+.badge.red{
+  background:#dcfce7;
+  color:#14532d;
+  border:1px solid #16a34a;
+}
+.badge.green{
+  background:#fee2e2;
+  color:#7f1d1d;
+  border:1px solid #dc2626;
+}
+
+/* SCROLL */
+.tableWrapper{
+  max-height:320px;
+  overflow:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+  min-width:1200px;
+  background:#fff;
+}
+
+th, td{
+  padding:8px 10px;
+  border:1px solid var(--border);
+  white-space:nowrap;
+}
+
+th{
+  position:sticky;
+  top:0;
+  background:#e5e7eb;
+  z-index:2;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  color:#111827;
+}
+
+tbody tr:nth-child(even){
+  background:#f8fafc;
+}
+
+tbody tr:hover{
+  background:#dbeafe;
+}
+  </style>
+</head>
+
+<body>
+<div id="paginaPrincipal" class="container">
+
+
+<h1>📊 Confronto de Relatórios (Veículos Carregados x PVD)</h1>
+
+<div class="grid">
+  <div class="card">
+    <h2>1) Veículos Carregados</h2>
+    <input id="fileData" type="file" />
+    <div id="statusData" class="status">Aguardando upload...</div>
+  </div>
+
+  <div class="card">
+    <h2>2) PVD</h2>
+    <input id="fileDetalhado" type="file" />
+    <div id="statusDetalhado" class="status">Aguardando upload...</div>
+  </div>
+</div>
+
+<div class="card">
+
+<div class="toolbar">
+  <div class="left">
+    <button class="btn green" id="btnProcessar" disabled>🚀 Processar</button>
+    <button class="btn secondary" id="btnExportarCSV" disabled>⬇️ Exportar</button>
+    <button class="btn secondary" id="btnLimpar">🧹 Limpar</button>
+    <button class="btn secondary" id="btnAlmoxPendentes" disabled>
+    📌 Análise Programação
+    </button>
+
+  </div>
+
+  <div class="left" style="flex:1; justify-content:flex-end; gap:10px;">
+    <input id="dateFilter" type="date" class="search" disabled />
+
+    <input id="searchInput" class="search" placeholder="Pesquisar..." disabled />
+
+    <select id="filterSelect" disabled>
+
+      <option value="all">Tudo</option>
+      <option value="with">Com registros</option>
+      <option value="without">Sem registros</option>
+    </select>
+    
+  </div>
+
+  <label style="display:flex; align-items:center; gap:6px; font-size:12px;">
+    <input type="checkbox" id="chkMostrarAtrasados" checked>
+    Mostrar recebimentos atrasados (vermelhos)
+  </label>
+
+</div>
+
+<div id="summary" class="summary"></div>
+<div id="results" class="results"></div>
+
+</div>
+</div>
+
+<script>
+let dataRows = [];
+let detalhadoRows = [];
+let resultado = [];
+let resultadoFiltrado = [];
+let mostrarAtrasados = true;
+
+
+
+const fileData = document.getElementById("fileData");
+const fileDetalhado = document.getElementById("fileDetalhado");
+const btnProcessar = document.getElementById("btnProcessar");
+const btnExportarCSV = document.getElementById("btnExportarCSV");
+const btnLimpar = document.getElementById("btnLimpar");
+const resultsDiv = document.getElementById("results");
+const summaryDiv = document.getElementById("summary");
+const searchInput = document.getElementById("searchInput");
+const filterSelect = document.getElementById("filterSelect");
+const dateFilter = document.getElementById("dateFilter");
+const chkMostrarAtrasados = document.getElementById("chkMostrarAtrasados");
+
+
+
+function normalizar(txt){
+  return (txt||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().trim();
+}
+
+function excelSerialToDateLocal(serial){
+  // Excel conta dias a partir de 1899-12-31
+  const utc_days = Math.floor(serial - 25569);
+  const utc_value = utc_days * 86400 * 1000;
+
+  // criar Date em UTC
+  const d = new Date(utc_value);
+
+  // ajusta para hora local para não causar off-by-one
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
+
+
+function parsePossibleDate(value){
+  if(!value) return null;
+  if(Object.prototype.toString.call(value)==="[object Date]") return value;
+  if(typeof value==="number") return excelSerialToDateLocal(value);
+
+
+  if(typeof value==="string"){
+    let m=value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(m) return new Date(m[3],m[2]-1,m[1]);
+    m=value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(m) return new Date(m[1],m[2]-1,m[3]);
+    const d=new Date(value);
+    if(!isNaN(d)) return d;
+  }
+  return null;
+}
+
+function formatDateBR(v){
+  const d=parsePossibleDate(v);
+  if(!d) return "";
+  return d.toLocaleDateString("pt-BR");
+}
+
+async function readExcel(file){
+  const data = await file.arrayBuffer();
+  const wb = XLSX.read(data,{type:"array"});
+  const ws = wb.Sheets["Export"];
+  return XLSX.utils.sheet_to_json(ws,{defval:""});
+}
+
+function atualizarBotoes(){
+  btnProcessar.disabled = !(dataRows.length && detalhadoRows.length);
+}
+
+function renderSummary(filtrado = resultado){
+  let total = filtrado.length;
+  let com = 0;
+  let sem = 0;
+  let totalMatches = 0;
+
+  filtrado.forEach(r => {
+    const dtCarreg = parsePossibleDate(r.dataRow["DT. CARREGAMENTO"]);
+
+    // aplica a MESMA regra de atraso usada na tabela
+    const validMatches = r.matches.filter(m => {
+      const dtCheck = parsePossibleDate(m["Data de Check in"]);
+      const dtEntr  = parsePossibleDate(m["Data de Entrada da Nota"]);
+
+      let atrasado = false;
+      if (dtCarreg) {
+        if (dtCheck && dtCheck >= dtCarreg) atrasado = true;
+        if (dtEntr  && dtEntr  >= dtCarreg) atrasado = true;
+      }
+
+      // se NÃO mostrar atrasados → remove do total
+      if (!mostrarAtrasados && atrasado) return false;
+
+      return true;
+    });
+
+    if (validMatches.length) com++;
+    else sem++;
+
+    totalMatches += validMatches.length;
+  });
+
+  summaryDiv.innerHTML = `
+    <div class="pill">Data: <b>${total}</b></div>
+    <div class="pill">Com: <b>${com}</b></div>
+    <div class="pill">Sem: <b>${sem}</b></div>
+    <div class="pill">Total Detalhado: <b>${totalMatches}</b></div>
+  `;
+}
+
+
+
+let sortState = {}; // guarda coluna e direção por grupo
+
+function ordenarGrupo(groupIndex, col) {
+  const item = resultado[groupIndex];
+  if (!item) return;
+
+  // alterna ASC/DESC
+  const key = groupIndex + "_" + col;
+  const dir = sortState[key] === "asc" ? "desc" : "asc";
+  sortState[key] = dir;
+
+  item.matches.sort((a, b) => {
+    let va = (a[col] || "").toString().toUpperCase();
+    let vb = (b[col] || "").toString().toUpperCase();
+
+    // tenta converter datas
+    const da = parsePossibleDate(a[col]);
+    const db = parsePossibleDate(b[col]);
+    if (da && db) return dir === "asc" ? da - db : db - da;
+
+    // tenta número
+    if (!isNaN(va) && !isNaN(vb)) return dir === "asc" ? va - vb : vb - va;
+
+    return dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+
+  aplicarFiltrosEBusca(); // re-render
+}
+
+
+function buildGroupHTML(item,index){
+  const d=item.dataRow;
+  const matches=item.matches;
+  const badge = matches.length? "green":"red";
+
+  let header = `
+    <div class="groupHeader">
+      <div>
+        <b>#${index+1} ID:${d["ID"]}</b><br>
+        DT CARREG: ${formatDateBRLocal(d["DT. CARREGAMENTO"])}
+<br>
+        DESTINOS: ${d["DESTINOS"]}<br>
+        REFERENCIAS: ${d["REFERENCIAS"]}<br><br>
+
+        <span class="sub">
+          👤 Líder: <b>${d["Lider"] || d["LIDER"] || ""}</b> |
+          📦 Conferente: <b>${d["CONFERENTE"] || ""}</b> |
+          🚜 Operador: <b>${d["OPERADOR"] || ""}</b>
+        </span>
+      </div>
+      <div class="badge ${badge}">${matches.length} registros</div>
+    </div>
+  `;
+
+
+  if(!matches.length) return `<div class="group">${header}</div>`;
+
+  const cols = detalhadoCols.length ? detalhadoCols : [
+      "Nota","Numero OEF","Fornecedor","Cliente","Destinatario",
+      "Destino","UF Destino","Almoxarifado",
+      "Peso","Volumes","Mercadoria","Prioridade",
+      "Data de Check in","Data de Entrada da Nota",
+      "Dt Limite Embarque","Dt Final Entrega"
+  ];
+
+  let thead = cols.map(c=>`
+    <th onclick="ordenarGrupo(${index}, '${c}')">
+      ${c} ⬍
+    </th>
+  `).join("");
+
+
+  let tbody = matches
+    .filter(m => {
+      const dtCarreg = parsePossibleDate(d["DT. CARREGAMENTO"]);
+      const dtCheck  = parsePossibleDate(m["Data de Check in"]);
+      const dtEntr   = parsePossibleDate(m["Data de Entrada da Nota"]);
+
+      let atrasado = false;
+      if (dtCarreg) {
+        if (dtCheck && dtCheck >= dtCarreg) atrasado = true;
+        if (dtEntr  && dtEntr  >= dtCarreg) atrasado = true;
+      }
+
+      // ❌ Se NÃO quiser mostrar atrasados → remove
+      if (!mostrarAtrasados && atrasado) return false;
+
+      return true;
+    })
+    .map(m => {
+
+
+    const dtCarreg = parsePossibleDate(d["DT. CARREGAMENTO"]);
+    const dtCheck  = parsePossibleDate(m["Data de Check in"]);
+    const dtEntr   = parsePossibleDate(m["Data de Entrada da Nota"]);
+
+    // 🔥 regra principal
+    let atrasado = false;
+    if (dtCarreg) {
+      if (dtCheck && dtCheck >= dtCarreg) atrasado = true;
+      if (dtEntr  && dtEntr  >= dtCarreg) atrasado = true;
+    }
+
+    const style = atrasado ? 'style="background:#fef2f2; color:#9f1239; font-weight:600;"' : "";
+
+
+    return `
+    <tr ${style}>
+      ${cols.map(c=>{
+        const isDate = c.includes("Data") || c.includes("Dt");
+        return `<td>${isDate ? formatDateBR(m[c]) : (m[c] || "")}</td>`;
+      }).join("")}
+    </tr>`;
+  }).join("");
+
+
+  return `
+  <div class="group">
+    ${header}
+    <div class="tableWrapper">
+      <table>
+        <thead><tr>${thead}</tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>
+  </div>
+`;
+}
+
+
+function aplicarFiltrosEBusca(){
+  let f = resultado;
+  const q = normalizar(searchInput.value);
+  const selectedDate = dateFilter.value; // yyyy-mm-dd
+
+  function isSameDate(d1, d2){
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth() &&
+           d1.getDate() === d2.getDate();
+  }
+
+  // Filtro por Data de Carregamento
+  if (selectedDate) {
+    const parts = selectedDate.split("-");
+    const selDate = new Date(parts[0], parts[1]-1, parts[2]); // ano, mes-1, dia
+    f = f.filter(r => {
+      const d = parsePossibleDate(r.dataRow["DT. CARREGAMENTO"]);
+      if (!d) return false;
+      return isSameDate(d, selDate);
+    });
+  }
+
+  if(filterSelect.value==="with") f=f.filter(r=>r.matches.length);
+  if(filterSelect.value==="without") f=f.filter(r=>!r.matches.length);
+  if(q) f=f.filter(r=>normalizar(JSON.stringify(r)).includes(q));
+
+  // 🔹 salva o resultado filtrado global
+  resultadoFiltrado = f;
+
+  resultsDiv.innerHTML = f.map(buildGroupHTML).join("");
+  renderSummary(f);
+}
+
+
+
+function processar(){
+
+  // Pré-processa Almoxarifado do detalhado
+  const detalhadoPre = detalhadoRows.map(r => ({
+    ...r,
+    __almoxNorm: normalizar(r["Almoxarifado"] || "")
+  }));
+
+  resultado = dataRows.map(row=>{
+    const dtCarreg = parsePossibleDate(row["DT. CARREGAMENTO"]);
+    const refsNorm = normalizar(row["REFERENCIAS"] || "");
+    const prioridadeNorm = normalizar(row["PRIORIDADES SOLICITACAO"] || "");
+
+
+    const matches = detalhadoPre.filter(r=>{
+      const dtLim = parsePossibleDate(r["Dt Limite Embarque"]);
+
+      // REGRA 1: Dt Limite <= Dt Carregamento
+      if(dtLim && dtCarreg && dtLim > dtCarreg) return false;
+
+      const almox = r.__almoxNorm;
+      if(!almox) return false;
+
+      // escape para regex segura
+      const almoxSafe = almox.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      // regex: não pode ter letra ou hífen colado antes/depois
+      const regex = new RegExp(`(^|[^A-Z0-9])${almoxSafe}([^A-Z0-9]|$)`);
+
+
+      // precisa existir em REFERENCIAS OU PRIORIDADES
+      const matchRefs = regex.test(refsNorm);
+      const matchPrioridade = regex.test(prioridadeNorm);
+
+      if(!(matchRefs || matchPrioridade)) return false;
+
+
+
+      return true;
+    });
+    // 🔽 ORDENA POR DT LIMITE EMBARQUE (MENOR → MAIOR)
+    matches.sort((a, b) => {
+      const da = parsePossibleDate(a["Dt Limite Embarque"]);
+      const db = parsePossibleDate(b["Dt Limite Embarque"]);
+
+      if (!da && !db) return 0;
+      if (!da) return 1;   // datas vazias vão para o final
+      if (!db) return -1;
+
+      return da - db;
+    });
+
+    return {dataRow:row, matches};
+  });
+
+  renderSummary();
+  aplicarFiltrosEBusca();
+  btnExportarCSV.disabled=false;
+  searchInput.disabled=false;
+  filterSelect.disabled=false;
+  dateFilter.disabled = false;
+
+  document.getElementById("btnAlmoxPendentes").disabled = false;
+
+
+}
+
+function exportarExcel() {
+  if (!resultadoFiltrado.length) {
+    alert("Nenhum dado filtrado para exportar.");
+    return;
+  }
+
+  if (!detalhadoCols.length) {
+    alert("Nenhuma coluna definida para exportação.");
+    return;
+  }
+
+  const exportRows = [];
+
+  resultadoFiltrado.forEach(item => {
+    const dtCarreg = parsePossibleDate(item.dataRow["DT. CARREGAMENTO"]);
+
+    item.matches.forEach(m => {
+      const nota = (m["Nota"] || "").toString().trim();
+      const oef  = (m["Numero OEF"] || "").toString().trim();
+
+      // 🔒 Só exporta se tiver Nota OU OEF
+      if (!nota && !oef) return;
+
+      // =============================
+      // REGRA DE ATRASO (MESMA DA TABELA)
+      // =============================
+      const dtCheck = parsePossibleDate(m["Data de Check in"]);
+      const dtEntr  = parsePossibleDate(m["Data de Entrada da Nota"]);
+
+      let atrasado = false;
+      if (dtCarreg) {
+        if (dtCheck && dtCheck >= dtCarreg) atrasado = true;
+        if (dtEntr  && dtEntr  >= dtCarreg) atrasado = true;
+      }
+
+      // ❌ NÃO EXPORTA SE FOR ATRASADO
+      if (atrasado) return;
+
+      // =============================
+      // MONTA LINHA PARA EXPORTAÇÃO
+      // =============================
+      const exportRow = {};
+      detalhadoCols.forEach(c => {
+        const isDate = c.includes("Data") || c.includes("Dt");
+        exportRow[c] = isDate ? formatDateBR(m[c]) : (m[c] || "");
+      });
+
+      exportRows.push(exportRow);
+    });
+  });
+
+  if (!exportRows.length) {
+    alert("Nenhuma linha válida (sem atraso) encontrada.");
+    return;
+  }
+
+  const ws = XLSX.utils.json_to_sheet(exportRows);
+  ws["!cols"] = detalhadoCols.map(c => ({ wch: Math.max(c.length, 18) }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Notas_Sem_Atraso");
+
+  XLSX.writeFile(wb, "relatorio_sem_atraso.xlsx");
+}
+
+
+
+
+function limparTudo() {
+  dataRows = [];
+  detalhadoRows = [];
+  resultado = [];
+
+  fileData.value = "";
+  fileDetalhado.value = "";
+
+  resultsDiv.innerHTML = "";
+  summaryDiv.innerHTML = "";
+  searchInput.value = "";
+  filterSelect.value = "all";
+
+  btnProcessar.disabled = true;
+  btnExportarCSV.disabled = true;
+  searchInput.disabled = true;
+  filterSelect.disabled = true;
+
+  alert("Dados limpos com sucesso.");
+}
+
+
+fileData.onchange=async e=>{
+  dataRows = await readExcel(e.target.files[0]);
+
+  // MUDA TEXTO VISUAL
+  document.getElementById("statusData").innerText = "Carregado";
+
+  atualizarBotoes();
+};
+
+let detalhadoCols = [];
+
+fileDetalhado.onchange=async e=>{
+  detalhadoRows = await readExcel(e.target.files[0]);
+
+  // Captura a ordem das colunas da primeira linha
+  if(detalhadoRows.length){
+    detalhadoCols = Object.keys(detalhadoRows[0]);
+  }
+
+  // MUDA TEXTO VISUAL
+  document.getElementById("statusDetalhado").innerText = "Carregado";
+
+  atualizarBotoes();
+};
+
+
+
+function formatDateBRLocal(v){
+  const d = parsePossibleDate(v);
+  if(!d) return "";
+  const day = d.getDate().toString().padStart(2,"0");
+  const month = (d.getMonth()+1).toString().padStart(2,"0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+function listarAlmoxPendentes(){
+
+  // 🔹 Hoje e amanhã
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+  const amanha = new Date(hoje);
+  amanha.setDate(hoje.getDate()+1);
+
+  // ===============================
+  // MAPA DE ALMOX DO PVD (pendentes)
+  // ===============================
+  const almoxPend = {};
+
+  detalhadoRows.forEach(r=>{
+    const almox = normalizar(r["Almoxarifado"]);
+    if(!almox) return;
+
+    const dtLim = parsePossibleDate(r["Dt Limite Embarque"]);
+    if(!dtLim) return;
+
+    // Somente <= amanhã
+    if(dtLim > amanha) return;
+
+    if(!almoxPend[almox]){
+      almoxPend[almox] = {
+        notas: [],
+        qtd: 0
+      };
+    }
+
+    almoxPend[almox].qtd++;
+    almoxPend[almox].notas.push({
+      dtLim,
+      nota: r["Nota"] || r["Numero OEF"] || "",
+      fornecedor: r["Fornecedor"] || "",
+      destinatario: r["Destinatario"] || "",
+      cliente: r["Cliente"] || "",
+      checkin: r["Data de Check in"],
+      entrada: r["Data de Entrada da Nota"],
+      finalEntrega: r["Dt Final Entrega"]
+    });
+
+
+
+  });
+
+
+  // =====================================
+  // BUSCAR ÚLTIMO VEÍCULO POR ALMOX (DT PREV)
+  // =====================================
+  const almoxUltimoVeiculo = {};
+
+  dataRows.forEach(row=>{
+  const dtPrev = parsePossibleDate(row["DT. PREVISÃO"]);
+  const dtCarreg = parsePossibleDate(row["DT. CARREGAMENTO"]);
+  if(!dtPrev) return;
+
+  const refsNorm = normalizar(row["REFERENCIAS"] || "");
+  const prioridadeNorm = normalizar(row["PRIORIDADES SOLICITACAO"] || "");
+
+  Object.keys(almoxPend).forEach(almox=>{
+    const almoxSafe = almox.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(^|[^A-Z0-9])${almoxSafe}([^A-Z0-9]|$)`);
+
+    if(regex.test(refsNorm) || regex.test(prioridadeNorm)){
+
+      if(!almoxUltimoVeiculo[almox]) almoxUltimoVeiculo[almox] = [];
+
+      almoxUltimoVeiculo[almox].push({
+        dtPrev,
+        dtCarreg,
+        id: row["ID"] || "",
+        refs: row["REFERENCIAS"] || ""
+      });
+    }
+  });
+});
+
+Object.keys(almoxUltimoVeiculo).forEach(a=>{
+  almoxUltimoVeiculo[a].sort((a,b)=> b.dtPrev - a.dtPrev);
+  almoxUltimoVeiculo[a] = almoxUltimoVeiculo[a].slice(0,3);
+});
+
+
+  // ===============================
+  // ORDENA ALMOX POR QTD DE NOTAS
+  // ===============================
+  const almoxOrdenados = Object.entries(almoxPend)
+    .sort((a,b)=> b[1].qtd - a[1].qtd);
+
+
+  const termoCliente = normalizar(document.getElementById("searchClientePopup")?.value || "");
+  const filtroVeiculo = document.getElementById("filterVeiculoPopup")?.value || "all";
+
+
+
+  // ===============================
+  // MONTA HTML EXPANSÍVEL
+  // ===============================
+  let html = "";
+
+  almoxOrdenados.forEach(([almox,info])=>{
+
+    // ✅ filtro por cliente
+    if(termoCliente){
+      const temCliente = info.notas.some(n => normalizar(n.cliente).includes(termoCliente));
+      if(!temCliente) return;
+    }
+
+
+    // ordena datas das notas
+    info.notas.sort((a,b)=>{
+      const da = parsePossibleDate(a.dtLim);
+      const db = parsePossibleDate(b.dtLim);
+
+      if(!da && !db) return 0;
+      if(!da) return 1;
+      if(!db) return -1;
+
+      return da - db;
+    });
+
+
+    const veiculos = almoxUltimoVeiculo[almox] || [];
+
+    let temVeiculoHojeOuAmanha = false;
+
+
+    if(veiculos.length){
+      const dtUltPrev = parsePossibleDate(veiculos[0].dtPrev);
+      if(dtUltPrev){
+        dtUltPrev.setHours(0,0,0,0);
+
+        if(dtUltPrev.getTime() >= hoje.getTime()){
+          temVeiculoHojeOuAmanha = true;
+        }
+
+      }
+    }
+
+    // ✅ filtro por status de veículo programado
+    if(filtroVeiculo === "programado" && !temVeiculoHojeOuAmanha) return;
+    if(filtroVeiculo === "sem" && temVeiculoHojeOuAmanha) return;
+
+    const statusVeiculoBadge = temVeiculoHojeOuAmanha
+      ? `<span style="
+            background:#dcfce7;
+            color:#14532d;
+            border:2px solid #22c55e;
+            padding:6px 12px;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:900;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            box-shadow:0 4px 10px rgba(0,0,0,0.15);
+          ">
+            🟢 VEÍCULO PROGRAMADO
+        </span>`
+      : `<span style="
+            background:#fee2e2;
+            color:#7f1d1d;
+            border:2px solid #ef4444;
+            padding:6px 12px;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:900;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            box-shadow:0 4px 10px rgba(0,0,0,0.15);
+          ">
+            🔴 SEM VEÍCULO
+        </span>`;
+
+
+
+    const veicHTML = veiculos.map(v=>`
+    <tr>
+      <td>${v.id}</td>
+      <td>${formatDateBRLocal(v.dtPrev)}</td>
+      <td>${formatDateBRLocal(v.dtCarreg)}</td>
+      <td>${v.refs}</td>
+    </tr>
+    `).join("");
+
+
+    let qtdDentroRegra = 0;
+    let qtdForaRegra = 0;
+
+    const notasHTML = info.notas.map(n => {
+
+      const dtLim   = parsePossibleDate(n.dtLim);
+      const dtCheck = parsePossibleDate(n.checkin);
+      const dtEntr  = parsePossibleDate(n.entrada);
+
+      // 🔥 regra: checkin OU entrada >= dt limite
+      let dentroRegra = false;
+      if (dtLim) {
+        if (dtCheck && dtCheck >= dtLim) dentroRegra = true;
+        if (dtEntr  && dtEntr  >= dtLim) dentroRegra = true;
+      }
+
+      if(dentroRegra) qtdDentroRegra++;
+      else qtdForaRegra++;
+
+      const style = dentroRegra ? 'style="background:#fef2f2; color:#9f1239; font-weight:600;"' : "";
+
+      return `
+          <tr ${style}>
+            <td>${n.nota}</td>
+            <td>${n.fornecedor || ""}</td>
+            <td>${n.destinatario || ""}</td>
+            <td>${formatDateBRLocal(n.checkin)}</td>
+            <td>${formatDateBRLocal(n.entrada)}</td>
+            <td>${formatDateBRLocal(n.dtLim)}</td>
+            <td>${formatDateBRLocal(n.finalEntrega)}</td>
+          </tr>`;
+      }).join("");
+
+
+
+
+
+    // resumo compacto dos veículos
+    // resumo compacto dos veículos
+    const resumoVeic = veiculos.length
+      ? veiculos.map(v =>
+          `• ID ${v.id} - Programado: ${formatDateBRLocal(v.dtPrev)} | Carregado: ${formatDateBRLocal(v.dtCarreg)}`
+        ).join("<br>")
+      : "Nenhum encontrado";
+
+
+
+html += `
+<details style="margin-bottom:12px; border:1px solid #ddd; padding:10px; border-radius:8px;">
+  <summary style="cursor:pointer; font-weight:800; font-size:14px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+
+      <div>
+        🏭 ${almox} | 📦 ${info.qtd} notas pendentes <br>
+
+        <span style="font-size:12px; font-weight:700; color:#991b1b;">
+          Entrada em Atraso: ${qtdDentroRegra}
+        </span>
+        &nbsp; | &nbsp;
+        <span style="font-size:12px; font-weight:700; color:#14532d;">
+          Entrada com Prazo: ${qtdForaRegra}
+        </span>
+
+        <br>
+
+        <span style="font-size:12px; font-weight:600; color:#1e40af;">
+          <div style="font-size:12px; font-weight:600; color:#1e40af; margin-top:4px;">
+            🚛 Últimos veículos:<br>
+            <span style="font-weight:500; color:#0f172a;">
+              ${resumoVeic}
+            </span>
+          </div>
+        </span>
+      </div>
+
+      <div style="flex-shrink:0;">
+        ${statusVeiculoBadge}
+      </div>
+
+    </div>
+  </summary>
+
+
+  <div style="margin-top:10px; font-size:13px;">
+
+    <h4 style="margin-top:12px;">📦 Notas Pendentes</h4>
+    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+      <tr style="background:#f3f4f6;">
+        <th>Nota</th>
+        <th>Fornecedor</th>
+        <th>Destinatário</th>
+        <th>Data Check-in</th>
+        <th>Data de Entrada</th>
+        <th>Limite de Embarque</th>
+        <th>Limite de Entrega</th>
+      </tr>
+      ${notasHTML}
+    </table>
+
+  </div>
+</details>
+`;
+
+  });
+
+  document.getElementById("almoxList").innerHTML = html || "<i>Nenhum almox crítico</i>";
+  abrirPaginaAnalise();
+
+
+  const inputPopup = document.getElementById("searchClientePopup");
+  if(inputPopup){
+    inputPopup.oninput = () => listarAlmoxPendentes();
+  }
+
+  const filtroPopup = document.getElementById("filterVeiculoPopup");
+  if(filtroPopup){
+    filtroPopup.onchange = () => listarAlmoxPendentes();
+  }
+
+
+}
+
+function abrirPaginaAnalise(){
+  document.getElementById("paginaPrincipal").style.display = "none";
+  document.getElementById("paginaAnalise").style.display = "block";
+}
+
+function voltarPaginaPrincipal(){
+  document.getElementById("paginaAnalise").style.display = "none";
+  document.getElementById("paginaPrincipal").style.display = "block";
+}
+
+
+
+btnProcessar.onclick=processar;
+searchInput.oninput=aplicarFiltrosEBusca;
+filterSelect.onchange=aplicarFiltrosEBusca;
+
+btnExportarCSV.onclick = exportarExcel;
+btnLimpar.onclick = limparTudo;
+
+dateFilter.onchange = aplicarFiltrosEBusca;
+
+document.getElementById("btnAlmoxPendentes").onclick = listarAlmoxPendentes;
+
+chkMostrarAtrasados.onchange = () => {
+  mostrarAtrasados = chkMostrarAtrasados.checked;
+  aplicarFiltrosEBusca();
+};
+
+
+
+</script>
+
+<div id="paginaAnalise" style="display:none;" class="container">
+
+  <div class="card" style="margin-top:20px;">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <h2 style="margin:0;">🚨 Análise Programação D-1</h2>
+
+      <button class="btn secondary" onclick="voltarPaginaPrincipal()">
+        ⬅ Voltar
+      </button>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:15px; margin-bottom:12px; align-items:center;">
+      
+      <select id="filterVeiculoPopup"
+        style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
+      >
+        <option value="all">🚛 Todos</option>
+        <option value="programado">🟢 Somente Programados</option>
+        <option value="sem">🔴 Somente Sem Veículo</option>
+      </select>
+
+      <input id="searchClientePopup" type="text"
+        placeholder="🔍 Filtrar por Cliente..."
+        style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
+      />
+    </div>
+
+    <div id="almoxList" style="margin-top:10px; font-size:13px;"></div>
+
+  </div>
+
+</div>
+
+
+
+</body>
+</html>
