@@ -969,6 +969,26 @@ function ordenarDiasSemana(arr){
   });
 }
 
+function renderResumoAnalise(stats){
+
+  document.getElementById("resumoAnalise").innerHTML = `
+    <div class="pill">🏭 Almox: <b>${stats.totalAlmox}</b></div>
+    <div class="pill">📦 Notas Pendentes: <b>${stats.totalNotas}</b></div>
+    <div class="pill" style="background:#fee2e2; border-color:#fecaca;">
+      🟥 Em Atraso: <b>${stats.totalAtraso}</b>
+    </div>
+    <div class="pill" style="background:#dcfce7; border-color:#bbf7d0;">
+      🟩 No Prazo: <b>${stats.totalPrazo}</b>
+    </div>
+    <div class="pill">
+      🟢 Com Veículo: <b>${stats.comVeiculo}</b>
+    </div>
+    <div class="pill">
+      🔴 Sem Veículo: <b>${stats.semVeiculo}</b>
+    </div>
+  `;
+}
+
 
 function listarAlmoxPendentes(){
 
@@ -1071,6 +1091,16 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
   // MONTA HTML EXPANSÍVEL
   // ===============================
   let html = "";
+
+  const stats = {
+    totalAlmox: 0,
+    totalNotas: 0,
+    totalAtraso: 0,
+    totalPrazo: 0,
+    comVeiculo: 0,
+    semVeiculo: 0
+  };
+
 
   almoxOrdenados.forEach(([almox,info])=>{
 
@@ -1180,6 +1210,12 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
     if(filtroVeiculo === "programado" && !temVeiculoHojeOuAmanha) return;
     if(filtroVeiculo === "sem" && temVeiculoHojeOuAmanha) return;
 
+    stats.totalAlmox++;
+    stats.totalNotas += info.qtd;
+    
+    if(temVeiculoHojeOuAmanha) stats.comVeiculo++;
+    else stats.semVeiculo++;
+    
     const statusVeiculoBadge = temVeiculoHojeOuAmanha
       ? `<span style="
             background:#dcfce7;
@@ -1257,9 +1293,8 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
           </tr>`;
       }).join("");
 
-
-
-
+    stats.totalAtraso += qtdDentroRegra;
+    stats.totalPrazo += qtdForaRegra;
 
     // resumo compacto dos veículos
     // resumo compacto dos veículos
@@ -1362,6 +1397,7 @@ html += `
   });
 
   document.getElementById("almoxList").innerHTML = html || "<i>Nenhum almox crítico</i>";
+  renderResumoAnalise(stats);
   abrirPaginaAnalise();
 
 
@@ -1446,7 +1482,8 @@ chkMostrarAtrasados.onchange = () => {
       />
 
     </div>
-
+    <div id="resumoAnalise" class="summary" style="margin-top:10px;"></div>
+    
     <div id="almoxList" style="margin-top:10px; font-size:13px;"></div>
 
   </div>
