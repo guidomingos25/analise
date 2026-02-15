@@ -130,11 +130,25 @@ input[type="file"], .search, select{
 }
 
 .badge{
-  padding:4px 10px;
-  border-radius:8px;
-  font-size:12px;
-  font-weight:600;
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+
+  height:40px !important;
+  min-width:40px !important;
+
+  padding:0 12px !important;
+
+  border-radius:12px !important;
+
+  font-size:14px !important;
+  font-weight:900 !important;
+
+  line-height:40px !important;
 }
+
+
+
 .badge.red{
   background:#dcfce7;
   color:#14532d;
@@ -544,6 +558,13 @@ function parsePossibleDate(value){
   return null;
 }
 
+function isSameDate(d1, d2){
+  return d1.getFullYear() === d2.getFullYear() &&
+         d1.getMonth() === d2.getMonth() &&
+         d1.getDate() === d2.getDate();
+}
+
+
 function formatDateBR(v){
   const d=parsePossibleDate(v);
   if(!d) return "";
@@ -594,10 +615,10 @@ function renderSummary(filtrado = resultado){
   });
 
   summaryDiv.innerHTML = `
-    <div class="pill">Data: <b>${total}</b></div>
-    <div class="pill">Com: <b>${com}</b></div>
-    <div class="pill">Sem: <b>${sem}</b></div>
-    <div class="pill">Total Detalhado: <b>${totalMatches}</b></div>
+    <div class="pill">Veículos Carregados: <b>${total}</b></div>
+    <div class="pill">Com Registros: <b>${com}</b></div>
+    <div class="pill">Sem Registros: <b>${sem}</b></div>
+    <div class="pill">Total de Notas: <b>${totalMatches}</b></div>
   `;
 }
 
@@ -634,18 +655,55 @@ function ordenarGrupo(groupIndex, col) {
 
 
 function buildGroupHTML(item,index){
-  const d=item.dataRow;
-  const matches=item.matches;
-  const badge = matches.length? "green":"red";
+
+  const d = item.dataRow;
+
+  // =============================
+  // FILTRA MATCHES CONFORME CHECKBOX (MOSTRAR ATRASADOS)
+  // =============================
+  const matches = item.matches.filter(m => {
+
+    const dtCarreg = parsePossibleDate(d["DT. CARREGAMENTO"]);
+    const dtCheck  = parsePossibleDate(m["Data de Check in"]);
+    const dtEntr   = parsePossibleDate(m["Data de Entrada da Nota"]);
+
+    let atrasado = false;
+
+    if (dtCarreg) {
+      if (dtCheck && dtCheck >= dtCarreg) atrasado = true;
+      if (dtEntr  && dtEntr  >= dtCarreg) atrasado = true;
+    }
+
+    // ❌ Se NÃO mostrar atrasados → remove do grupo
+    if (!mostrarAtrasados && atrasado) return false;
+
+    return true;
+  });
+
+  // Badge agora mostra os registros filtrados
+  const badge = matches.length ? "green" : "red";
 
   let header = `
     <div class="groupHeader">
       <div>
         <b>#${index+1} ID:${d["ID"]}</b><br>
-        DT CARREG: ${formatDateBRLocal(d["DT. CARREGAMENTO"])}
-<br>
-        DESTINOS: ${d["DESTINOS"]}<br>
-        REFERENCIAS: ${d["REFERENCIAS"]}<br><br>
+
+        <div style="font-weight:400;">
+          <b>DT CARREG:</b> ${formatDateBRLocal(d["DT. CARREGAMENTO"])}<br>
+          <b>DESTINOS:</b> ${d["DESTINOS"]}<br>
+          <b>REFERENCIAS:</b> ${d["REFERENCIAS"]}<br>
+          <b>VEÍCULO SOLICITADO:</b> ${d["VEÍCULO SOLICITADO"] || ""}<br>
+          <b>VEÍCULO CONTRATADO:</b> ${d["VEICULO CONTRATADO"] || ""}<br>
+          <b>MODALIDADE:</b> ${d["MODALIDADE"] || ""}<br>
+          <b>QUIMICO:</b> ${d["QUIMICO"] || ""}<br>
+
+          <b>OBS. CARREGAMENTO:</b>
+          <div style="margin-top:4px; white-space:pre-wrap; font-weight:600; color:#b91c1c;">
+            ${(d["OBS. CARREGAMENTO"] || "").toString()}
+          </div>
+        </div>
+
+        <br>
 
         <span class="sub">
           👤 Líder: <b>${d["Lider"] || d["LIDER"] || ""}</b> |
@@ -653,12 +711,16 @@ function buildGroupHTML(item,index){
           🚜 Operador: <b>${d["OPERADOR"] || ""}</b>
         </span>
       </div>
-      <div class="badge ${badge}">${matches.length} registros</div>
+
+      <div class="badge ${badge}">
+        ${matches.length} registros
+      </div>
     </div>
   `;
 
-
+  // se não tem registros filtrados, não mostra tabela
   if(!matches.length) return `<div class="group">${header}</div>`;
+
 
   const cols = detalhadoCols.length ? detalhadoCols : [
       "Nota","Numero OEF","Fornecedor","Cliente","Destinatario",
@@ -675,31 +737,12 @@ function buildGroupHTML(item,index){
   `).join("");
 
 
-  let tbody = matches
-    .filter(m => {
-      const dtCarreg = parsePossibleDate(d["DT. CARREGAMENTO"]);
-      const dtCheck  = parsePossibleDate(m["Data de Check in"]);
-      const dtEntr   = parsePossibleDate(m["Data de Entrada da Nota"]);
-
-      let atrasado = false;
-      if (dtCarreg) {
-        if (dtCheck && dtCheck >= dtCarreg) atrasado = true;
-        if (dtEntr  && dtEntr  >= dtCarreg) atrasado = true;
-      }
-
-      // ❌ Se NÃO quiser mostrar atrasados → remove
-      if (!mostrarAtrasados && atrasado) return false;
-
-      return true;
-    })
-    .map(m => {
-
+  let tbody = matches.map(m => {
 
     const dtCarreg = parsePossibleDate(d["DT. CARREGAMENTO"]);
     const dtCheck  = parsePossibleDate(m["Data de Check in"]);
     const dtEntr   = parsePossibleDate(m["Data de Entrada da Nota"]);
 
-    // 🔥 regra principal
     let atrasado = false;
     if (dtCarreg) {
       if (dtCheck && dtCheck >= dtCarreg) atrasado = true;
@@ -708,28 +751,28 @@ function buildGroupHTML(item,index){
 
     const style = atrasado ? 'style="background:#fef2f2; color:#9f1239; font-weight:600;"' : "";
 
-
     return `
-    <tr ${style}>
-      ${cols.map(c=>{
-        const isDate = c.includes("Data") || c.includes("Dt");
-        return `<td>${isDate ? formatDateBR(m[c]) : (m[c] || "")}</td>`;
-      }).join("")}
-    </tr>`;
+      <tr ${style}>
+        ${cols.map(c=>{
+          const isDate = c.includes("Data") || c.includes("Dt");
+          return `<td>${isDate ? formatDateBR(m[c]) : (m[c] || "")}</td>`;
+        }).join("")}
+      </tr>
+    `;
   }).join("");
 
 
   return `
-  <div class="group">
-    ${header}
-    <div class="tableWrapper">
-      <table>
-        <thead><tr>${thead}</tr></thead>
-        <tbody>${tbody}</tbody>
-      </table>
+    <div class="group">
+      ${header}
+      <div class="tableWrapper">
+        <table>
+          <thead><tr>${thead}</tr></thead>
+          <tbody>${tbody}</tbody>
+        </table>
+      </div>
     </div>
-  </div>
-`;
+  `;
 }
 
 
@@ -1267,9 +1310,23 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
     let qtdDentroRegra = 0;
     let qtdForaRegra = 0;
 
+    // 🔥 NOVO: contadores D+, D0 e D-1
+    let qtdDmais = 0;   // D+
+    let qtdD0 = 0;      // D0
+    let qtdDmenos1 = 0; // D-1
+
+
     const notasHTML = info.notas.map(n => {
 
       const dtLim   = parsePossibleDate(n.dtLim);
+      if(dtLim){
+        dtLim.setHours(0,0,0,0);
+
+        if(dtLim < hoje) qtdDmais++;
+        else if(isSameDate(dtLim, hoje)) qtdD0++;
+        else if(isSameDate(dtLim, amanha)) qtdDmenos1++;
+        }
+
       const dtCheck = parsePossibleDate(n.checkin);
       const dtEntr  = parsePossibleDate(n.entrada);
 
@@ -1341,6 +1398,19 @@ html += `
           <span style="font-size:12px; font-weight:700; color:#14532d;">
             Entrada com Prazo: ${qtdForaRegra}
           </span>
+          <div style="margin-top:6px; font-size:12px; font-weight:800; color:#000;">
+  
+            D+: <span style="color:#dc2626;">${qtdDmais}</span>
+            &nbsp; | &nbsp;
+
+            D0: <span style="color:#2563eb;">${qtdD0}</span>
+            &nbsp; | &nbsp;
+
+            D-1: <span style="color:#16a34a;">${qtdDmenos1}</span>
+
+          </div>
+
+
         </div>
 
         <div style="margin-top:10px; font-size:12px;">
