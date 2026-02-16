@@ -529,16 +529,12 @@ function buscarJanelaAlmox(almoxNorm){
 
 
 function excelSerialToDateLocal(serial){
-  // Excel conta dias a partir de 1899-12-31
-  const utc_days = Math.floor(serial - 25569);
-  const utc_value = utc_days * 86400 * 1000;
-
-  // criar Date em UTC
-  const d = new Date(utc_value);
-
-  // ajusta para hora local para não causar off-by-one
-  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  // Excel base correta: 1899-12-30
+  const excelEpoch = new Date(1899, 11, 30);
+  const ms = serial * 24 * 60 * 60 * 1000;
+  return new Date(excelEpoch.getTime() + ms);
 }
+
 
 
 function parsePossibleDate(value){
@@ -689,7 +685,7 @@ function buildGroupHTML(item,index){
         <b>#${index+1} ID: ${d["ID"]}</b><br><br>
 
         <div style="font-weight:400;">
-          <b>DT CARREG:</b> ${formatDateBRLocal(d["DT. CARREGAMENTO"])}<br>
+          <b>DT CARREG:</b> ${formatDateTimeBRLocal(d["DT. CARREGAMENTO"])}<br>
           <b>DESTINOS:</b> ${d["DESTINOS"]}<br>
           <b>REFERENCIAS:</b> ${d["REFERENCIAS"]}<br>
           <b>VEÍCULO SOLICITADO:</b> ${d["VEÍCULO SOLICITADO"] || ""}<br>
@@ -1500,6 +1496,20 @@ function abrirPaginaAnalise(){
 function voltarPaginaPrincipal(){
   document.getElementById("paginaAnalise").style.display = "none";
   document.getElementById("paginaPrincipal").style.display = "block";
+}
+
+function formatDateTimeBRLocal(v){
+  const d = parsePossibleDate(v);
+  if(!d) return "";
+
+  return d.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
 }
 
 
