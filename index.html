@@ -7,6 +7,11 @@
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+
+
   <style>
     /* === SEU CSS ORIGINAL (INALTERADO) === */
 :root{
@@ -235,7 +240,12 @@ tbody tr:hover{
   </div>
 
   <div class="left" style="flex:1; justify-content:flex-end; gap:10px;">
-    <input id="dateFilter" type="date" class="search" disabled />
+    <button id="btnDateFilter" class="btn secondary" disabled title="Selecionar datas">
+      📅
+    </button>
+
+    <input id="dateFilter" type="text" style="display:none;" />
+
 
     <input id="searchInput" class="search" placeholder="Pesquisar..." disabled />
 
@@ -515,6 +525,30 @@ const summaryDiv = document.getElementById("summary");
 const searchInput = document.getElementById("searchInput");
 const filterSelect = document.getElementById("filterSelect");
 const dateFilter = document.getElementById("dateFilter");
+const btnDateFilter = document.getElementById("btnDateFilter"); 
+let datasSelecionadas = [];
+
+const calendario = flatpickr("#dateFilter", {
+  mode: "multiple",
+  dateFormat: "Y-m-d",
+  locale: "pt",
+  clickOpens: false,
+  positionElement: btnDateFilter,   // 👈 AQUI ESTÁ A CORREÇÃO
+  position: "below",                // 👈 força abrir abaixo
+  onChange: function(selectedDates) {
+    datasSelecionadas = selectedDates;
+    aplicarFiltrosEBusca();
+  }
+});
+
+
+
+btnDateFilter.addEventListener("click", function() {
+  calendario.open();
+});
+
+
+
 const chkMostrarAtrasados = document.getElementById("chkMostrarAtrasados");
 
 
@@ -575,8 +609,47 @@ async function readExcel(file){
 }
 
 function atualizarBotoes(){
-  btnProcessar.disabled = !(dataRows.length && detalhadoRows.length);
+  const habilitar = dataRows.length && detalhadoRows.length;
+
+  btnProcessar.disabled = !habilitar;
+
+  // 👉 ETAPA 4
+  searchInput.disabled = !habilitar;
+  filterSelect.disabled = !habilitar;
+  btnDateFilter.disabled = !habilitar;
 }
+
+btnLimpar.addEventListener("click", function(){
+
+  // 🔹 Limpa arrays principais
+  dataRows = [];
+  detalhadoRows = [];
+  resultado = [];
+  resultadoFiltrado = [];
+  datasSelecionadas = [];
+
+  // 🔹 Limpa tela
+  resultsDiv.innerHTML = "";
+  summaryDiv.innerHTML = "";
+
+  // 🔹 Limpa arquivos selecionados
+  fileData.value = "";
+  fileDetalhado.value = "";
+
+  // 🔹 Limpa campo pesquisa
+  searchInput.value = "";
+
+  // 🔹 Limpa filtro
+  filterSelect.value = "all";
+
+  // 🔹 Limpa calendário
+  calendario.clear();
+
+  // 🔹 Desabilita botões novamente
+  atualizarBotoes();
+
+});
+
 
 function renderSummary(filtrado = resultado){
   let total = filtrado.length;
@@ -775,24 +848,28 @@ function buildGroupHTML(item,index){
 function aplicarFiltrosEBusca(){
   let f = resultado;
   const q = normalizar(searchInput.value);
-  const selectedDate = dateFilter.value; // yyyy-mm-dd
-
+  
   function isSameDate(d1, d2){
     return d1.getFullYear() === d2.getFullYear() &&
            d1.getMonth() === d2.getMonth() &&
            d1.getDate() === d2.getDate();
   }
 
-  // Filtro por Data de Carregamento
-  if (selectedDate) {
-    const parts = selectedDate.split("-");
-    const selDate = new Date(parts[0], parts[1]-1, parts[2]); // ano, mes-1, dia
+  // Filtro por múltiplas datas de carregamento
+  if (datasSelecionadas.length > 0) {
+
     f = f.filter(r => {
       const d = parsePossibleDate(r.dataRow["DT. CARREGAMENTO"]);
       if (!d) return false;
-      return isSameDate(d, selDate);
+
+      return datasSelecionadas.some(selDate =>
+        isSameDate(d, selDate)
+      );
     });
+
   }
+
+
 
   if(filterSelect.value==="with") f=f.filter(r=>r.matches.length);
   if(filterSelect.value==="without") f=f.filter(r=>!r.matches.length);
