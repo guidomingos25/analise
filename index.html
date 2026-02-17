@@ -902,7 +902,13 @@ function processar(){
       const dtLim = parsePossibleDate(r["Dt Limite Embarque"]);
 
       // REGRA 1: Dt Limite <= Dt Carregamento
-      if(dtLim && dtCarreg && dtLim > dtCarreg) return false;
+      if (dtLim && dtCarreg) {
+        dtLim.setHours(0,0,0,0);
+        dtCarreg.setHours(0,0,0,0);
+
+        if (dtLim.getTime() > dtCarreg.getTime()) return false;
+      }
+
 
       const almox = r.__almoxNorm;
       if(!almox) return false;
@@ -1095,10 +1101,10 @@ function renderResumoAnalise(stats){
     <div class="pill">🏭 Almox: <b>${stats.totalAlmox}</b></div>
     <div class="pill">📦 Notas Pendentes: <b>${stats.totalNotas}</b></div>
     <div class="pill" style="background:#fee2e2; border-color:#fecaca;">
-      🟥 Em Atraso: <b>${stats.totalAtraso}</b>
+      🟥 Entrada Em Atraso: <b>${stats.totalAtraso}</b>
     </div>
     <div class="pill" style="background:#dcfce7; border-color:#bbf7d0;">
-      🟩 No Prazo: <b>${stats.totalPrazo}</b>
+      🟩 Entrada No Prazo: <b>${stats.totalPrazo}</b>
     </div>
     <div class="pill">
       🟢 Com Veículo: <b>${stats.comVeiculo}</b>
@@ -1106,6 +1112,18 @@ function renderResumoAnalise(stats){
     <div class="pill">
       🔴 Sem Veículo: <b>${stats.semVeiculo}</b>
     </div>
+    <div class="pill" style="background:#fee2e2; border-color:#fecaca;">
+      🔴 D+: <b>${stats.totalDmais}</b>
+    </div>
+
+    <div class="pill" style="background:#dbeafe; border-color:#bfdbfe;">
+      🔵 D0: <b>${stats.totalD0}</b>
+    </div>
+
+    <div class="pill" style="background:#dcfce7; border-color:#bbf7d0;">
+      🟢 D-1: <b>${stats.totalDmenos1}</b>
+    </div>
+
   `;
 }
 
@@ -1130,8 +1148,11 @@ function listarAlmoxPendentes(){
     const dtLim = parsePossibleDate(r["Dt Limite Embarque"]);
     if(!dtLim) return;
 
+    dtLim.setHours(0,0,0,0);   // 🔥 CORREÇÃO
+
     // Somente <= amanhã
-    if(dtLim > amanha) return;
+    if(dtLim.getTime() > amanha.getTime()) return;
+
 
     if(!almoxPend[almox]){
       almoxPend[almox] = {
@@ -1221,8 +1242,13 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
     totalAtraso: 0,
     totalPrazo: 0,
     comVeiculo: 0,
-    semVeiculo: 0
+    semVeiculo: 0,
+
+    totalDmais: 0,
+    totalD0: 0,
+    totalDmenos1: 0
   };
+
 
 
   almoxOrdenados.forEach(([almox,info])=>{
@@ -1432,6 +1458,10 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
 
     stats.totalAtraso += qtdDentroRegra;
     stats.totalPrazo += qtdForaRegra;
+    stats.totalDmais += qtdDmais;
+    stats.totalD0 += qtdD0;
+    stats.totalDmenos1 += qtdDmenos1;
+
 
     const resumoVeic = veiculos.length
       ? veiculos.map(v =>
