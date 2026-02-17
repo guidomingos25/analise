@@ -1182,9 +1182,12 @@ function listarAlmoxPendentes(){
       almoxUltimoVeiculo[almox].push({
         dtPrev,
         dtCarreg,
+        dtEntrega: row["DT. ENTREGA"] || "",
+        destinos: row["DESTINOS"] || "",   // 👈 NOVO
         id: row["ID"] || "",
         refs: row["REFERENCIAS"] || ""
       });
+
     }
   });
 });
@@ -1245,12 +1248,12 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
         background:#f8fafc;
         border:1px solid #cbd5e1;
         font-size:12px;
-        min-width:220px;
-        min-height:130px;
+        height:100%;                /* 👈 ESSENCIAL */
         display:flex;
         flex-direction:column;
-        justify-content:center;
+        justify-content:space-between;  /* 👈 melhor que center */
       ">
+
         <div style="font-weight:900; margin-bottom:8px;">
           🗓️ Janelas
         </div>
@@ -1430,11 +1433,9 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
     stats.totalAtraso += qtdDentroRegra;
     stats.totalPrazo += qtdForaRegra;
 
-    // resumo compacto dos veículos
-    // resumo compacto dos veículos
     const resumoVeic = veiculos.length
       ? veiculos.map(v =>
-          `• ID ${v.id} - Programado: ${formatDateBRLocal(v.dtPrev)} | Carregado: ${formatDateBRLocal(v.dtCarreg)}`
+          `• ID ${v.id} | Prog: ${formatDateBRLocal(v.dtPrev)} | Carreg: ${formatDateBRLocal(v.dtCarreg)} | Destinos: ${v.destinos} | Entrega: ${v.dtEntrega}`
         ).join("<br>")
       : "Nenhum encontrado";
 
@@ -1442,79 +1443,91 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
 
 html += `
 <details style="margin-bottom:12px; border:1px solid #ddd; padding:10px; border-radius:8px;">
-  <summary style="cursor:pointer; font-size:14px;">
-    <div style="
-      display:flex;
-      align-items:stretch;
-      gap:20px;
-      width:100%;
-    ">
-
-      <!-- COLUNA 1 -->
-      <div style="
-        flex:0 0 420px;
-        display:flex;
-        flex-direction:column;
-        justify-content:space-between;
-      ">
-
-        <div>
-          <div style="font-weight:800;">
-            🏭 ${almox} | 📦 ${info.qtd} notas pendentes
-          </div>
+  <summary style="cursor:pointer; padding:15px;">
+  <div style="display:flex; gap:20px; width:100%; align-items:stretch;">
 
 
-          <span style="font-size:12px; font-weight:700; color:#991b1b;">
-            Entrada em Atraso: ${qtdDentroRegra}
-          </span>
-          &nbsp; | &nbsp;
-          <span style="font-size:12px; font-weight:700; color:#14532d;">
-            Entrada com Prazo: ${qtdForaRegra}
-          </span>
-          <div style="margin-top:6px; font-size:12px; font-weight:800; color:#000;">
-  
-            D+: <span style="color:#dc2626;">${qtdDmais}</span>
-            &nbsp; | &nbsp;
+    <!-- BLOCO ESQUERDA -->
+    <div style="flex:1;">
 
-            D0: <span style="color:#2563eb;">${qtdD0}</span>
-            &nbsp; | &nbsp;
-
-            D-1: <span style="color:#16a34a;">${qtdDmenos1}</span>
-
-          </div>
-
-
+      <!-- LINHA 1 -->
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-weight:900; font-size:15px;">
+          🏭 ${almox}
         </div>
 
-        <div style="margin-top:10px; font-size:12px;">
-          🚛 Últimos veículos:<br>
-          ${resumoVeic}
-        </div>
-
-      </div>
-
-      <!-- COLUNA 2 - JANELAS CENTRALIZADA -->
-      <div style="
-        flex:1;
-        display:flex;
-        justify-content:center;
-        align-items:stretch;
-      ">
-        ${janelaHTML}
-      </div>
-
-      <!-- COLUNA 3 -->
-      <div style="
-        flex:0 0 220px;
-        display:flex;
-        align-items:flex-start;
-        justify-content:flex-end;
-      ">
         ${statusVeiculoBadge}
       </div>
 
+      <!-- LINHA 2 -->
+      <div style="margin-top:6px; font-size:13px; font-weight:700;">
+        📦 ${info.qtd} notas pendentes
+      </div>
+
+      <!-- LINHA 3 - INDICADORES -->
+      <div style="margin-top:6px; font-size:12px;">
+
+        <!-- Linha 1 -->
+        <div style="display:flex; gap:15px; flex-wrap:wrap;">
+          <span style="color:#991b1b; font-weight:700;">
+            Entrada em Atraso: ${qtdDentroRegra}
+          </span>
+
+          <span style="color:#14532d; font-weight:700;">
+            Entrada No Prazo: ${qtdForaRegra}
+          </span>
+        </div>
+
+        <!-- Linha 2 -->
+        <div style="display:flex; gap:15px; margin-top:6px; flex-wrap:wrap;">
+          <span style="color:#dc2626; font-weight:800;">
+            🔴 D+: ${qtdDmais}
+          </span>
+
+          <span style="color:#2563eb; font-weight:800;">
+            🔵 D0: ${qtdD0}
+          </span>
+
+          <span style="color:#16a34a; font-weight:800;">
+            🟢 D-1: ${qtdDmenos1}
+          </span>
+        </div>
+
+      </div>
+
+
+      <!-- LINHA 4 - VEÍCULOS -->
+      <div style="
+        margin-top:10px;
+        background:#f8fafc;
+        border:1px solid #e2e8f0;
+        padding:8px 10px;
+        border-radius:8px;
+        font-size:12px;
+      ">
+        <b>🚛 Últimos veículos</b><br>
+        ${resumoVeic}
+      </div>
+
     </div>
-  </summary>
+
+    <div style="
+      width:260px;
+      display:flex;
+    ">
+      <div style="
+        flex:1;
+        display:flex;
+        flex-direction:column;
+      ">
+        ${janelaHTML}
+      </div>
+    </div>
+
+
+  </div>
+</summary>
+
 
 
 
