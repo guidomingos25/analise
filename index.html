@@ -339,7 +339,7 @@ const JANELAS_ALMOX = {
   "BRA-MACEIO-AL02": { carregamento: ['qui', 'ter'], entrega: ['qua', 'seg'] },
   "BRA-MAUA-SP23": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
   "BRA-MAUA-SP25": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
-  "BRA-MDEODO-AL03": { carregamento: ['qua', 'sex'], entrega: ['qui', 'ter'] },
+  "BRA-MDEODO-AL03": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "BRA-PAULIN-SP08": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "BRA-PAULINIA-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "BRA-S-ANDR-SP20": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
@@ -1141,6 +1141,36 @@ function listarAlmoxPendentes(){
   // ===============================
   const almoxPend = {};
 
+    // ======================================
+  // MAPA TOTAL PVD (SEM FILTRO DE DATA)
+  // ======================================
+  const almoxTotalPVD = {};
+
+  detalhadoRows.forEach(r => {
+    const almox = normalizar(r["Almoxarifado"]);
+    if(!almox) return;
+
+    if(!almoxTotalPVD[almox]){
+      almoxTotalPVD[almox] = {
+        totalRegistros: 0,
+        pesoTotal: 0
+      };
+    }
+
+    almoxTotalPVD[almox].totalRegistros++;
+
+    const peso = parseFloat(
+      (r["Peso"] || "0")
+        .toString()
+        .replace(",", ".")
+    );
+
+    if(!isNaN(peso)){
+      almoxTotalPVD[almox].pesoTotal += peso;
+    }
+  });
+
+
   detalhadoRows.forEach(r=>{
     const almox = normalizar(r["Almoxarifado"]);
     if(!almox) return;
@@ -1482,12 +1512,32 @@ html += `
 
       <!-- LINHA 1 -->
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="font-weight:900; font-size:15px;">
-          🏭 ${almox}
+        <div style="display:flex; flex-direction:column; gap:4px;">
+
+          <div style="font-weight:900; font-size:15px;">
+            🏭 ${almox}
+          </div>
+
+          ${
+            almoxTotalPVD[almox] 
+            ? `
+            <div style="font-size:12px; font-weight:700; color:#1e293b;">
+              ⚖ Peso Total PVD: 
+              ${almoxTotalPVD[almox].pesoTotal.toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2})}
+            </div>
+
+            <div style="font-size:12px; font-weight:700; color:#475569;">
+              📄 Total Notas PVD: ${almoxTotalPVD[almox].totalRegistros}
+            </div>
+            `
+            : ""
+          }
+
         </div>
 
         ${statusVeiculoBadge}
       </div>
+
 
       <!-- LINHA 2 -->
       <div style="margin-top:6px; font-size:13px; font-weight:700;">
