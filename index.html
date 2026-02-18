@@ -339,7 +339,7 @@ const JANELAS_ALMOX = {
   "BRA-MACEIO-AL02": { carregamento: ['qui', 'ter'], entrega: ['qua', 'seg'] },
   "BRA-MAUA-SP23": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
   "BRA-MAUA-SP25": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
-  "BRA-MDEODO-AL03": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "BRA-MDEODO-AL03": { carregamento: ['qua', 'sex'], entrega: ['qui', 'ter'] },
   "BRA-PAULIN-SP08": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "BRA-PAULINIA-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "BRA-S-ANDR-SP20": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
@@ -1259,6 +1259,9 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
   const termoCliente = normalizar(document.getElementById("searchClientePopup")?.value || "");
   const filtroVeiculo = document.getElementById("filterVeiculoPopup")?.value || "all";
   const termoDestino = normalizar(document.getElementById("searchDestinoPopup")?.value || "");
+  const termoUFDestino = normalizar(
+    document.getElementById("searchUFDestinoPopup")?.value || ""
+  );
 
 
   // ===============================
@@ -1341,6 +1344,18 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
     if(termoDestino){
       const temDestino = info.notas.some(n => normalizar(n.destino).includes(termoDestino));
       if(!temDestino) return;
+    }
+    // ✅ filtro por UF Destino (coluna "UF Destino" da PVD)
+    if(termoUFDestino){
+      const temUFDestino = info.notas.some(n =>
+        normalizar(
+          detalhadoRows.find(r =>
+            (r["Nota"] || r["Numero OEF"] || "") === n.nota
+          )?.["UF Destino"]
+        ).includes(termoUFDestino)
+      );
+
+      if(!temUFDestino) return;
     }
 
 
@@ -1649,6 +1664,10 @@ html += `
   if(inputDestinoPopup){
     inputDestinoPopup.oninput = () => listarAlmoxPendentes();
   }
+  const inputUFDestinoPopup = document.getElementById("searchUFDestinoPopup");
+  if(inputUFDestinoPopup){
+    inputUFDestinoPopup.oninput = () => listarAlmoxPendentes();
+  }
 
   const filtroPopup = document.getElementById("filterVeiculoPopup");
   if(filtroPopup){
@@ -1734,6 +1753,11 @@ chkMostrarAtrasados.onchange = () => {
         placeholder="📍 Filtrar por Destino..."
         style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
       />
+      <input id="searchUFDestinoPopup" type="text"
+        placeholder="🗺️ Filtrar por UF Destino..."
+        style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
+      />
+
 
     </div>
     <div id="resumoAnalise" class="summary" style="margin-top:10px;"></div>
