@@ -1099,18 +1099,23 @@ function renderResumoAnalise(stats){
 
   document.getElementById("resumoAnalise").innerHTML = `
     <div class="pill">🏭 Almox: <b>${stats.totalAlmox}</b></div>
-    <div class="pill">📦 Notas Pendentes: <b>${stats.totalNotas}</b></div>
+    <div class="pill">📦 Notas: <b>${stats.totalNotas}</b></div>
     <div class="pill" style="background:#fee2e2; border-color:#fecaca;">
       🟥 Entrada Em Atraso: <b>${stats.totalAtraso}</b>
     </div>
     <div class="pill" style="background:#dcfce7; border-color:#bbf7d0;">
       🟩 Entrada No Prazo: <b>${stats.totalPrazo}</b>
     </div>
-    <div class="pill">
-      🟢 Com Veículo: <b>${stats.comVeiculo}</b>
+    <div class="pill" style="background:#dbeafe; border-color:#bfdbfe;">
+      🔵 Carregados Hoje: <b>${stats.carregadosHoje}</b>
     </div>
-    <div class="pill">
-      🔴 Sem Veículo: <b>${stats.semVeiculo}</b>
+
+    <div class="pill" style="background:#dcfce7; border-color:#bbf7d0;">
+      🟢 Programados: <b>${stats.programados}</b>
+    </div>
+
+    <div class="pill" style="background:#fee2e2; border-color:#fecaca;">
+      🔴 Não Programados: <b>${stats.semVeiculo}</b>
     </div>
     <div class="pill" style="background:#fee2e2; border-color:#fecaca;">
       🔴 D+: <b>${stats.totalDmais}</b>
@@ -1257,7 +1262,30 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
 
 
   const termoCliente = normalizar(document.getElementById("searchClientePopup")?.value || "");
-  const filtroVeiculo = document.getElementById("filterVeiculoPopup")?.value || "all";
+  const selectVeiculo = document.getElementById("filterVeiculoPopup");
+  let filtroVeiculo = [];
+
+  if (selectVeiculo) {
+
+    const selecionados = Array.from(selectVeiculo.selectedOptions)
+      .map(o => o.value);
+
+    // Se selecionar "all"
+    if (selecionados.includes("all")) {
+
+      // Marca todos automaticamente
+      Array.from(selectVeiculo.options).forEach(opt => {
+        opt.selected = true;
+      });
+
+      filtroVeiculo = ["carregado", "programado", "sem"];
+
+    } else {
+      filtroVeiculo = selecionados;
+    }
+  }
+
+
   const termoDestino = normalizar(document.getElementById("searchDestinoPopup")?.value || "");
   const termoUFDestino = normalizar(
     document.getElementById("searchUFDestinoPopup")?.value || ""
@@ -1274,8 +1302,10 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
     totalNotas: 0,
     totalAtraso: 0,
     totalPrazo: 0,
-    comVeiculo: 0,
+    carregadosHoje: 0,
+    programados: 0,
     semVeiculo: 0,
+
 
     totalDmais: 0,
     totalD0: 0,
@@ -1397,50 +1427,119 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
     
         return false;
       });
+    }  
+
+    
+    // 🔵 Verifica se existe veículo carregado HOJE
+    let temCarregadoHoje = false;
+
+    if (veiculos.length) {
+      temCarregadoHoje = veiculos.some(v => {
+        const dtCarreg = parsePossibleDate(v.dtCarreg);
+        if (!dtCarreg) return false;
+
+        dtCarreg.setHours(0,0,0,0);
+        return dtCarreg.getTime() === hoje.getTime();
+      });
     }
 
 
-    // ✅ filtro por status de veículo programado
-    if(filtroVeiculo === "programado" && !temVeiculoHojeOuAmanha) return;
-    if(filtroVeiculo === "sem" && temVeiculoHojeOuAmanha) return;
+    // STATUS FINAL DO ALMOX
+    let statusVeiculo = "sem";
+
+    if (temCarregadoHoje) {
+      statusVeiculo = "carregado";
+    } else if (temVeiculoHojeOuAmanha) {
+      statusVeiculo = "programado";
+    }
+
+    // Se houver seleção, filtra pelos selecionados
+    if (filtroVeiculo.length > 0 && !filtroVeiculo.includes(statusVeiculo)) {
+      return;
+    }
+
 
     stats.totalAlmox++;
     stats.totalNotas += info.qtd;
-    
-    if(temVeiculoHojeOuAmanha) stats.comVeiculo++;
-    else stats.semVeiculo++;
-    
-    const statusVeiculoBadge = temVeiculoHojeOuAmanha
-      ? `<span style="
-            background:#dcfce7;
-            color:#14532d;
-            border:2px solid #22c55e;
-            padding:6px 12px;
-            border-radius:999px;
-            font-size:12px;
-            font-weight:900;
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            box-shadow:0 4px 10px rgba(0,0,0,0.15);
-          ">
-            🟢 VEÍCULO PROGRAMADO
-        </span>`
-      : `<span style="
-            background:#fee2e2;
-            color:#7f1d1d;
-            border:2px solid #ef4444;
-            padding:6px 12px;
-            border-radius:999px;
-            font-size:12px;
-            font-weight:900;
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            box-shadow:0 4px 10px rgba(0,0,0,0.15);
-          ">
-            🔴 SEM VEÍCULO
-        </span>`;
+
+        if (statusVeiculo === "carregado") {
+      stats.carregadosHoje++;
+    }
+    else if (statusVeiculo === "programado") {
+      stats.programados++;
+    }
+    else {
+      stats.semVeiculo++;
+    }
+
+    let statusVeiculoBadge = "";
+
+    // 🔵 PRIORIDADE 1: Carregado Hoje
+    if (temCarregadoHoje) {
+
+      statusVeiculoBadge = `
+        <span style="
+          background:#dbeafe;
+          color:#1e3a8a;
+          border:2px solid #2563eb;
+          padding:6px 12px;
+          border-radius:999px;
+          font-size:12px;
+          font-weight:900;
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+          box-shadow:0 4px 10px rgba(0,0,0,0.15);
+        ">
+          🔵 CARREGADO HOJE
+        </span>
+      `;
+
+    }
+    // 🟢 PRIORIDADE 2: Programado
+    else if (temVeiculoHojeOuAmanha) {
+
+      statusVeiculoBadge = `
+        <span style="
+          background:#dcfce7;
+          color:#14532d;
+          border:2px solid #22c55e;
+          padding:6px 12px;
+          border-radius:999px;
+          font-size:12px;
+          font-weight:900;
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+          box-shadow:0 4px 10px rgba(0,0,0,0.15);
+        ">
+          🟢 PROGRAMADO
+        </span>
+      `;
+
+    }
+    // 🔴 PRIORIDADE 3: Sem veículo
+    else {
+
+      statusVeiculoBadge = `
+        <span style="
+          background:#fee2e2;
+          color:#7f1d1d;
+          border:2px solid #ef4444;
+          padding:6px 12px;
+          border-radius:999px;
+          font-size:12px;
+          font-weight:900;
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+          box-shadow:0 4px 10px rgba(0,0,0,0.15);
+        ">
+          🔴 NÃO PROGRAMADO
+        </span>
+      `;
+    }
+
 
 
 
@@ -1737,13 +1836,16 @@ chkMostrarAtrasados.onchange = () => {
 
     <div style="display:flex; gap:10px; margin-top:15px; margin-bottom:12px; align-items:center;">
       
-      <select id="filterVeiculoPopup"
+      <select id="filterVeiculoPopup" multiple size="4"
         style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
       >
-        <option value="all">🚛 Todos</option>
-        <option value="programado">🟢 Somente Programados</option>
-        <option value="sem">🔴 Somente Sem Veículo</option>
+        <option value="all">✅ Selecionar Todos</option>
+        <option value="carregado">🔵 Carregados Hoje</option>
+        <option value="programado">🟢 Programados</option>
+        <option value="sem">🔴 Não Programados</option>
       </select>
+
+
 
       <input id="searchClientePopup" type="text"
         placeholder="🔍 Filtrar por Cliente..."
