@@ -1207,7 +1207,6 @@ function listarAlmoxPendentes(){
       };
     }
 
-    almoxPend[almox].qtd++;
     almoxPend[almox].notas.push({
       dtLim,
       nota: r["Nota"] || r["Numero OEF"] || "",
@@ -1215,10 +1214,12 @@ function listarAlmoxPendentes(){
       destinatario: r["Destinatario"] || "",
       cliente: r["Cliente"] || "",
       destino: r["Destino"] || "",
+      uf: r["UF Destino"] || "",   // 👈 ADICIONE ISSO
       checkin: r["Data de Check in"],
       entrada: r["Data de Entrada da Nota"],
       finalEntrega: r["Dt Final Entrega"]
     });
+
 
 
 
@@ -1386,18 +1387,17 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       const temDestino = info.notas.some(n => normalizar(n.destino).includes(termoDestino));
       if(!temDestino) return;
     }
-    // ✅ filtro por UF Destino (coluna "UF Destino" da PVD)
-    if(termoUFDestino){
-      const temUFDestino = info.notas.some(n =>
-        normalizar(
-          detalhadoRows.find(r =>
-            (r["Nota"] || r["Numero OEF"] || "") === n.nota
-          )?.["UF Destino"]
-        ).includes(termoUFDestino)
-      );
+    // ✅ filtro por UF Destino (comparação EXATA)
+    if (termoUFDestino) {
 
-      if(!temUFDestino) return;
+      const temUFDestino = info.notas.some(n => {
+        const uf = normalizar(n.uf || "");
+        return uf === termoUFDestino;
+      });
+
+      if (!temUFDestino) return;
     }
+
 
 
     // ordena datas das notas
