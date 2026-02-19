@@ -676,11 +676,11 @@ function renderSummary(filtrado = resultado){
       const dtCheck = parsePossibleDate(m["Data de Check in"]);
       const dtEntr  = parsePossibleDate(m["Data de Entrada da Nota"]);
 
-      let atrasado = false;
-      if (dtCarreg) {
-        if (dtCheck && dtCheck >= dtCarreg) atrasado = true;
-        if (dtEntr  && dtEntr  >= dtCarreg) atrasado = true;
-      }
+      let atrasado = ehAtrasado(
+        r.dataRow["DT. CARREGAMENTO"],
+        m["Data de Check in"],
+        m["Data de Entrada da Nota"]
+      );
 
       // se NÃO mostrar atrasados → remove do total
       if (!mostrarAtrasados && atrasado) return false;
@@ -747,12 +747,11 @@ function buildGroupHTML(item,index){
     const dtCheck  = parsePossibleDate(m["Data de Check in"]);
     const dtEntr   = parsePossibleDate(m["Data de Entrada da Nota"]);
 
-    let atrasado = false;
-
-    if (dtCarreg) {
-      if (dtCheck && dtCheck >= dtCarreg) atrasado = true;
-      if (dtEntr  && dtEntr  >= dtCarreg) atrasado = true;
-    }
+    let atrasado = ehAtrasado(
+      d["DT. CARREGAMENTO"],
+      m["Data de Check in"],
+      m["Data de Entrada da Nota"]
+    );
 
     // ❌ Se NÃO mostrar atrasados → remove do grupo
     if (!mostrarAtrasados && atrasado) return false;
@@ -823,11 +822,11 @@ function buildGroupHTML(item,index){
     const dtCheck  = parsePossibleDate(m["Data de Check in"]);
     const dtEntr   = parsePossibleDate(m["Data de Entrada da Nota"]);
 
-    let atrasado = false;
-    if (dtCarreg) {
-      if (dtCheck && dtCheck >= dtCarreg) atrasado = true;
-      if (dtEntr  && dtEntr  >= dtCarreg) atrasado = true;
-    }
+    let atrasado = ehAtrasado(
+      d["DT. CARREGAMENTO"],
+      m["Data de Check in"],
+      m["Data de Entrada da Nota"]
+    );
 
     const style = atrasado ? 'style="background:#fef2f2; color:#9f1239; font-weight:600;"' : "";
 
@@ -997,11 +996,11 @@ function exportarExcel() {
       const dtCheck = parsePossibleDate(m["Data de Check in"]);
       const dtEntr  = parsePossibleDate(m["Data de Entrada da Nota"]);
 
-      let atrasado = false;
-      if (dtCarreg) {
-        if (dtCheck && dtCheck >= dtCarreg) atrasado = true;
-        if (dtEntr  && dtEntr  >= dtCarreg) atrasado = true;
-      }
+      let atrasado = ehAtrasado(
+        item.dataRow["DT. CARREGAMENTO"],
+        m["Data de Check in"],
+        m["Data de Entrada da Nota"]
+      );
 
       // ❌ NÃO EXPORTA SE FOR ATRASADO
       if (atrasado) return;
@@ -1083,7 +1082,33 @@ fileDetalhado.onchange=async e=>{
   atualizarBotoes();
 };
 
+// =====================================================
+// REGRA PROFISSIONAL DE ATRASO (IGNORA HORÁRIO)
+// =====================================================
+function ehAtrasado(dataReferencia, dataCheck, dataEntrada){
 
+  const dtRef = parsePossibleDate(dataReferencia);
+  if (!dtRef) return false;
+
+  const ref = new Date(dtRef);
+  ref.setHours(0,0,0,0);
+
+  const dtCheck = parsePossibleDate(dataCheck);
+  if (dtCheck) {
+    const check = new Date(dtCheck);
+    check.setHours(0,0,0,0);
+    if (check.getTime() >= ref.getTime()) return true;
+  }
+
+  const dtEntr = parsePossibleDate(dataEntrada);
+  if (dtEntr) {
+    const entr = new Date(dtEntr);
+    entr.setHours(0,0,0,0);
+    if (entr.getTime() >= ref.getTime()) return true;
+  }
+
+  return false;
+}
 
 function formatDateBRLocal(v){
   const d = parsePossibleDate(v);
@@ -1456,11 +1481,19 @@ if (veiculos.length) {
 let temProgramado = false;
 let temNaoProgramado = false;
 
+// 🔵 PRIORIDADE 1 — Se tem veículo sem carregamento → PROGRAMADO
 if (temSemCarregamento) {
-  temProgramado = true; // 🟢 SOBRESAÍ
+  temProgramado = true;
 }
+
+// 🔴 PRIORIDADE 2 — Se tem veículo com carregamento → NÃO PROGRAMADO
 else if (temComCarregamento) {
-  temNaoProgramado = true; // 🔴 Só se não tiver programado
+  temNaoProgramado = true;
+}
+
+// 🔴 PRIORIDADE 3 — Se NÃO EXISTE VEÍCULO → NÃO PROGRAMADO
+else if (veiculos.length === 0) {
+  temNaoProgramado = true;
 }
 
 
