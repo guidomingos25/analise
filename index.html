@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -203,6 +204,16 @@ tbody tr:nth-child(even){
 tbody tr:hover{
   background:#dbeafe;
 }
+
+.badge-container {
+  display: flex;
+  justify-content: center; /* centraliza horizontal */
+  align-items: center;     /* centraliza vertical */
+  gap: 8px;                /* espaço entre badges */
+  margin-top: 12px;
+  flex-wrap: wrap;         /* evita quebrar layout */
+}
+
   </style>
 </head>
 
@@ -1404,141 +1415,142 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
 
     const veiculos = almoxUltimoVeiculo[almox] || [];
 
-    let temVeiculoHojeOuAmanha = false;
+// ===============================
+// REGRAS COM PRIORIDADE CORRETA
+// ===============================
 
-    if (veiculos.length) {
-      // se existir qualquer veículo que:
-      // - dtPrev >= hoje
-      // OU
-      // - dtPrev < hoje mas NÃO tem dtCarreg
-      temVeiculoHojeOuAmanha = veiculos.some(v => {
-        const dtPrev = parsePossibleDate(v.dtPrev);
-        const dtCarreg = parsePossibleDate(v.dtCarreg);
-    
-        if (!dtPrev) return false;
-    
-        dtPrev.setHours(0,0,0,0);
-    
-        // Caso 1: previsão hoje ou futura
-        if (dtPrev.getTime() >= hoje.getTime()) return true;
-    
-        // Caso 2: previsão passada mas ainda não carregou
-        if (dtPrev.getTime() < hoje.getTime() && !dtCarreg) return true;
-    
-        return false;
-      });
-    }  
+let temCarregadoHoje = false;
+let temSemCarregamento = false;
+let temComCarregamento = false;
 
-    
-    // 🔵 Verifica se existe veículo carregado HOJE
-    let temCarregadoHoje = false;
+if (veiculos.length) {
 
-    if (veiculos.length) {
-      temCarregadoHoje = veiculos.some(v => {
-        const dtCarreg = parsePossibleDate(v.dtCarreg);
-        if (!dtCarreg) return false;
+  veiculos.forEach(v => {
 
-        dtCarreg.setHours(0,0,0,0);
-        return dtCarreg.getTime() === hoje.getTime();
-      });
+    const dtCarreg = parsePossibleDate(v.dtCarreg);
+
+    if (dtCarreg) {
+
+      dtCarreg.setHours(0,0,0,0);
+
+      // 🔵 CARREGADO HOJE
+      if (dtCarreg.getTime() === hoje.getTime()) {
+        temCarregadoHoje = true;
+      }
+
+      temComCarregamento = true;
+
+    } else {
+      // 🟢 SEM CARREGAMENTO
+      temSemCarregamento = true;
     }
 
+  });
 
-    // STATUS FINAL DO ALMOX
-    let statusVeiculo = "sem";
+}
 
-    if (temCarregadoHoje) {
-      statusVeiculo = "carregado";
-    } else if (temVeiculoHojeOuAmanha) {
-      statusVeiculo = "programado";
-    }
+// ===============================
+// DEFINIÇÃO FINAL (PRIORIDADE)
+// ===============================
 
-    // Se houver seleção, filtra pelos selecionados
-    if (filtroVeiculo.length > 0 && !filtroVeiculo.includes(statusVeiculo)) {
-      return;
-    }
+let temProgramado = false;
+let temNaoProgramado = false;
+
+if (temSemCarregamento) {
+  temProgramado = true; // 🟢 SOBRESAÍ
+}
+else if (temComCarregamento) {
+  temNaoProgramado = true; // 🔴 Só se não tiver programado
+}
+
+
+
+if (filtroVeiculo.length > 0) {
+
+  let mostrar = false;
+
+  if (filtroVeiculo.includes("carregado") && temCarregadoHoje) {
+    mostrar = true;
+  }
+
+  if (filtroVeiculo.includes("programado") && temProgramado) {
+    mostrar = true;
+  }
+
+  if (filtroVeiculo.includes("sem") && temNaoProgramado) {
+    mostrar = true;
+  }
+
+  if (!mostrar) return;
+}
+
+
 
 
     stats.totalAlmox++;
     stats.totalNotas += info.qtd;
 
-        if (statusVeiculo === "carregado") {
-      stats.carregadosHoje++;
-    }
-    else if (statusVeiculo === "programado") {
-      stats.programados++;
-    }
-    else {
-      stats.semVeiculo++;
-    }
+if (temCarregadoHoje) stats.carregadosHoje++;
+if (temProgramado) stats.programados++;
+if (temNaoProgramado) stats.semVeiculo++;
+
+
 
     let statusVeiculoBadge = "";
 
-    // 🔵 PRIORIDADE 1: Carregado Hoje
-    if (temCarregadoHoje) {
+// 🔵 CARREGADO HOJE
+if (temCarregadoHoje) {
+  statusVeiculoBadge += `
+    <span style="
+      background:#dbeafe;
+      color:#1e3a8a;
+      border:2px solid #2563eb;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      margin-right:6px;
+    ">
+      🔵 CARREGADO HOJE
+    </span>
+  `;
+}
 
-      statusVeiculoBadge = `
-        <span style="
-          background:#dbeafe;
-          color:#1e3a8a;
-          border:2px solid #2563eb;
-          padding:6px 12px;
-          border-radius:999px;
-          font-size:12px;
-          font-weight:900;
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          box-shadow:0 4px 10px rgba(0,0,0,0.15);
-        ">
-          🔵 CARREGADO HOJE
-        </span>
-      `;
+// 🟢 PROGRAMADO (tem prioridade sobre vermelho)
+if (temProgramado) {
+  statusVeiculoBadge += `
+    <span style="
+      background:#dcfce7;
+      color:#14532d;
+      border:2px solid #22c55e;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+    ">
+      🟢 PROGRAMADO
+    </span>
+  `;
+}
 
-    }
-    // 🟢 PRIORIDADE 2: Programado
-    else if (temVeiculoHojeOuAmanha) {
+// 🔴 NÃO PROGRAMADO
+else if (temNaoProgramado) {
+  statusVeiculoBadge += `
+    <span style="
+      background:#fee2e2;
+      color:#7f1d1d;
+      border:2px solid #ef4444;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+    ">
+      🔴 NÃO PROGRAMADO
+    </span>
+  `;
+}
 
-      statusVeiculoBadge = `
-        <span style="
-          background:#dcfce7;
-          color:#14532d;
-          border:2px solid #22c55e;
-          padding:6px 12px;
-          border-radius:999px;
-          font-size:12px;
-          font-weight:900;
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          box-shadow:0 4px 10px rgba(0,0,0,0.15);
-        ">
-          🟢 PROGRAMADO
-        </span>
-      `;
 
-    }
-    // 🔴 PRIORIDADE 3: Sem veículo
-    else {
-
-      statusVeiculoBadge = `
-        <span style="
-          background:#fee2e2;
-          color:#7f1d1d;
-          border:2px solid #ef4444;
-          padding:6px 12px;
-          border-radius:999px;
-          font-size:12px;
-          font-weight:900;
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          box-shadow:0 4px 10px rgba(0,0,0,0.15);
-        ">
-          🔴 NÃO PROGRAMADO
-        </span>
-      `;
-    }
 
 
 
@@ -1649,7 +1661,10 @@ html += `
 
         </div>
 
-        ${statusVeiculoBadge}
+        <div class="badge-container">
+          ${statusVeiculoBadge}
+        </div>
+
       </div>
 
 
