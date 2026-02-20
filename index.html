@@ -1145,6 +1145,7 @@ function renderResumoAnalise(stats){
 
       ${criarCard("📊 VOLUME GERAL", [
         {label:"🏭 Almox", valor:stats.totalAlmox},
+        {label:"📄 Total Notas PVD", valor:stats.totalNotasPVDGeral},
         {label:"📦 Notas ≤ D-1", valor:stats.totalNotas}
       ])}
 
@@ -1390,6 +1391,7 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
   const stats = {
     totalAlmox: 0,
     totalNotas: 0,
+    totalNotasPVDGeral: 0,
     totalAtraso: 0,
     totalPrazo: 0,
     carregadosHoje: 0,
@@ -1591,6 +1593,11 @@ if (filtroVeiculo.length > 0) {
 
     stats.totalAlmox++;
     stats.totalNotas += info.qtd;
+
+    // 🔥 TOTAL GERAL PVD RESPEITANDO FILTROS
+if (almoxTotalPVD[almox]) {
+  stats.totalNotasPVDGeral += almoxTotalPVD[almox].totalRegistros;
+}
 
 if (temCarregadoHoje) stats.carregadosHoje++;
 if (temProgramado) stats.programados++;
