@@ -1152,30 +1152,81 @@ function dataCoincideComJanela(data, janelaArray){
   return janelaArray.map(d => d.toLowerCase()).includes(dia);
 }
 
+function calcularProximaDataJanela(dataBase, diasJanela){
+
+  if(!diasJanela || !diasJanela.length) return null;
+
+  const dias = ["dom","seg","ter","qua","qui","sex","sáb"];
+
+  const base = new Date(dataBase);
+  base.setHours(0,0,0,0);
+
+  for(let i=0; i<=14; i++){ // procura até 14 dias pra frente
+    const tentativa = new Date(base);
+    tentativa.setDate(base.getDate() + i);
+
+    const diaAbrev = dias[tentativa.getDay()];
+
+    if(diasJanela.map(d=>d.toLowerCase()).includes(diaAbrev)){
+      return tentativa;
+    }
+  }
+
+  return null;
+}
+
 // ===============================
 // BOLINHA VERDE VISUAL
 // ===============================
 function bolinhaVerde(){
   return `
-    <span style="
-      display:inline-block;
-      width:5px;
-      height:5px;
-      border-radius:50%;
-      background:#22c55e;
-      margin-left:6px;
-      margin-bottom:2px;
-      box-shadow:0 0 0px rgba(34,197,94,0.6);
-    "></span>
+    <svg 
+      width="12" 
+      height="12" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="#22c55e" 
+      stroke-width="3" 
+      stroke-linecap="round" 
+      stroke-linejoin="round"
+      style="margin-left:6px; vertical-align:middle;"
+    >
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
   `;
 }
 
-function emojiJoinha(){
+function iconeCheck(cor = "green") {
+
+  const cores = {
+    green: "#16a34a",
+    yellow: "#facc15",
+    red: "#dc2626",
+    gray: "#9ca3af"
+  };
+
   return `
     <span style="
-      margin-left:6px;
-      font-size:14px;
-    ">✅</span>
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    ">
+      <svg 
+        width="18" 
+        height="18" 
+        viewBox="0 0 24 24" 
+        fill="none"
+      >
+        <circle cx="12" cy="12" r="10" fill="${cores[cor]}" />
+        <path 
+          d="M7 12l3 3 7-7" 
+          stroke="white" 
+          stroke-width="2.5" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+        />
+      </svg>
+    </span>
   `;
 }
 
@@ -1184,11 +1235,12 @@ function renderResumoAnalise(stats){
   document.getElementById("resumoAnalise").innerHTML = `
 
     <div style="
-      display:grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap:20px;
-      margin-bottom:20px;
-    ">
+  display:grid;
+  grid-template-columns: repeat(4, 1fr) 320px;
+  gap:20px;
+  margin-bottom:20px;
+  align-items:start;
+">
 
       ${criarCard("📊 VOLUME GERAL", [
         {label:"🏭 Almox", valor:stats.totalAlmox},
@@ -1213,8 +1265,37 @@ function renderResumoAnalise(stats){
         {label:"🟢 D-1", valor:stats.totalDmenos1, cor:"#16a34a"},
         {label:"🟢 ≥ D-2", valor:stats.totalDmenosMaiorIgual2, cor:"#15803d"}
       ])}
+            <!-- LEGENDA -->
+<div style="
+  background:#ffffff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  padding:18px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+  font-size:12px;
+">
 
-    </div>
+  <div style="font-weight:900; margin-bottom:12px; color:#374151;">
+    📖 REGRAS DO FAROL
+  </div>
+
+<div style="margin-bottom:12px;">
+  <b>🗓️ Com Janela Cadastrada</b><br>
+  🟢 Verde → Embarque / Entrega superior a próxima janela<br>
+  🟡 Amarelo → Embarque inferior a próxima janela e Entrega válida<br>
+  🔴 Vermelho → Embarque vencido e Entrega válida<br>
+  ⚪ Cinza → Entrega vencida
+</div>
+
+  <div style="margin-bottom:12px;">
+    <b>🗓️ Sem Janela Cadastrada</b><br>
+    🟢 Verde → Embarque superior a D+2<br>
+    🟡 Amarelo → Embarque hoje ou amanhã<br>
+    🔴 Vermelho → Embarque vencido / Entrega à vencer<br>
+    ⚪ Cinza → Entrega vencida
+  </div>
+
+</div>
   `;
 }
 
@@ -1731,17 +1812,149 @@ else if (temNaoProgramado) {
 
     const notasHTML = info.notas.map(n => {
 
-      const coincideCarregamento = janela && dataCoincideComJanela(
-    parsePossibleDate(n.dtLim),
+    const dtLimEmb = parsePossibleDate(n.dtLim);
+const dtLimEnt = parsePossibleDate(n.finalEntrega);
+let coincideCarregamento = false;
+let coincideEntrega = false;
+
+// ===============================
+// 🔎 VERIFICA SE DATA COINCIDE COM JANELA
+// ===============================
+if (janela && dtLimEmb) {
+  coincideCarregamento = dataCoincideComJanela(
+    dtLimEmb,
     janela.carregamento
   );
+}
 
-  const coincideEntrega = janela && dataCoincideComJanela(
-    parsePossibleDate(n.finalEntrega),
+if (janela && dtLimEnt) {
+  coincideEntrega = dataCoincideComJanela(
+    dtLimEnt,
     janela.entrega
   );
+}
 
-  const mostrarJoinha = coincideCarregamento && coincideEntrega;
+let mostrarJoinha = false;        // 🟢 verde
+let mostrarCheckAmarelo = false;  // 🟡 amarelo
+let mostrarCheckVermelho = false; // 🔴 novo
+let mostrarCheckCinza = false;    // ⚪ novo
+
+// ===============================
+// 🔵🟡 REGRA COM JANELA
+// ===============================
+if (janela && dtLimEmb) {
+
+  dtLimEmb.setHours(0,0,0,0);
+
+  const proximaJanelaCarreg =
+    calcularProximaDataJanela(hoje, janela.carregamento);
+
+  let regraCarregamentoVerde = false;
+  let regraCarregamentoAmarelo = false;
+
+  if (proximaJanelaCarreg) {
+
+    // 🟢 VERDE
+    if (dtLimEmb.getTime() >= proximaJanelaCarreg.getTime()) {
+      regraCarregamentoVerde = true;
+    }
+
+    // 🟡 AMARELO
+    if (
+      dtLimEmb.getTime() >= hoje.getTime() &&
+      dtLimEmb.getTime() < proximaJanelaCarreg.getTime()
+    ) {
+      regraCarregamentoAmarelo = true;
+    }
+  }
+
+  let regraEntrega = false;
+
+  if ((regraCarregamentoVerde || regraCarregamentoAmarelo) && dtLimEnt) {
+
+    dtLimEnt.setHours(0,0,0,0);
+
+    const proximaJanelaEntrega =
+      calcularProximaDataJanela(
+        proximaJanelaCarreg,
+        janela.entrega
+      );
+
+    if (proximaJanelaEntrega) {
+      regraEntrega =
+        dtLimEnt.getTime() >= proximaJanelaEntrega.getTime();
+    }
+  }
+
+  // 🔵 DEFINIÇÃO FINAL
+  if (regraCarregamentoVerde && regraEntrega) {
+    mostrarJoinha = true; // verde
+  }
+
+  if (!mostrarJoinha && regraCarregamentoAmarelo && regraEntrega) {
+    mostrarCheckAmarelo = true; // amarelo
+  }
+}
+
+// ===============================
+// 🟡🟢 REGRA SOMENTE PARA QUEM NÃO TEM JANELA
+// ===============================
+if (!janela && dtLimEmb && dtLimEnt) {
+
+  dtLimEmb.setHours(0,0,0,0);
+  dtLimEnt.setHours(0,0,0,0);
+
+  const amanhaLocal = new Date(hoje);
+  amanhaLocal.setDate(hoje.getDate() + 1);
+
+  const entregaValida =
+    dtLimEnt.getTime() >= dtLimEmb.getTime();
+
+  if (entregaValida) {
+
+    // 🟡 Hoje ou amanhã
+    if (
+      dtLimEmb.getTime() === hoje.getTime() ||
+      dtLimEmb.getTime() === amanhaLocal.getTime()
+    ) {
+      mostrarCheckAmarelo = true;
+    }
+
+    // 🟢 Depois de amanhã
+    if (dtLimEmb.getTime() > amanhaLocal.getTime()) {
+      mostrarJoinha = true;
+    }
+  }
+}
+
+// ===============================
+// 🔴 REGRA CRÍTICA (EMBARQUE VENCIDO)
+// ===============================
+if (dtLimEmb && dtLimEnt) {
+
+  dtLimEmb.setHours(0,0,0,0);
+  dtLimEnt.setHours(0,0,0,0);
+
+  if (
+    dtLimEmb.getTime() < hoje.getTime() &&
+    dtLimEnt.getTime() >= hoje.getTime()
+  ) {
+    mostrarCheckVermelho = true;
+    mostrarJoinha = false;
+    mostrarCheckAmarelo = false;
+  }
+}
+
+// ===============================
+// ⚪ SE NÃO CAIU EM NENHUMA REGRA
+// ===============================
+if (
+  !mostrarJoinha &&
+  !mostrarCheckAmarelo &&
+  !mostrarCheckVermelho
+) {
+  mostrarCheckCinza = true;
+}
 
       const dtLim   = parsePossibleDate(n.dtLim);
       if(dtLim){
@@ -1789,7 +2002,12 @@ else if (temNaoProgramado) {
   ${coincideEntrega ? bolinhaVerde() : ""}
   
 </td>
-<td>${mostrarJoinha ? emojiJoinha() : ""}</td>
+<td style="text-align:center;">
+  ${mostrarCheckVermelho ? iconeCheck("red") : ""}
+  ${!mostrarCheckVermelho && mostrarJoinha ? iconeCheck("green") : ""}
+  ${!mostrarCheckVermelho && !mostrarJoinha && mostrarCheckAmarelo ? iconeCheck("yellow") : ""}
+  ${mostrarCheckCinza ? iconeCheck("gray") : ""}
+</td>
           </tr>`;
       }).join("");
 
@@ -2016,15 +2234,15 @@ html += `
         <th>Data Check-in</th>
         <th>Data de Entrada</th>
         <th>Limite de Embarque</th>
-        <th>Limite de Entrega</th>
-        <th>✅</th>
+        <th>Limite Entrega</th>
+        <th>Farol</th>
       </tr>
       ${notasHTML}
     </table>
 
-  </div>
-</details>
-`;
+      </div>
+    </details>
+    `;
 
   });
 
