@@ -1132,6 +1132,53 @@ function ordenarDiasSemana(arr){
   });
 }
 
+// ===============================
+// DIA DA SEMANA (PADRÃO JANELA)
+// ===============================
+function getDiaSemanaAbrev(date){
+  if(!date) return null;
+
+  const dias = ["dom","seg","ter","qua","qui","sex","sáb"];
+  return dias[date.getDay()];
+}
+
+// ===============================
+// VALIDA SE DATA ESTÁ NA JANELA
+// ===============================
+function dataCoincideComJanela(data, janelaArray){
+  if(!data || !janelaArray || !janelaArray.length) return false;
+
+  const dia = getDiaSemanaAbrev(data);
+  return janelaArray.map(d => d.toLowerCase()).includes(dia);
+}
+
+// ===============================
+// BOLINHA VERDE VISUAL
+// ===============================
+function bolinhaVerde(){
+  return `
+    <span style="
+      display:inline-block;
+      width:5px;
+      height:5px;
+      border-radius:50%;
+      background:#22c55e;
+      margin-left:6px;
+      margin-bottom:2px;
+      box-shadow:0 0 0px rgba(34,197,94,0.6);
+    "></span>
+  `;
+}
+
+function emojiJoinha(){
+  return `
+    <span style="
+      margin-left:6px;
+      font-size:14px;
+    ">✅</span>
+  `;
+}
+
 function renderResumoAnalise(stats){
 
   document.getElementById("resumoAnalise").innerHTML = `
@@ -1684,6 +1731,18 @@ else if (temNaoProgramado) {
 
     const notasHTML = info.notas.map(n => {
 
+      const coincideCarregamento = janela && dataCoincideComJanela(
+    parsePossibleDate(n.dtLim),
+    janela.carregamento
+  );
+
+  const coincideEntrega = janela && dataCoincideComJanela(
+    parsePossibleDate(n.finalEntrega),
+    janela.entrega
+  );
+
+  const mostrarJoinha = coincideCarregamento && coincideEntrega;
+
       const dtLim   = parsePossibleDate(n.dtLim);
       if(dtLim){
       dtLim.setHours(0,0,0,0);
@@ -1720,8 +1779,17 @@ else if (temNaoProgramado) {
             <td>${n.destinatario || ""}</td>
             <td>${formatDateBRLocal(n.checkin)}</td>
             <td>${formatDateBRLocal(n.entrada)}</td>
-            <td>${formatDateBRLocal(n.dtLim)}</td>
-            <td>${formatDateBRLocal(n.finalEntrega)}</td>
+            <td>
+  ${formatDateBRLocal(n.dtLim)}
+  ${coincideCarregamento ? bolinhaVerde() : ""}
+</td>
+
+<td>
+  ${formatDateBRLocal(n.finalEntrega)}
+  ${coincideEntrega ? bolinhaVerde() : ""}
+  
+</td>
+<td>${mostrarJoinha ? emojiJoinha() : ""}</td>
           </tr>`;
       }).join("");
 
@@ -1949,6 +2017,7 @@ html += `
         <th>Data de Entrada</th>
         <th>Limite de Embarque</th>
         <th>Limite de Entrega</th>
+        <th>✅</th>
       </tr>
       ${notasHTML}
     </table>
