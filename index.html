@@ -27,7 +27,7 @@
   --accent2:#166534;
   --danger:#b91c1c;
   --warning:#b45309;
-  --bgcard:#f8fafc;
+  --bgcard:#e5e7eb;
 }
 
 *{ box-sizing:border-box; font-family: system-ui, Segoe UI, Roboto, Arial; }
@@ -2104,7 +2104,7 @@ if (
 html += `
 <details style="
   margin-bottom:14px;
-  background:var(--bgcard);
+  background:var(--card2);
   border:1px solid var(--border);
   border-radius:12px;
   padding:14px;
@@ -2266,11 +2266,11 @@ html += `
   display:flex;
   gap:12px;
 ">
-  <span style="color:#6b7280;">
-    ⚪ NFs Com Entrada Anterior Último Carregamento: ${notasAntesCarregamento}
+  <span style="color:var(--danger);">
+    NFs Com Entrada Anterior Último Carregamento: ${notasAntesCarregamento}
   </span>
     <span style="color:#2563eb;">
-    🔵 NFs Com Entrada Após Último Carregamento: ${notasAposCarregamento}
+    NFs Com Entrada Após Último Carregamento: ${notasAposCarregamento}
   </span>
 </div>
 
