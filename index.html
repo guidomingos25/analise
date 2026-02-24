@@ -27,6 +27,7 @@
   --accent2:#166534;
   --danger:#b91c1c;
   --warning:#b45309;
+  --bgcard:#f8fafc;
 }
 
 *{ box-sizing:border-box; font-family: system-ui, Segoe UI, Roboto, Arial; }
@@ -1267,7 +1268,7 @@ function renderResumoAnalise(stats){
       ])}
             <!-- LEGENDA -->
 <div style="
-  background:#ffffff;
+  background:var(--card2);
   border:1px solid #e5e7eb;
   border-radius:14px;
   padding:18px;
@@ -1304,7 +1305,7 @@ function criarCard(titulo, itens){
 
   return `
     <div style="
-      background:#ffffff;
+      background:var(--card2);
       border:1px solid #e5e7eb;
       border-radius:14px;
       padding:18px;
@@ -1570,7 +1571,7 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       <div style="
         padding:12px;
         border-radius:10px;
-        background:#f8fafc;
+        background:#ffffff;
         border:1px solid #cbd5e1;
         font-size:12px;
         height:100%;                /* 👈 ESSENCIAL */
@@ -1638,6 +1639,58 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
 
 
     const veiculos = almoxUltimoVeiculo[almox] || [];
+    
+    // ===============================
+// 📊 CONTADOR NOTAS VS ÚLTIMO CARREGAMENTO
+// ===============================
+
+// 🔎 Pega a última DT. CARREGAMENTO (mais recente)
+let ultimaDataCarregamento = null;
+
+if (veiculos.length) {
+  veiculos.forEach(v => {
+    const dtCarreg = parsePossibleDate(v.dtCarreg);
+    if (dtCarreg) {
+      dtCarreg.setHours(0,0,0,0);
+      if (!ultimaDataCarregamento || dtCarreg > ultimaDataCarregamento) {
+        ultimaDataCarregamento = dtCarreg;
+      }
+    }
+  });
+}
+
+let notasAposCarregamento = 0;
+let notasAntesCarregamento = 0;
+
+if (ultimaDataCarregamento) {
+
+  info.notas.forEach(n => {
+
+    const dtCheck = parsePossibleDate(n.checkin);
+    const dtEntrada = parsePossibleDate(n.entrada);
+
+    let dataBaseNota = null;
+
+    if (dtCheck && dtEntrada) {
+      dataBaseNota = dtCheck > dtEntrada ? dtCheck : dtEntrada;
+    } else if (dtCheck) {
+      dataBaseNota = dtCheck;
+    } else if (dtEntrada) {
+      dataBaseNota = dtEntrada;
+    }
+
+    if (dataBaseNota) {
+      dataBaseNota.setHours(0,0,0,0);
+
+      if (dataBaseNota.getTime() >= ultimaDataCarregamento.getTime()) {
+        notasAposCarregamento++;
+      } else {
+        notasAntesCarregamento++;
+      }
+    }
+  });
+}
+    
 
 // ===============================
 // REGRAS COM PRIORIDADE CORRETA
@@ -2047,8 +2100,17 @@ if (
 
 
 
+
 html += `
-<details style="margin-bottom:12px; border:1px solid #ddd; padding:10px; border-radius:8px;">
+<details style="
+  margin-bottom:14px;
+  background:var(--bgcard);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.06);
+">
+
   <summary style="cursor:pointer; padding:15px;">
   <div style="display:flex; gap:20px; width:100%; align-items:stretch;">
 
@@ -2188,7 +2250,7 @@ html += `
       <!-- LINHA 4 - VEÍCULOS -->
       <div style="
         margin-top:10px;
-        background:#f8fafc;
+        background:#FFFFFF;
         border:1px solid #e2e8f0;
         padding:8px 10px;
         border-radius:8px;
@@ -2197,6 +2259,20 @@ html += `
         <b>🚛 Últimos veículos</b><br>
         ${resumoVeic}
       </div>
+      <div style="
+  margin-top:8px;
+  font-size:12px;
+  font-weight:700;
+  display:flex;
+  gap:12px;
+">
+  <span style="color:#6b7280;">
+    ⚪ NFs Com Entrada Anterior Último Carregamento: ${notasAntesCarregamento}
+  </span>
+    <span style="color:#2563eb;">
+    🔵 NFs Com Entrada Após Último Carregamento: ${notasAposCarregamento}
+  </span>
+</div>
 
     </div>
 
