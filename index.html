@@ -215,6 +215,27 @@ tbody tr:hover{
   margin-top: 12px;
   flex-wrap: wrap;         /* evita quebrar layout */
 }
+.obsQuick{
+  display:flex;
+  gap:6px;          /* menos espaço entre botões */
+  flex-wrap:wrap;
+  margin:6px 0 8px;
+}
+
+.quickBtn{
+  cursor:pointer;
+  border:1px solid #d1d5db;
+  background:#f8fafc;
+  color:#111827;
+
+  padding:4px 8px;          /* menor */
+  border-radius:8px;        /* menor */
+  font-size:11px;           /* menor */
+  font-weight:700;          /* menos pesado */
+  line-height:1;            /* evita altura extra */
+}
+
+.quickBtn:hover{ background:#e5e7eb; }
 
 .obsBox{
     margin-top:12px;
@@ -1389,6 +1410,37 @@ function criarCard(titulo, itens){
   `;
 }
 
+function getObsTextarea(vocNorm){
+  return document.querySelector(`textarea[data-vocativo="${vocNorm}"]`);
+}
+
+// adiciona texto no textarea (SEM salvar)
+function addObsPreset(ev, vocNorm, texto){
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+
+  const t = getObsTextarea(vocNorm);
+  if (!t) return;
+
+  const add = String(texto || "").trim();
+  if (!add) return;
+
+  const atual = (t.value || "").trim();
+  t.value = atual ? (atual + "\n" + add) : add;
+
+  t.focus();
+  t.selectionStart = t.selectionEnd = t.value.length;
+  t.dispatchEvent(new Event("input", { bubbles:true }));
+}
+
+// limpar (opcional)
+function clearObs(ev, vocNorm){
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+  const t = getObsTextarea(vocNorm);
+  if (!t) return;
+  t.value = "";
+  t.focus();
+  t.dispatchEvent(new Event("input", { bubbles:true }));
+}
 
 function listarAlmoxPendentes(){
 
@@ -2368,10 +2420,40 @@ html += `
   </div>
   <div class="obsBox">
   <label>📝 Observação (Vocativo)</label>
+
+  <div class="obsQuick">
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'JANELA')">🗓️ JANELA</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'FECHAMENTO')">🔒 FECHAMENTO</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'TORRE')">🏢 TORRE</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'NF NÃO LOCALIZADA')">🧾 NF NÃO LOCALIZADA</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'NÃO ESTÁ RECEBENDO')">⛔ NÃO ESTÁ RECEBENDO</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'AGUARDANDO CONSOLIDAÇÃO')">📦 AGUARDANDO CONSOLIDAÇÃO</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'RETIRA')">🚚 RETIRA</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'CARREGADO HOJE')">🔵 CARREGADO HOJE</button>
+
+    <button class="quickBtn" type="button"
+  onclick="addObsPreset(event, '${normalizar(almox)}', 'MEDIANTE AUTORIZAÇÃO')">✅ MEDIANTE AUTORIZAÇÃO</button>
+
+  
   <textarea
     placeholder="Digite uma observação para este vocativo..."
     data-vocativo="${normalizar(almox)}"
-    ></textarea>
+  ></textarea>
 </div>
 
 <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
