@@ -342,6 +342,9 @@ let resultadoFiltrado = [];
 let mostrarAtrasados = true;
 let snapshotVocativos = {}; 
 
+// guarda o que o usuário digitou (mesmo sem salvar)
+window.obsDrafts = window.obsDrafts || {};  // { VOCATIVO_NORM: "texto..." }
+
 let savingAll = false;
 const savingVoc = new Set();
 
@@ -1443,6 +1446,7 @@ function clearObs(ev, vocNorm){
 }
 
 function listarAlmoxPendentes(){
+    capturarObsDoDOM();
 
   // 🔹 Hoje e amanhã
   const hoje = new Date();
@@ -2488,6 +2492,7 @@ html += `
   });
 
   document.getElementById("almoxList").innerHTML = html || "<i>Nenhum almox crítico</i>";
+  restaurarObsNoDOM();
   renderResumoAnalise(stats);
   abrirPaginaAnalise();
     carregarObservacoesHojeEPreencher();
@@ -2723,9 +2728,19 @@ function aplicarObservacoesNoDOM(mapa) {
     const vocNorm = normalizar(voc);
     const texto = String(mapa[voc] || "").trim();
 
-    // ✅ Preenche apenas o textbox
     const t = document.querySelector(`textarea[data-vocativo="${vocNorm}"]`);
-    if (t) t.value = texto;
+    if (!t) return;
+
+    // ✅ se o usuário já digitou algo (draft), não sobrescreve
+    if (window.obsDrafts && window.obsDrafts[vocNorm] != null && (window.obsDrafts[vocNorm] || "").trim() !== "") {
+      return;
+    }
+
+    t.value = texto;
+
+    // também alimenta o draft com o que veio do servidor
+    window.obsDrafts = window.obsDrafts || {};
+    window.obsDrafts[vocNorm] = texto;
   });
 }
 
@@ -2767,6 +2782,35 @@ document.addEventListener("click", (e) => {
   if (t && t.matches('textarea[data-vocativo]')) {
     e.stopPropagation();
   }
+}, true);
+
+function capturarObsDoDOM(){
+  const map = window.obsDrafts || (window.obsDrafts = {});
+  document.querySelectorAll('textarea[data-vocativo]').forEach(t => {
+    const voc = normalizar(t.dataset.vocativo || "");
+    if(!voc) return;
+    map[voc] = t.value || "";
+  });
+}
+
+function restaurarObsNoDOM(){
+  const map = window.obsDrafts || {};
+  document.querySelectorAll('textarea[data-vocativo]').forEach(t => {
+    const voc = normalizar(t.dataset.vocativo || "");
+    if(!voc) return;
+
+    // só preenche se houver draft
+    if (map[voc] != null) t.value = map[voc];
+  });
+}
+
+// opcional (melhor UX): enquanto digita, já atualiza o cache
+document.addEventListener("input", (e) => {
+  const t = e.target;
+  if (!t || !t.matches('textarea[data-vocativo]')) return;
+  const voc = normalizar(t.dataset.vocativo || "");
+  if (!voc) return;
+  window.obsDrafts[voc] = t.value || "";
 }, true);
 
 </script>
