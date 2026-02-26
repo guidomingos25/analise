@@ -360,7 +360,7 @@ function lockButton(btn, locked, textWhile){
 // MAPA FIXO DE JANELAS (ENTREGA x CARREGAMENTO)
 // ===============================
 const JANELAS_ALMOX = {
-    "NEX-JUIZFORA-MG": { carregamento: ['sáb', 'ter'], entrega: ['qui','ter'] },
+  "NEX-JUIZFORA-MG": { carregamento: ['sáb', 'ter'], entrega: ['qui','ter'] },
   "VALE-MARIANA-MG": { carregamento: ['ter'], entrega: ['qui'] },
   "CARIACICA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "SAL-PARAUAPE-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
@@ -2463,7 +2463,7 @@ html += `
   <button class="btn secondary" type="button"
     onclick="salvarVocativo('${almox}', event)">
     💾 Salvar
-  </button>
+    </button>
 </div>
 </summary>
 
@@ -2568,39 +2568,66 @@ chkMostrarAtrasados.onchange = () => {
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz-AaiXcFqw12hLnth9QF-XxMen6MniH6vIxxSVkttQm_nxrSan2tSNlDqDxU0h0NUg/exec";
 const APPS_SCRIPT_TOKEN = "1234"; // igual ao TOKEN do script
 
+function hojeISO(){
+  const d = new Date();
+  // força data local sem sofrer offset na hora de formatar
+  const local = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const y = local.getFullYear();
+  const m = String(local.getMonth()+1).padStart(2,"0");
+  const day = String(local.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+
 async function salvarObservacoes() {
   if (savingAll) return;
   savingAll = true;
 
-  const btnSalvar = document.getElementById("btnSalvarObs");
+  const btnSalvar = document.getElementById("btnSalvarTudo");
   lockButton(btnSalvar, true, "💾 Salvando...");
 
   try {
-    const vocativos = Object.keys(snapshotVocativos || {});
-    if (!vocativos.length) {
-      alert("Nenhum vocativo para salvar.");
-      return;
-    }
+    // ✅ pega somente os vocativos que estão renderizados AGORA (visualização atual)
+const vocativosVisiveis = Array.from(document.querySelectorAll('#almoxList details[data-vocativo]'))
+  .map(el => normalizar(el.getAttribute('data-vocativo')))
+  .filter(Boolean);
 
-    // ✅ SEM FILTRO: salva TODOS (com ou sem observação)
-    const registros = vocativos.map(v => montarRegistroVocativo(normalizar(v)));
+// se quiser: somente os que estão abertos
+// .filter(v => document.querySelector(`#almoxList details[data-vocativo="${v}"]`)?.open)
 
-    const payload = { token: APPS_SCRIPT_TOKEN, registros };
+if (!vocativosVisiveis.length) {
+  alert("Nenhum vocativo visível para salvar.");
+  return;
+}
+
+// ✅ monta registros só do que está na visualização
+const registros = vocativosVisiveis.map(v => montarRegistroVocativo(v));
+
+    const payload = {
+  action: "replaceHoje",      // ✅ diz pro backend substituir o lote do dia
+  token: APPS_SCRIPT_TOKEN,
+  dataRef: hojeISO(),         // ✅ SEMPRE HOJE
+  registros
+};
 
     const body = new URLSearchParams();
     body.set("payload", JSON.stringify(payload));
 
     const response = await fetch(APPS_SCRIPT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-      body
-    });
+  method: "POST",
+  headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+  body
+});
 
-    const texto = await response.text();
-    console.log("Servidor:", texto);
+const texto = await response.text();
+console.log("Servidor:", texto);
 
-    // ✅ Recarrega e preenche as observações do dia
-    await carregarObservacoesHojeEPreencher();
+// ✅ AQUI: valida a resposta do servidor
+if (!response.ok) {
+  throw new Error(`HTTP ${response.status} - ${texto}`);
+}
+
+// ✅ Só continua se deu certo
+await carregarObservacoesHojeEPreencher();
 
 
   } catch (e) {
@@ -2610,15 +2637,17 @@ async function salvarObservacoes() {
     savingAll = false;
   }
 }
-
 function montarRegistroVocativo(voc) {
   const vocNorm = normalizar(voc);
-    const t = document.querySelector(`textarea[data-vocativo="${vocNorm}"]`);
+  const t = document.querySelector(`textarea[data-vocativo="${vocNorm}"]`);
   const observacao = (t?.value || "").trim();
-  const s = snapshotVocativos[voc] || {};
+
+  // ✅ aqui estava um risco: snapshotVocativos[voc] pode falhar se voc vier diferente
+  const s = snapshotVocativos[vocNorm] || snapshotVocativos[voc] || {};
 
   return {
-    Vocativo: s.Vocativo || voc,
+    DataRef: hojeISO(), // ✅ SEMPRE A DATA DE HOJE
+    Vocativo: normalizar(s.Vocativo || voc),
     StatusVeiculo: s.StatusVeiculo || "",
     Total_notas: Number(s.Total_notas || 0),
     EntradaEmAtraso: Number(s.EntradaEmAtraso || 0),
@@ -2648,9 +2677,11 @@ async function salvarVocativo(voc, ev) {
 
   try {
     const payload = {
-      token: APPS_SCRIPT_TOKEN,
-      registros: [montarRegistroVocativo(vocNorm)]
-    };
+        action: "upsertHoje",           // ou "salvarVocativo" se for o nome no seu backend
+        token: APPS_SCRIPT_TOKEN,
+        dataRef: hojeISO(),             // garante que é “hoje”
+        registros: [montarRegistroVocativo(vocNorm)]
+        };
 
     const body = new URLSearchParams();
 body.set("payload", JSON.stringify(payload));
@@ -2660,10 +2691,26 @@ const response = await fetch(APPS_SCRIPT_URL, {
   headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
   body
 });
-    const texto = await response.text();
+
+const texto = await response.text();
+console.log("Servidor:", texto);
+
+// ✅ AQUI: valida a resposta do servidor
+if (!response.ok) {
+  throw new Error(`HTTP ${response.status} - ${texto}`);
+}
 
 
-    await carregarObservacoesHojeEPreencher();
+    // depois do POST dar certo:
+    const t = document.querySelector(`textarea[data-vocativo="${vocNorm}"]`);
+    const obs = (t?.value || "").trim();
+
+    // mantém cache local coerente
+    window.obsDrafts = window.obsDrafts || {};
+    window.obsDrafts[vocNorm] = obs;
+
+    window.obsHojeOriginal = window.obsHojeOriginal || {};
+    window.obsHojeOriginal[vocNorm] = obs;
 
 
 
@@ -2745,7 +2792,7 @@ function aplicarObservacoesNoDOM(mapa) {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("btnSalvarObs");
+  const btn = document.getElementById("btnSalvarTudo");
   if (btn) btn.addEventListener("click", salvarObservacoes);
 });
 
@@ -2828,8 +2875,8 @@ document.addEventListener("input", (e) => {
       ⬅ Voltar
     </button>
 
-    <button class="btn" id="btnSalvarObs" type="button">
-      💾 Salvar tudo
+    <button class="btn" id="btnSalvarTudo" type="button">
+    💾 Salvar tudo
     </button>
   </div>
 </div>
