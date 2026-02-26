@@ -1,0 +1,2757 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Confronto de Relatórios - Veículos Carregados x PVD</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+
+  
+
+  <style>
+    /* === SEU CSS ORIGINAL (INALTERADO) === */
+:root{
+  --bg:#f4f6f9;
+  --card:#ffffff;
+  --card2:#f8fafc;
+  --backcard:#ffffff;
+  --text:#0f172a;
+  --muted:#475569;
+  --border:#d1d5db;
+  --accent:#1e40af;
+  --accent2:#166534;
+  --danger:#b91c1c;
+  --warning:#b45309;
+  --bgcard:#e5e7eb;
+}
+
+*{ box-sizing:border-box; font-family: system-ui, Segoe UI, Roboto, Arial; }
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  padding:24px;
+}
+
+.container{ max-width:1400px; margin:auto; }
+
+h1{
+  font-size:22px;
+  font-weight:700;
+  color:#0f172a;
+}
+
+.groupHeader b{
+  font-size:14px;
+}
+
+.sub{ color:var(--muted); font-size:13px; }
+
+.grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.08);
+}
+
+.card h2{ font-size:14px; margin-bottom:10px; }
+
+input[type="file"], .search, select{
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--text);
+  width:100%;
+}
+
+.btn{
+  cursor:pointer;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--accent);
+  color:#fff;
+  padding:10px 16px;
+  font-weight:700;
+}
+
+.btn.secondary{
+  background:#f9fafb;
+  color:#111827;
+}
+
+.btn.green{
+  background:var(--accent2);
+}
+
+.btn:disabled{ opacity:.5; }
+
+.status{ font-size:12px; color:var(--muted); }
+
+.toolbar{
+  display:flex;
+  gap:10px;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+
+.left{ display:flex; gap:10px; align-items:center; }
+
+.summary{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+
+.pill{
+  background:var(--card2);
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:6px 12px;
+  font-size:12px;
+}
+
+.results{ display:flex; flex-direction:column; gap:14px; }
+
+.group{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+}
+
+.groupHeader{
+  padding:12px 16px;
+  background:#e5e7eb;
+  border-bottom:2px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+  font-weight:700;
+}
+
+.badge{
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+
+  height:40px !important;
+  min-width:40px !important;
+
+  padding:0 12px !important;
+
+  border-radius:12px !important;
+
+  font-size:14px !important;
+  font-weight:900 !important;
+
+  line-height:40px !important;
+}
+
+
+
+.badge.red{
+  background:#dcfce7;
+  color:#14532d;
+  border:1px solid #16a34a;
+}
+.badge.green{
+  background:#fee2e2;
+  color:#7f1d1d;
+  border:1px solid #dc2626;
+}
+
+/* SCROLL */
+.tableWrapper{
+  max-height:320px;
+  overflow:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+  min-width:1200px;
+  background:#fff;
+}
+
+th, td{
+  padding:8px 10px;
+  border:1px solid var(--border);
+  white-space:nowrap;
+}
+
+th{
+  position:sticky;
+  top:0;
+  background:#e5e7eb;
+  z-index:2;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  color:#111827;
+}
+
+tbody tr:nth-child(even){
+  background:#f8fafc;
+}
+
+tbody tr:hover{
+  background:#dbeafe;
+}
+
+.badge-container {
+  display: flex;
+  justify-content: center; /* centraliza horizontal */
+  align-items: center;     /* centraliza vertical */
+  gap: 8px;                /* espaço entre badges */
+  margin-top: 12px;
+  flex-wrap: wrap;         /* evita quebrar layout */
+}
+
+.obsBox{
+    margin-top:12px;
+    background:#ffffff;
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    padding:10px;
+  }
+  .obsBox label{
+    display:block;
+    font-size:12px;
+    font-weight:900;
+    color:#374151;
+    margin-bottom:6px;
+  }
+  .obsBox textarea{
+    width:100%;
+    min-height:70px;
+    resize:vertical;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+    font-size:13px;
+    outline:none;
+  }
+  .obsBox textarea:focus{
+    border-color:#93c5fd;
+    box-shadow:0 0 0 3px rgba(59,130,246,0.15);
+  }
+  </style>
+</head>
+
+<body>
+<div id="paginaPrincipal" class="container">
+
+
+<h1>📊 Confronto de Relatórios (Veículos Carregados x PVD)</h1>
+
+<div class="grid">
+  <div class="card">
+    <h2>1) Veículos Carregados</h2>
+    <input id="fileData" type="file" />
+    <div id="statusData" class="status">Aguardando upload...</div>
+  </div>
+
+  <div class="card">
+    <h2>2) PVD</h2>
+    <input id="fileDetalhado" type="file" />
+    <div id="statusDetalhado" class="status">Aguardando upload...</div>
+  </div>
+</div>
+
+<div class="card">
+
+  
+<div class="toolbar">
+  <div class="left">
+    <button class="btn green" id="btnProcessar" disabled>🚀 Processar</button>
+    <button class="btn secondary" id="btnExportarCSV" disabled>⬇️ Exportar</button>
+    <button class="btn secondary" id="btnLimpar">🧹 Limpar</button>
+    <button class="btn secondary" id="btnAlmoxPendentes" disabled>
+    📌 Análise Programação
+    </button>
+
+  </div>
+
+  <div class="left" style="flex:1; justify-content:flex-end; gap:10px;">
+    <button id="btnDateFilter" class="btn secondary" disabled title="Selecionar datas">
+      📅
+    </button>
+
+    <input id="dateFilter" type="text" style="display:none;" />
+
+
+    <input id="searchInput" class="search" placeholder="Pesquisar..." disabled />
+
+    <select id="filterSelect" disabled>
+
+      <option value="all">Tudo</option>
+      <option value="with">Com registros</option>
+      <option value="without">Sem registros</option>
+    </select>
+    
+  </div>
+
+  <label style="display:flex; align-items:center; gap:6px; font-size:12px;">
+    <input type="checkbox" id="chkMostrarAtrasados" checked>
+    Mostrar recebimentos atrasados (vermelhos)
+  </label>
+
+</div>
+
+<div id="summary" class="summary"></div>
+<div id="results" class="results"></div>
+
+</div>
+</div>
+
+<script>
+let dataRows = [];
+let detalhadoRows = [];
+let resultado = [];
+let resultadoFiltrado = [];
+let mostrarAtrasados = true;
+let snapshotVocativos = {}; 
+
+let savingAll = false;
+const savingVoc = new Set();
+
+function lockButton(btn, locked, textWhile){
+  if(!btn) return;
+  btn.disabled = locked;
+  btn.dataset.oldText = btn.dataset.oldText || btn.innerHTML;
+  if(locked && textWhile) btn.innerHTML = textWhile;
+  if(!locked && btn.dataset.oldText) btn.innerHTML = btn.dataset.oldText;
+}
+
+// ===============================
+// MAPA FIXO DE JANELAS (ENTREGA x CARREGAMENTO)
+// ===============================
+const JANELAS_ALMOX = {
+    "NEX-JUIZFORA-MG": { carregamento: ['sáb', 'ter'], entrega: ['qui','ter'] },
+  "VALE-MARIANA-MG": { carregamento: ['ter'], entrega: ['qui'] },
+  "CARIACICA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "SAL-PARAUAPE-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "084-VITORIA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "0BC-B-COCAIS-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "1AVBS-GRAJAU-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "SUZ-INOCENCIAMS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "1SUZ-TLAGOAS-MS": { carregamento: ['qui', 'sáb'], entrega: ['dom', 'qua'] },
+  "2AVBS-GRAJAU-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "2SUZ-ARACRUZ-ES": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
+  "2SUZ-IMPERAT-MA": { carregamento: ['sex', 'ter'], entrega: ['qui', 'seg'] },
+  "2SUZ-RIBAS-MS": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
+  "3B-VALE-VITORIA-ES": { carregamento: ['sex', 'sáb'], entrega: ['qua', 'seg'] },
+  "ACO GRAVATA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "ACO-ACAILAND-MA": { carregamento: ['sex', 'ter'], entrega: ['qui', 'seg'] },
+  "ACO-BACORDA-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "ACO-BRASILDM-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "ACO-GRAJAU-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "ACO-PETROLIN-PE": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "ACO-URBANO SANTOSMA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "ACO-VALENCADOPIAUI-PI": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "ALB-BARCARENA-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "ALU-ANANINDEUA-PA": { carregamento: ['qua', 'qui', 'seg', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "ALU-BARCARE-PA": { carregamento: ['qua', 'qui', 'seg', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "ALU-BARCARENA-PA": { carregamento: ['qua', 'qui', 'seg', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "ANG-BARALTO-GO": { carregamento: ['qui', 'sex', 'sáb'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "ANGLO-CMD-MG": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
+  "ANGLO-NIQUE-GO": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "ANGLO-SAG-MG": { carregamento: ['sáb'], entrega: ['ter'] },
+  "ANGLO-SJB-RJ": { carregamento: ['sáb'], entrega: ['qua'] },
+  "AVBSI-ACAILA-MA": { carregamento: ['sex', 'ter'], entrega: ['qui', 'seg'] },
+  "AVBSI-BARRA-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "AVBSI-BURITI-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "AVBSI-ELES-PI": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "AVBSI-SAOFRA-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "AVBSI-URBANO-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "BIO-COLOMBIA-SP": { carregamento: ['qua', 'seg', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
+  "BIO-LA-PRATA-MG": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'seg'] },
+  "BIO-LAGOADAPRATA-MG": { carregamento: ['seg', 'sex'], entrega: ['qui', 'seg'] },
+  "BIO-LEME-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "BIO-RIOBRI-MS-1": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "BIO-SERTAOZI-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "BRA-01-TRIUN-RS": { carregamento: ['qui', 'seg', 'sex'], entrega: ['seg', 'sex', 'ter'] },
+  "BRA-07-TRIUN-RS": { carregamento: ['qui', 'seg', 'sex'], entrega: ['seg', 'sex', 'ter'] },
+  "BRA-07-TRIUNFO-RS": { carregamento: ['qui', 'seg', 'sex'], entrega: ['seg', 'sex', 'ter'] },
+  "BRA-CAMACA-BA01": { carregamento: ['qua', 'sex', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
+  "BRA-CAMACA-BA03": { carregamento: ['qua', 'sex', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
+  "BRA-CAMACA-BA04": { carregamento: ['qua', 'sex', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
+  "BRA-CAMACA-BA07": { carregamento: ['qua', 'sex', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
+  "BRA-CAMACA-BA11": { carregamento: ['qua', 'sex', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
+  "BRA-CANDEI-BA": { carregamento: ['qua', 'qui', 'sex', 'sáb'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "BRA-CUBATA-SP": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
+  "BRA-DCAXIRJ": { carregamento: ['qua', 'seg', 'sáb', 'ter', 'qui', 'sex'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "BRA-MACEIO-AL02": { carregamento: ['qui', 'ter'], entrega: ['qua', 'seg'] },
+  "BRA-MAUA-SP23": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
+  "BRA-MAUA-SP25": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
+  "BRA-MDEODO-AL03": { carregamento: ['qua', 'sex'], entrega: ['qui', 'ter'] },
+  "BRA-PAULIN-SP08": { carregamento: ['seg', 'qua'], entrega: ['qui','ter'] },
+  "BRA-PAULINIA-SP": { carregamento: ['seg', 'qua'], entrega: ['qui','ter'] },
+  "BRA-S-ANDR-SP20": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
+  "BRA-S-ANDR-SP22": { carregamento: ['qua', 'seg', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
+  "BRA-TRIUNFO-RS": { carregamento: ['qui', 'seg', 'sex'], entrega: ['seg', 'sex', 'ter'] },
+  "BRS-MACEIOAL": { carregamento: ['qui', 'ter'], entrega: ['qua', 'seg'] },
+  "CSN-ALHANDRA-PB": { carregamento: ['sex'], entrega: ['qui', 'seg'] },
+  "CSN-ARCOS-MG": { carregamento: ['seg'], entrega: ['qua'] },
+  "CSN-BARROSO-MG": { carregamento: ['sex'], entrega: ['qua', 'seg', 'ter'] },
+  "CSN-BARUERI-SP": { carregamento: ['seg'], entrega: ['qui', 'ter'] },
+  "CSN-CAAPORA-PB": { carregamento: ['sex'], entrega: ['qui', 'seg'] },
+  "CSN-CANDEIAS-BA": { carregamento: ['sáb'], entrega: ['qui', 'seg'] },
+  "CSN-CANTAGAL-RJ": { carregamento: ['sex'], entrega: ['qua', 'seg', 'ter'] },
+  "CSN-COCAL-GO-GO": { carregamento: ['sex'], entrega: ['qua', 'seg', 'ter'] },
+  "CSN-Congonhas-MG": { carregamento: ['sex'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "CSN-GUARUJA-SP": { carregamento: ['sáb'], entrega: ['qui', 'ter'] },
+  "CSN-MAIRIPOR-SP": { carregamento: ['sáb'], entrega: ['qui', 'ter'] },
+  "CSN-MCLAROS-MG": { carregamento: ['sex'], entrega: ['qua', 'seg', 'sex'] },
+  "CSN-OURICURI-PE": { carregamento: ['sex'], entrega: ['qui', 'seg'] },
+  "CSN-PEDROLEO-MG": { carregamento: ['sex'], entrega: ['qua', 'seg', 'ter'] },
+  "CSN-PLEOPOLD-MG": { carregamento: ['sex'], entrega: ['qua', 'seg', 'ter'] },
+  "CSN-RIODEJANEIRO-RJ": { carregamento: ['sáb'], entrega: ['qua', 'seg', 'ter'] },
+  "CSN-RJANEIRO-RJ": { carregamento: ['sáb'], entrega: ['qua', 'seg', 'ter'] },
+  "CSN-SEERA-ES": { carregamento: ['sex'], entrega: ['qua', 'seg', 'ter'] },
+  "CSN-SOROCABA-SP": { carregamento: ['sáb'], entrega: ['qui', 'ter'] },
+  "CSN-STOANDRE-SP": { carregamento: ['sáb'], entrega: ['qui', 'ter'] },
+  "CSN-SVICENTE-SP": { carregamento: ['sáb'], entrega: ['ter'] },
+  "CSN1-VOLTRED-RJ": { carregamento: ['sáb'], entrega: ['seg', 'sex'] },
+  "ELI-ALHANDRA-PB": { carregamento: ['sex'], entrega: ['qua', 'ter', 'seg'] },
+  "FER-ALAGOINHAS-BA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "FER-ALAGOINHASBA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "FER-ARAGUARIMG": { carregamento: ['sáb'], entrega: ['ter'] },
+  "FER-BH-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "FER-CARIACIC-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "FER-DIVINOPOLIS-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "FER-IMPERATRIZ-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "FER-IMPERATRIZMA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "FER-IPATINGAMG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "FER-PAULINIA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg'] },
+  "FER-PAULINIASP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg'] },
+  "FER-RPRETO-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "FER-SAO LUIS-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "FERR-PAULINIA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg'] },
+  "FERROV-GUARA-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "JOAO-NEIVA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "KIN-CACHALTA-GO": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "KIN-CACU-GO": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "KIN-PARACATU-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "MIN-OURILANDIADONORTE-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "MIN-PARAGOMI-PA": { carregamento: ['qui', 'seg'], entrega: ['qui', 'seg'] },
+  "MIN-PARAGOMINAS-PA": { carregamento: ['qui', 'seg'], entrega: ['qui', 'seg'] },
+  "MRN BELEM PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "MRN-SANTAREM-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "NL-SANTAREM-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "NOU-INOCENCIA-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "NOU-RIBASDORIOPARDO-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "NOU-TRES LAGOASMS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "NOURY JUNDI SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "NOURY-EUNAP-BA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "NOURY-IMPER-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "NOURY-ITUP-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "NOURY-JACAR-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "NOURY-T LAG1-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "NOURYON-RJ-RJ": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "NVA-LIMA-OMT-MG": { carregamento: ['sex', 'sáb', 'ter'], entrega: ['qua', 'seg', 'sex'] },
+  "NVA-LIMA-OVG-MG": { carregamento: ['seg', 'sex', 'sáb'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "OLE-CAMACARI-BA": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'ter'] },
+  "OURO-PRETO-B1MG": { carregamento: ['sex', 'sáb'], entrega: ['qua', 'seg', 'ter'] },
+  "OXI SUZANO SP": { carregamento: ['seg', 'sáb'], entrega: ['qua', 'seg'] },
+  "OXI-CAMACARI-BA": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'ter'] },
+  "OXI-CAMACARIBA": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'ter'] },
+  "OXI-MAUA-SP": { carregamento: ['sáb'], entrega: ['seg'] },
+  "OXI-TRIUNFORS": { carregamento: ['sex'], entrega: ['ter'] },
+  "OXITE-TRIUNF-RS": { carregamento: ['sex'], entrega: ['ter'] },
+  "OXITEN-TREME-SP": { carregamento: ['qua', 'seg'], entrega: ['qua', 'sex'] },
+  "OXITENO-MAUA-SP": { carregamento: ['sáb'], entrega: ['seg'] },
+  "RAI GUARIBA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI JAU SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-02-CARAP-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "RAI-ANDRADIN-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-ARACATUB-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-ARARAQUA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-B-BONITA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-BE-ABREU-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-BOCAINA-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "RAI-BROTAS-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-BTABREU-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-CARAPO-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "RAI-ELIAS-FA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-GUARIBA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-IBATE-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-IGARAPAVASP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-IPAUSSU-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "RAI-JATAI-GO": { carregamento: ['seg', 'sex', 'sáb'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-MARACAI-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-MIRANDO-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-MORRO AGUDOSP": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
+  "RAI-PAR-PAUL-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-PIRACICA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-PIRACICABA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-RAFARD-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "RAI-RIOBRILHANTE-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "RAI-TARUMA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI-VALPARAI-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "RAI01-CARAPO-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "RAIZE-ARARAQ-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
+  "S-GONCALO AMARA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "SAL-CANAA DOS CARAJASPA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "SAL-MARABAPA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "SUZ- BELEM-PA-2": { carregamento: ['qua', 'seg', 'sex'], entrega: ['qua', 'seg', 'sex'] },
+  "SUZ- LIMEIRA-SP": { carregamento: ['qua', 'seg', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
+  "SUZ-ACAILAN-MA": { carregamento: ['qua', 'sáb'], entrega: ['sex', 'ter'] },
+  "SUZ-ARACRUZ-ES": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
+  "SUZ-C-ITAPEM-ES": { carregamento: ['sex', 'sáb'], entrega: ['qua', 'seg'] },
+  "SUZ-IMPERATRIZ-MA": { carregamento: ['sex', 'ter'], entrega: ['qui', 'seg'] },
+  "SUZ-IMPERATRIZMA": { carregamento: ['sex', 'ter'], entrega: ['qui', 'seg'] },
+  "SUZ-JACAREI-SP": { carregamento: ['seg', 'qua', 'sab'], entrega: ['ter', 'qui', 'dom'] },
+  "SUZ-LIMEIRA-SP": { carregamento: ['qua', 'seg', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
+  "SUZ-MARACAN-CE": { carregamento: ['qua'], entrega: ['qua'] },
+  "SUZ-MOGICRUZ-SP": { carregamento: ['sáb'], entrega: ['ter'] },
+  "SUZ-MUCURI-BA": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'seg'] },
+  "SUZ-RIBRIOPA-MS": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
+  "SUZ-SAOPAULO-SP": { carregamento: ['qua', 'seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "SUZ-SMARCAN-SP": { carregamento: ['seg'], entrega: ['qua'] },
+  "SUZ-SUZANO-SP": { carregamento: ['qui', 'sáb', 'ter'], entrega: ['qui', 'sáb', 'ter'] },
+  "SUZ-T FREITAS": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'seg'] },
+  "SUZ-TAUBATE-SP": { carregamento: ['sáb'], entrega: ['seg'] },
+  "SUZ-TFREITAS-BA": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'seg'] },
+  "SUZ-TLAGOAS-MS": { carregamento: ['sáb', 'ter'], entrega: ['sex', 'ter'] },
+  "SUZ-VIVEIRO-BA": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'seg'] },
+  "SUZAN-BELEM-PA": { carregamento: ['qua', 'seg', 'sex'], entrega: ['qua', 'seg', 'sex'] },
+  "VAL-BRUMADI-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VAL-CANAADOSCARAJAS-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VAL-MANGARATIBA-RJ": { carregamento: ['ter'], entrega: ['qui'] },
+  "VAL-MANGARATIBARJ": { carregamento: ['ter'], entrega: ['qui'] },
+  "VAL-COLATINA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VAL-MARABA-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VAL-PARAUAPEBAS-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VAL-RIO-DE-J-RJ": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VAL-SERRAES": { carregamento: ['sex', 'sáb', 'ter'], entrega: ['qua', 'seg', 'sex'] },
+  "VALE-ACAILANDIA-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VALE-CAPANEMA-MG": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
+  "VALE-CATAS-MG": { carregamento: ['sáb', 'ter'], entrega: ['qua', 'sex'] },
+  "VALE-CONGO-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VALE-CURIONOPOLIS-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VALE-GOVALAD-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VALE-ITABIRA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VALE-ITABIRITO-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VALE-ITAGUAI-RJ": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VALE-MARIANA-G": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VALE-NOVAERA-MG": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
+  "VALE-PARAUAP-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VALE-RIO-PIRACICABA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VALE-SANTA-LUZIA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VALE-SAO-LUIS-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VALE-SGONCA-MG": { carregamento: ['seg'], entrega: ['qui'] },
+  "VALE-TIMBOPEBA-MG": { carregamento: ['sex'], entrega: ['seg'] },
+  "VITORIA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VLI B-COQUE -SE": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VLI-CARIACIC-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VLI-DIVINOPOLIS-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VLI-IBIA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VLI-LAVRAS-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VLI-OURO-PRE-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VLI-PIRAPO-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VLI-S.G.AMAR-CE": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VLI-SANTOS-SP": { carregamento: ['seg', 'sáb'], entrega: ['qua', 'seg'] },
+  "VLI-SAOLUIS-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VLI-SERRA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VLI-STALUZIA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VLI-UBERABA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VLI-VITORIA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VN-PINDARE-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+};
+
+const fileData = document.getElementById("fileData");
+const fileDetalhado = document.getElementById("fileDetalhado");
+const btnProcessar = document.getElementById("btnProcessar");
+const btnExportarCSV = document.getElementById("btnExportarCSV");
+const btnLimpar = document.getElementById("btnLimpar");
+const resultsDiv = document.getElementById("results");
+const summaryDiv = document.getElementById("summary");
+const searchInput = document.getElementById("searchInput");
+const filterSelect = document.getElementById("filterSelect");
+const dateFilter = document.getElementById("dateFilter");
+const btnDateFilter = document.getElementById("btnDateFilter"); 
+let datasSelecionadas = [];
+
+const calendario = flatpickr("#dateFilter", {
+  mode: "multiple",
+  dateFormat: "Y-m-d",
+  locale: "pt",
+  clickOpens: false,
+  positionElement: btnDateFilter,   // 👈 AQUI ESTÁ A CORREÇÃO
+  position: "below",                // 👈 força abrir abaixo
+  onChange: function(selectedDates) {
+    datasSelecionadas = selectedDates;
+    aplicarFiltrosEBusca();
+  }
+});
+
+
+
+btnDateFilter.addEventListener("click", function() {
+  calendario.open();
+});
+
+
+
+const chkMostrarAtrasados = document.getElementById("chkMostrarAtrasados");
+
+
+
+function normalizar(txt){
+  return (txt||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().trim();
+}
+
+function buscarJanelaAlmox(almoxNorm){
+  return JANELAS_ALMOX[almoxNorm] || null;
+}
+
+
+function excelSerialToDateLocal(serial){
+  // Excel base correta: 1899-12-30
+  const excelEpoch = new Date(1899, 11, 30);
+  const ms = serial * 24 * 60 * 60 * 1000;
+  return new Date(excelEpoch.getTime() + ms);
+}
+
+
+
+function parsePossibleDate(value){
+  if(!value) return null;
+  if(Object.prototype.toString.call(value)==="[object Date]") return value;
+  if(typeof value==="number") return excelSerialToDateLocal(value);
+
+
+  if(typeof value==="string"){
+    let m=value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(m) return new Date(m[3],m[2]-1,m[1]);
+    m=value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(m) return new Date(m[1],m[2]-1,m[3]);
+    const d=new Date(value);
+    if(!isNaN(d)) return d;
+  }
+  return null;
+}
+
+function isSameDate(d1, d2){
+  return d1.getFullYear() === d2.getFullYear() &&
+         d1.getMonth() === d2.getMonth() &&
+         d1.getDate() === d2.getDate();
+}
+
+
+function formatDateBR(v){
+  const d=parsePossibleDate(v);
+  if(!d) return "";
+  return d.toLocaleDateString("pt-BR");
+}
+
+async function readExcel(file){
+  const data = await file.arrayBuffer();
+  const wb = XLSX.read(data,{type:"array"});
+  const ws = wb.Sheets["Export"];
+  return XLSX.utils.sheet_to_json(ws,{defval:""});
+}
+
+function atualizarBotoes(){
+  const habilitar = dataRows.length && detalhadoRows.length;
+
+  btnProcessar.disabled = !habilitar;
+
+  // 👉 ETAPA 4
+  searchInput.disabled = !habilitar;
+  filterSelect.disabled = !habilitar;
+  btnDateFilter.disabled = !habilitar;
+}
+
+btnLimpar.addEventListener("click", function(){
+
+  // 🔹 Limpa arrays principais
+  dataRows = [];
+  detalhadoRows = [];
+  resultado = [];
+  resultadoFiltrado = [];
+  datasSelecionadas = [];
+
+  // 🔹 Limpa tela
+  resultsDiv.innerHTML = "";
+  summaryDiv.innerHTML = "";
+
+  // 🔹 Limpa arquivos selecionados
+  fileData.value = "";
+  fileDetalhado.value = "";
+
+  // 🔹 Limpa campo pesquisa
+  searchInput.value = "";
+
+  // 🔹 Limpa filtro
+  filterSelect.value = "all";
+
+  // 🔹 Limpa calendário
+  calendario.clear();
+
+  // 🔹 Desabilita botões novamente
+  atualizarBotoes();
+
+});
+
+
+function renderSummary(filtrado = resultado){
+  let total = filtrado.length;
+  let com = 0;
+  let sem = 0;
+  let totalMatches = 0;
+
+  filtrado.forEach(r => {
+    const dtCarreg = parsePossibleDate(r.dataRow["DT. CARREGAMENTO"]);
+
+    // aplica a MESMA regra de atraso usada na tabela
+    const validMatches = r.matches.filter(m => {
+      const dtCheck = parsePossibleDate(m["Data de Check in"]);
+      const dtEntr  = parsePossibleDate(m["Data de Entrada da Nota"]);
+
+      let atrasado = ehAtrasado(
+        r.dataRow["DT. CARREGAMENTO"],
+        m["Data de Check in"],
+        m["Data de Entrada da Nota"]
+      );
+
+      // se NÃO mostrar atrasados → remove do total
+      if (!mostrarAtrasados && atrasado) return false;
+
+      return true;
+    });
+
+    if (validMatches.length) com++;
+    else sem++;
+
+    totalMatches += validMatches.length;
+  });
+
+  summaryDiv.innerHTML = `
+    <div class="pill">Veículos Carregados: <b>${total}</b></div>
+    <div class="pill">Com Registros: <b>${com}</b></div>
+    <div class="pill">Sem Registros: <b>${sem}</b></div>
+    <div class="pill">Total de Notas: <b>${totalMatches}</b></div>
+  `;
+}
+
+
+
+let sortState = {}; // guarda coluna e direção por grupo
+
+function ordenarGrupo(groupIndex, col) {
+  const item = resultado[groupIndex];
+  if (!item) return;
+
+  // alterna ASC/DESC
+  const key = groupIndex + "_" + col;
+  const dir = sortState[key] === "asc" ? "desc" : "asc";
+  sortState[key] = dir;
+
+  item.matches.sort((a, b) => {
+    let va = (a[col] || "").toString().toUpperCase();
+    let vb = (b[col] || "").toString().toUpperCase();
+
+    // tenta converter datas
+    const da = parsePossibleDate(a[col]);
+    const db = parsePossibleDate(b[col]);
+    if (da && db) return dir === "asc" ? da - db : db - da;
+
+    // tenta número
+    if (!isNaN(va) && !isNaN(vb)) return dir === "asc" ? va - vb : vb - va;
+
+    return dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+
+  aplicarFiltrosEBusca(); // re-render
+}
+
+
+function buildGroupHTML(item,index){
+
+  const d = item.dataRow;
+
+  // =============================
+  // FILTRA MATCHES CONFORME CHECKBOX (MOSTRAR ATRASADOS)
+  // =============================
+  const matches = item.matches.filter(m => {
+
+    const dtCarreg = parsePossibleDate(d["DT. CARREGAMENTO"]);
+    const dtCheck  = parsePossibleDate(m["Data de Check in"]);
+    const dtEntr   = parsePossibleDate(m["Data de Entrada da Nota"]);
+
+    let atrasado = ehAtrasado(
+      d["DT. CARREGAMENTO"],
+      m["Data de Check in"],
+      m["Data de Entrada da Nota"]
+    );
+
+    // ❌ Se NÃO mostrar atrasados → remove do grupo
+    if (!mostrarAtrasados && atrasado) return false;
+
+    return true;
+  });
+
+  // Badge agora mostra os registros filtrados
+  const badge = matches.length ? "green" : "red";
+
+  let header = `
+    <div class="groupHeader">
+      <div>
+        <b>#${index+1} ID: ${d["ID"]}</b><br><br>
+
+        <div style="font-weight:400;">
+          <b>DT CARREG:</b> ${formatDateTimeBRLocal(d["DT. CARREGAMENTO"])}<br>
+          <b>DESTINOS:</b> ${d["DESTINOS"]}<br>
+          <b>REFERENCIAS:</b> ${d["REFERENCIAS"]}<br>
+          <b>VEÍCULO SOLICITADO:</b> ${d["VEÍCULO SOLICITADO"] || ""}<br>
+          <b>VEÍCULO CONTRATADO:</b> ${d["VEICULO CONTRATADO"] || ""}<br>
+          <b>MODALIDADE:</b> ${d["MODALIDADE"] || ""}<br>
+          <b>QUIMICO:</b> ${d["QUIMICO"] || ""}<br>
+
+          <b>OBS. CARREGAMENTO:</b>
+          <div style="margin-top:4px; white-space:pre-wrap; font-weight:600; color:#b91c1c;">
+            ${(d["OBS. CARREGAMENTO"] || "").toString()}
+          </div>
+        </div>
+
+        <br>
+
+        <span class="sub">
+          👤 Líder: <b>${d["Lider"] || d["LIDER"] || ""}</b> |
+          📦 Conferente: <b>${d["CONFERENTE"] || ""}</b> |
+          🚜 Operador: <b>${d["OPERADOR"] || ""}</b>
+        </span>
+      </div>
+
+      <div class="badge ${badge}">
+        ${matches.length} registros
+      </div>
+    </div>
+  `;
+
+  // se não tem registros filtrados, não mostra tabela
+  if(!matches.length) return `<div class="group">${header}</div>`;
+
+
+  const cols = detalhadoCols.length ? detalhadoCols : [
+      "Nota","Numero OEF","Fornecedor","Cliente","Destinatario",
+      "Destino","UF Destino","Almoxarifado",
+      "Peso","Volumes","Mercadoria","Prioridade",
+      "Data de Check in","Data de Entrada da Nota",
+      "Dt Limite Embarque","Dt Final Entrega"
+  ];
+
+  let thead = cols.map(c=>`
+    <th onclick="ordenarGrupo(${index}, '${c}')">
+      ${c} ⬍
+    </th>
+  `).join("");
+
+
+  let tbody = matches.map(m => {
+
+    const dtCarreg = parsePossibleDate(d["DT. CARREGAMENTO"]);
+    const dtCheck  = parsePossibleDate(m["Data de Check in"]);
+    const dtEntr   = parsePossibleDate(m["Data de Entrada da Nota"]);
+
+    let atrasado = ehAtrasado(
+      d["DT. CARREGAMENTO"],
+      m["Data de Check in"],
+      m["Data de Entrada da Nota"]
+    );
+
+    const style = atrasado ? 'style="background:#fef2f2; color:#9f1239; font-weight:600;"' : "";
+
+    return `
+      <tr ${style}>
+        ${cols.map(c=>{
+          const isDate = c.includes("Data") || c.includes("Dt");
+          return `<td>${isDate ? formatDateBR(m[c]) : (m[c] || "")}</td>`;
+        }).join("")}
+      </tr>
+    `;
+  }).join("");
+
+
+  return `
+    <div class="group">
+      ${header}
+      <div class="tableWrapper">
+        <table>
+          <thead><tr>${thead}</tr></thead>
+          <tbody>${tbody}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+
+function aplicarFiltrosEBusca(){
+  let f = resultado;
+  const q = normalizar(searchInput.value);
+  
+  function isSameDate(d1, d2){
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth() &&
+           d1.getDate() === d2.getDate();
+  }
+
+  // Filtro por múltiplas datas de carregamento
+  if (datasSelecionadas.length > 0) {
+
+    f = f.filter(r => {
+      const d = parsePossibleDate(r.dataRow["DT. CARREGAMENTO"]);
+      if (!d) return false;
+
+      return datasSelecionadas.some(selDate =>
+        isSameDate(d, selDate)
+      );
+    });
+
+  }
+
+
+
+  if(filterSelect.value==="with") f=f.filter(r=>r.matches.length);
+  if(filterSelect.value==="without") f=f.filter(r=>!r.matches.length);
+  if(q) f=f.filter(r=>normalizar(JSON.stringify(r)).includes(q));
+
+  // 🔹 salva o resultado filtrado global
+  resultadoFiltrado = f;
+
+  resultsDiv.innerHTML = f.map(buildGroupHTML).join("");
+  renderSummary(f);
+}
+
+
+
+function processar(){
+
+  // Pré-processa Almoxarifado do detalhado
+  const detalhadoPre = detalhadoRows.map(r => ({
+    ...r,
+    __almoxNorm: normalizar(r["Almoxarifado"] || "")
+  }));
+
+  resultado = dataRows.map(row=>{
+    const dtCarreg = parsePossibleDate(row["DT. CARREGAMENTO"]);
+    const refsNorm = normalizar(row["REFERENCIAS"] || "");
+    const prioridadeNorm = normalizar(row["PRIORIDADES SOLICITACAO"] || "");
+
+
+    const matches = detalhadoPre.filter(r=>{
+      const dtLim = parsePossibleDate(r["Dt Limite Embarque"]);
+
+      // REGRA 1: Dt Limite <= Dt Carregamento
+      if (dtLim && dtCarreg) {
+        dtLim.setHours(0,0,0,0);
+        dtCarreg.setHours(0,0,0,0);
+
+        if (dtLim.getTime() > dtCarreg.getTime()) return false;
+      }
+
+
+      const almox = r.__almoxNorm;
+      if(!almox) return false;
+
+      // escape para regex segura
+      const almoxSafe = almox.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      // regex: não pode ter letra ou hífen colado antes/depois
+      const regex = new RegExp(`(^|[^A-Z0-9])${almoxSafe}([^A-Z0-9]|$)`);
+
+
+      // precisa existir em REFERENCIAS OU PRIORIDADES
+      const matchRefs = regex.test(refsNorm);
+      const matchPrioridade = regex.test(prioridadeNorm);
+
+      if(!(matchRefs || matchPrioridade)) return false;
+
+
+
+      return true;
+    });
+    // 🔽 ORDENA POR DT LIMITE EMBARQUE (MENOR → MAIOR)
+    matches.sort((a, b) => {
+      const da = parsePossibleDate(a["Dt Limite Embarque"]);
+      const db = parsePossibleDate(b["Dt Limite Embarque"]);
+
+      if (!da && !db) return 0;
+      if (!da) return 1;   // datas vazias vão para o final
+      if (!db) return -1;
+
+      return da - db;
+    });
+
+    return {dataRow:row, matches};
+  });
+
+  renderSummary();
+  aplicarFiltrosEBusca();
+  btnExportarCSV.disabled=false;
+  searchInput.disabled=false;
+  filterSelect.disabled=false;
+  dateFilter.disabled = false;
+
+  document.getElementById("btnAlmoxPendentes").disabled = false;
+
+
+}
+
+function exportarExcel() {
+  if (!resultadoFiltrado.length) {
+    alert("Nenhum dado filtrado para exportar.");
+    return;
+  }
+
+  if (!detalhadoCols.length) {
+    alert("Nenhuma coluna definida para exportação.");
+    return;
+  }
+
+  const exportRows = [];
+
+  resultadoFiltrado.forEach(item => {
+    const dtCarreg = parsePossibleDate(item.dataRow["DT. CARREGAMENTO"]);
+
+    item.matches.forEach(m => {
+      const nota = (m["Nota"] || "").toString().trim();
+      const oef  = (m["Numero OEF"] || "").toString().trim();
+
+      // 🔒 Só exporta se tiver Nota OU OEF
+      if (!nota && !oef) return;
+
+      // =============================
+      // REGRA DE ATRASO (MESMA DA TABELA)
+      // =============================
+      const dtCheck = parsePossibleDate(m["Data de Check in"]);
+      const dtEntr  = parsePossibleDate(m["Data de Entrada da Nota"]);
+
+      let atrasado = ehAtrasado(
+        item.dataRow["DT. CARREGAMENTO"],
+        m["Data de Check in"],
+        m["Data de Entrada da Nota"]
+      );
+
+      // ❌ NÃO EXPORTA SE FOR ATRASADO
+      if (atrasado) return;
+
+      // =============================
+      // MONTA LINHA PARA EXPORTAÇÃO
+      // =============================
+      const exportRow = {};
+      detalhadoCols.forEach(c => {
+        const isDate = c.includes("Data") || c.includes("Dt");
+        exportRow[c] = isDate ? formatDateBR(m[c]) : (m[c] || "");
+      });
+
+      exportRows.push(exportRow);
+    });
+  });
+
+  if (!exportRows.length) {
+    alert("Nenhuma linha válida (sem atraso) encontrada.");
+    return;
+  }
+
+  const ws = XLSX.utils.json_to_sheet(exportRows);
+  ws["!cols"] = detalhadoCols.map(c => ({ wch: Math.max(c.length, 18) }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Notas_Sem_Atraso");
+
+  XLSX.writeFile(wb, "relatorio_sem_atraso.xlsx");
+}
+
+
+
+
+function limparTudo() {
+  dataRows = [];
+  detalhadoRows = [];
+  resultado = [];
+
+  fileData.value = "";
+  fileDetalhado.value = "";
+
+  resultsDiv.innerHTML = "";
+  summaryDiv.innerHTML = "";
+  searchInput.value = "";
+  filterSelect.value = "all";
+
+  btnProcessar.disabled = true;
+  btnExportarCSV.disabled = true;
+  searchInput.disabled = true;
+  filterSelect.disabled = true;
+
+  alert("Dados limpos com sucesso.");
+}
+
+
+fileData.onchange=async e=>{
+  dataRows = await readExcel(e.target.files[0]);
+
+  // MUDA TEXTO VISUAL
+  document.getElementById("statusData").innerText = "Carregado";
+
+  atualizarBotoes();
+};
+
+let detalhadoCols = [];
+
+fileDetalhado.onchange=async e=>{
+  detalhadoRows = await readExcel(e.target.files[0]);
+
+  // Captura a ordem das colunas da primeira linha
+  if(detalhadoRows.length){
+    detalhadoCols = Object.keys(detalhadoRows[0]);
+  }
+
+  // MUDA TEXTO VISUAL
+  document.getElementById("statusDetalhado").innerText = "Carregado";
+
+  atualizarBotoes();
+};
+
+// =====================================================
+// REGRA PROFISSIONAL DE ATRASO (IGNORA HORÁRIO)
+// =====================================================
+function ehAtrasado(dataReferencia, dataCheck, dataEntrada){
+
+  const dtRef = parsePossibleDate(dataReferencia);
+  if (!dtRef) return false;
+
+  const ref = new Date(dtRef);
+  ref.setHours(0,0,0,0);
+
+  const dtCheck = parsePossibleDate(dataCheck);
+  if (dtCheck) {
+    const check = new Date(dtCheck);
+    check.setHours(0,0,0,0);
+    if (check.getTime() >= ref.getTime()) return true;
+  }
+
+  const dtEntr = parsePossibleDate(dataEntrada);
+  if (dtEntr) {
+    const entr = new Date(dtEntr);
+    entr.setHours(0,0,0,0);
+    if (entr.getTime() >= ref.getTime()) return true;
+  }
+
+  return false;
+}
+
+function formatDateBRLocal(v){
+  const d = parsePossibleDate(v);
+  if(!d) return "";
+  const day = d.getDate().toString().padStart(2,"0");
+  const month = (d.getMonth()+1).toString().padStart(2,"0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+const ORDEM_DIAS = ["dom","seg","ter","qua","qui","sex","sab","sáb"];
+
+function ordenarDiasSemana(arr){
+  if(!Array.isArray(arr)) return [];
+  
+  return arr.slice().sort((a,b)=>{
+    const ia = ORDEM_DIAS.indexOf(a.toLowerCase());
+    const ib = ORDEM_DIAS.indexOf(b.toLowerCase());
+    return ia - ib;
+  });
+}
+
+// ===============================
+// DIA DA SEMANA (PADRÃO JANELA)
+// ===============================
+function getDiaSemanaAbrev(date){
+  if(!date) return null;
+
+  const dias = ["dom","seg","ter","qua","qui","sex","sáb"];
+  return dias[date.getDay()];
+}
+
+// ===============================
+// VALIDA SE DATA ESTÁ NA JANELA
+// ===============================
+function dataCoincideComJanela(data, janelaArray){
+  if(!data || !janelaArray || !janelaArray.length) return false;
+
+  const dia = getDiaSemanaAbrev(data);
+  return janelaArray.map(d => d.toLowerCase()).includes(dia);
+}
+
+function calcularProximaDataJanela(dataBase, diasJanela){
+
+  if(!diasJanela || !diasJanela.length) return null;
+
+  const dias = ["dom","seg","ter","qua","qui","sex","sáb"];
+
+  const base = new Date(dataBase);
+  base.setHours(0,0,0,0);
+
+  for(let i=0; i<=14; i++){ // procura até 14 dias pra frente
+    const tentativa = new Date(base);
+    tentativa.setDate(base.getDate() + i);
+
+    const diaAbrev = dias[tentativa.getDay()];
+
+    if(diasJanela.map(d=>d.toLowerCase()).includes(diaAbrev)){
+      return tentativa;
+    }
+  }
+
+  return null;
+}
+
+// ===============================
+// BOLINHA VERDE VISUAL
+// ===============================
+function bolinhaVerde(){
+  return `
+    <svg 
+      width="12" 
+      height="12" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="#22c55e" 
+      stroke-width="3" 
+      stroke-linecap="round" 
+      stroke-linejoin="round"
+      style="margin-left:6px; vertical-align:middle;"
+    >
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+  `;
+}
+
+function iconeCheck(cor = "green") {
+
+  const cores = {
+    green: "#16a34a",
+    yellow: "#facc15",
+    red: "#dc2626",
+    gray: "#9ca3af"
+  };
+
+  return `
+    <span style="
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    ">
+      <svg 
+        width="18" 
+        height="18" 
+        viewBox="0 0 24 24" 
+        fill="none"
+      >
+        <circle cx="12" cy="12" r="10" fill="${cores[cor]}" />
+        <path 
+          d="M7 12l3 3 7-7" 
+          stroke="white" 
+          stroke-width="2.5" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+        />
+      </svg>
+    </span>
+  `;
+}
+
+function renderResumoAnalise(stats){
+
+  document.getElementById("resumoAnalise").innerHTML = `
+
+    <div style="
+  display:grid;
+  grid-template-columns: repeat(4, 1fr) 320px;
+  gap:20px;
+  margin-bottom:20px;
+  align-items:start;
+">
+
+      ${criarCard("📊 VOLUME GERAL", [
+        {label:"🏭 Almox", valor:stats.totalAlmox},
+        {label:"📄 Total Notas PVD", valor:stats.totalNotasPVDGeral},
+        {label:"📦 Notas ≤ D-1", valor:stats.totalNotas}
+      ])}
+
+      ${criarCard("⏱ ENTRADA NF", [
+        {label:"🟥 Em Atraso", valor:stats.totalAtraso, cor:"#dc2626"},
+        {label:"🟩 No Prazo", valor:stats.totalPrazo, cor:"#16a34a"}
+      ])}
+
+      ${criarCard("🚛 STATUS PROGRAMAÇÃO", [
+        {label:"🔵 Carregados Hoje", valor:stats.carregadosHoje, cor:"#2563eb"},
+        {label:"🟢 Programados", valor:stats.programados, cor:"#16a34a"},
+        {label:"🔴 Não Programados", valor:stats.semVeiculo, cor:"#dc2626"}
+      ])}
+
+      ${criarCard("📅 CRITICIDADE", [
+        {label:"🔴 D+", valor:stats.totalDmais, cor:"#dc2626"},
+        {label:"🔵 D0", valor:stats.totalD0, cor:"#2563eb"},
+        {label:"🟢 D-1", valor:stats.totalDmenos1, cor:"#16a34a"},
+        {label:"🟢 ≥ D-2", valor:stats.totalDmenosMaiorIgual2, cor:"#15803d"}
+      ])}
+            <!-- LEGENDA -->
+<div style="
+  background:var(--card2);
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  padding:18px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+  font-size:12px;
+">
+
+  <div style="font-weight:900; margin-bottom:12px; color:#374151;">
+    📖 REGRAS DO FAROL
+  </div>
+
+<div style="margin-bottom:12px;">
+  <b>🗓️ Com Janela Cadastrada</b><br>
+  🟢 Verde → Embarque / Entrega superior a próxima janela<br>
+  🟡 Amarelo → Embarque inferior a próxima janela e Entrega válida<br>
+  🔴 Vermelho → Embarque vencido e Entrega válida<br>
+  ⚪ Cinza → Entrega vencida
+</div>
+
+  <div style="margin-bottom:12px;">
+    <b>🗓️ Sem Janela Cadastrada</b><br>
+    🟢 Verde → Embarque superior a D+2<br>
+    🟡 Amarelo → Embarque hoje ou amanhã<br>
+    🔴 Vermelho → Embarque vencido / Entrega à vencer<br>
+    ⚪ Cinza → Entrega vencida
+  </div>
+
+</div>
+  `;
+}
+
+
+function criarCard(titulo, itens){
+
+  return `
+    <div style="
+      background:var(--card2);
+      border:1px solid #e5e7eb;
+      border-radius:14px;
+      padding:18px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.05);
+    ">
+
+      <div style="
+        font-weight:900;
+        font-size:13px;
+        color:#374151;
+        margin-bottom:14px;
+        letter-spacing:0.5px;
+      ">
+        ${titulo}
+      </div>
+
+      ${itens.map(item => `
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          padding:6px 0;
+          border-bottom:1px solid #f1f5f9;
+        ">
+          <span style="font-size:13px; color:#475569;">
+            ${item.label}
+          </span>
+
+          <span style="
+            font-weight:900;
+            font-size:18px;
+            color:${item.cor || "#111827"};
+          ">
+            ${item.valor}
+          </span>
+        </div>
+      `).join("")}
+
+    </div>
+  `;
+}
+
+
+function listarAlmoxPendentes(){
+
+  // 🔹 Hoje e amanhã
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+  const amanha = new Date(hoje);
+  amanha.setDate(hoje.getDate()+1);
+  // 🔽 NOVO FILTRO DATA LIMITE
+  const modoDataLimite = 
+    document.getElementById("filtroDataLimitePopup")?.value || "all";
+
+  // ===============================
+  // MAPA DE ALMOX DO PVD (pendentes)
+  // ===============================
+  const almoxPend = {};
+
+    // ======================================
+  // MAPA TOTAL PVD (SEM FILTRO DE DATA)
+  // ======================================
+  const almoxTotalPVD = {};
+  
+  detalhadoRows.forEach(r => {
+    const almox = normalizar(r["Almoxarifado"]);
+    if(!almox) return;
+
+    if(!almoxTotalPVD[almox]){
+      almoxTotalPVD[almox] = {
+        totalRegistros: 0,
+        pesoTotal: 0
+      };
+    }
+
+    almoxTotalPVD[almox].totalRegistros++;
+
+    const peso = parseFloat(
+      (r["Peso"] || "0")
+        .toString()
+        .replace(",", ".")
+    );
+
+    if(!isNaN(peso)){
+      almoxTotalPVD[almox].pesoTotal += peso;
+    }
+  });
+
+
+  detalhadoRows.forEach(r=>{
+    const almox = normalizar(r["Almoxarifado"]);
+    if(!almox) return;
+
+    const dtLim = parsePossibleDate(r["Dt Limite Embarque"]);
+    if(!dtLim) return;
+
+    dtLim.setHours(0,0,0,0);   // 🔥 CORREÇÃO
+
+
+
+    if(!almoxPend[almox]){
+      almoxPend[almox] = {
+        notas: [],
+        qtd: 0
+      };
+    }
+
+    almoxPend[almox].notas.push({
+      dtLim,
+      nota: r["Nota"] || r["Numero OEF"] || "",
+      fornecedor: r["Fornecedor"] || "",
+      destinatario: r["Destinatario"] || "",
+      cliente: r["Cliente"] || "",
+      destino: r["Destino"] || "",
+      uf: r["UF Destino"] || "",   // 👈 ADICIONE ISSO
+      checkin: r["Data de Check in"],
+      entrada: r["Data de Entrada da Nota"],
+      finalEntrega: r["Dt Final Entrega"]
+    });
+
+    if (dtLim.getTime() <= amanha.getTime()) {
+      almoxPend[almox].qtd++;
+    }
+
+
+  });
+
+
+  // =====================================
+  // BUSCAR ÚLTIMO VEÍCULO POR ALMOX (DT PREV)
+  // =====================================
+  const almoxUltimoVeiculo = {};
+
+  dataRows.forEach(row=>{
+  const dtPrev = parsePossibleDate(row["DT. PREVISÃO"]);
+  const dtCarreg = parsePossibleDate(row["DT. CARREGAMENTO"]);
+  if(!dtPrev) return;
+
+  const refsNorm = normalizar(row["REFERENCIAS"] || "");
+  const prioridadeNorm = normalizar(row["PRIORIDADES SOLICITACAO"] || "");
+
+  Object.keys(almoxPend).forEach(almox=>{
+    const almoxSafe = almox.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(^|[^A-Z0-9])${almoxSafe}([^A-Z0-9]|$)`);
+
+    if(regex.test(refsNorm) || regex.test(prioridadeNorm)){
+
+      if(!almoxUltimoVeiculo[almox]) almoxUltimoVeiculo[almox] = [];
+
+      almoxUltimoVeiculo[almox].push({
+        dtPrev,
+        dtCarreg,
+        dtEntrega: row["DT. ENTREGA"] || "",
+        destinos: row["DESTINOS"] || "",   // 👈 NOVO
+        id: row["ID"] || "",
+        refs: row["REFERENCIAS"] || ""
+      });
+
+    }
+  });
+});
+
+Object.keys(almoxUltimoVeiculo).forEach(a=>{
+  almoxUltimoVeiculo[a].sort((a,b)=> b.dtPrev - a.dtPrev);
+  almoxUltimoVeiculo[a] = almoxUltimoVeiculo[a].slice(0,3);
+});
+
+
+  // ===============================
+  // ORDENA ALMOX POR QTD DE NOTAS
+  // ===============================
+  const almoxOrdenados = Object.entries(almoxPend)
+    .sort((a,b)=> b[1].qtd - a[1].qtd);
+
+
+  const termoCliente = normalizar(document.getElementById("searchClientePopup")?.value || "");
+  const selectVeiculo = document.getElementById("filterVeiculoPopup");
+  let filtroVeiculo = [];
+
+  if (selectVeiculo) {
+
+    const selecionados = Array.from(selectVeiculo.selectedOptions)
+      .map(o => o.value);
+
+    // Se selecionar "all"
+    if (selecionados.includes("all")) {
+
+      // Marca todos automaticamente
+      Array.from(selectVeiculo.options).forEach(opt => {
+        opt.selected = true;
+      });
+
+      filtroVeiculo = ["carregado", "programado", "sem"];
+
+    } else {
+      filtroVeiculo = selecionados;
+    }
+  }
+
+
+  const termoDestino = normalizar(document.getElementById("searchDestinoPopup")?.value || "");
+  const termoUFDestino = normalizar(
+    document.getElementById("searchUFDestinoPopup")?.value || ""
+  );
+
+
+  // ===============================
+  // MONTA HTML EXPANSÍVEL
+  // ===============================
+  let html = "";
+
+    snapshotVocativos = {};
+  const stats = {
+    totalAlmox: 0,
+    totalNotas: 0,
+    totalNotasPVDGeral: 0,
+    totalAtraso: 0,
+    totalPrazo: 0,
+    carregadosHoje: 0,
+    programados: 0,
+    semVeiculo: 0,
+
+
+    totalDmais: 0,
+    totalD0: 0,
+    totalDmenos1: 0,
+    totalDmenosMaiorIgual2: 0
+  };
+
+
+
+  almoxOrdenados.forEach(([almox,info])=>{
+    // =====================================
+    // FILTRO POR DATA LIMITE (VOCATIVO)
+    // =====================================
+    if (modoDataLimite === "ateAmanha") {
+
+      const temNFValida = info.notas.some(n => {
+        const dt = parsePossibleDate(n.dtLim);
+        if (!dt) return false;
+
+        dt.setHours(0,0,0,0);
+        return dt.getTime() <= amanha.getTime();
+      });
+
+      if (!temNFValida) return; // NÃO MOSTRA ESSE ALMOX
+    }
+
+        // ===============================
+    // JANELAS FIXAS (ENTREGA / CARREGAMENTO)
+    // ===============================
+    const janela = buscarJanelaAlmox(almox);
+
+    const janelaEntrega = janela?.entrega?.length
+      ? ordenarDiasSemana(janela.entrega).join(" / ")
+      : "Não cadastrado";
+
+    const janelaCarreg = janela?.carregamento?.length
+      ? ordenarDiasSemana(janela.carregamento).join(" / ")
+      : "Não cadastrado";
+
+
+    const janelaHTML = `
+      <div style="
+        padding:12px;
+        border-radius:10px;
+        background:#ffffff;
+        border:1px solid #cbd5e1;
+        font-size:12px;
+        height:100%;                /* 👈 ESSENCIAL */
+        display:flex;
+        flex-direction:column;
+        justify-content:space-between;  /* 👈 melhor que center */
+      ">
+
+        <div style="font-weight:900; margin-bottom:8px;">
+          🗓️ Janelas
+        </div>
+
+        <div>
+          <b>Carregamento: </b>
+          <span style="color:#166534; font-weight:800;">
+            ${janelaCarreg}
+          </span>
+        </div>
+
+        <div style="margin-top:8px;">
+          <b>Entrega: </b>
+          <span style="color:#1e40af; font-weight:800;">
+            ${janelaEntrega}
+          </span>
+        </div>
+      </div>
+    `;
+
+
+
+
+    // ✅ filtro por cliente
+    if(termoCliente){
+      const temCliente = info.notas.some(n => normalizar(n.cliente).includes(termoCliente));
+      if(!temCliente) return;
+    }
+    if(termoDestino){
+      const temDestino = info.notas.some(n => normalizar(n.destino).includes(termoDestino));
+      if(!temDestino) return;
+    }
+    // ✅ filtro por UF Destino (comparação EXATA)
+    if (termoUFDestino) {
+
+      const temUFDestino = info.notas.some(n => {
+        const uf = normalizar(n.uf || "");
+        return uf === termoUFDestino;
+      });
+
+      if (!temUFDestino) return;
+    }
+
+
+
+    // ordena datas das notas
+    info.notas.sort((a,b)=>{
+      const da = parsePossibleDate(a.dtLim);
+      const db = parsePossibleDate(b.dtLim);
+
+      if(!da && !db) return 0;
+      if(!da) return 1;
+      if(!db) return -1;
+
+      return da - db;
+    });
+
+
+    const veiculos = almoxUltimoVeiculo[almox] || [];
+    
+    // ===============================
+// 📊 CONTADOR NOTAS VS ÚLTIMO CARREGAMENTO
+// ===============================
+
+// 🔎 Pega a última DT. CARREGAMENTO (mais recente)
+let ultimaDataCarregamento = null;
+
+if (veiculos.length) {
+  veiculos.forEach(v => {
+    const dtCarreg = parsePossibleDate(v.dtCarreg);
+    if (dtCarreg) {
+      dtCarreg.setHours(0,0,0,0);
+      if (!ultimaDataCarregamento || dtCarreg > ultimaDataCarregamento) {
+        ultimaDataCarregamento = dtCarreg;
+      }
+    }
+  });
+}
+
+let notasAposCarregamento = 0;
+let notasAntesCarregamento = 0;
+
+if (ultimaDataCarregamento) {
+
+  info.notas.forEach(n => {
+
+    const dtCheck = parsePossibleDate(n.checkin);
+    const dtEntrada = parsePossibleDate(n.entrada);
+
+    let dataBaseNota = null;
+
+    if (dtCheck && dtEntrada) {
+      dataBaseNota = dtCheck > dtEntrada ? dtCheck : dtEntrada;
+    } else if (dtCheck) {
+      dataBaseNota = dtCheck;
+    } else if (dtEntrada) {
+      dataBaseNota = dtEntrada;
+    }
+
+    if (dataBaseNota) {
+      dataBaseNota.setHours(0,0,0,0);
+
+      if (dataBaseNota.getTime() >= ultimaDataCarregamento.getTime()) {
+        notasAposCarregamento++;
+      } else {
+        notasAntesCarregamento++;
+      }
+    }
+  });
+}
+    
+
+// ===============================
+// REGRAS COM PRIORIDADE CORRETA
+// ===============================
+
+let temCarregadoHoje = false;
+let temSemCarregamento = false;
+let temComCarregamento = false;
+
+if (veiculos.length) {
+
+  veiculos.forEach(v => {
+
+    const dtCarreg = parsePossibleDate(v.dtCarreg);
+
+    if (dtCarreg) {
+
+      dtCarreg.setHours(0,0,0,0);
+
+      // 🔵 CARREGADO HOJE
+      if (dtCarreg.getTime() === hoje.getTime()) {
+        temCarregadoHoje = true;
+      }
+
+      temComCarregamento = true;
+
+    } else {
+      // 🟢 SEM CARREGAMENTO
+      temSemCarregamento = true;
+    }
+
+  });
+
+}
+
+// ===============================
+// DEFINIÇÃO FINAL (PRIORIDADE)
+// ===============================
+
+let temProgramado = false;
+let temNaoProgramado = false;
+
+// 🔵 PRIORIDADE 1 — Se tem veículo sem carregamento → PROGRAMADO
+if (temSemCarregamento) {
+  temProgramado = true;
+}
+
+// 🔴 PRIORIDADE 2 — Se tem veículo com carregamento → NÃO PROGRAMADO
+else if (temComCarregamento) {
+  temNaoProgramado = true;
+}
+
+// 🔴 PRIORIDADE 3 — Se NÃO EXISTE VEÍCULO → NÃO PROGRAMADO
+else if (veiculos.length === 0) {
+  temNaoProgramado = true;
+}
+
+
+
+if (filtroVeiculo.length > 0) {
+
+  let mostrar = false;
+
+  if (filtroVeiculo.includes("carregado") && temCarregadoHoje) {
+    mostrar = true;
+  }
+
+  if (filtroVeiculo.includes("programado") && temProgramado) {
+    mostrar = true;
+  }
+
+  if (filtroVeiculo.includes("sem") && temNaoProgramado) {
+    mostrar = true;
+  }
+
+  if (!mostrar) return;
+}
+
+
+
+
+    stats.totalAlmox++;
+    stats.totalNotas += info.qtd;
+
+    // 🔥 TOTAL GERAL PVD RESPEITANDO FILTROS
+if (almoxTotalPVD[almox]) {
+  stats.totalNotasPVDGeral += almoxTotalPVD[almox].totalRegistros;
+}
+
+if (temCarregadoHoje) stats.carregadosHoje++;
+if (temProgramado) stats.programados++;
+if (temNaoProgramado) stats.semVeiculo++;
+
+
+
+    let statusVeiculoBadge = "";
+
+// 🔵 CARREGADO HOJE
+if (temCarregadoHoje) {
+  statusVeiculoBadge += `
+    <span style="
+      background:#dbeafe;
+      color:#1e3a8a;
+      border:2px solid #2563eb;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      margin-right:6px;
+    ">
+      🔵 CARREGADO HOJE
+    </span>
+  `;
+}
+
+// 🟢 PROGRAMADO (tem prioridade sobre vermelho)
+if (temProgramado) {
+  statusVeiculoBadge += `
+    <span style="
+      background:#dcfce7;
+      color:#14532d;
+      border:2px solid #22c55e;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+    ">
+      🟢 PROGRAMADO
+    </span>
+  `;
+}
+
+// 🔴 NÃO PROGRAMADO
+else if (temNaoProgramado) {
+  statusVeiculoBadge += `
+    <span style="
+      background:#fee2e2;
+      color:#7f1d1d;
+      border:2px solid #ef4444;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+    ">
+      🔴 NÃO PROGRAMADO
+    </span>
+  `;
+}
+
+
+
+
+
+
+    const veicHTML = veiculos.map(v=>`
+    <tr>
+      <td>${v.id}</td>
+      <td>${formatDateBRLocal(v.dtPrev)}</td>
+      <td>${formatDateBRLocal(v.dtCarreg)}</td>
+      <td>${v.refs}</td>
+    </tr>
+    `).join("");
+
+
+    let qtdDentroRegra = 0;
+    let qtdForaRegra = 0;
+
+    // 🔥 NOVO: contadores D+, D0 e D-1
+    // 🔥 NOVO: Mapa dinâmico de D- dias
+    let mapaDias = {};
+
+
+    const notasHTML = info.notas.map(n => {
+
+    const dtLimEmb = parsePossibleDate(n.dtLim);
+const dtLimEnt = parsePossibleDate(n.finalEntrega);
+let coincideCarregamento = false;
+let coincideEntrega = false;
+
+// ===============================
+// 🔎 VERIFICA SE DATA COINCIDE COM JANELA
+// ===============================
+if (janela && dtLimEmb) {
+  coincideCarregamento = dataCoincideComJanela(
+    dtLimEmb,
+    janela.carregamento
+  );
+}
+
+if (janela && dtLimEnt) {
+  coincideEntrega = dataCoincideComJanela(
+    dtLimEnt,
+    janela.entrega
+  );
+}
+
+let mostrarJoinha = false;        // 🟢 verde
+let mostrarCheckAmarelo = false;  // 🟡 amarelo
+let mostrarCheckVermelho = false; // 🔴 novo
+let mostrarCheckCinza = false;    // ⚪ novo
+
+// ===============================
+// 🔵🟡 REGRA COM JANELA
+// ===============================
+if (janela && dtLimEmb) {
+
+  dtLimEmb.setHours(0,0,0,0);
+
+  const proximaJanelaCarreg =
+    calcularProximaDataJanela(hoje, janela.carregamento);
+
+  let regraCarregamentoVerde = false;
+  let regraCarregamentoAmarelo = false;
+
+  if (proximaJanelaCarreg) {
+
+    // 🟢 VERDE
+    if (dtLimEmb.getTime() >= proximaJanelaCarreg.getTime()) {
+      regraCarregamentoVerde = true;
+    }
+
+    // 🟡 AMARELO
+    if (
+      dtLimEmb.getTime() >= hoje.getTime() &&
+      dtLimEmb.getTime() < proximaJanelaCarreg.getTime()
+    ) {
+      regraCarregamentoAmarelo = true;
+    }
+  }
+
+  let regraEntrega = false;
+
+  if ((regraCarregamentoVerde || regraCarregamentoAmarelo) && dtLimEnt) {
+
+    dtLimEnt.setHours(0,0,0,0);
+
+    const proximaJanelaEntrega =
+      calcularProximaDataJanela(
+        proximaJanelaCarreg,
+        janela.entrega
+      );
+
+    if (proximaJanelaEntrega) {
+      regraEntrega =
+        dtLimEnt.getTime() >= proximaJanelaEntrega.getTime();
+    }
+  }
+
+  // 🔵 DEFINIÇÃO FINAL
+  if (regraCarregamentoVerde && regraEntrega) {
+    mostrarJoinha = true; // verde
+  }
+
+  if (!mostrarJoinha && regraCarregamentoAmarelo && regraEntrega) {
+    mostrarCheckAmarelo = true; // amarelo
+  }
+}
+
+// ===============================
+// 🟡🟢 REGRA SOMENTE PARA QUEM NÃO TEM JANELA
+// ===============================
+if (!janela && dtLimEmb && dtLimEnt) {
+
+  dtLimEmb.setHours(0,0,0,0);
+  dtLimEnt.setHours(0,0,0,0);
+
+  const amanhaLocal = new Date(hoje);
+  amanhaLocal.setDate(hoje.getDate() + 1);
+
+  const entregaValida =
+    dtLimEnt.getTime() >= dtLimEmb.getTime();
+
+  if (entregaValida) {
+
+    // 🟡 Hoje ou amanhã
+    if (
+      dtLimEmb.getTime() === hoje.getTime() ||
+      dtLimEmb.getTime() === amanhaLocal.getTime()
+    ) {
+      mostrarCheckAmarelo = true;
+    }
+
+    // 🟢 Depois de amanhã
+    if (dtLimEmb.getTime() > amanhaLocal.getTime()) {
+      mostrarJoinha = true;
+    }
+  }
+}
+
+// ===============================
+// 🔴 REGRA CRÍTICA (EMBARQUE VENCIDO)
+// ===============================
+if (dtLimEmb && dtLimEnt) {
+
+  dtLimEmb.setHours(0,0,0,0);
+  dtLimEnt.setHours(0,0,0,0);
+
+  if (
+    dtLimEmb.getTime() < hoje.getTime() &&
+    dtLimEnt.getTime() >= hoje.getTime()
+  ) {
+    mostrarCheckVermelho = true;
+    mostrarJoinha = false;
+    mostrarCheckAmarelo = false;
+  }
+}
+
+// ===============================
+// ⚪ SE NÃO CAIU EM NENHUMA REGRA
+// ===============================
+if (
+  !mostrarJoinha &&
+  !mostrarCheckAmarelo &&
+  !mostrarCheckVermelho
+) {
+  mostrarCheckCinza = true;
+}
+
+      const dtLim   = parsePossibleDate(n.dtLim);
+      if(dtLim){
+      dtLim.setHours(0,0,0,0);
+
+      const diffTime = dtLim.getTime() - hoje.getTime();
+      const diffDias = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if(!mapaDias[diffDias]){
+        mapaDias[diffDias] = 0;
+      }
+
+      mapaDias[diffDias]++;
+    }
+
+      const dtCheck = parsePossibleDate(n.checkin);
+      const dtEntr  = parsePossibleDate(n.entrada);
+
+      // 🔥 regra: checkin OU entrada >= dt limite
+      let dentroRegra = false;
+      if (dtLim) {
+        if (dtCheck && dtCheck >= dtLim) dentroRegra = true;
+        if (dtEntr  && dtEntr  >= dtLim) dentroRegra = true;
+      }
+
+      if(dentroRegra) qtdDentroRegra++;
+      else qtdForaRegra++;
+
+      const style = dentroRegra ? 'style="background:#fef2f2; color:#9f1239; font-weight:600;"' : "";
+
+      return `
+          <tr ${style}>
+            <td>${n.nota}</td>
+            <td>${n.fornecedor || ""}</td>
+            <td>${n.destinatario || ""}</td>
+            <td>${formatDateBRLocal(n.checkin)}</td>
+            <td>${formatDateBRLocal(n.entrada)}</td>
+            <td>
+  ${formatDateBRLocal(n.dtLim)}
+  ${coincideCarregamento ? bolinhaVerde() : ""}
+</td>
+
+<td>
+  ${formatDateBRLocal(n.finalEntrega)}
+  ${coincideEntrega ? bolinhaVerde() : ""}
+  
+</td>
+<td style="text-align:center;">
+  ${mostrarCheckVermelho ? iconeCheck("red") : ""}
+  ${!mostrarCheckVermelho && mostrarJoinha ? iconeCheck("green") : ""}
+  ${!mostrarCheckVermelho && !mostrarJoinha && mostrarCheckAmarelo ? iconeCheck("yellow") : ""}
+  ${mostrarCheckCinza ? iconeCheck("gray") : ""}
+</td>
+          </tr>`;
+      }).join("");
+
+    stats.totalAtraso += qtdDentroRegra;
+    stats.totalPrazo += qtdForaRegra;
+    Object.keys(mapaDias).forEach(d => {
+      const dias = Number(d);
+      const qtd = mapaDias[dias];
+
+      // 🔴 PASSADO
+      if (dias < 0) {
+        stats.totalDmais += qtd;
+      }
+
+      // 🔵 HOJE
+      else if (dias === 0) {
+        stats.totalD0 += qtd;
+      }
+
+      // 🟢 D-1
+      else if (dias === 1) {
+        stats.totalDmenos1 += qtd;
+      }
+
+      // 🟢 >= D-2 (AGREGADO)
+      else if (dias >= 2) {
+        stats.totalDmenosMaiorIgual2 += qtd;
+      }
+    });
+
+// ✅ calcula D+, D0, D-1 deste vocativo (igual ao que aparece na tela)
+let dMaisVoc = 0;
+let d0Voc = 0;
+let dMenos1Voc = 0;
+
+Object.keys(mapaDias).forEach(k => {
+  const dias = Number(k);
+  const qtd = mapaDias[dias] || 0;
+  if (dias < 0) dMaisVoc += qtd;       // D+
+  else if (dias === 0) d0Voc += qtd;   // D0
+  else if (dias === 1) dMenos1Voc += qtd; // D-1
+});
+
+// ✅ status do veículo em texto (para gravar na planilha)
+let statusVeiculo = "NAO PROGRAMADO";
+if (temCarregadoHoje) statusVeiculo = "CARREGADO HOJE";
+else if (temProgramado) statusVeiculo = "PROGRAMADO";
+else if (temNaoProgramado) statusVeiculo = "NAO PROGRAMADO";
+
+// ✅ grava no snapshot para o botão Salvar usar
+snapshotVocativos[normalizar(almox)] = {
+  Vocativo: almox,
+  StatusVeiculo: statusVeiculo,
+  Total_notas: info.qtd || 0,
+  EntradaEmAtraso: qtdDentroRegra || 0,
+  Atrasadas: dMaisVoc || 0,
+  Vencendo_hoje: d0Voc || 0,
+  Vencendo_amanhã: dMenos1Voc || 0,
+  NFsEntradaAntesUltimoCarregamento: notasAntesCarregamento || 0
+};
+
+
+
+    const resumoVeic = veiculos.length
+      ? veiculos.map(v =>
+          `• ID ${v.id} | Prog: ${formatDateBRLocal(v.dtPrev)} | Carreg: ${formatDateBRLocal(v.dtCarreg)} | Destinos: ${v.destinos} | Entrega: ${v.dtEntrega}`
+        ).join("<br>")
+      : "Nenhum encontrado";
+
+    
+
+
+html += `
+<details data-vocativo="${normalizar(almox)}" style="
+  margin-bottom:14px;
+  background:var(--card2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.06);
+">
+
+  <summary style="cursor:pointer; padding:15px;">
+  <div style="display:flex; gap:20px; width:100%; align-items:stretch;">
+
+
+    <!-- BLOCO ESQUERDA -->
+    <div style="flex:1;">
+
+      <!-- LINHA 1 -->
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; flex-direction:column; gap:4px;">
+
+          <div style="font-weight:900; font-size:15px;">
+            🏭 ${almox}
+          </div>
+
+          ${
+            almoxTotalPVD[almox] 
+            ? `
+            <div style="font-size:12px; font-weight:700; color:#1e293b;">
+              ⚖ Peso Total PVD: 
+              ${almoxTotalPVD[almox].pesoTotal.toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2})}
+            </div>
+
+            <div style="font-size:12px; font-weight:700; color:#475569;">
+              📄 Total Notas PVD: ${almoxTotalPVD[almox].totalRegistros}
+            </div>
+            `
+            : ""
+          }
+
+        </div>
+
+        <div class="badge-container">
+          ${statusVeiculoBadge}
+        </div>
+
+      </div>
+
+
+      <!-- LINHA 2 -->
+      <div style="margin-top:6px; font-size:13px; font-weight:700;">
+        📦 Notas <= D-1: ${info.qtd}
+      </div>
+
+      <!-- LINHA 3 - INDICADORES -->
+      <div style="margin-top:6px; font-size:12px;">
+
+        <!-- Linha 1 -->
+        <div style="display:flex; gap:15px; flex-wrap:wrap;">
+          <span style="color:#991b1b; font-weight:700;">
+            Entrada em Atraso: ${qtdDentroRegra}
+          </span>
+
+          <span style="color:#14532d; font-weight:700;">
+            Entrada No Prazo: ${qtdForaRegra}
+          </span>
+        </div>
+
+        <!-- Linha 2 -->
+        <div style="display:flex; gap:15px; margin-top:6px; flex-wrap:wrap;">
+          ${
+            (() => {
+
+              let totalDmais = 0;
+              let totalD0 = 0;
+              let totalDmenos1 = 0;
+              let totalDmenosMaiorIgual2 = 0;
+
+              Object.keys(mapaDias).forEach(d => {
+                const dias = Number(d);
+                const qtd = mapaDias[d];
+
+                // 🔴 PASSADO
+                if (dias < 0) {
+                  totalDmais += qtd;
+                }
+
+                // 🔵 HOJE
+                else if (dias === 0) {
+                  totalD0 += qtd;
+                }
+
+                // 🟢 D-1
+                else if (dias === 1) {
+                  totalDmenos1 += qtd;
+                }
+
+                // 🟢 >= D-2
+                else if (dias >= 2) {
+                  totalDmenosMaiorIgual2 += qtd;
+                }
+              });
+
+              let htmlDias = "";
+
+              if (totalDmais > 0) {
+                htmlDias += `
+                  <span style="color:#dc2626; font-weight:800;">
+                    🔴 D+: ${totalDmais}
+                  </span>
+                `;
+              }
+
+              if (totalD0 > 0) {
+                htmlDias += `
+                  <span style="color:#2563eb; font-weight:800; margin-left:10px;">
+                    🔵 D0: ${totalD0}
+                  </span>
+                `;
+              }
+
+              if (totalDmenos1 > 0) {
+                htmlDias += `
+                  <span style="color:#16a34a; font-weight:800; margin-left:10px;">
+                    🟢 D-1: ${totalDmenos1}
+                  </span>
+                `;
+              }
+
+              if (totalDmenosMaiorIgual2 > 0) {
+                htmlDias += `
+                  <span style="color:#15803d; font-weight:900; margin-left:10px;">
+                    🟢 >= D-2: ${totalDmenosMaiorIgual2}
+                  </span>
+                `;
+              }
+
+              return htmlDias;
+
+            })()
+          }
+        </div>
+
+      </div>
+
+
+      <!-- LINHA 4 - VEÍCULOS -->
+      <div style="
+        margin-top:10px;
+        background:#FFFFFF;
+        border:1px solid #e2e8f0;
+        padding:8px 10px;
+        border-radius:8px;
+        font-size:12px;
+      ">
+        <b>🚛 Últimos veículos</b><br>
+        ${resumoVeic}
+      </div>
+      <div style="
+  margin-top:8px;
+  font-size:12px;
+  font-weight:700;
+  display:flex;
+  gap:12px;
+">
+  <span style="color:var(--danger);">
+    NFs Com Entrada Anterior Último Carregamento: ${notasAntesCarregamento}
+  </span>
+    <span style="color:#2563eb;">
+    NFs Com Entrada Após Último Carregamento: ${notasAposCarregamento}
+  </span>
+</div>
+
+    </div>
+    
+
+    <div style="
+      width:260px;
+      display:flex;
+    ">
+      <div style="
+        flex:1;
+        display:flex;
+        flex-direction:column;
+      ">
+        ${janelaHTML}
+      </div>
+    </div>
+
+
+  </div>
+  <div class="obsBox">
+  <label>📝 Observação (Vocativo)</label>
+  <textarea
+    placeholder="Digite uma observação para este vocativo..."
+    data-vocativo="${normalizar(almox)}"
+    ></textarea>
+</div>
+
+<div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
+  <button class="btn secondary" type="button"
+    onclick="salvarVocativo('${almox}', event)">
+    💾 Salvar
+  </button>
+</div>
+</summary>
+
+  <div style="margin-top:10px; font-size:13px;">
+
+    <h4 style="margin-top:12px;">📦 Notas Pendentes</h4>
+    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+      <tr style="background:#f3f4f6;">
+        <th>Nota</th>
+        <th>Fornecedor</th>
+        <th>Destinatário</th>
+        <th>Data Check-in</th>
+        <th>Data de Entrada</th>
+        <th>Limite de Embarque</th>
+        <th>Limite Entrega</th>
+        <th>Farol</th>
+      </tr>
+      ${notasHTML}
+    </table>
+    
+
+      </div>
+    </details>
+    `;
+
+  });
+
+  document.getElementById("almoxList").innerHTML = html || "<i>Nenhum almox crítico</i>";
+  renderResumoAnalise(stats);
+  abrirPaginaAnalise();
+    carregarObservacoesHojeEPreencher();
+
+
+  const inputPopup = document.getElementById("searchClientePopup");
+  if(inputPopup){
+    inputPopup.oninput = () => listarAlmoxPendentes();
+  }
+  const inputDestinoPopup = document.getElementById("searchDestinoPopup");
+  if(inputDestinoPopup){
+    inputDestinoPopup.oninput = () => listarAlmoxPendentes();
+  }
+  const inputUFDestinoPopup = document.getElementById("searchUFDestinoPopup");
+  if(inputUFDestinoPopup){
+    inputUFDestinoPopup.oninput = () => listarAlmoxPendentes();
+  }
+
+  const filtroPopup = document.getElementById("filterVeiculoPopup");
+  if(filtroPopup){
+    filtroPopup.onchange = () => listarAlmoxPendentes();
+  }
+  const filtroDataPopup = document.getElementById("filtroDataLimitePopup");
+  if(filtroDataPopup){
+    filtroDataPopup.onchange = () => listarAlmoxPendentes();
+  }
+
+
+}
+
+function abrirPaginaAnalise(){
+  document.getElementById("paginaPrincipal").style.display = "none";
+  document.getElementById("paginaAnalise").style.display = "block";
+}
+
+function voltarPaginaPrincipal(){
+  document.getElementById("paginaAnalise").style.display = "none";
+  document.getElementById("paginaPrincipal").style.display = "block";
+}
+
+function formatDateTimeBRLocal(v){
+  const d = parsePossibleDate(v);
+  if(!d) return "";
+
+  return d.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+}
+
+
+
+btnProcessar.onclick=processar;
+searchInput.oninput=aplicarFiltrosEBusca;
+filterSelect.onchange=aplicarFiltrosEBusca;
+
+btnExportarCSV.onclick = exportarExcel;
+btnLimpar.onclick = limparTudo;
+
+dateFilter.onchange = aplicarFiltrosEBusca;
+
+document.getElementById("btnAlmoxPendentes").onclick = listarAlmoxPendentes;
+
+chkMostrarAtrasados.onchange = () => {
+  mostrarAtrasados = chkMostrarAtrasados.checked;
+  aplicarFiltrosEBusca();
+};
+
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz-AaiXcFqw12hLnth9QF-XxMen6MniH6vIxxSVkttQm_nxrSan2tSNlDqDxU0h0NUg/exec";
+const APPS_SCRIPT_TOKEN = "1234"; // igual ao TOKEN do script
+
+async function salvarObservacoes() {
+  if (savingAll) return;
+  savingAll = true;
+
+  const btnSalvar = document.getElementById("btnSalvarObs");
+  lockButton(btnSalvar, true, "💾 Salvando...");
+
+  try {
+    const vocativos = Object.keys(snapshotVocativos || {});
+    if (!vocativos.length) {
+      alert("Nenhum vocativo para salvar.");
+      return;
+    }
+
+    // ✅ SEM FILTRO: salva TODOS (com ou sem observação)
+    const registros = vocativos.map(v => montarRegistroVocativo(normalizar(v)));
+
+    const payload = { token: APPS_SCRIPT_TOKEN, registros };
+
+    const body = new URLSearchParams();
+    body.set("payload", JSON.stringify(payload));
+
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+      body
+    });
+
+    const texto = await response.text();
+    console.log("Servidor:", texto);
+
+    // ✅ Recarrega e preenche as observações do dia
+    await carregarObservacoesHojeEPreencher();
+
+
+  } catch (e) {
+    alert("❌ Erro ao salvar: " + e.message);
+  } finally {
+    lockButton(btnSalvar, false);
+    savingAll = false;
+  }
+}
+
+function montarRegistroVocativo(voc) {
+  const vocNorm = normalizar(voc);
+    const t = document.querySelector(`textarea[data-vocativo="${vocNorm}"]`);
+  const observacao = (t?.value || "").trim();
+  const s = snapshotVocativos[voc] || {};
+
+  return {
+    Vocativo: s.Vocativo || voc,
+    StatusVeiculo: s.StatusVeiculo || "",
+    Total_notas: Number(s.Total_notas || 0),
+    EntradaEmAtraso: Number(s.EntradaEmAtraso || 0),
+    Atrasadas: Number(s.Atrasadas || 0),
+    Vencendo_hoje: Number(s.Vencendo_hoje || 0),
+    Vencendo_amanhã: Number(s.Vencendo_amanhã || 0),
+    NFsEntradaAntesUltimoCarregamento: Number(s.NFsEntradaAntesUltimoCarregamento || 0),
+    Observacao: observacao
+  };
+}
+
+async function salvarVocativo(voc, ev) {
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); } // ✅ evita efeito do <summary>
+
+  const vocNorm = normalizar(voc);
+  if (!vocNorm || !snapshotVocativos[vocNorm]) {
+    alert("Vocativo inválido/indisponível.");
+    return;
+  }
+
+  if (savingVoc.has(vocNorm)) return;   // ✅ trava por vocativo
+  savingVoc.add(vocNorm);
+
+  // tenta pegar o botão clicado (se vier event)
+  const btn = ev?.currentTarget || null;
+  lockButton(btn, true, "Salvando...");
+
+  try {
+    const payload = {
+      token: APPS_SCRIPT_TOKEN,
+      registros: [montarRegistroVocativo(vocNorm)]
+    };
+
+    const body = new URLSearchParams();
+body.set("payload", JSON.stringify(payload));
+
+const response = await fetch(APPS_SCRIPT_URL, {
+  method: "POST",
+  headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+  body
+});
+    const texto = await response.text();
+
+
+    await carregarObservacoesHojeEPreencher();
+
+
+
+  } catch (e) {
+    alert("❌ Erro ao salvar: " + e.message);
+  } finally {
+    lockButton(btn, false);
+    savingVoc.delete(vocNorm);
+  }
+}
+
+async function carregarObservacoesHojeEPreencher() {
+  try {
+    // anti-cache
+    const url = `${APPS_SCRIPT_URL}?action=obsHoje&token=${encodeURIComponent(APPS_SCRIPT_TOKEN)}&t=${Date.now()}`;
+    const resp = await fetch(url, { cache: "no-store" });
+
+    const raw = await resp.text();
+    let json;
+
+    try {
+      json = JSON.parse(raw);
+    } catch (e) {
+      console.warn("Resposta do Apps Script não é JSON válido:", raw);
+      return;
+    }
+
+    if (!json || !json.ok) {
+      console.warn("Apps Script retornou ok=false:", json);
+      return;
+    }
+
+    // Aceita data como objeto {VOC: "obs"} OU como array [{Vocativo, Observacao}, ...]
+    const mapa = {};
+
+    if (Array.isArray(json.data)) {
+      json.data.forEach(row => {
+        const voc = normalizar(row.Vocativo || row.vocativo || row.VOCATIVO || "");
+        const obs = String(row.Observacao || row.observacao || row.OBSERVACAO || "").trim();
+        if (voc) mapa[voc] = obs;
+      });
+    } else if (json.data && typeof json.data === "object") {
+      Object.keys(json.data).forEach(voc => {
+        const vocNorm = normalizar(voc);
+        mapa[vocNorm] = String(json.data[voc] || "").trim();
+      });
+    }
+
+    // guarda original (hoje)
+    window.obsHojeOriginal = { ...mapa };
+
+    // aplica
+    aplicarObservacoesNoDOM(mapa);
+
+  } catch (e) {
+    console.warn("Erro ao carregar observações do dia:", e);
+  }
+}
+
+function aplicarObservacoesNoDOM(mapa) {
+  Object.keys(mapa || {}).forEach(voc => {
+    const vocNorm = normalizar(voc);
+    const texto = String(mapa[voc] || "").trim();
+
+    // ✅ Preenche apenas o textbox
+    const t = document.querySelector(`textarea[data-vocativo="${vocNorm}"]`);
+    if (t) t.value = texto;
+  });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("btnSalvarObs");
+  if (btn) btn.addEventListener("click", salvarObservacoes);
+});
+
+// ✅ Impede que teclado/clique dentro do textarea acione abrir/fechar o <details>
+// ✅ Espaço NÃO abre o dropdown, mas continua digitando normalmente no textarea
+document.addEventListener("keydown", (e) => {
+  const t = e.target;
+  if (!t || !t.matches('textarea[data-vocativo]')) return;
+
+  if (e.key === " " || e.code === "Space" || e.keyCode === 32) {
+
+    // impede o toggle do <details>
+    e.preventDefault();
+    e.stopPropagation();
+
+    // insere o espaço manualmente no ponto do cursor
+    const start = t.selectionStart ?? t.value.length;
+    const end   = t.selectionEnd ?? t.value.length;
+
+    t.value = t.value.slice(0, start) + " " + t.value.slice(end);
+
+    const pos = start + 1;
+    t.setSelectionRange(pos, pos);
+
+    // dispara evento input normal
+    t.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+}, true);
+
+
+// clique dentro do textarea não abre/fecha o dropdown
+document.addEventListener("click", (e) => {
+  const t = e.target;
+  if (t && t.matches('textarea[data-vocativo]')) {
+    e.stopPropagation();
+  }
+}, true);
+
+</script>
+
+<div id="paginaAnalise" style="display:none;" class="container">
+
+  <div class="card" style="margin-top:20px;">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+  <h2 style="margin:0;">🚨 Análise Programação D-1</h2>
+
+  <!-- AÇÕES NO TOPO (ALINHADAS À DIREITA) -->
+  <div style="display:flex; gap:10px; justify-content:flex-end; align-items:center;">
+    <button class="btn secondary" onclick="voltarPaginaPrincipal()">
+      ⬅ Voltar
+    </button>
+
+    <button class="btn" id="btnSalvarObs" type="button">
+      💾 Salvar tudo
+    </button>
+  </div>
+</div>
+
+    <div style="display:flex; gap:10px; margin-top:15px; margin-bottom:12px; align-items:center;">
+      
+    
+
+      <select id="filterVeiculoPopup" multiple size="4"
+        style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
+      >
+        <option value="all">✅ Selecionar Todos</option>
+        <option value="carregado">🔵 Carregados Hoje</option>
+        <option value="programado">🟢 Programados</option>
+        <option value="sem">🔴 Não Programados</option>
+      </select>
+
+      <select id="filtroDataLimitePopup"
+          style="width:180px; padding:6px 10px;">
+        <option value="ateAmanha">⏳ Análise D-1</option>
+        <option value="all">📅 Todos</option>
+      </select>
+
+      <input id="searchClientePopup" type="text"
+        placeholder="🔍 Filtrar por Cliente..."
+        style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
+      />
+      <input id="searchDestinoPopup" type="text"
+        placeholder="📍 Filtrar por Destino..."
+        style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
+      />
+      <input id="searchUFDestinoPopup" type="text"
+        placeholder="🗺️ Filtrar por UF Destino..."
+        style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
+      />
+
+
+    </div>
+    <div id="resumoAnalise" class="summary" style="margin-top:10px;"></div>
+    
+    <div id="almoxList" style="margin-top:10px; font-size:13px;"></div>
+
+  </div>
+
+</div>
+
+
+
+</body>
+</html>
