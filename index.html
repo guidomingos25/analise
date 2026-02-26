@@ -2200,9 +2200,8 @@ Object.keys(mapaDias).forEach(k => {
 
 // ✅ status do veículo em texto (para gravar na planilha)
 let statusVeiculo = "NAO PROGRAMADO";
-if (temCarregadoHoje) statusVeiculo = "CARREGADO HOJE";
-else if (temProgramado) statusVeiculo = "PROGRAMADO";
-else if (temNaoProgramado) statusVeiculo = "NAO PROGRAMADO";
+if (temProgramado) statusVeiculo = "PROGRAMADO";
+else statusVeiculo = "NAO PROGRAMADO";
 
 // ✅ grava no snapshot para o botão Salvar usar
 snapshotVocativos[normalizar(almox)] = {
@@ -2444,7 +2443,7 @@ html += `
       onclick="addObsPreset(event, '${normalizar(almox)}', 'RETIRA')">🚚 RETIRA</button>
 
     <button class="quickBtn" type="button"
-      onclick="addObsPreset(event, '${normalizar(almox)}', 'VEÍCULO CARREGADO HOJE')">🔵 VEÍCULO CARREGADO HOJE</button>
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'CARREGADO HOJE')">🔵 CARREGADO HOJE</button>
 
     <button class="quickBtn" type="button"
   onclick="addObsPreset(event, '${normalizar(almox)}', 'MEDIANTE AUTORIZAÇÃO')">✅ MEDIANTE AUTORIZAÇÃO</button>
