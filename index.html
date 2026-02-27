@@ -2207,9 +2207,19 @@ let statusVeiculo = "NAO PROGRAMADO";
 if (temProgramado) statusVeiculo = "PROGRAMADO";
 else statusVeiculo = "NAO PROGRAMADO";
 
-// ✅ grava no snapshot para o botão Salvar usar
+// ✅ pega clientes do vocativo a partir do PVD (info.notas)
+const clientesUnicos = Array.from(new Set(
+  (info.notas || [])
+    .map(n => (n.cliente || "").toString().trim())
+    .filter(Boolean)
+));
+
+// regra simples: se tiver 1 → usa 1; se tiver vários → junta
+const clienteResumo = clientesUnicos.join(" / "); // ou ", " se preferir
+
 snapshotVocativos[normalizar(almox)] = {
   Vocativo: almox,
+  Cliente: clienteResumo, // ✅ NOVO
   StatusVeiculo: statusVeiculo,
   Total_notas: info.qtd || 0,
   EntradaEmAtraso: qtdDentroRegra || 0,
@@ -2648,18 +2658,19 @@ function montarRegistroVocativo(voc) {
   // ✅ aqui estava um risco: snapshotVocativos[voc] pode falhar se voc vier diferente
   const s = snapshotVocativos[vocNorm] || snapshotVocativos[voc] || {};
 
-  return {
-    DataRef: hojeISO(), // ✅ SEMPRE A DATA DE HOJE
-    Vocativo: normalizar(s.Vocativo || voc),
-    StatusVeiculo: s.StatusVeiculo || "",
-    Total_notas: Number(s.Total_notas || 0),
-    EntradaEmAtraso: Number(s.EntradaEmAtraso || 0),
-    Atrasadas: Number(s.Atrasadas || 0),
-    Vencendo_hoje: Number(s.Vencendo_hoje || 0),
-    Vencendo_amanhã: Number(s.Vencendo_amanhã || 0),
-    NFsEntradaAntesUltimoCarregamento: Number(s.NFsEntradaAntesUltimoCarregamento || 0),
-    Observacao: observacao
-  };
+return {
+  DataRef: hojeISO(),
+  Vocativo: normalizar(s.Vocativo || voc),
+  Cliente: (s.Cliente || ""), // ✅ NOVO
+  StatusVeiculo: s.StatusVeiculo || "",
+  Total_notas: Number(s.Total_notas || 0),
+  EntradaEmAtraso: Number(s.EntradaEmAtraso || 0),
+  Atrasadas: Number(s.Atrasadas || 0),
+  Vencendo_hoje: Number(s.Vencendo_hoje || 0),
+  Vencendo_amanhã: Number(s.Vencendo_amanhã || 0),
+  NFsEntradaAntesUltimoCarregamento: Number(s.NFsEntradaAntesUltimoCarregamento || 0),
+  Observacao: observacao
+};
 }
 
 async function salvarVocativo(voc, ev) {
