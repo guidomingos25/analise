@@ -342,11 +342,107 @@ let resultadoFiltrado = [];
 let mostrarAtrasados = true;
 let snapshotVocativos = {}; 
 
+// ✅ cache do que veio da planilha (HOJE)
+window.statusHojeServidor = window.statusHojeServidor || {}; // { VOCNORM: "PROGRAMADO" | "NAO PROGRAMADO" }
+window.obsHojeServidor    = window.obsHojeServidor || {};    // { VOCNORM: "texto..." }
+window._cacheHojeISO      = window._cacheHojeISO || "";      // "YYYY-MM-DD"
+
 // guarda o que o usuário digitou (mesmo sem salvar)
 window.obsDrafts = window.obsDrafts || {};  // { VOCATIVO_NORM: "texto..." }
 
 let savingAll = false;
 const savingVoc = new Set();
+
+async function carregarObsEStatusHojeCache(force = false) {
+  const hoje = hojeISO();
+
+  // ✅ se já buscou hoje e não forçado, reaproveita
+  if (!force && window._cacheHojeISO === hoje) {
+    return {
+      obs: window.obsHojeServidor || {},
+      status: window.statusHojeServidor || {}
+    };
+  }
+
+  try {
+    const url = `${APPS_SCRIPT_URL}?action=obsHoje&token=${encodeURIComponent(APPS_SCRIPT_TOKEN)}&t=${Date.now()}`;
+    const resp = await fetch(url, { cache: "no-store" });
+    const raw = await resp.text();
+
+    let json;
+    try { json = JSON.parse(raw); }
+    catch { 
+      console.warn("Apps Script não retornou JSON:", raw);
+      return { obs:{}, status:{} };
+    }
+
+    if (!json || !json.ok) {
+      console.warn("Apps Script retornou ok=false:", json);
+      return { obs:{}, status:{} };
+    }
+
+    const mapaObs = {};
+    const mapaStatus = {};
+
+    if (Array.isArray(json.data)) {
+      json.data.forEach(row => {
+        const voc = normalizar(row.Vocativo || row.vocativo || row.VOCATIVO || "");
+        if (!voc) return;
+
+        const obs = String(row.Observacao || row.observacao || row.OBSERVACAO || "").trim();
+
+        const stRaw = row.StatusVeiculo || row.statusVeiculo || row.STATUSVEICULO || "";
+const st = parseStatus(stRaw);
+
+        mapaObs[voc] = obs;
+        mapaStatus[voc] = st;
+      });
+    }
+
+    // ✅ grava cache em memória
+    window._cacheHojeISO = hoje;
+    window.obsHojeServidor = mapaObs;
+    window.statusHojeServidor = mapaStatus;
+
+    return { obs: mapaObs, status: mapaStatus };
+
+  } catch (e) {
+    console.warn("Erro ao buscar obs/status hoje:", e);
+    return { obs:{}, status:{} };
+  }
+}
+
+function capturarStatusDoDOM(){
+  window.statusDrafts = window.statusDrafts || {};
+  document.querySelectorAll('select[data-status-vocativo]').forEach(sel => {
+    const voc = normalizar(sel.getAttribute('data-status-vocativo') || "");
+    if(!voc) return;
+    window.statusDrafts[voc] = (sel.value === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO";
+  });
+}
+
+// aplica overrides (statusDrafts) no snapshot + atualiza badge + select
+function reaplicarStatusDraftsNoSnapshotEUI(){
+  const drafts = window.statusDrafts || {};
+  Object.keys(drafts).forEach(vocNorm => {
+    const st = drafts[vocNorm];
+
+    // aplica no snapshot
+    snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
+    snapshotVocativos[vocNorm].StatusVeiculo = st;
+
+    // aplica no select
+    const sel = getStatusSelect(vocNorm);
+    if (sel) sel.value = st;
+
+    // aplica no badge
+    const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
+    if (badgeDiv) {
+      const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
+      badgeDiv.innerHTML = renderStatusBadge(st, temCarregadoHoje);
+    }
+  });
+}
 
 function lockButton(btn, locked, textWhile){
   if(!btn) return;
@@ -629,7 +725,15 @@ btnDateFilter.addEventListener("click", function() {
 
 const chkMostrarAtrasados = document.getElementById("chkMostrarAtrasados");
 
+function parseStatus(stRaw){
+  const s = normalizar(stRaw || "");
 
+  // aceita variações comuns
+  if (s === "PROGRAMADO") return "PROGRAMADO";
+
+  // qualquer outra coisa cai como NÃO PROGRAMADO
+  return "NAO PROGRAMADO";
+}
 
 function normalizar(txt){
   return (txt||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().trim();
@@ -1445,8 +1549,11 @@ function clearObs(ev, vocNorm){
   t.dispatchEvent(new Event("input", { bubbles:true }));
 }
 
-function listarAlmoxPendentes(){
+async function listarAlmoxPendentes(){
     capturarObsDoDOM();
+    capturarStatusDoDOM(); // ✅ NOVO: não perder status manual ao filtrar
+          // ✅ sempre busca status do dia na planilha antes de montar a tela (usa cache)
+  const { obs: obsHoje, status: statusHoje } = await carregarObsEStatusHojeCache(false);
 
   // 🔹 Hoje e amanhã
   const hoje = new Date();
@@ -1846,7 +1953,22 @@ else if (veiculos.length === 0) {
   temNaoProgramado = true;
 }
 
+// ===============================
+// ✅ STATUS EFETIVO (manual tem prioridade)
+// ===============================
+const vocNormAtual = normalizar(almox);
 
+const overrideManual = window.statusDrafts?.[vocNormAtual];              // prioridade 1
+const overrideServidor = window.statusHojeServidor?.[vocNormAtual];      // prioridade 2
+
+if (overrideManual) {
+  temProgramado = (overrideManual === "PROGRAMADO");
+  temNaoProgramado = !temProgramado;
+
+} else if (overrideServidor) {
+  temProgramado = (overrideServidor === "PROGRAMADO");
+  temNaoProgramado = !temProgramado;
+}
 
 if (filtroVeiculo.length > 0) {
 
@@ -2221,12 +2343,14 @@ snapshotVocativos[normalizar(almox)] = {
   Vocativo: almox,
   Cliente: clienteResumo, // ✅ NOVO
   StatusVeiculo: statusVeiculo,
+  TemCarregadoHoje: temCarregadoHoje === true,
   Total_notas: info.qtd || 0,
   EntradaEmAtraso: qtdDentroRegra || 0,
   Atrasadas: dMaisVoc || 0,
   Vencendo_hoje: d0Voc || 0,
   Vencendo_amanhã: dMenos1Voc || 0,
   NFsEntradaAntesUltimoCarregamento: notasAntesCarregamento || 0
+  
 };
 
 
@@ -2282,9 +2406,24 @@ html += `
 
         </div>
 
-        <div class="badge-container">
-          ${statusVeiculoBadge}
-        </div>
+        <div class="badge-container" style="align-items:center;">
+  <div id="statusBadge-${normalizar(almox)}">
+    ${statusVeiculoBadge}
+  </div>
+
+  <div style="display:flex; align-items:center; gap:8px; margin-left:10px;">
+    
+
+    <select
+      data-status-vocativo="${normalizar(almox)}"
+      style="padding:6px 10px; border-radius:10px; border:1px solid #d1d5db; font-weight:800;"
+      onchange="onStatusManualChange('${normalizar(almox)}', this.value, event)"
+    >
+      <option value="PROGRAMADO">🟢 PROGRAMADO</option>
+      <option value="NAO PROGRAMADO">🔴 NÃO PROGRAMADO</option>
+    </select>
+  </div>
+</div>
 
       </div>
 
@@ -2505,10 +2644,23 @@ html += `
   });
 
   document.getElementById("almoxList").innerHTML = html || "<i>Nenhum almox crítico</i>";
-  restaurarObsNoDOM();
-  renderResumoAnalise(stats);
-  abrirPaginaAnalise();
-    carregarObservacoesHojeEPreencher();
+
+restaurarObsNoDOM();
+
+// 1) aplica defaults calculados (mas agora snapshot já pode ter status do servidor)
+aplicarStatusDefaultNoDOM();
+
+// 2) aplica status do servidor (HOJE) sem sobrescrever manual
+aplicarStatusNoDOM(window.statusHojeServidor || {});
+
+// 3) aplica observações do servidor (HOJE) sem sobrescrever draft digitado
+aplicarObservacoesNoDOM(window.obsHojeServidor || {});
+
+// 4) reaplica o manual por cima de tudo
+reaplicarStatusDraftsNoSnapshotEUI();
+
+renderResumoAnalise(stats);
+abrirPaginaAnalise();
 
 
   const inputPopup = document.getElementById("searchClientePopup");
@@ -2534,6 +2686,22 @@ html += `
   }
 
 
+}
+
+function aplicarStatusDefaultNoDOM(){
+  Object.keys(snapshotVocativos || {}).forEach(vocNorm => {
+    const sel = getStatusSelect(vocNorm);
+    if (!sel) return;
+
+    // se usuário já mexeu manualmente, mantém
+    if (window.statusDrafts && window.statusDrafts[vocNorm]) return;
+
+    const status = snapshotVocativos[vocNorm].StatusVeiculo || "NAO PROGRAMADO";
+    sel.value = status;
+
+    // ✅ NÃO grave default em statusDrafts aqui
+    // statusDrafts é SOMENTE para mudança manual do usuário
+  });
 }
 
 function abrirPaginaAnalise(){
@@ -2657,12 +2825,14 @@ function montarRegistroVocativo(voc) {
 
   // ✅ aqui estava um risco: snapshotVocativos[voc] pode falhar se voc vier diferente
   const s = snapshotVocativos[vocNorm] || snapshotVocativos[voc] || {};
+  const sel = getStatusSelect(vocNorm);
+const statusAtual = sel?.value || (window.statusDrafts?.[vocNorm]) || s.StatusVeiculo || "NAO PROGRAMADO";
 
 return {
   DataRef: hojeISO(),
   Vocativo: normalizar(s.Vocativo || voc),
   Cliente: (s.Cliente || ""), // ✅ NOVO
-  StatusVeiculo: s.StatusVeiculo || "",
+  StatusVeiculo: statusAtual,
   Total_notas: Number(s.Total_notas || 0),
   EntradaEmAtraso: Number(s.EntradaEmAtraso || 0),
   Atrasadas: Number(s.Atrasadas || 0),
@@ -2721,6 +2891,8 @@ if (!response.ok) {
 
     // mantém cache local coerente
     window.obsDrafts = window.obsDrafts || {};
+    // guarda override manual do status (mesmo sem salvar)
+    window.statusDrafts = window.statusDrafts || {}; // { VOCATIVO_NORM: "PROGRAMADO" | "NAO PROGRAMADO" }
     window.obsDrafts[vocNorm] = obs;
 
     window.obsHojeOriginal = window.obsHojeOriginal || {};
@@ -2759,17 +2931,20 @@ async function carregarObservacoesHojeEPreencher() {
 
     // Aceita data como objeto {VOC: "obs"} OU como array [{Vocativo, Observacao}, ...]
     const mapa = {};
+    const mapaStatus = {};
 
     if (Array.isArray(json.data)) {
       json.data.forEach(row => {
         const voc = normalizar(row.Vocativo || row.vocativo || row.VOCATIVO || "");
         const obs = String(row.Observacao || row.observacao || row.OBSERVACAO || "").trim();
-        if (voc) mapa[voc] = obs;
-      });
-    } else if (json.data && typeof json.data === "object") {
-      Object.keys(json.data).forEach(voc => {
-        const vocNorm = normalizar(voc);
-        mapa[vocNorm] = String(json.data[voc] || "").trim();
+
+        const stRaw = row.StatusVeiculo || row.statusVeiculo || row.STATUSVEICULO || "";
+const st = parseStatus(stRaw);
+
+        if (voc) {
+          mapa[voc] = obs;
+          mapaStatus[voc] = st;
+        }
       });
     }
 
@@ -2778,10 +2953,95 @@ async function carregarObservacoesHojeEPreencher() {
 
     // aplica
     aplicarObservacoesNoDOM(mapa);
+    aplicarStatusNoDOM(mapaStatus);
 
   } catch (e) {
     console.warn("Erro ao carregar observações do dia:", e);
   }
+}
+
+function getStatusSelect(vocNorm){
+  return document.querySelector(`select[data-status-vocativo="${vocNorm}"]`);
+}
+
+function renderStatusBadge(status, temCarregadoHoje){
+  // mantém sua regra visual: carregado hoje pode coexistir
+  let html = "";
+
+  if (temCarregadoHoje) {
+    html += `
+      <span style="
+        background:#dbeafe; color:#1e3a8a; border:2px solid #2563eb;
+        padding:6px 12px; border-radius:999px; font-size:12px; font-weight:900; margin-right:6px;
+      ">🔵 CARREGADO HOJE</span>
+    `;
+  }
+
+  if (status === "PROGRAMADO") {
+    html += `
+      <span style="
+        background:#dcfce7; color:#14532d; border:2px solid #22c55e;
+        padding:6px 12px; border-radius:999px; font-size:12px; font-weight:900;
+      ">🟢 PROGRAMADO</span>
+    `;
+  } else {
+    html += `
+      <span style="
+        background:#fee2e2; color:#7f1d1d; border:2px solid #ef4444;
+        padding:6px 12px; border-radius:999px; font-size:12px; font-weight:900;
+      ">🔴 NÃO PROGRAMADO</span>
+    `;
+  }
+
+  return html;
+}
+
+// quando usuário muda no select
+function onStatusManualChange(vocNorm, value, ev){
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+
+  const status = (value === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO";
+
+  // cache local
+  window.statusDrafts = window.statusDrafts || {};
+  window.statusDrafts[vocNorm] = status;
+
+  // garante que snapshot esteja coerente (isso que vai para planilha)
+  snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
+  snapshotVocativos[vocNorm].StatusVeiculo = status;
+
+  // atualiza badge na hora
+  const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
+  if (badgeDiv) {
+    const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
+    badgeDiv.innerHTML = renderStatusBadge(status, temCarregadoHoje);
+  }
+  listarAlmoxPendentes();
+}
+
+// aplica os status carregados do servidor (sem sobrescrever se usuário já mexeu manualmente)
+function aplicarStatusNoDOM(mapaStatus){
+  Object.keys(mapaStatus || {}).forEach(voc => {
+    const vocNorm = normalizar(voc);
+    const status = parseStatus(mapaStatus[voc]);
+
+    // se usuário já alterou manualmente, não sobrescreve
+    if (window.statusDrafts && window.statusDrafts[vocNorm]) return;
+
+    const sel = getStatusSelect(vocNorm);
+    if (sel) sel.value = status;
+
+    
+    snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
+    snapshotVocativos[vocNorm].StatusVeiculo = status;
+
+    // atualiza badge
+    const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
+    if (badgeDiv) {
+      const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
+      badgeDiv.innerHTML = renderStatusBadge(status, temCarregadoHoje);
+    }
+  });
 }
 
 function aplicarObservacoesNoDOM(mapa) {
