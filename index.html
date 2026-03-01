@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Confronto de Relatórios - Veículos Carregados x PVD</title>
+  <title>ANÁLISE CARREGAMENTO</title>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -157,12 +157,12 @@ input[type="file"], .search, select{
 
 
 
-.badge.red{
+.badge.green{
   background:#dcfce7;
   color:#14532d;
   border:1px solid #16a34a;
 }
-.badge.green{
+.badge.red{
   background:#fee2e2;
   color:#7f1d1d;
   border:1px solid #dc2626;
@@ -272,7 +272,7 @@ tbody tr:hover{
 <div id="paginaPrincipal" class="container">
 
 
-<h1>📊 Confronto de Relatórios (Veículos Carregados x PVD)</h1>
+<h1>📊 ANÁLISE CARREGAMENTO</h1>
 
 <div class="grid">
   <div class="card">
@@ -1206,26 +1206,7 @@ function exportarExcel() {
 
 
 
-function limparTudo() {
-  dataRows = [];
-  detalhadoRows = [];
-  resultado = [];
 
-  fileData.value = "";
-  fileDetalhado.value = "";
-
-  resultsDiv.innerHTML = "";
-  summaryDiv.innerHTML = "";
-  searchInput.value = "";
-  filterSelect.value = "all";
-
-  btnProcessar.disabled = true;
-  btnExportarCSV.disabled = true;
-  searchInput.disabled = true;
-  filterSelect.disabled = true;
-
-  alert("Dados limpos com sucesso.");
-}
 
 
 fileData.onchange=async e=>{
@@ -1549,6 +1530,31 @@ function clearObs(ev, vocNorm){
   t.dispatchEvent(new Event("input", { bubbles:true }));
 }
 
+function toDateOnly(d){
+  const x = parsePossibleDate(d);
+  if(!x) return null;
+  const y = new Date(x);
+  y.setHours(0,0,0,0);
+  return y;
+}
+
+// dias inteiros (0 = hoje, 1 = ontem, 6 = 6 dias atrás)
+function diasDesdeHoje(data){
+  const d = toDateOnly(data);
+  if(!d) return null;
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+  return Math.floor((hoje.getTime() - d.getTime()) / 86400000);
+}
+
+// pega a maior entre Check-in e Entrada (date-only)
+function maiorDataEntradaOuCheckin(dtCheck, dtEntr){
+  const c = toDateOnly(dtCheck);
+  const e = toDateOnly(dtEntr);
+  if(c && e) return (c > e) ? c : e;
+  return c || e || null;
+}
+
 async function listarAlmoxPendentes(){
     capturarObsDoDOM();
     capturarStatusDoDOM(); // ✅ NOVO: não perder status manual ao filtrar
@@ -1560,6 +1566,8 @@ async function listarAlmoxPendentes(){
   hoje.setHours(0,0,0,0);
   const amanha = new Date(hoje);
   amanha.setDate(hoje.getDate()+1);
+
+  
   // 🔽 NOVO FILTRO DATA LIMITE
   const modoDataLimite = 
     document.getElementById("filtroDataLimitePopup")?.value || "all";
@@ -1663,7 +1671,8 @@ async function listarAlmoxPendentes(){
         dtPrev,
         dtCarreg,
         dtEntrega: row["DT. ENTREGA"] || "",
-        destinos: row["DESTINOS"] || "",   // 👈 NOVO
+        veiculoSolicitado: row["VEÍCULO SOLICITADO"] || "",   // ✅ NOVO
+        destinos: row["DESTINOS"] || "",
         id: row["ID"] || "",
         refs: row["REFERENCIAS"] || ""
       });
@@ -1715,6 +1724,50 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
     document.getElementById("searchUFDestinoPopup")?.value || ""
   );
 
+  function notaPassaFiltros(n) {
+  // ====== FILTROS TEXTO ======
+  if (termoCliente && !normalizar(n.cliente || "").includes(termoCliente)) return false;
+  if (termoDestino && !normalizar(n.destino || "").includes(termoDestino)) return false;
+
+  if (termoUFDestino) {
+    const uf = normalizar(n.uf || "");
+    if (uf !== termoUFDestino) return false; // comparação EXATA
+  }
+
+  // ====== FILTRO DATA LIMITE (o mesmo que você usa para “mostrar vocativo”) ======
+  if (modoDataLimite && modoDataLimite !== "all") {
+    const dtLimEmb  = toDateOnly(n.dtLim);          // limite embarque
+    const dtEntrada = toDateOnly(n.entrada);        // entrada NF
+    const dtCheckin = toDateOnly(n.checkin);        // check-in
+    const dtMaior   = maiorDataEntradaOuCheckin(dtCheckin, dtEntrada);
+
+    if (modoDataLimite === "ateAmanha") {
+      if (!dtLimEmb) return false;
+      return dtLimEmb.getTime() <= amanha.getTime();
+    }
+
+    if (modoDataLimite === "entradaNF_Atraso6") {
+      if (!dtEntrada) return false;
+      const dias = diasDesdeHoje(dtEntrada);
+      return (dias != null && dias >= 6);
+    }
+
+    if (modoDataLimite === "maxEntCheck_Atraso6") {
+      if (!dtMaior) return false;
+      const dias = diasDesdeHoje(dtMaior);
+      return (dias != null && dias >= 6);
+    }
+
+    if (modoDataLimite === "limEmb_Atraso6") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      return (dias != null && dias > 6); // ✅ agora é >6
+    }
+  }
+
+  return true;
+}
+
 
   // ===============================
   // MONTA HTML EXPANSÍVEL
@@ -1745,18 +1798,50 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
     // =====================================
     // FILTRO POR DATA LIMITE (VOCATIVO)
     // =====================================
+    // =====================================
+// FILTRO POR DATA LIMITE (VOCATIVO)
+// =====================================
+if (modoDataLimite && modoDataLimite !== "all") {
+
+  const passa = info.notas.some(n => {
+
+    const dtLimEmb  = toDateOnly(n.dtLim);          // Limite embarque
+    const dtEntrada = toDateOnly(n.entrada);        // Entrada NF
+    const dtCheckin = toDateOnly(n.checkin);        // Check-in
+    const dtMaior   = maiorDataEntradaOuCheckin(dtCheckin, dtEntrada);
+
+    // 1) D-1: Limite embarque <= amanhã
     if (modoDataLimite === "ateAmanha") {
-
-      const temNFValida = info.notas.some(n => {
-        const dt = parsePossibleDate(n.dtLim);
-        if (!dt) return false;
-
-        dt.setHours(0,0,0,0);
-        return dt.getTime() <= amanha.getTime();
-      });
-
-      if (!temNFValida) return; // NÃO MOSTRA ESSE ALMOX
+      if (!dtLimEmb) return false;
+      return dtLimEmb.getTime() <= amanha.getTime();
     }
+
+    // 2) Entrada NF atrasada >= 6 dias (passado)
+    if (modoDataLimite === "entradaNF_Atraso6") {
+      if (!dtEntrada) return false;
+      const dias = diasDesdeHoje(dtEntrada);
+      return (dias != null && dias >= 6);
+    }
+
+    // 3) Maior data (Entrada/Check-in) atrasada >= 6 dias (passado)
+    if (modoDataLimite === "maxEntCheck_Atraso6") {
+      if (!dtMaior) return false;
+      const dias = diasDesdeHoje(dtMaior);
+      return (dias != null && dias >= 6);
+    }
+
+    // 4) Limite embarque atrasado >= 6 dias (passado)
+    if (modoDataLimite === "limEmb_Atraso6") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      return (dias != null && dias > 6); // ✅ agora é >6
+    }
+
+    return true;
+  });
+
+  if (!passa) return; // não mostra esse almox
+}
 
         // ===============================
     // JANELAS FIXAS (ENTREGA / CARREGAMENTO)
@@ -1828,10 +1913,10 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       if (!temUFDestino) return;
     }
 
-
+    const notasFiltradas = (info.notas || []).filter(notaPassaFiltros);
 
     // ordena datas das notas
-    info.notas.sort((a,b)=>{
+    notasFiltradas.sort((a,b)=>{
       const da = parsePossibleDate(a.dtLim);
       const db = parsePossibleDate(b.dtLim);
 
@@ -1842,6 +1927,14 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       return da - db;
     });
 
+    // qtd D-1 considerando os filtros e a regra <= amanhã
+const qtdD1Filtrado = notasFiltradas.reduce((acc, n) => {
+  const dtLimEmb = toDateOnly(n.dtLim);
+  if (dtLimEmb && dtLimEmb.getTime() <= amanha.getTime()) return acc + 1;
+  return acc;
+}, 0);
+// ✅ qtd D-1 TOTAL do vocativo (SEM filtros de Cliente/Destino/UF/DataLimite)
+const qtdD1TotalSemFiltro = Number(info.qtd || 0);
 
     const veiculos = almoxUltimoVeiculo[almox] || [];
     
@@ -1993,11 +2086,11 @@ if (filtroVeiculo.length > 0) {
 
 
     stats.totalAlmox++;
-    stats.totalNotas += info.qtd;
+    stats.totalNotas += qtdD1Filtrado;
 
     // 🔥 TOTAL GERAL PVD RESPEITANDO FILTROS
 if (almoxTotalPVD[almox]) {
-  stats.totalNotasPVDGeral += almoxTotalPVD[almox].totalRegistros;
+  stats.totalNotasPVDGeral += notasFiltradas.length;
 }
 
 if (temCarregadoHoje) stats.carregadosHoje++;
@@ -2083,7 +2176,7 @@ else if (temNaoProgramado) {
     let mapaDias = {};
 
 
-    const notasHTML = info.notas.map(n => {
+    const notasHTML = notasFiltradas.map(n => {
 
     const dtLimEmb = parsePossibleDate(n.dtLim);
 const dtLimEnt = parsePossibleDate(n.finalEntrega);
@@ -2331,8 +2424,7 @@ else statusVeiculo = "NAO PROGRAMADO";
 
 // ✅ pega clientes do vocativo a partir do PVD (info.notas)
 const clientesUnicos = Array.from(new Set(
-  (info.notas || [])
-    .map(n => (n.cliente || "").toString().trim())
+  (notasFiltradas || []).map(n => (n.cliente || "").toString().trim())
     .filter(Boolean)
 ));
 
@@ -2356,10 +2448,10 @@ snapshotVocativos[normalizar(almox)] = {
 
 
     const resumoVeic = veiculos.length
-      ? veiculos.map(v =>
-          `• ID ${v.id} | Prog: ${formatDateBRLocal(v.dtPrev)} | Carreg: ${formatDateBRLocal(v.dtCarreg)} | Destinos: ${v.destinos} | Entrega: ${v.dtEntrega}`
-        ).join("<br>")
-      : "Nenhum encontrado";
+    ? veiculos.map(v =>
+        `• ID ${v.id} | Prog: ${formatDateBRLocal(v.dtPrev)} | Carreg: ${formatDateBRLocal(v.dtCarreg)} | Destinos: ${v.destinos} | Entrega: ${formatDateBRLocal(v.dtEntrega)} (Veículo Solicitado: ${v.veiculoSolicitado || ""})`
+      ).join("<br>")
+    : "Nenhum encontrado";
 
     
 
@@ -2430,7 +2522,7 @@ html += `
 
       <!-- LINHA 2 -->
       <div style="margin-top:6px; font-size:13px; font-weight:700;">
-        📦 Notas <= D-1: ${info.qtd}
+        📦 Notas <= D-1: ${qtdD1TotalSemFiltro}
       </div>
 
       <!-- LINHA 3 - INDICADORES -->
@@ -2606,13 +2698,13 @@ html += `
 
     <button class="quickBtn" type="button"
       onclick="addObsPreset(event, '${normalizar(almox)}', 'TEMOS PRAZO')">⏱️ TEMOS PRAZO</button>
+ 
+</div>
 
-  
-  <textarea
+ <textarea
     placeholder="Digite uma observação para este vocativo..."
     data-vocativo="${normalizar(almox)}"
   ></textarea>
-</div>
 
 <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
   <button class="btn secondary" type="button"
@@ -2738,7 +2830,6 @@ searchInput.oninput=aplicarFiltrosEBusca;
 filterSelect.onchange=aplicarFiltrosEBusca;
 
 btnExportarCSV.onclick = exportarExcel;
-btnLimpar.onclick = limparTudo;
 
 dateFilter.onchange = aplicarFiltrosEBusca;
 
@@ -3144,7 +3235,7 @@ document.addEventListener("input", (e) => {
   <div class="card" style="margin-top:20px;">
     
     <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-  <h2 style="margin:0;">🚨 Análise Programação D-1</h2>
+  <h2 style="margin:0;">🚨 ANÁLISE PROGRAMAÇÃO</h2>
 
   <!-- AÇÕES NO TOPO (ALINHADAS À DIREITA) -->
   <div style="display:flex; gap:10px; justify-content:flex-end; align-items:center;">
@@ -3171,10 +3262,12 @@ document.addEventListener("input", (e) => {
         <option value="sem">🔴 Não Programados</option>
       </select>
 
-      <select id="filtroDataLimitePopup"
-          style="width:180px; padding:6px 10px;">
+      <select id="filtroDataLimitePopup" style="width:220px; padding:6px 10px;">
+        <option value="all" selected>📅 Todos</option>
         <option value="ateAmanha">⏳ Análise D-1</option>
-        <option value="all">📅 Todos</option>
+        <option value="entradaNF_Atraso6">🧾 Entrada ≥ 6 dias</option>
+        <option value="maxEntCheck_Atraso6">🕒 Entrada/Check-in ≥ 6 dias</option>
+        <option value="limEmb_Atraso6">📅 Limite Embarque > 6 dias</option>
       </select>
 
       <input id="searchClientePopup" type="text"
