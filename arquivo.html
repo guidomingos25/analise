@@ -12,6 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
 
+  
 
   <style>
     /* === SEU CSS ORIGINAL (INALTERADO) === */
@@ -214,7 +215,56 @@ tbody tr:hover{
   margin-top: 12px;
   flex-wrap: wrap;         /* evita quebrar layout */
 }
+.obsQuick{
+  display:flex;
+  gap:6px;          /* menos espaço entre botões */
+  flex-wrap:wrap;
+  margin:6px 0 8px;
+}
 
+.quickBtn{
+  cursor:pointer;
+  border:1px solid #d1d5db;
+  background:#f8fafc;
+  color:#111827;
+
+  padding:4px 8px;          /* menor */
+  border-radius:8px;        /* menor */
+  font-size:11px;           /* menor */
+  font-weight:700;          /* menos pesado */
+  line-height:1;            /* evita altura extra */
+}
+
+.quickBtn:hover{ background:#e5e7eb; }
+
+.obsBox{
+    margin-top:12px;
+    background:#ffffff;
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    padding:10px;
+  }
+  .obsBox label{
+    display:block;
+    font-size:12px;
+    font-weight:900;
+    color:#374151;
+    margin-bottom:6px;
+  }
+  .obsBox textarea{
+    width:100%;
+    min-height:70px;
+    resize:vertical;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+    font-size:13px;
+    outline:none;
+  }
+  .obsBox textarea:focus{
+    border-color:#93c5fd;
+    box-shadow:0 0 0 3px rgba(59,130,246,0.15);
+  }
   </style>
 </head>
 
@@ -290,6 +340,117 @@ let detalhadoRows = [];
 let resultado = [];
 let resultadoFiltrado = [];
 let mostrarAtrasados = true;
+let snapshotVocativos = {}; 
+
+// ✅ cache do que veio da planilha (HOJE)
+window.statusHojeServidor = window.statusHojeServidor || {}; // { VOCNORM: "PROGRAMADO" | "NAO PROGRAMADO" }
+window.obsHojeServidor    = window.obsHojeServidor || {};    // { VOCNORM: "texto..." }
+window._cacheHojeISO      = window._cacheHojeISO || "";      // "YYYY-MM-DD"
+
+// guarda o que o usuário digitou (mesmo sem salvar)
+window.obsDrafts = window.obsDrafts || {};  // { VOCATIVO_NORM: "texto..." }
+
+let savingAll = false;
+const savingVoc = new Set();
+
+async function carregarObsEStatusHojeCache(force = false) {
+  const hoje = hojeISO();
+
+  // ✅ se já buscou hoje e não forçado, reaproveita
+  if (!force && window._cacheHojeISO === hoje) {
+    return {
+      obs: window.obsHojeServidor || {},
+      status: window.statusHojeServidor || {}
+    };
+  }
+
+  try {
+    const url = `${APPS_SCRIPT_URL}?action=obsHoje&token=${encodeURIComponent(APPS_SCRIPT_TOKEN)}&t=${Date.now()}`;
+    const resp = await fetch(url, { cache: "no-store" });
+    const raw = await resp.text();
+
+    let json;
+    try { json = JSON.parse(raw); }
+    catch { 
+      console.warn("Apps Script não retornou JSON:", raw);
+      return { obs:{}, status:{} };
+    }
+
+    if (!json || !json.ok) {
+      console.warn("Apps Script retornou ok=false:", json);
+      return { obs:{}, status:{} };
+    }
+
+    const mapaObs = {};
+    const mapaStatus = {};
+
+    if (Array.isArray(json.data)) {
+      json.data.forEach(row => {
+        const voc = normalizar(row.Vocativo || row.vocativo || row.VOCATIVO || "");
+        if (!voc) return;
+
+        const obs = String(row.Observacao || row.observacao || row.OBSERVACAO || "").trim();
+
+        const stRaw = row.StatusVeiculo || row.statusVeiculo || row.STATUSVEICULO || "";
+const st = parseStatus(stRaw);
+
+        mapaObs[voc] = obs;
+        mapaStatus[voc] = st;
+      });
+    }
+
+    // ✅ grava cache em memória
+    window._cacheHojeISO = hoje;
+    window.obsHojeServidor = mapaObs;
+    window.statusHojeServidor = mapaStatus;
+
+    return { obs: mapaObs, status: mapaStatus };
+
+  } catch (e) {
+    console.warn("Erro ao buscar obs/status hoje:", e);
+    return { obs:{}, status:{} };
+  }
+}
+
+function capturarStatusDoDOM(){
+  window.statusDrafts = window.statusDrafts || {};
+  document.querySelectorAll('select[data-status-vocativo]').forEach(sel => {
+    const voc = normalizar(sel.getAttribute('data-status-vocativo') || "");
+    if(!voc) return;
+    window.statusDrafts[voc] = (sel.value === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO";
+  });
+}
+
+// aplica overrides (statusDrafts) no snapshot + atualiza badge + select
+function reaplicarStatusDraftsNoSnapshotEUI(){
+  const drafts = window.statusDrafts || {};
+  Object.keys(drafts).forEach(vocNorm => {
+    const st = drafts[vocNorm];
+
+    // aplica no snapshot
+    snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
+    snapshotVocativos[vocNorm].StatusVeiculo = st;
+
+    // aplica no select
+    const sel = getStatusSelect(vocNorm);
+    if (sel) sel.value = st;
+
+    // aplica no badge
+    const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
+    if (badgeDiv) {
+      const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
+      badgeDiv.innerHTML = renderStatusBadge(st, temCarregadoHoje);
+    }
+  });
+}
+
+function lockButton(btn, locked, textWhile){
+  if(!btn) return;
+  btn.disabled = locked;
+  btn.dataset.oldText = btn.dataset.oldText || btn.innerHTML;
+  if(locked && textWhile) btn.innerHTML = textWhile;
+  if(!locked && btn.dataset.oldText) btn.innerHTML = btn.dataset.oldText;
+}
 
 // ===============================
 // MAPA FIXO DE JANELAS (ENTREGA x CARREGAMENTO)
@@ -325,7 +486,7 @@ const JANELAS_ALMOX = {
   "ANGLO-CMD-MG": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
   "ANGLO-NIQUE-GO": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "ANGLO-SAG-MG": { carregamento: ['sáb'], entrega: ['ter'] },
-  "ANGLO-SJB-RJ": { carregamento: ['sáb'], entrega: ['qua'] },
+  "ANGLO-SJB-RJ": { carregamento: ['seg'], entrega: ['qua'] },
   "AVBSI-ACAILA-MA": { carregamento: ['sex', 'ter'], entrega: ['qui', 'seg'] },
   "AVBSI-BARRA-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "AVBSI-BURITI-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
@@ -347,16 +508,16 @@ const JANELAS_ALMOX = {
   "BRA-CAMACA-BA07": { carregamento: ['qua', 'sex', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
   "BRA-CAMACA-BA11": { carregamento: ['qua', 'sex', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
   "BRA-CANDEI-BA": { carregamento: ['qua', 'qui', 'sex', 'sáb'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-  "BRA-CUBATA-SP": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
+  "BRA-CUBATA-SP": { carregamento: ['seg', 'qua'], entrega: ['qui', 'ter'] },
   "BRA-DCAXIRJ": { carregamento: ['qua', 'seg', 'sáb', 'ter', 'qui', 'sex'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "BRA-MACEIO-AL02": { carregamento: ['qui', 'ter'], entrega: ['qua', 'seg'] },
-  "BRA-MAUA-SP23": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
-  "BRA-MAUA-SP25": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
+  "BRA-MAUA-SP23": { carregamento: ['seg', 'qua'], entrega: ['qui', 'ter'] },
+  "BRA-MAUA-SP25": { carregamento: ['sab', 'ter', 'qui'], entrega: ['qua', 'sex', 'seg'] },
   "BRA-MDEODO-AL03": { carregamento: ['qua', 'sex'], entrega: ['qui', 'ter'] },
   "BRA-PAULIN-SP08": { carregamento: ['seg', 'qua'], entrega: ['qui','ter'] },
   "BRA-PAULINIA-SP": { carregamento: ['seg', 'qua'], entrega: ['qui','ter'] },
-  "BRA-S-ANDR-SP20": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
-  "BRA-S-ANDR-SP22": { carregamento: ['qua', 'seg', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
+  "BRA-S-ANDR-SP20": { carregamento: ['seg', 'qua'], entrega: ['qui', 'ter'] },
+  "BRA-S-ANDR-SP22": { carregamento: ['qui', 'ter', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
   "BRA-TRIUNFO-RS": { carregamento: ['qui', 'seg', 'sex'], entrega: ['seg', 'sex', 'ter'] },
   "BRS-MACEIOAL": { carregamento: ['qui', 'ter'], entrega: ['qua', 'seg'] },
   "CSN-ALHANDRA-PB": { carregamento: ['sex'], entrega: ['qui', 'seg'] },
@@ -379,7 +540,7 @@ const JANELAS_ALMOX = {
   "CSN-SEERA-ES": { carregamento: ['sex'], entrega: ['qua', 'seg', 'ter'] },
   "CSN-SOROCABA-SP": { carregamento: ['sáb'], entrega: ['qui', 'ter'] },
   "CSN-STOANDRE-SP": { carregamento: ['sáb'], entrega: ['qui', 'ter'] },
-  "CSN-SVICENTE-SP": { carregamento: ['sáb'], entrega: ['ter'] },
+  "CSN-SVICENTE-SP": { carregamento: ['seg'], entrega: ['ter'] },
   "CSN1-VOLTRED-RJ": { carregamento: ['sáb'], entrega: ['seg', 'sex'] },
   "ELI-ALHANDRA-PB": { carregamento: ['sex'], entrega: ['qua', 'ter', 'seg'] },
   "FER-ALAGOINHAS-BA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
@@ -427,7 +588,7 @@ const JANELAS_ALMOX = {
   "OXI-MAUA-SP": { carregamento: ['sáb'], entrega: ['seg'] },
   "OXI-TRIUNFORS": { carregamento: ['sex'], entrega: ['ter'] },
   "OXITE-TRIUNF-RS": { carregamento: ['sex'], entrega: ['ter'] },
-  "OXITEN-TREME-SP": { carregamento: ['qua', 'seg'], entrega: ['qua', 'sex'] },
+  "OXITEN-TREME-SP": { carregamento: ['qui', 'ter'], entrega: ['qua', 'sex'] },
   "OXITENO-MAUA-SP": { carregamento: ['sáb'], entrega: ['seg'] },
   "RAI GUARIBA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
   "RAI JAU SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
@@ -472,7 +633,7 @@ const JANELAS_ALMOX = {
   "SUZ-JACAREI-SP": { carregamento: ['seg', 'qua', 'sab'], entrega: ['ter', 'qui', 'dom'] },
   "SUZ-LIMEIRA-SP": { carregamento: ['qua', 'seg', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
   "SUZ-MARACAN-CE": { carregamento: ['qua'], entrega: ['qua'] },
-  "SUZ-MOGICRUZ-SP": { carregamento: ['sáb'], entrega: ['ter'] },
+  "SUZ-MOGICRUZ-SP": { carregamento: ['seg'], entrega: ['ter'] },
   "SUZ-MUCURI-BA": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'seg'] },
   "SUZ-RIBRIOPA-MS": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
   "SUZ-SAOPAULO-SP": { carregamento: ['qua', 'seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
@@ -508,7 +669,7 @@ const JANELAS_ALMOX = {
   "VALE-RIO-PIRACICABA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "VALE-SANTA-LUZIA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "VALE-SAO-LUIS-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-  "VALE-SGONCA-MG": { carregamento: ['seg'], entrega: ['qui'] },
+  "VALE-SGONCA-MG": { carregamento: ['ter'], entrega: ['qui'] },
   "VALE-TIMBOPEBA-MG": { carregamento: ['sex'], entrega: ['seg'] },
   "VITORIA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "VLI B-COQUE -SE": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
@@ -564,7 +725,15 @@ btnDateFilter.addEventListener("click", function() {
 
 const chkMostrarAtrasados = document.getElementById("chkMostrarAtrasados");
 
+function parseStatus(stRaw){
+  const s = normalizar(stRaw || "");
 
+  // aceita variações comuns
+  if (s === "PROGRAMADO") return "PROGRAMADO";
+
+  // qualquer outra coisa cai como NÃO PROGRAMADO
+  return "NAO PROGRAMADO";
+}
 
 function normalizar(txt){
   return (txt||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().trim();
@@ -1348,8 +1517,43 @@ function criarCard(titulo, itens){
   `;
 }
 
+function getObsTextarea(vocNorm){
+  return document.querySelector(`textarea[data-vocativo="${vocNorm}"]`);
+}
 
-function listarAlmoxPendentes(){
+// adiciona texto no textarea (SEM salvar)
+function addObsPreset(ev, vocNorm, texto){
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+
+  const t = getObsTextarea(vocNorm);
+  if (!t) return;
+
+  const add = String(texto || "").trim();
+  if (!add) return;
+
+  const atual = (t.value || "").trim();
+  t.value = atual ? (atual + "\n" + add) : add;
+
+  t.focus();
+  t.selectionStart = t.selectionEnd = t.value.length;
+  t.dispatchEvent(new Event("input", { bubbles:true }));
+}
+
+// limpar (opcional)
+function clearObs(ev, vocNorm){
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+  const t = getObsTextarea(vocNorm);
+  if (!t) return;
+  t.value = "";
+  t.focus();
+  t.dispatchEvent(new Event("input", { bubbles:true }));
+}
+
+async function listarAlmoxPendentes(){
+    capturarObsDoDOM();
+    capturarStatusDoDOM(); // ✅ NOVO: não perder status manual ao filtrar
+          // ✅ sempre busca status do dia na planilha antes de montar a tela (usa cache)
+  const { obs: obsHoje, status: statusHoje } = await carregarObsEStatusHojeCache(false);
 
   // 🔹 Hoje e amanhã
   const hoje = new Date();
@@ -1517,6 +1721,7 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
   // ===============================
   let html = "";
 
+    snapshotVocativos = {};
   const stats = {
     totalAlmox: 0,
     totalNotas: 0,
@@ -1748,7 +1953,22 @@ else if (veiculos.length === 0) {
   temNaoProgramado = true;
 }
 
+// ===============================
+// ✅ STATUS EFETIVO (manual tem prioridade)
+// ===============================
+const vocNormAtual = normalizar(almox);
 
+const overrideManual = window.statusDrafts?.[vocNormAtual];              // prioridade 1
+const overrideServidor = window.statusHojeServidor?.[vocNormAtual];      // prioridade 2
+
+if (overrideManual) {
+  temProgramado = (overrideManual === "PROGRAMADO");
+  temNaoProgramado = !temProgramado;
+
+} else if (overrideServidor) {
+  temProgramado = (overrideServidor === "PROGRAMADO");
+  temNaoProgramado = !temProgramado;
+}
 
 if (filtroVeiculo.length > 0) {
 
@@ -2091,6 +2311,49 @@ if (
       }
     });
 
+// ✅ calcula D+, D0, D-1 deste vocativo (igual ao que aparece na tela)
+let dMaisVoc = 0;
+let d0Voc = 0;
+let dMenos1Voc = 0;
+
+Object.keys(mapaDias).forEach(k => {
+  const dias = Number(k);
+  const qtd = mapaDias[dias] || 0;
+  if (dias < 0) dMaisVoc += qtd;       // D+
+  else if (dias === 0) d0Voc += qtd;   // D0
+  else if (dias === 1) dMenos1Voc += qtd; // D-1
+});
+
+// ✅ status do veículo em texto (para gravar na planilha)
+let statusVeiculo = "NAO PROGRAMADO";
+if (temProgramado) statusVeiculo = "PROGRAMADO";
+else statusVeiculo = "NAO PROGRAMADO";
+
+// ✅ pega clientes do vocativo a partir do PVD (info.notas)
+const clientesUnicos = Array.from(new Set(
+  (info.notas || [])
+    .map(n => (n.cliente || "").toString().trim())
+    .filter(Boolean)
+));
+
+// regra simples: se tiver 1 → usa 1; se tiver vários → junta
+const clienteResumo = clientesUnicos.join(" / "); // ou ", " se preferir
+
+snapshotVocativos[normalizar(almox)] = {
+  Vocativo: almox,
+  Cliente: clienteResumo, // ✅ NOVO
+  StatusVeiculo: statusVeiculo,
+  TemCarregadoHoje: temCarregadoHoje === true,
+  Total_notas: info.qtd || 0,
+  EntradaEmAtraso: qtdDentroRegra || 0,
+  Atrasadas: dMaisVoc || 0,
+  Vencendo_hoje: d0Voc || 0,
+  Vencendo_amanhã: dMenos1Voc || 0,
+  NFsEntradaAntesUltimoCarregamento: notasAntesCarregamento || 0
+  
+};
+
+
 
     const resumoVeic = veiculos.length
       ? veiculos.map(v =>
@@ -2098,11 +2361,11 @@ if (
         ).join("<br>")
       : "Nenhum encontrado";
 
-
+    
 
 
 html += `
-<details style="
+<details data-vocativo="${normalizar(almox)}" style="
   margin-bottom:14px;
   background:var(--card2);
   border:1px solid var(--border);
@@ -2143,9 +2406,24 @@ html += `
 
         </div>
 
-        <div class="badge-container">
-          ${statusVeiculoBadge}
-        </div>
+        <div class="badge-container" style="align-items:center;">
+  <div id="statusBadge-${normalizar(almox)}">
+    ${statusVeiculoBadge}
+  </div>
+
+  <div style="display:flex; align-items:center; gap:8px; margin-left:10px;">
+    
+
+    <select
+      data-status-vocativo="${normalizar(almox)}"
+      style="padding:6px 10px; border-radius:10px; border:1px solid #d1d5db; font-weight:800;"
+      onchange="onStatusManualChange('${normalizar(almox)}', this.value, event)"
+    >
+      <option value="PROGRAMADO">🟢 PROGRAMADO</option>
+      <option value="NAO PROGRAMADO">🔴 NÃO PROGRAMADO</option>
+    </select>
+  </div>
+</div>
 
       </div>
 
@@ -2275,6 +2553,7 @@ html += `
 </div>
 
     </div>
+    
 
     <div style="
       width:260px;
@@ -2291,13 +2570,57 @@ html += `
 
 
   </div>
+  <div class="obsBox">
+  <label>📝 Observação (Vocativo)</label>
+
+  <div class="obsQuick">
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'JANELA')">🗓️ JANELA</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'FECHAMENTO')">🔒 FECHAMENTO</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'TORRE')">🏢 TORRE</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'NF NÃO LOCALIZADA')">🧾 NF NÃO LOCALIZADA</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'NÃO ESTÁ RECEBENDO')">⛔ NÃO ESTÁ RECEBENDO</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'AGUARDANDO CONSOLIDAÇÃO')">📦 AGUARDANDO CONSOLIDAÇÃO</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'RETIRA')">🚚 RETIRA</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'VEÍCULO CARREGADO HOJE')">🔵 VEÍCULO CARREGADO HOJE</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'MEDIANTE AUTORIZAÇÃO')">✅ MEDIANTE AUTORIZAÇÃO</button>
+  
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'NF DEU ENTRADA HOJE')">📥 NF DEU ENTRADA HOJE</button>
+
+    <button class="quickBtn" type="button"
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'TEMOS PRAZO')">⏱️ TEMOS PRAZO</button>
+
+  
+  <textarea
+    placeholder="Digite uma observação para este vocativo..."
+    data-vocativo="${normalizar(almox)}"
+  ></textarea>
+</div>
+
+<div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
+  <button class="btn secondary" type="button"
+    onclick="salvarVocativo('${almox}', event)">
+    💾 Salvar
+    </button>
+</div>
 </summary>
-
-
-
-
-
-
 
   <div style="margin-top:10px; font-size:13px;">
 
@@ -2315,6 +2638,7 @@ html += `
       </tr>
       ${notasHTML}
     </table>
+    
 
       </div>
     </details>
@@ -2323,8 +2647,23 @@ html += `
   });
 
   document.getElementById("almoxList").innerHTML = html || "<i>Nenhum almox crítico</i>";
-  renderResumoAnalise(stats);
-  abrirPaginaAnalise();
+
+restaurarObsNoDOM();
+
+// 1) aplica defaults calculados (mas agora snapshot já pode ter status do servidor)
+aplicarStatusDefaultNoDOM();
+
+// 2) aplica status do servidor (HOJE) sem sobrescrever manual
+aplicarStatusNoDOM(window.statusHojeServidor || {});
+
+// 3) aplica observações do servidor (HOJE) sem sobrescrever draft digitado
+aplicarObservacoesNoDOM(window.obsHojeServidor || {});
+
+// 4) reaplica o manual por cima de tudo
+reaplicarStatusDraftsNoSnapshotEUI();
+
+renderResumoAnalise(stats);
+abrirPaginaAnalise();
 
 
   const inputPopup = document.getElementById("searchClientePopup");
@@ -2350,6 +2689,22 @@ html += `
   }
 
 
+}
+
+function aplicarStatusDefaultNoDOM(){
+  Object.keys(snapshotVocativos || {}).forEach(vocNorm => {
+    const sel = getStatusSelect(vocNorm);
+    if (!sel) return;
+
+    // se usuário já mexeu manualmente, mantém
+    if (window.statusDrafts && window.statusDrafts[vocNorm]) return;
+
+    const status = snapshotVocativos[vocNorm].StatusVeiculo || "NAO PROGRAMADO";
+    sel.value = status;
+
+    // ✅ NÃO grave default em statusDrafts aqui
+    // statusDrafts é SOMENTE para mudança manual do usuário
+  });
 }
 
 function abrirPaginaAnalise(){
@@ -2394,7 +2749,393 @@ chkMostrarAtrasados.onchange = () => {
   aplicarFiltrosEBusca();
 };
 
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz-AaiXcFqw12hLnth9QF-XxMen6MniH6vIxxSVkttQm_nxrSan2tSNlDqDxU0h0NUg/exec";
+const APPS_SCRIPT_TOKEN = "1234"; // igual ao TOKEN do script
 
+function hojeISO(){
+  const d = new Date();
+  // força data local sem sofrer offset na hora de formatar
+  const local = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const y = local.getFullYear();
+  const m = String(local.getMonth()+1).padStart(2,"0");
+  const day = String(local.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+
+async function salvarObservacoes() {
+  if (savingAll) return;
+  savingAll = true;
+
+  const btnSalvar = document.getElementById("btnSalvarTudo");
+  lockButton(btnSalvar, true, "💾 Salvando...");
+
+  try {
+    // ✅ pega somente os vocativos que estão renderizados AGORA (visualização atual)
+const vocativosVisiveis = Array.from(document.querySelectorAll('#almoxList details[data-vocativo]'))
+  .map(el => normalizar(el.getAttribute('data-vocativo')))
+  .filter(Boolean);
+
+// se quiser: somente os que estão abertos
+// .filter(v => document.querySelector(`#almoxList details[data-vocativo="${v}"]`)?.open)
+
+if (!vocativosVisiveis.length) {
+  alert("Nenhum vocativo visível para salvar.");
+  return;
+}
+
+// ✅ monta registros só do que está na visualização
+const registros = vocativosVisiveis.map(v => montarRegistroVocativo(v));
+
+    const payload = {
+  action: "replaceHoje",      // ✅ diz pro backend substituir o lote do dia
+  token: APPS_SCRIPT_TOKEN,
+  dataRef: hojeISO(),         // ✅ SEMPRE HOJE
+  registros
+};
+
+    const body = new URLSearchParams();
+    body.set("payload", JSON.stringify(payload));
+
+    const response = await fetch(APPS_SCRIPT_URL, {
+  method: "POST",
+  headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+  body
+});
+
+const texto = await response.text();
+console.log("Servidor:", texto);
+
+// ✅ AQUI: valida a resposta do servidor
+if (!response.ok) {
+  throw new Error(`HTTP ${response.status} - ${texto}`);
+}
+
+// ✅ Só continua se deu certo
+await carregarObservacoesHojeEPreencher();
+
+
+  } catch (e) {
+    alert("❌ Erro ao salvar: " + e.message);
+  } finally {
+    lockButton(btnSalvar, false);
+    savingAll = false;
+  }
+}
+function montarRegistroVocativo(voc) {
+  const vocNorm = normalizar(voc);
+  const t = document.querySelector(`textarea[data-vocativo="${vocNorm}"]`);
+  const observacao = (t?.value || "").trim();
+
+  // ✅ aqui estava um risco: snapshotVocativos[voc] pode falhar se voc vier diferente
+  const s = snapshotVocativos[vocNorm] || snapshotVocativos[voc] || {};
+  const sel = getStatusSelect(vocNorm);
+const statusAtual = sel?.value || (window.statusDrafts?.[vocNorm]) || s.StatusVeiculo || "NAO PROGRAMADO";
+
+return {
+  DataRef: hojeISO(),
+  Vocativo: normalizar(s.Vocativo || voc),
+  Cliente: (s.Cliente || ""), // ✅ NOVO
+  StatusVeiculo: statusAtual,
+  Total_notas: Number(s.Total_notas || 0),
+  EntradaEmAtraso: Number(s.EntradaEmAtraso || 0),
+  Atrasadas: Number(s.Atrasadas || 0),
+  Vencendo_hoje: Number(s.Vencendo_hoje || 0),
+  Vencendo_amanhã: Number(s.Vencendo_amanhã || 0),
+  NFsEntradaAntesUltimoCarregamento: Number(s.NFsEntradaAntesUltimoCarregamento || 0),
+  Observacao: observacao
+};
+}
+
+async function salvarVocativo(voc, ev) {
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); } // ✅ evita efeito do <summary>
+
+  const vocNorm = normalizar(voc);
+  if (!vocNorm || !snapshotVocativos[vocNorm]) {
+    alert("Vocativo inválido/indisponível.");
+    return;
+  }
+
+  if (savingVoc.has(vocNorm)) return;   // ✅ trava por vocativo
+  savingVoc.add(vocNorm);
+
+  // tenta pegar o botão clicado (se vier event)
+  const btn = ev?.currentTarget || null;
+  lockButton(btn, true, "Salvando...");
+
+  try {
+    const payload = {
+        action: "upsertHoje",           // ou "salvarVocativo" se for o nome no seu backend
+        token: APPS_SCRIPT_TOKEN,
+        dataRef: hojeISO(),             // garante que é “hoje”
+        registros: [montarRegistroVocativo(vocNorm)]
+        };
+
+    const body = new URLSearchParams();
+body.set("payload", JSON.stringify(payload));
+
+const response = await fetch(APPS_SCRIPT_URL, {
+  method: "POST",
+  headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+  body
+});
+
+const texto = await response.text();
+console.log("Servidor:", texto);
+
+// ✅ AQUI: valida a resposta do servidor
+if (!response.ok) {
+  throw new Error(`HTTP ${response.status} - ${texto}`);
+}
+
+
+    // depois do POST dar certo:
+    const t = document.querySelector(`textarea[data-vocativo="${vocNorm}"]`);
+    const obs = (t?.value || "").trim();
+
+    // mantém cache local coerente
+    window.obsDrafts = window.obsDrafts || {};
+    // guarda override manual do status (mesmo sem salvar)
+    window.statusDrafts = window.statusDrafts || {}; // { VOCATIVO_NORM: "PROGRAMADO" | "NAO PROGRAMADO" }
+    window.obsDrafts[vocNorm] = obs;
+
+    window.obsHojeOriginal = window.obsHojeOriginal || {};
+    window.obsHojeOriginal[vocNorm] = obs;
+
+
+
+  } catch (e) {
+    alert("❌ Erro ao salvar: " + e.message);
+  } finally {
+    lockButton(btn, false);
+    savingVoc.delete(vocNorm);
+  }
+}
+
+async function carregarObservacoesHojeEPreencher() {
+  try {
+    // anti-cache
+    const url = `${APPS_SCRIPT_URL}?action=obsHoje&token=${encodeURIComponent(APPS_SCRIPT_TOKEN)}&t=${Date.now()}`;
+    const resp = await fetch(url, { cache: "no-store" });
+
+    const raw = await resp.text();
+    let json;
+
+    try {
+      json = JSON.parse(raw);
+    } catch (e) {
+      console.warn("Resposta do Apps Script não é JSON válido:", raw);
+      return;
+    }
+
+    if (!json || !json.ok) {
+      console.warn("Apps Script retornou ok=false:", json);
+      return;
+    }
+
+    // Aceita data como objeto {VOC: "obs"} OU como array [{Vocativo, Observacao}, ...]
+    const mapa = {};
+    const mapaStatus = {};
+
+    if (Array.isArray(json.data)) {
+      json.data.forEach(row => {
+        const voc = normalizar(row.Vocativo || row.vocativo || row.VOCATIVO || "");
+        const obs = String(row.Observacao || row.observacao || row.OBSERVACAO || "").trim();
+
+        const stRaw = row.StatusVeiculo || row.statusVeiculo || row.STATUSVEICULO || "";
+const st = parseStatus(stRaw);
+
+        if (voc) {
+          mapa[voc] = obs;
+          mapaStatus[voc] = st;
+        }
+      });
+    }
+
+    // guarda original (hoje)
+    window.obsHojeOriginal = { ...mapa };
+
+    // aplica
+    aplicarObservacoesNoDOM(mapa);
+    aplicarStatusNoDOM(mapaStatus);
+
+  } catch (e) {
+    console.warn("Erro ao carregar observações do dia:", e);
+  }
+}
+
+function getStatusSelect(vocNorm){
+  return document.querySelector(`select[data-status-vocativo="${vocNorm}"]`);
+}
+
+function renderStatusBadge(status, temCarregadoHoje){
+  // mantém sua regra visual: carregado hoje pode coexistir
+  let html = "";
+
+  if (temCarregadoHoje) {
+    html += `
+      <span style="
+        background:#dbeafe; color:#1e3a8a; border:2px solid #2563eb;
+        padding:6px 12px; border-radius:999px; font-size:12px; font-weight:900; margin-right:6px;
+      ">🔵 CARREGADO HOJE</span>
+    `;
+  }
+
+  if (status === "PROGRAMADO") {
+    html += `
+      <span style="
+        background:#dcfce7; color:#14532d; border:2px solid #22c55e;
+        padding:6px 12px; border-radius:999px; font-size:12px; font-weight:900;
+      ">🟢 PROGRAMADO</span>
+    `;
+  } else {
+    html += `
+      <span style="
+        background:#fee2e2; color:#7f1d1d; border:2px solid #ef4444;
+        padding:6px 12px; border-radius:999px; font-size:12px; font-weight:900;
+      ">🔴 NÃO PROGRAMADO</span>
+    `;
+  }
+
+  return html;
+}
+
+// quando usuário muda no select
+function onStatusManualChange(vocNorm, value, ev){
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+
+  const status = (value === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO";
+
+  // cache local
+  window.statusDrafts = window.statusDrafts || {};
+  window.statusDrafts[vocNorm] = status;
+
+  // garante que snapshot esteja coerente (isso que vai para planilha)
+  snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
+  snapshotVocativos[vocNorm].StatusVeiculo = status;
+
+  // atualiza badge na hora
+  const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
+  if (badgeDiv) {
+    const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
+    badgeDiv.innerHTML = renderStatusBadge(status, temCarregadoHoje);
+  }
+  listarAlmoxPendentes();
+}
+
+// aplica os status carregados do servidor (sem sobrescrever se usuário já mexeu manualmente)
+function aplicarStatusNoDOM(mapaStatus){
+  Object.keys(mapaStatus || {}).forEach(voc => {
+    const vocNorm = normalizar(voc);
+    const status = parseStatus(mapaStatus[voc]);
+
+    // se usuário já alterou manualmente, não sobrescreve
+    if (window.statusDrafts && window.statusDrafts[vocNorm]) return;
+
+    const sel = getStatusSelect(vocNorm);
+    if (sel) sel.value = status;
+
+    
+    snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
+    snapshotVocativos[vocNorm].StatusVeiculo = status;
+
+    // atualiza badge
+    const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
+    if (badgeDiv) {
+      const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
+      badgeDiv.innerHTML = renderStatusBadge(status, temCarregadoHoje);
+    }
+  });
+}
+
+function aplicarObservacoesNoDOM(mapa) {
+  Object.keys(mapa || {}).forEach(voc => {
+    const vocNorm = normalizar(voc);
+    const texto = String(mapa[voc] || "").trim();
+
+    const t = document.querySelector(`textarea[data-vocativo="${vocNorm}"]`);
+    if (!t) return;
+
+    // ✅ se o usuário já digitou algo (draft), não sobrescreve
+    if (window.obsDrafts && window.obsDrafts[vocNorm] != null && (window.obsDrafts[vocNorm] || "").trim() !== "") {
+      return;
+    }
+
+    t.value = texto;
+
+    // também alimenta o draft com o que veio do servidor
+    window.obsDrafts = window.obsDrafts || {};
+    window.obsDrafts[vocNorm] = texto;
+  });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("btnSalvarTudo");
+  if (btn) btn.addEventListener("click", salvarObservacoes);
+});
+
+// ✅ Impede que teclado/clique dentro do textarea acione abrir/fechar o <details>
+// ✅ Espaço NÃO abre o dropdown, mas continua digitando normalmente no textarea
+document.addEventListener("keydown", (e) => {
+  const t = e.target;
+  if (!t || !t.matches('textarea[data-vocativo]')) return;
+
+  if (e.key === " " || e.code === "Space" || e.keyCode === 32) {
+
+    // impede o toggle do <details>
+    e.preventDefault();
+    e.stopPropagation();
+
+    // insere o espaço manualmente no ponto do cursor
+    const start = t.selectionStart ?? t.value.length;
+    const end   = t.selectionEnd ?? t.value.length;
+
+    t.value = t.value.slice(0, start) + " " + t.value.slice(end);
+
+    const pos = start + 1;
+    t.setSelectionRange(pos, pos);
+
+    // dispara evento input normal
+    t.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+}, true);
+
+
+// clique dentro do textarea não abre/fecha o dropdown
+document.addEventListener("click", (e) => {
+  const t = e.target;
+  if (t && t.matches('textarea[data-vocativo]')) {
+    e.stopPropagation();
+  }
+}, true);
+
+function capturarObsDoDOM(){
+  const map = window.obsDrafts || (window.obsDrafts = {});
+  document.querySelectorAll('textarea[data-vocativo]').forEach(t => {
+    const voc = normalizar(t.dataset.vocativo || "");
+    if(!voc) return;
+    map[voc] = t.value || "";
+  });
+}
+
+function restaurarObsNoDOM(){
+  const map = window.obsDrafts || {};
+  document.querySelectorAll('textarea[data-vocativo]').forEach(t => {
+    const voc = normalizar(t.dataset.vocativo || "");
+    if(!voc) return;
+
+    // só preenche se houver draft
+    if (map[voc] != null) t.value = map[voc];
+  });
+}
+
+// opcional (melhor UX): enquanto digita, já atualiza o cache
+document.addEventListener("input", (e) => {
+  const t = e.target;
+  if (!t || !t.matches('textarea[data-vocativo]')) return;
+  const voc = normalizar(t.dataset.vocativo || "");
+  if (!voc) return;
+  window.obsDrafts[voc] = t.value || "";
+}, true);
 
 </script>
 
@@ -2403,12 +3144,19 @@ chkMostrarAtrasados.onchange = () => {
   <div class="card" style="margin-top:20px;">
     
     <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-      <h2 style="margin:0;">🚨 Análise Programação D-1</h2>
+  <h2 style="margin:0;">🚨 Análise Programação D-1</h2>
 
-      <button class="btn secondary" onclick="voltarPaginaPrincipal()">
-        ⬅ Voltar
-      </button>
-    </div>
+  <!-- AÇÕES NO TOPO (ALINHADAS À DIREITA) -->
+  <div style="display:flex; gap:10px; justify-content:flex-end; align-items:center;">
+    <button class="btn secondary" onclick="voltarPaginaPrincipal()">
+      ⬅ Voltar
+    </button>
+
+    <button class="btn" id="btnSalvarTudo" type="button">
+    💾 Salvar tudo
+    </button>
+  </div>
+</div>
 
     <div style="display:flex; gap:10px; margin-top:15px; margin-bottom:12px; align-items:center;">
       
