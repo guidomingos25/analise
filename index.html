@@ -12,7 +12,8 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
 
-  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 
   <style>
     /* === SEU CSS ORIGINAL (INALTERADO) === */
@@ -265,7 +266,247 @@ tbody tr:hover{
     border-color:#93c5fd;
     box-shadow:0 0 0 3px rgba(59,130,246,0.15);
   }
-  </style>
+  
+/* ===============================
+   ✅ Layout Profissional (UI ONLY)
+   Mantém IDs/classes e regras JS
+   =============================== */
+
+:root{
+  --bg: #0b1220;
+  --surface: rgba(255,255,255,0.06);
+  --card: rgba(255,255,255,0.92);
+  --card2: rgba(255,255,255,0.72);
+  --text: #0b1220;
+  --muted: #4b5563;
+  --border: rgba(15,23,42,0.14);
+  --accent: #1f4ed8;
+  --accent2: #0f766e;
+  --danger: #b91c1c;
+  --warning: #b45309;
+  --shadow: 0 10px 30px rgba(2,6,23,0.18);
+  --shadowSoft: 0 8px 18px rgba(2,6,23,0.10);
+  --radius: 16px;
+}
+
+body{
+  background:
+    radial-gradient(900px 380px at 10% 0%, rgba(37,99,235,0.18), transparent 55%),
+    radial-gradient(900px 380px at 90% 0%, rgba(16,185,129,0.14), transparent 55%),
+    linear-gradient(180deg, #0b1220 0%, #0b1220 240px, #f4f6f9 240px, #f4f6f9 100%);
+  padding:28px;
+}
+
+.container{ max-width:1480px; }
+
+h1{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:20px;
+  color:#e5e7eb;
+  margin:0 0 16px;
+  letter-spacing:0.4px;
+}
+
+.card{
+  border-radius: var(--radius);
+  border:1px solid rgba(255,255,255,0.12);
+  box-shadow: var(--shadowSoft);
+}
+
+.card h2{
+  font-size:13px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:#111827;
+}
+
+.grid .card{
+  background: rgba(255,255,255,0.92);
+}
+
+.btn{
+  border-radius: 12px;
+  border:1px solid rgba(15,23,42,0.12);
+  box-shadow: 0 6px 14px rgba(2,6,23,0.10);
+  transition: transform .08s ease, box-shadow .12s ease, opacity .12s ease;
+}
+.btn:hover{ transform: translateY(-1px); box-shadow: 0 10px 22px rgba(2,6,23,0.14); }
+.btn:active{ transform: translateY(0px); }
+
+.btn.secondary{
+  background: rgba(255,255,255,0.78);
+  border:1px solid rgba(15,23,42,0.10);
+  box-shadow:none;
+}
+.btn.secondary:hover{ background: rgba(255,255,255,0.92); }
+
+.toolbar{
+  gap:12px;
+  padding:12px;
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.86);
+  border:1px solid rgba(15,23,42,0.10);
+  box-shadow: var(--shadowSoft);
+}
+
+.toolbar .left{ gap:8px; flex-wrap:wrap; }
+.toolbar .left:last-child{ flex:1; justify-content:flex-end; min-width:320px; }
+
+.search{
+  min-width:260px;
+}
+
+.summary{
+  display:grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap:14px;
+  align-items:stretch;
+}
+
+.summary .pillRow{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-content:flex-start;
+}
+.pill{
+  background: rgba(255,255,255,0.86);
+  border: 1px solid rgba(15,23,42,0.10);
+  box-shadow: var(--shadowSoft);
+  border-radius: 999px;
+  padding:8px 12px;
+}
+
+.chartCard{
+  background: rgba(255,255,255,0.86);
+  border: 1px solid rgba(15,23,42,0.10);
+  border-radius: var(--radius);
+  box-shadow: var(--shadowSoft);
+  padding:12px;
+  min-height:120px;
+}
+.chartTitle{
+  font-size:12px;
+  font-weight:900;
+  color:#111827;
+  margin:0 0 8px;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.chartWrap{ height:120px; }
+.chartWrap canvas{ width:100% !important; height:120px !important; }
+
+.group{
+  border-radius: var(--radius);
+  border:1px solid rgba(15,23,42,0.10);
+  box-shadow: var(--shadowSoft);
+}
+
+.groupHeader{
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(6px);
+}
+
+.tableWrapper{
+  border-top: 1px solid rgba(15,23,42,0.10);
+}
+
+/* =======================
+   Página Análise (Popup)
+   ======================= */
+#paginaAnalise .card{
+  background: rgba(255,255,255,0.92);
+  border:1px solid rgba(15,23,42,0.10);
+}
+
+#paginaAnalise h2{
+  font-size:16px !important;
+  font-weight:900 !important;
+  letter-spacing:.02em;
+}
+
+.kpiGrid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(260px, 1fr)) minmax(320px, 1fr);
+  gap:16px;
+  margin-bottom:16px;
+  align-items:stretch;
+}
+
+.kpiCard{
+  background: rgba(248,250,252,0.92);
+  border: 1px solid rgba(15,23,42,0.10);
+  border-radius: 18px;
+  padding:16px;
+  box-shadow: var(--shadowSoft);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-height: 220px; /* 👈 maior horizontal/vertical */
+}
+
+.kpiHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+}
+.kpiHeader .kpiTitle{
+  font-weight:1000;
+  font-size:12px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#111827;
+}
+.kpiList .kpiRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:6px 0;
+  border-bottom:1px solid rgba(15,23,42,0.06);
+}
+.kpiList .kpiRow:last-child{ border-bottom:none; }
+.kpiLabel{ font-size:13px; color:#475569; font-weight:700; }
+.kpiValue{ font-weight:1000; font-size:20px; color:#111827; }
+
+.kpiChart{
+  margin-top:auto;
+  border-top:1px solid rgba(15,23,42,0.08);
+  padding-top:10px;
+}
+.kpiChart canvas{ width:100% !important; height:120px !important; }
+
+.legendCard{
+  background: rgba(248,250,252,0.92);
+  border: 1px solid rgba(15,23,42,0.10);
+  border-radius: 18px;
+  padding:16px;
+  box-shadow: var(--shadowSoft);
+  max-width: 420px;
+  justify-self: end;
+}
+
+.filtersBar{
+  display:grid;
+  grid-template-columns: minmax(220px, 320px) 220px 1fr 1fr minmax(240px, 260px);
+  gap:10px;
+  align-items:stretch;
+  margin-top:14px;
+  margin-bottom:12px;
+}
+.filtersBar > *{
+  width:100% !important;
+}
+@media (max-width: 1200px){
+  .summary{ grid-template-columns: 1fr; }
+  .kpiGrid{ grid-template-columns: repeat(2, minmax(260px, 1fr)); }
+  .filtersBar{ grid-template-columns: 1fr 1fr; }
+  .search{ min-width:180px; }
+}
+
+</style>
 </head>
 
 <body>
@@ -840,13 +1081,8 @@ function renderSummary(filtrado = resultado){
   let totalMatches = 0;
 
   filtrado.forEach(r => {
-    const dtCarreg = parsePossibleDate(r.dataRow["DT. CARREGAMENTO"]);
-
     // aplica a MESMA regra de atraso usada na tabela
     const validMatches = r.matches.filter(m => {
-      const dtCheck = parsePossibleDate(m["Data de Check in"]);
-      const dtEntr  = parsePossibleDate(m["Data de Entrada da Nota"]);
-
       let atrasado = ehAtrasado(
         r.dataRow["DT. CARREGAMENTO"],
         m["Data de Check in"],
@@ -866,12 +1102,23 @@ function renderSummary(filtrado = resultado){
   });
 
   summaryDiv.innerHTML = `
-    <div class="pill">Veículos Carregados: <b>${total}</b></div>
-    <div class="pill">Com Registros: <b>${com}</b></div>
-    <div class="pill">Sem Registros: <b>${sem}</b></div>
-    <div class="pill">Total de Notas: <b>${totalMatches}</b></div>
+    <div class="pillRow">
+      <div class="pill">Veículos Carregados: <b>${total}</b></div>
+      <div class="pill">Com Registros: <b>${com}</b></div>
+      <div class="pill">Sem Registros: <b>${sem}</b></div>
+      <div class="pill">Total de Notas: <b>${totalMatches}</b></div>
+    </div>
+
+    <div class="chartCard">
+      <div class="chartTitle">Visão geral</div>
+      <div class="chartWrap"><canvas id="chartResumoPrincipal"></canvas></div>
+    </div>
   `;
+
+  // 🔎 Atualiza gráfico (UI apenas)
+  atualizarGraficoResumoPrincipal({ total, com, sem, totalMatches });
 }
+
 
 
 
@@ -1385,115 +1632,85 @@ function renderResumoAnalise(stats){
 
   document.getElementById("resumoAnalise").innerHTML = `
 
-    <div style="
-  display:grid;
-  grid-template-columns: repeat(4, 1fr) 320px;
-  gap:20px;
-  margin-bottom:20px;
-  align-items:start;
-">
+    <div class="kpiGrid">
 
       ${criarCard("📊 VOLUME GERAL", [
         {label:"🏭 Almox", valor:stats.totalAlmox},
         {label:"📄 Total Notas PVD", valor:stats.totalNotasPVDGeral},
         {label:"📦 Notas ≤ D-1", valor:stats.totalNotas}
-      ])}
+      ], "chartKpiVolume")}
 
       ${criarCard("⏱ ENTRADA NF", [
         {label:"🟥 Em Atraso", valor:stats.totalAtraso, cor:"#dc2626"},
         {label:"🟩 No Prazo", valor:stats.totalPrazo, cor:"#16a34a"}
-      ])}
+      ], "chartKpiEntrada")}
 
       ${criarCard("🚛 STATUS PROGRAMAÇÃO", [
         {label:"🔵 Carregados Hoje", valor:stats.carregadosHoje, cor:"#2563eb"},
         {label:"🟢 Programados", valor:stats.programados, cor:"#16a34a"},
         {label:"🔴 Não Programados", valor:stats.semVeiculo, cor:"#dc2626"}
-      ])}
+      ], "chartKpiStatus")}
 
       ${criarCard("📅 CRITICIDADE", [
         {label:"🔴 D+", valor:stats.totalDmais, cor:"#dc2626"},
         {label:"🔵 D0", valor:stats.totalD0, cor:"#2563eb"},
         {label:"🟢 D-1", valor:stats.totalDmenos1, cor:"#16a34a"},
         {label:"🟢 ≥ D-2", valor:stats.totalDmenosMaiorIgual2, cor:"#15803d"}
-      ])}
-            <!-- LEGENDA -->
-<div style="
-  background:var(--card2);
-  border:1px solid #e5e7eb;
-  border-radius:14px;
-  padding:18px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.05);
-  font-size:12px;
-">
+      ], "chartKpiCriticidade")}
 
-  <div style="font-weight:900; margin-bottom:12px; color:#374151;">
-    📖 REGRAS DO FAROL
-  </div>
+      <!-- LEGENDA -->
+      <div class="legendCard">
+        <div style="font-weight:1000; margin-bottom:12px; color:#111827; letter-spacing:.06em; text-transform:uppercase;">
+          📖 Regras do Farol
+        </div>
 
-<div style="margin-bottom:12px;">
-  <b>🗓️ Com Janela Cadastrada</b><br>
-  🟢 Verde → Embarque / Entrega superior a próxima janela<br>
-  🟡 Amarelo → Embarque inferior a próxima janela e Entrega válida<br>
-  🔴 Vermelho → Embarque vencido e Entrega válida<br>
-  ⚪ Cinza → Entrega vencida
-</div>
+        <div style="margin-bottom:12px; font-size:12px; color:#111827;">
+          <b>🗓️ Com Janela Cadastrada</b><br>
+          🟢 Verde → Embarque / Entrega superior a próxima janela<br>
+          🟡 Amarelo → Embarque inferior a próxima janela e Entrega válida<br>
+          🔴 Vermelho → Embarque vencido e Entrega válida<br>
+          ⚪ Cinza → Entrega vencida
+        </div>
 
-  <div style="margin-bottom:12px;">
-    <b>🗓️ Sem Janela Cadastrada</b><br>
-    🟢 Verde → Embarque superior a D+2<br>
-    🟡 Amarelo → Embarque hoje ou amanhã<br>
-    🔴 Vermelho → Embarque vencido / Entrega à vencer<br>
-    ⚪ Cinza → Entrega vencida
-  </div>
+        <div style="margin-bottom:0; font-size:12px; color:#111827;">
+          <b>🗓️ Sem Janela Cadastrada</b><br>
+          🟢 Verde → Embarque superior a D+2<br>
+          🟡 Amarelo → Embarque hoje ou amanhã<br>
+          🔴 Vermelho → Embarque vencido / Entrega à vencer<br>
+          ⚪ Cinza → Entrega vencida
+        </div>
+      </div>
 
-</div>
+    </div>
   `;
+
+  // 🔎 Atualiza gráficos (UI apenas)
+  atualizarGraficosAnalise(stats);
 }
 
 
-function criarCard(titulo, itens){
+function criarCard(titulo, itens, chartId){
 
   return `
-    <div style="
-      background:var(--card2);
-      border:1px solid #e5e7eb;
-      border-radius:14px;
-      padding:18px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.05);
-    ">
-
-      <div style="
-        font-weight:900;
-        font-size:13px;
-        color:#374151;
-        margin-bottom:14px;
-        letter-spacing:0.5px;
-      ">
-        ${titulo}
+    <div class="kpiCard">
+      <div class="kpiHeader">
+        <div class="kpiTitle">${titulo}</div>
       </div>
 
-      ${itens.map(item => `
-        <div style="
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          padding:6px 0;
-          border-bottom:1px solid #f1f5f9;
-        ">
-          <span style="font-size:13px; color:#475569;">
-            ${item.label}
-          </span>
+      <div class="kpiList">
+        ${itens.map(item => `
+          <div class="kpiRow">
+            <span class="kpiLabel">${item.label}</span>
+            <span class="kpiValue" style="color:${item.cor || "#111827"};">
+              ${item.valor}
+            </span>
+          </div>
+        `).join("")}
+      </div>
 
-          <span style="
-            font-weight:900;
-            font-size:18px;
-            color:${item.cor || "#111827"};
-          ">
-            ${item.valor}
-          </span>
-        </div>
-      `).join("")}
-
+      <div class="kpiChart">
+        <canvas id="${chartId}"></canvas>
+      </div>
     </div>
   `;
 }
@@ -3228,7 +3445,152 @@ document.addEventListener("input", (e) => {
   window.obsDrafts[voc] = t.value || "";
 }, true);
 
+
+/* ===============================
+   ✅ Gráficos (UI ONLY)
+   - Não altera regras/funcionalidade
+   - Apenas reflete os totais já calculados
+   =============================== */
+let _chartResumoPrincipal = null;
+let _chartKpiVolume = null;
+let _chartKpiEntrada = null;
+let _chartKpiStatus = null;
+let _chartKpiCriticidade = null;
+
+function _fmt(n){
+  const x = Number(n || 0);
+  return x.toLocaleString("pt-BR");
+}
+
+function _destroyChart(ch){
+  try{ if(ch) ch.destroy(); } catch(e){}
+}
+
+function _mkBarChart(ctx, labels, values){
+  return new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "",
+        data: values
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+        datalabels: {
+          anchor: "end",
+          align: "top",
+          formatter: (v)=> _fmt(v),
+          font: { weight: "900", size: 11 }
+        }
+      },
+      scales: {
+        x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+        y: { beginAtZero: true, ticks: { font: { size: 10 } } }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+function _mkDoughnutChart(ctx, labels, values){
+  return new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "68%",
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } },
+        tooltip: { enabled: true },
+        datalabels: {
+          formatter: (v)=> v ? _fmt(v) : "",
+          font: { weight: "900", size: 11 }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+// Principal: 4 KPIs
+function atualizarGraficoResumoPrincipal({ total, com, sem, totalMatches }){
+  const canvas = document.getElementById("chartResumoPrincipal");
+  if (!canvas || !window.Chart) return;
+
+  const ctx = canvas.getContext("2d");
+
+  _destroyChart(_chartResumoPrincipal);
+  _chartResumoPrincipal = _mkBarChart(
+    ctx,
+    ["Veículos", "Com Reg.", "Sem Reg.", "Notas"],
+    [total, com, sem, totalMatches]
+  );
+}
+
+// Análise: 4 blocos
+function atualizarGraficosAnalise(stats){
+  if (!stats || !window.Chart) return;
+
+  // volume
+  const c1 = document.getElementById("chartKpiVolume");
+  if (c1) {
+    _destroyChart(_chartKpiVolume);
+    _chartKpiVolume = _mkBarChart(
+      c1.getContext("2d"),
+      ["Almox", "Notas PVD", "≤ D-1"],
+      [stats.totalAlmox, stats.totalNotasPVDGeral, stats.totalNotas]
+    );
+  }
+
+  // entrada
+  const c2 = document.getElementById("chartKpiEntrada");
+  if (c2) {
+    _destroyChart(_chartKpiEntrada);
+    _chartKpiEntrada = _mkDoughnutChart(
+      c2.getContext("2d"),
+      ["No prazo", "Em atraso"],
+      [stats.totalPrazo, stats.totalAtraso]
+    );
+  }
+
+  // status
+  const c3 = document.getElementById("chartKpiStatus");
+  if (c3) {
+    _destroyChart(_chartKpiStatus);
+    _chartKpiStatus = _mkBarChart(
+      c3.getContext("2d"),
+      ["Carregados hoje", "Programados", "Não prog."],
+      [stats.carregadosHoje, stats.programados, stats.semVeiculo]
+    );
+  }
+
+  // criticidade
+  const c4 = document.getElementById("chartKpiCriticidade");
+  if (c4) {
+    _destroyChart(_chartKpiCriticidade);
+    _chartKpiCriticidade = _mkBarChart(
+      c4.getContext("2d"),
+      ["D+", "D0", "D-1", "≥ D-2"],
+      [stats.totalDmais, stats.totalD0, stats.totalDmenos1, stats.totalDmenosMaiorIgual2]
+    );
+  }
+}
+
 </script>
+
 
 <div id="paginaAnalise" style="display:none;" class="container">
 
@@ -3249,7 +3611,7 @@ document.addEventListener("input", (e) => {
   </div>
 </div>
 
-    <div style="display:flex; gap:10px; margin-top:15px; margin-bottom:12px; align-items:center;">
+    <div class="filtersBar">
       
     
 
