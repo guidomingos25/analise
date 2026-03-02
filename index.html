@@ -490,7 +490,7 @@ h1{
 
 .filtersBar{
   display:grid;
-  grid-template-columns: minmax(220px, 320px) 220px 1fr 1fr minmax(240px, 260px);
+  grid-template-columns: minmax(220px, 320px) 220px 220px 1fr 1fr minmax(240px, 260px);
   gap:10px;
   align-items:stretch;
   margin-top:14px;
@@ -1789,6 +1789,8 @@ async function listarAlmoxPendentes(){
   const modoDataLimite = 
     document.getElementById("filtroDataLimitePopup")?.value || "all";
 
+  const modoCriticidade = document.getElementById("filtroCriticidadePopup")?.value || "all";
+
   // ===============================
   // MAPA DE ALMOX DO PVD (pendentes)
   // ===============================
@@ -1975,10 +1977,42 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       return (dias != null && dias >= 6);
     }
 
-    if (modoDataLimite === "limEmb_Atraso6") {
+    if (modoDataLimite === "limEmb_6_10") {
       if (!dtLimEmb) return false;
       const dias = diasDesdeHoje(dtLimEmb);
-      return (dias != null && dias > 6); // ✅ agora é >6
+      return (dias != null && dias > 6 && dias <= 10);
+    }
+
+    if (modoDataLimite === "limEmb_10_19") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      return (dias != null && dias > 10 && dias <= 20);
+    }
+
+    if (modoDataLimite === "limEmb_19_plus") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      return (dias != null && dias > 20);
+    }
+  }
+
+
+  // ====== FILTRO CRITICIDADE (D+, D0, D-1, ≥ D-2) ======
+  if (modoCriticidade && modoCriticidade !== "all") {
+    const dtLimEmb = toDateOnly(n.dtLim);
+    if (!dtLimEmb) return false;
+
+    // dias para o limite (mesma lógica dos seus KPIs)
+    const diasParaLimite = Math.round((dtLimEmb.getTime() - hoje.getTime()) / 86400000);
+
+    if (modoCriticidade === "Dmais") {
+      if (!(diasParaLimite < 0)) return false;       // D+
+    } else if (modoCriticidade === "D0") {
+      if (!(diasParaLimite === 0)) return false;     // D0
+    } else if (modoCriticidade === "Dmenos1") {
+      if (!(diasParaLimite === 1)) return false;     // D-1
+    } else if (modoCriticidade === "Dge2") {
+      if (!(diasParaLimite >= 2)) return false;      // ≥ D-2
     }
   }
 
@@ -2048,10 +2082,22 @@ if (modoDataLimite && modoDataLimite !== "all") {
     }
 
     // 4) Limite embarque atrasado >= 6 dias (passado)
-    if (modoDataLimite === "limEmb_Atraso6") {
+    if (modoDataLimite === "limEmb_6_10") {
       if (!dtLimEmb) return false;
       const dias = diasDesdeHoje(dtLimEmb);
-      return (dias != null && dias > 6); // ✅ agora é >6
+      return (dias != null && dias > 6 && dias <= 10);
+    }
+
+    if (modoDataLimite === "limEmb_10_19") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      return (dias != null && dias > 10 && dias <= 20);
+    }
+
+    if (modoDataLimite === "limEmb_19_plus") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      return (dias != null && dias > 20);
     }
 
     return true;
@@ -2998,6 +3044,11 @@ abrirPaginaAnalise();
   }
 
 
+
+  const filtroCritPopup = document.getElementById("filtroCriticidadePopup");
+  if(filtroCritPopup){
+    filtroCritPopup.onchange = () => listarAlmoxPendentes();
+  }
 }
 
 function aplicarStatusDefaultNoDOM(){
@@ -3629,7 +3680,18 @@ function atualizarGraficosAnalise(stats){
         <option value="ateAmanha">⏳ Análise D-1</option>
         <option value="entradaNF_Atraso6">🧾 Entrada ≥ 6 dias</option>
         <option value="maxEntCheck_Atraso6">🕒 Entrada/Check-in ≥ 6 dias</option>
-        <option value="limEmb_Atraso6">📅 Limite Embarque > 6 dias</option>
+        
+        <option value="limEmb_6_10">📅 Limite Emb. > de 6 a 10 dias</option>
+        <option value="limEmb_10_19">📅 Limite Emb. de 11 a 20 dias</option>
+        <option value="limEmb_19_plus">📅 Limite Emb. acima de 20 dias</option>
+      </select>
+
+      <select id="filtroCriticidadePopup" style="width:220px; padding:6px 10px;">
+        <option value="all" selected>🚦 Criticidade (Todos)</option>
+        <option value="Dmais">🔴 D+</option>
+        <option value="D0">🔵 D0</option>
+        <option value="Dmenos1">🟢 D-1</option>
+        <option value="Dge2">🟢 ≥ D-2</option>
       </select>
 
       <input id="searchClientePopup" type="text"
