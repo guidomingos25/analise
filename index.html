@@ -1965,6 +1965,11 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       return dtLimEmb.getTime() <= amanha.getTime();
     }
 
+    if (modoDataLimite === "limEmb_0_plus") {
+      if (!dtLimEmb) return false;
+      return dtLimEmb.getTime() >= hoje.getTime(); // ✅ hoje ou posterior
+    }
+
     if (modoDataLimite === "entradaNF_Atraso6") {
       if (!dtEntrada) return false;
       const dias = diasDesdeHoje(dtEntrada);
@@ -1975,6 +1980,18 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       if (!dtMaior) return false;
       const dias = diasDesdeHoje(dtMaior);
       return (dias != null && dias >= 6);
+    }
+
+    if (modoDataLimite === "limEmb_1_2") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      return (dias != null && dias >= 1 && dias <= 2);
+    }
+
+    if (modoDataLimite === "limEmb_3_5") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      return (dias != null && dias >= 3 && dias <= 5);
     }
 
     if (modoDataLimite === "limEmb_6_10") {
@@ -2067,6 +2084,11 @@ if (modoDataLimite && modoDataLimite !== "all") {
       return dtLimEmb.getTime() <= amanha.getTime();
     }
 
+    if (modoDataLimite === "limEmb_0_plus") {
+      if (!dtLimEmb) return false;
+      return dtLimEmb.getTime() >= hoje.getTime(); // ✅ hoje ou posterior
+    }
+
     // 2) Entrada NF atrasada >= 6 dias (passado)
     if (modoDataLimite === "entradaNF_Atraso6") {
       if (!dtEntrada) return false;
@@ -2079,6 +2101,18 @@ if (modoDataLimite && modoDataLimite !== "all") {
       if (!dtMaior) return false;
       const dias = diasDesdeHoje(dtMaior);
       return (dias != null && dias >= 6);
+    }
+
+    if (modoDataLimite === "limEmb_1_2") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      return (dias != null && dias >= 1 && dias <= 2);
+    }
+
+    if (modoDataLimite === "limEmb_3_5") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      return (dias != null && dias >= 3 && dias <= 5);
     }
 
     // 4) Limite embarque atrasado >= 6 dias (passado)
@@ -3680,10 +3714,12 @@ function atualizarGraficosAnalise(stats){
         <option value="ateAmanha">⏳ Análise D-1</option>
         <option value="entradaNF_Atraso6">🧾 Entrada ≥ 6 dias</option>
         <option value="maxEntCheck_Atraso6">🕒 Entrada/Check-in ≥ 6 dias</option>
-        
-        <option value="limEmb_6_10">📅 Limite Emb. > de 6 a 10 dias</option>
-        <option value="limEmb_10_19">📅 Limite Emb. de 11 a 20 dias</option>
-        <option value="limEmb_19_plus">📅 Limite Emb. acima de 20 dias</option>
+        <option value="limEmb_0_plus">📅 Limite Emb. hoje ou a vencer</option>
+        <option value="limEmb_1_2">📅 Limite Emb. vencido de 1 a 2 dias</option>
+        <option value="limEmb_3_5">📅 Limite Emb. vencido de 3 a 5 dias</option>
+        <option value="limEmb_6_10">📅 Limite Emb. vencido de 6 a 10 dias</option>
+        <option value="limEmb_10_19">📅 Limite Emb. vencido de 11 a 20 dias</option>
+        <option value="limEmb_19_plus">📅 Limite Emb. vencido acima de 20 dias</option>
       </select>
 
       <select id="filtroCriticidadePopup" style="width:220px; padding:6px 10px;">
