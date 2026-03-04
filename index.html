@@ -2120,13 +2120,13 @@ if (modoDataLimite && modoDataLimite !== "all") {
     if (modoDataLimite === "limEmb_6_10") {
       if (!dtLimEmb) return false;
       const dias = diasDesdeHoje(dtLimEmb);
-      return (dias != null && dias > 6 && dias <= 10);
+      return (dias != null && dias >= 6 && dias <= 10);
     }
 
     if (modoDataLimite === "limEmb_10_19") {
       if (!dtLimEmb) return false;
       const dias = diasDesdeHoje(dtLimEmb);
-      return (dias != null && dias > 10 && dias <= 20);
+      return (dias != null && dias >= 11 && dias <= 20);
     }
 
     if (modoDataLimite === "limEmb_19_plus") {
