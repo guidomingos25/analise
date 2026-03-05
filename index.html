@@ -1638,7 +1638,12 @@ function renderResumoAnalise(stats){
       ${criarCard("📊 VOLUME GERAL", [
         {label:"🏭 Almox", valor:stats.totalAlmox},
         {label:"📄 Total Notas PVD", valor:stats.totalNotasPVDGeral},
-        {label:"📦 Notas ≤ D-1", valor:stats.totalNotas}
+
+        {label:"📦 Notas ≤ D-1", valor:stats.totalNotas},
+
+        // ✅ NOVO (PVD por status do veículo)
+        {label:"🟢 Notas (Programados)", valor:stats.notasProgramadas, cor:"#16a34a"},
+        {label:"🔴 Notas (Não Programados)", valor:stats.notasNaoProgramadas, cor:"#dc2626"}
       ], "chartKpiVolume")}
 
       ${criarCard("⏱ ENTRADA NF", [
@@ -1692,6 +1697,12 @@ function renderResumoAnalise(stats){
 
 function criarCard(titulo, itens, chartId){
 
+  const chartHTML = chartId ? `
+    <div class="kpiChart">
+      <canvas id="${chartId}"></canvas>
+    </div>
+  ` : "";
+
   return `
     <div class="kpiCard">
       <div class="kpiHeader">
@@ -1709,9 +1720,7 @@ function criarCard(titulo, itens, chartId){
         `).join("")}
       </div>
 
-      <div class="kpiChart">
-        <canvas id="${chartId}"></canvas>
-      </div>
+      ${chartHTML}
     </div>
   `;
 }
@@ -2044,22 +2053,25 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
   let html = "";
 
     snapshotVocativos = {};
-  const stats = {
-    totalAlmox: 0,
-    totalNotas: 0,
-    totalNotasPVDGeral: 0,
-    totalAtraso: 0,
-    totalPrazo: 0,
-    carregadosHoje: 0,
-    programados: 0,
-    semVeiculo: 0,
+    const stats = {
+      totalAlmox: 0,
+      totalNotas: 0,
+      totalNotasPVDGeral: 0,
+      totalAtraso: 0,
+      totalPrazo: 0,
+      carregadosHoje: 0,
+      programados: 0,
+      semVeiculo: 0,
 
+      totalDmais: 0,
+      totalD0: 0,
+      totalDmenos1: 0,
+      totalDmenosMaiorIgual2: 0,
 
-    totalDmais: 0,
-    totalD0: 0,
-    totalDmenos1: 0,
-    totalDmenosMaiorIgual2: 0
-  };
+      // ✅ NOVO
+      notasProgramadas: 0,
+      notasNaoProgramadas: 0
+    };
 
 
 
@@ -2212,6 +2224,16 @@ if (modoDataLimite && modoDataLimite !== "all") {
     }
 
     const notasFiltradas = (info.notas || []).filter(notaPassaFiltros);
+    // ✅ Se há filtros por NOTA ativos (criticidade/data/cliente/destino/UF)
+    // e não sobrou nenhuma nota, então NÃO mostra o vocativo
+    const filtrosNotaAtivos =
+      (modoCriticidade && modoCriticidade !== "all") ||
+      (modoDataLimite && modoDataLimite !== "all") ||
+      !!termoCliente || !!termoDestino || !!termoUFDestino;
+
+    if (filtrosNotaAtivos && notasFiltradas.length === 0) {
+      return; // ⛔ não renderiza esse vocativo
+    }
 
     // ordena datas das notas
     notasFiltradas.sort((a,b)=>{
@@ -2356,9 +2378,12 @@ if (overrideManual) {
   temProgramado = (overrideManual === "PROGRAMADO");
   temNaoProgramado = !temProgramado;
 
-} else if (overrideServidor) {
-  temProgramado = (overrideServidor === "PROGRAMADO");
-  temNaoProgramado = !temProgramado;
+} else if (overrideServidor === "PROGRAMADO") {
+  // ✅ servidor só "sobe" para PROGRAMADO
+  temProgramado = true;
+  temNaoProgramado = false;
+
+  // se quiser, mantém o "carregado hoje" coexistindo como já é
 }
 
 if (filtroVeiculo.length > 0) {
@@ -2380,7 +2405,14 @@ if (filtroVeiculo.length > 0) {
   if (!mostrar) return;
 }
 
+// ✅ NOVO: total de notas PVD deste vocativo (já respeitando filtros da tela)
+const totalNotasVoc = (notasFiltradas || []).length;
 
+if (temProgramado) {
+  stats.notasProgramadas += totalNotasVoc;
+} else if (temNaoProgramado) {
+  stats.notasNaoProgramadas += totalNotasVoc;
+}
 
 
     stats.totalAlmox++;
@@ -3420,23 +3452,32 @@ function onStatusManualChange(vocNorm, value, ev){
 function aplicarStatusNoDOM(mapaStatus){
   Object.keys(mapaStatus || {}).forEach(voc => {
     const vocNorm = normalizar(voc);
-    const status = parseStatus(mapaStatus[voc]);
+    const statusServidor = parseStatus(mapaStatus[voc]);
 
     // se usuário já alterou manualmente, não sobrescreve
     if (window.statusDrafts && window.statusDrafts[vocNorm]) return;
 
-    const sel = getStatusSelect(vocNorm);
-    if (sel) sel.value = status;
+    // status atual calculado (snapshot já tem o default calculado na montagem)
+    const statusAtualCalculado = snapshotVocativos?.[vocNorm]?.StatusVeiculo || "NAO PROGRAMADO";
 
-    
+    // ✅ regra nova:
+    // - se servidor = PROGRAMADO -> aplica sempre
+    // - se servidor = NAO PROGRAMADO -> só aplica se o calculado NÃO for PROGRAMADO
+    if (statusServidor === "NAO PROGRAMADO" && statusAtualCalculado === "PROGRAMADO") {
+      return; // 🔒 não derruba PROGRAMADO calculado
+    }
+
+    const sel = getStatusSelect(vocNorm);
+    if (sel) sel.value = statusServidor;
+
     snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
-    snapshotVocativos[vocNorm].StatusVeiculo = status;
+    snapshotVocativos[vocNorm].StatusVeiculo = statusServidor;
 
     // atualiza badge
     const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
     if (badgeDiv) {
       const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
-      badgeDiv.innerHTML = renderStatusBadge(status, temCarregadoHoje);
+      badgeDiv.innerHTML = renderStatusBadge(statusServidor, temCarregadoHoje);
     }
   });
 }
@@ -3548,6 +3589,13 @@ function _fmt(n){
   return x.toLocaleString("pt-BR");
 }
 
+function _pct(value, dataArray){
+  const total = (dataArray || []).reduce((a,b)=> a + (Number(b)||0), 0);
+  if (!total) return "";
+  const p = (Number(value || 0) / total) * 100;
+  return p.toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + "%";
+}
+
 function _destroyChart(ch){
   try{ if(ch) ch.destroy(); } catch(e){}
 }
@@ -3565,13 +3613,24 @@ function _mkBarChart(ctx, labels, values){
     options: {
       responsive: true,
       maintainAspectRatio: false,
+
+      layout: {
+        padding: { top: 18 } // 👈 dá “respiro” pro rótulo não ser cortado
+      },
+
       plugins: {
         legend: { display: false },
         tooltip: { enabled: true },
         datalabels: {
           anchor: "end",
           align: "top",
-          formatter: (v)=> _fmt(v),
+          offset: 4,      // 👈 empurra um pouco pra cima
+          clamp: true,    // 👈 mantém dentro do chartArea
+          clip: false,    // 👈 evita cortar o label
+          formatter: (v, ctx) => {
+            const arr = ctx?.chart?.data?.datasets?.[0]?.data || [];
+            return v ? _pct(v, arr) : "";
+          },
           font: { weight: "900", size: 11 }
         }
       },
@@ -3602,7 +3661,10 @@ function _mkDoughnutChart(ctx, labels, values){
         legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } },
         tooltip: { enabled: true },
         datalabels: {
-          formatter: (v)=> v ? _fmt(v) : "",
+          formatter: (v, ctx) => {
+            const arr = ctx?.chart?.data?.datasets?.[0]?.data || [];
+            return v ? _pct(v, arr) : "";
+          },
           font: { weight: "900", size: 11 }
         }
       }
@@ -3630,14 +3692,14 @@ function atualizarGraficoResumoPrincipal({ total, com, sem, totalMatches }){
 function atualizarGraficosAnalise(stats){
   if (!stats || !window.Chart) return;
 
-  // volume
+  // volume (somente Notas Programadas x Não Programadas)
   const c1 = document.getElementById("chartKpiVolume");
   if (c1) {
     _destroyChart(_chartKpiVolume);
     _chartKpiVolume = _mkBarChart(
       c1.getContext("2d"),
-      ["Almox", "Notas PVD", "≤ D-1"],
-      [stats.totalAlmox, stats.totalNotasPVDGeral, stats.totalNotas]
+      ["Notas Programadas", "Notas Não Programadas"],
+      [stats.notasProgramadas, stats.notasNaoProgramadas]
     );
   }
 
@@ -3652,14 +3714,14 @@ function atualizarGraficosAnalise(stats){
     );
   }
 
-  // status
+  // status (100%: Programados x Não Programados) — remove "Carregados Hoje" do gráfico
   const c3 = document.getElementById("chartKpiStatus");
   if (c3) {
     _destroyChart(_chartKpiStatus);
-    _chartKpiStatus = _mkBarChart(
+    _chartKpiStatus = _mkDoughnutChart(
       c3.getContext("2d"),
-      ["Carregados hoje", "Programados", "Não prog."],
-      [stats.carregadosHoje, stats.programados, stats.semVeiculo]
+      ["Programados", "Não Programados"],
+      [stats.programados, stats.semVeiculo]
     );
   }
 
