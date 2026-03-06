@@ -1668,28 +1668,60 @@ function renderResumoAnalise(stats){
         {label:"🟢 ≥ D-2", valor:stats.totalDmenosMaiorIgual2, cor:"#15803d"}
       ], "chartKpiCriticidade")}
 
-      <!-- LEGENDA -->
-      <div class="legendCard">
-        <div style="font-weight:1000; margin-bottom:12px; color:#111827; letter-spacing:.06em; text-transform:uppercase;">
-          📖 Regras do Farol
-        </div>
+      <div class="kpiCard">
+  <div class="kpiHeader">
+    <div class="kpiTitle">🔄 MIGRAÇÃO DE RANGES AMANHÃ</div>
+  </div>
 
-        <div style="margin-bottom:12px; font-size:12px; color:#111827;">
-          <b>🗓️ Com Janela Cadastrada</b><br>
-          🟢 Verde → Embarque / Entrega superior a próxima janela<br>
-          🟡 Amarelo → Embarque inferior a próxima janela e Entrega válida<br>
-          🔴 Vermelho → Embarque vencido e Entrega válida<br>
-          ⚪ Cinza → Entrega vencida
-        </div>
+  <div class="kpiList">
+    <div class="kpiRow">
+      <span class="kpiLabel">📅 D0 → 1 a 2 dias</span>
+      <span class="kpiValue" style="color:#000000;">
+        ${stats.migracaoHojePara1a2}
+      </span>
+    </div>
 
-        <div style="margin-bottom:0; font-size:12px; color:#111827;">
-          <b>🗓️ Sem Janela Cadastrada</b><br>
-          🟢 Verde → Embarque superior a D+2<br>
-          🟡 Amarelo → Embarque hoje ou amanhã<br>
-          🔴 Vermelho → Embarque vencido / Entrega à vencer<br>
-          ⚪ Cinza → Entrega vencida
-        </div>
-      </div>
+    <div class="kpiRow">
+      <span class="kpiLabel">📅 1 a 2 → 3 a 5 dias</span>
+      <span class="kpiValue" style="color:#000000;">
+        ${stats.migracao1a2Para3a5}
+      </span>
+    </div>
+
+    <div class="kpiRow">
+      <span class="kpiLabel">📅 3 a 5 → 6 a 10 dias</span>
+      <span class="kpiValue" style="color:#000000;">
+        ${stats.migracao3a5Para6a10}
+      </span>
+    </div>
+
+    <div class="kpiRow">
+      <span class="kpiLabel">📅 6 a 10 → 11 a 20 dias</span>
+      <span class="kpiValue" style="color:#000000;">
+        ${stats.migracao6a10Para11a20}
+      </span>
+    </div>
+
+    <div class="kpiRow">
+      <span class="kpiLabel">📅 11 a 20 → acima de 20 dias</span>
+      <span class="kpiValue" style="color:#000000;">
+        ${stats.migracao11a20Para20plus}
+      </span>
+    </div>
+  </div>
+
+  <div style="
+    margin-top:auto;
+    border-top:1px solid rgba(15,23,42,0.08);
+    padding-top:10px;
+    font-size:12px;
+    font-weight:700;
+    color:#475569;
+    line-height:1.5;
+  ">
+    Considera a virada para amanhã usando a mesma regra do filtro de limite de embarque.
+  </div>
+</div>
 
     </div>
   `;
@@ -2080,7 +2112,14 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       // ✅ entrada NF - somente notas em atraso
       atrasoComCheckin: 0,
       atrasoSemCheckinEXW: 0,
-      atrasoSemCheckinFCA: 0
+      atrasoSemCheckinFCA: 0,
+
+      // ✅ migração de ranges para amanhã
+      migracaoHojePara1a2: 0,
+      migracao1a2Para3a5: 0,
+      migracao3a5Para6a10: 0,
+      migracao6a10Para11a20: 0,
+      migracao11a20Para20plus: 0
     };
 
 
@@ -2742,27 +2781,53 @@ if (
     stats.atrasoSemCheckinEXW += qtdAtrasoSemCheckinEXW;
     stats.atrasoSemCheckinFCA += qtdAtrasoSemCheckinFCA;
     Object.keys(mapaDias).forEach(d => {
-      const dias = Number(d);
-      const qtd = mapaDias[dias];
+      const diasCrit = Number(d);
+      const qtd = mapaDias[diasCrit] || 0;
 
-      // 🔴 PASSADO
-      if (dias < 0) {
+      // =========================
+      // CRITICIDADE
+      // diasCrit = dtLim - hoje
+      // =========================
+      if (diasCrit < 0) {
         stats.totalDmais += qtd;
-      }
-
-      // 🔵 HOJE
-      else if (dias === 0) {
+      } else if (diasCrit === 0) {
         stats.totalD0 += qtd;
-      }
-
-      // 🟢 D-1
-      else if (dias === 1) {
+      } else if (diasCrit === 1) {
         stats.totalDmenos1 += qtd;
+      } else if (diasCrit >= 2) {
+        stats.totalDmenosMaiorIgual2 += qtd;
+      }
+    });
+
+    notasFiltradas.forEach(n => {
+      const dtLimEmb = toDateOnly(n.dtLim);
+      if (!dtLimEmb) return;
+
+      const diasVencidosHoje = diasDesdeHoje(dtLimEmb);
+
+      // hoje -> 1 a 2 dias
+      if (diasVencidosHoje === 0) {
+        stats.migracaoHojePara1a2++;
       }
 
-      // 🟢 >= D-2 (AGREGADO)
-      else if (dias >= 2) {
-        stats.totalDmenosMaiorIgual2 += qtd;
+      // 1 a 2 -> 3 a 5
+      if (diasVencidosHoje === 2) {
+        stats.migracao1a2Para3a5++;
+      }
+
+      // 3 a 5 -> 6 a 10
+      if (diasVencidosHoje === 5) {
+        stats.migracao3a5Para6a10++;
+      }
+
+      // 6 a 10 -> 11 a 20
+      if (diasVencidosHoje === 10) {
+        stats.migracao6a10Para11a20++;
+      }
+
+      // 11 a 20 -> acima de 20
+      if (diasVencidosHoje === 20) {
+        stats.migracao11a20Para20plus++;
       }
     });
 
@@ -2905,7 +2970,6 @@ html += `
         <div style="display:flex; gap:15px; margin-top:6px; flex-wrap:wrap;">
           ${
             (() => {
-
               let totalDmais = 0;
               let totalD0 = 0;
               let totalDmenos1 = 0;
@@ -2913,25 +2977,15 @@ html += `
 
               Object.keys(mapaDias).forEach(d => {
                 const dias = Number(d);
-                const qtd = mapaDias[d];
+                const qtd = mapaDias[dias] || 0;
 
-                // 🔴 PASSADO
                 if (dias < 0) {
                   totalDmais += qtd;
-                }
-
-                // 🔵 HOJE
-                else if (dias === 0) {
+                } else if (dias === 0) {
                   totalD0 += qtd;
-                }
-
-                // 🟢 D-1
-                else if (dias === 1) {
+                } else if (dias === 1) {
                   totalDmenos1 += qtd;
-                }
-
-                // 🟢 >= D-2
-                else if (dias >= 2) {
+                } else if (dias >= 2) {
                   totalDmenosMaiorIgual2 += qtd;
                 }
               });
@@ -2971,7 +3025,6 @@ html += `
               }
 
               return htmlDias;
-
             })()
           }
         </div>
