@@ -490,19 +490,37 @@ h1{
 
 .filtersBar{
   display:grid;
-  grid-template-columns: minmax(220px, 320px) 220px 220px 1fr 1fr minmax(240px, 260px);
-  gap:10px;
-  align-items:stretch;
+  grid-template-columns:
+    minmax(170px, 210px)   /* Programados / Não programados */
+    minmax(180px, 210px)   /* Range */
+    minmax(180px, 210px)   /* Migração */
+    minmax(170px, 190px)   /* Criticidade */
+    minmax(180px, 1fr)     /* Cliente */
+    minmax(180px, 1fr)     /* Destino */
+    minmax(150px, 180px);  /* UF */
+  gap:8px;
+  align-items:start;
   margin-top:14px;
   margin-bottom:12px;
 }
+
 .filtersBar > *{
   width:100% !important;
+  min-width:0;
 }
-@media (max-width: 1200px){
+
+@media (max-width: 1400px){
+  .filtersBar{
+    grid-template-columns: repeat(4, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 1100px){
   .summary{ grid-template-columns: 1fr; }
   .kpiGrid{ grid-template-columns: repeat(2, minmax(260px, 1fr)); }
-  .filtersBar{ grid-template-columns: 1fr 1fr; }
+  .filtersBar{
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
   .search{ min-width:180px; }
 }
 
@@ -1836,6 +1854,7 @@ async function listarAlmoxPendentes(){
     document.getElementById("filtroDataLimitePopup")?.value || "all";
 
   const modoCriticidade = document.getElementById("filtroCriticidadePopup")?.value || "all";
+  const modoMigracao = document.getElementById("filtroMigracaoPopup")?.value || "all";
 
   // ===============================
   // MAPA DE ALMOX DO PVD (pendentes)
@@ -2079,7 +2098,35 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       if (!(diasParaLimite >= 2)) return false;      // ≥ D-2
     }
   }
+    // ====== FILTRO MIGRAÇÃO DE RANGES (AMANHÃ) ======
+  if (modoMigracao && modoMigracao !== "all") {
+    const dtLimEmb = toDateOnly(n.dtLim);
+    if (!dtLimEmb) return false;
 
+    const diasVencidosHoje = diasDesdeHoje(dtLimEmb);
+
+    if (modoMigracao === "migra_D0_1a2") {
+      return diasVencidosHoje === 0;
+    }
+
+    if (modoMigracao === "migra_1a2_3a5") {
+      return diasVencidosHoje === 2;
+    }
+
+    if (modoMigracao === "migra_3a5_6a10") {
+      return diasVencidosHoje === 5;
+    }
+
+    if (modoMigracao === "migra_6a10_11a20") {
+      return diasVencidosHoje === 10;
+    }
+
+    if (modoMigracao === "migra_11a20_20plus") {
+      return diasVencidosHoje === 20;
+    }
+
+    return false;
+  }
   return true;
 }
 
@@ -2278,6 +2325,7 @@ if (modoDataLimite && modoDataLimite !== "all") {
     const filtrosNotaAtivos =
       (modoCriticidade && modoCriticidade !== "all") ||
       (modoDataLimite && modoDataLimite !== "all") ||
+      (modoMigracao && modoMigracao !== "all") ||
       !!termoCliente || !!termoDestino || !!termoUFDestino;
 
     if (filtrosNotaAtivos && notasFiltradas.length === 0) {
@@ -3199,12 +3247,13 @@ abrirPaginaAnalise();
   if(filtroDataPopup){
     filtroDataPopup.onchange = () => listarAlmoxPendentes();
   }
-
-
-
   const filtroCritPopup = document.getElementById("filtroCriticidadePopup");
   if(filtroCritPopup){
     filtroCritPopup.onchange = () => listarAlmoxPendentes();
+  }
+  const filtroMigracaoPopup = document.getElementById("filtroMigracaoPopup");
+  if (filtroMigracaoPopup) {
+    filtroMigracaoPopup.onchange = () => listarAlmoxPendentes();
   }
 }
 
@@ -3854,16 +3903,22 @@ function atualizarGraficosAnalise(stats){
     
 
       <select id="filterVeiculoPopup" multiple size="4"
-        style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
-      >
+  style="
+    padding:8px 10px;
+    border-radius:12px;
+    border:1px solid #d1d5db;
+    font-size:12px;
+    min-width:0;
+  "
+>
         <option value="all">✅ Selecionar Todos</option>
         <option value="carregado">🔵 Carregados Hoje</option>
         <option value="programado">🟢 Programados</option>
         <option value="sem">🔴 Não Programados</option>
       </select>
 
-      <select id="filtroDataLimitePopup" style="width:220px; padding:6px 10px;">
-        <option value="all" selected>📅 Todos</option>
+      <select id="filtroDataLimitePopup" style="padding:8px 10px; font-size:12px; min-width:0;">
+        <option value="all" selected>📅 Range (Todos)</option>
         <option value="ateAmanha">⏳ Análise D-1</option>
         <option value="entradaNF_Atraso6">🧾 Entrada ≥ 6 dias</option>
         <option value="maxEntCheck_Atraso6">🕒 Entrada/Check-in ≥ 6 dias</option>
@@ -3875,7 +3930,16 @@ function atualizarGraficosAnalise(stats){
         <option value="limEmb_19_plus">📅 Limite Emb. vencido acima de 20 dias</option>
       </select>
 
-      <select id="filtroCriticidadePopup" style="width:220px; padding:6px 10px;">
+      <select id="filtroMigracaoPopup" style="padding:8px 10px; font-size:12px; min-width:0;">
+        <option value="all" selected>🔄 Migração (Todos)</option>
+        <option value="migra_D0_1a2">📅 D0 → 1 a 2 dias</option>
+        <option value="migra_1a2_3a5">📅 1 a 2 → 3 a 5 dias</option>
+        <option value="migra_3a5_6a10">📅 3 a 5 → 6 a 10 dias</option>
+        <option value="migra_6a10_11a20">📅 6 a 10 → 11 a 20 dias</option>
+        <option value="migra_11a20_20plus">📅 11 a 20 → acima de 20 dias</option>
+      </select>
+
+      <select id="filtroCriticidadePopup" style="padding:8px 10px; font-size:12px; min-width:0;">
         <option value="all" selected>🚦 Criticidade (Todos)</option>
         <option value="Dmais">🔴 D+</option>
         <option value="D0">🔵 D0</option>
@@ -3885,16 +3949,16 @@ function atualizarGraficosAnalise(stats){
 
       <input id="searchClientePopup" type="text"
         placeholder="🔍 Filtrar por Cliente..."
-        style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
-      />
+        style="padding:8px 10px; border-radius:12px; border:1px solid #d1d5db; font-size:12px; min-width:0;"
+/>
       <input id="searchDestinoPopup" type="text"
         placeholder="📍 Filtrar por Destino..."
-        style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
-      />
+        style="padding:8px 10px; border-radius:12px; border:1px solid #d1d5db; font-size:12px; min-width:0;"
+/>
       <input id="searchUFDestinoPopup" type="text"
         placeholder="🗺️ Filtrar por UF Destino..."
-        style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid #d1d5db;"
-      />
+        style="padding:8px 10px; border-radius:12px; border:1px solid #d1d5db; font-size:12px; min-width:0;"
+/>
 
 
     </div>
