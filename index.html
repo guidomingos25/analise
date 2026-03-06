@@ -1647,7 +1647,10 @@ function renderResumoAnalise(stats){
       ], "chartKpiVolume")}
 
       ${criarCard("⏱ ENTRADA NF", [
-        {label:"🟥 Em Atraso", valor:stats.totalAtraso, cor:"#dc2626"},
+        {label:"📍 Atraso | Check-in", valor:stats.atrasoComCheckin, cor:"#b45309"},
+        {label:"🚚 Atraso | Entrada | EXW", valor:stats.atrasoSemCheckinEXW, cor:"#b45309"},
+        {label:"🏭 Atraso | Entrada | FCA", valor:stats.atrasoSemCheckinFCA, cor:"#b45309"},
+        {label:"🟥 Em Atraso | Total", valor:stats.totalAtraso, cor:"#dc2626"},
         {label:"🟩 No Prazo", valor:stats.totalPrazo, cor:"#16a34a"}
       ], "chartKpiEntrada")}
 
@@ -1861,7 +1864,8 @@ async function listarAlmoxPendentes(){
       destinatario: r["Destinatario"] || "",
       cliente: r["Cliente"] || "",
       destino: r["Destino"] || "",
-      uf: r["UF Destino"] || "",   // 👈 ADICIONE ISSO
+      uf: r["UF Destino"] || "",
+      incoterms: r["INCOTERMS"] || "",
       checkin: r["Data de Check in"],
       entrada: r["Data de Entrada da Nota"],
       finalEntrega: r["Dt Final Entrega"]
@@ -2068,9 +2072,14 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       totalDmenos1: 0,
       totalDmenosMaiorIgual2: 0,
 
-      // ✅ NOVO
+      // ✅ volume geral
       notasProgramadas: 0,
-      notasNaoProgramadas: 0
+      notasNaoProgramadas: 0,
+
+      // ✅ entrada NF - somente notas em atraso
+      atrasoComCheckin: 0,
+      atrasoSemCheckinEXW: 0,
+      atrasoSemCheckinFCA: 0
     };
 
 
@@ -2501,7 +2510,11 @@ else if (temNaoProgramado) {
     let qtdDentroRegra = 0;
     let qtdForaRegra = 0;
 
-    // 🔥 NOVO: contadores D+, D0 e D-1
+    // ✅ novos contadores por vocativo - somente para notas em atraso
+    let qtdAtrasoComCheckin = 0;
+    let qtdAtrasoSemCheckinEXW = 0;
+    let qtdAtrasoSemCheckinFCA = 0;
+
     // 🔥 NOVO: Mapa dinâmico de D- dias
     let mapaDias = {};
 
@@ -2676,8 +2689,23 @@ if (
         if (dtEntr  && dtEntr  >= dtLim) dentroRegra = true;
       }
 
-      if(dentroRegra) qtdDentroRegra++;
-      else qtdForaRegra++;
+      if (dentroRegra) {
+        qtdDentroRegra++;
+
+        const incotermNorm = normalizar(n.incoterms || "");
+
+        if (dtCheck) {
+          qtdAtrasoComCheckin++;
+        } else {
+          if (incotermNorm === "EXW") {
+            qtdAtrasoSemCheckinEXW++;
+          } else if (incotermNorm === "FCA") {
+            qtdAtrasoSemCheckinFCA++;
+          }
+        }
+      } else {
+        qtdForaRegra++;
+      }
 
       const style = dentroRegra ? 'style="background:#fef2f2; color:#9f1239; font-weight:600;"' : "";
 
@@ -2709,6 +2737,9 @@ if (
 
     stats.totalAtraso += qtdDentroRegra;
     stats.totalPrazo += qtdForaRegra;
+    stats.atrasoComCheckin += qtdAtrasoComCheckin;
+    stats.atrasoSemCheckinEXW += qtdAtrasoSemCheckinEXW;
+    stats.atrasoSemCheckinFCA += qtdAtrasoSemCheckinFCA;
     Object.keys(mapaDias).forEach(d => {
       const dias = Number(d);
       const qtd = mapaDias[dias];
