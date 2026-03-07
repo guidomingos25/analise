@@ -1692,37 +1692,67 @@ function renderResumoAnalise(stats){
   </div>
 
   <div class="kpiList">
-    <div class="kpiRow">
-      <span class="kpiLabel">📅 D0 → 1 a 2 dias</span>
-      <span class="kpiValue" style="color:#000000;">
+    <div class="kpiRow" style="display:grid; grid-template-columns: 24px 48px 1fr 48px; align-items:center; column-gap:8px;">
+      <span style="font-size:16px;">📅</span>
+      <span class="kpiValue" style="color:#000000; font-size:20px; text-align:left;">
+        ${stats.faixaHojeD0}
+      </span>
+      <span class="kpiLabel" style="text-align:center; display:block; width:100%;">
+        D0 → 1 a 2 dias
+      </span>
+      <span class="kpiValue" style="color:#b45309; text-align:right;">
         ${stats.migracaoHojePara1a2}
       </span>
     </div>
 
-    <div class="kpiRow">
-      <span class="kpiLabel">📅 1 a 2 → 3 a 5 dias</span>
-      <span class="kpiValue" style="color:#000000;">
+    <div class="kpiRow" style="display:grid; grid-template-columns: 24px 48px 1fr 48px; align-items:center; column-gap:8px;">
+      <span style="font-size:16px;">📅</span>
+      <span class="kpiValue" style="color:#000000; font-size:20px; text-align:left;">
+        ${stats.faixaHoje1a2}
+      </span>
+      <span class="kpiLabel" style="text-align:center; display:block; width:100%;">
+        1 a 2 → 3 a 5 dias
+      </span>
+      <span class="kpiValue" style="color:#b45309; text-align:right;">
         ${stats.migracao1a2Para3a5}
       </span>
     </div>
 
-    <div class="kpiRow">
-      <span class="kpiLabel">📅 3 a 5 → 6 a 10 dias</span>
-      <span class="kpiValue" style="color:#000000;">
+    <div class="kpiRow" style="display:grid; grid-template-columns: 24px 48px 1fr 48px; align-items:center; column-gap:8px;">
+      <span style="font-size:16px;">📅</span>
+      <span class="kpiValue" style="color:#000000; font-size:20px; text-align:left;">
+        ${stats.faixaHoje3a5}
+      </span>
+      <span class="kpiLabel" style="text-align:center; display:block; width:100%;">
+        3 a 5 → 6 a 10 dias
+      </span>
+      <span class="kpiValue" style="color:#b45309; text-align:right;">
         ${stats.migracao3a5Para6a10}
       </span>
     </div>
 
-    <div class="kpiRow">
-      <span class="kpiLabel">📅 6 a 10 → 11 a 20 dias</span>
-      <span class="kpiValue" style="color:#000000;">
+    <div class="kpiRow" style="display:grid; grid-template-columns: 24px 48px 1fr 48px; align-items:center; column-gap:8px;">
+      <span style="font-size:16px;">📅</span>
+      <span class="kpiValue" style="color:#000000; font-size:20px; text-align:left;">
+        ${stats.faixaHoje6a10}
+      </span>
+      <span class="kpiLabel" style="text-align:center; display:block; width:100%;">
+        6 a 10 → 11 a 20 dias
+      </span>
+      <span class="kpiValue" style="color:#b45309; text-align:right;">
         ${stats.migracao6a10Para11a20}
       </span>
     </div>
 
-    <div class="kpiRow">
-      <span class="kpiLabel">📅 11 a 20 → acima de 20 dias</span>
-      <span class="kpiValue" style="color:#000000;">
+    <div class="kpiRow" style="display:grid; grid-template-columns: 24px 48px 1fr 48px; align-items:center; column-gap:8px;">
+      <span style="font-size:16px;">📅</span>
+      <span class="kpiValue" style="color:#000000; font-size:20px; text-align:left;">
+        ${stats.faixaHoje11a20}
+      </span>
+      <span class="kpiLabel" style="text-align:center; display:block; width:100%;">
+        11 a 20 → acima de 20 dias
+      </span>
+      <span class="kpiValue" style="color:#b45309; text-align:right;">
         ${stats.migracao11a20Para20plus}
       </span>
     </div>
@@ -2160,6 +2190,13 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       atrasoComCheckin: 0,
       atrasoSemCheckinEXW: 0,
       atrasoSemCheckinFCA: 0,
+
+      // ✅ volume atual por range (lado esquerdo)
+      faixaHojeD0: 0,
+      faixaHoje1a2: 0,
+      faixaHoje3a5: 0,
+      faixaHoje6a10: 0,
+      faixaHoje11a20: 0,
 
       // ✅ migração de ranges para amanhã
       migracaoHojePara1a2: 0,
@@ -2853,27 +2890,50 @@ if (
 
       const diasVencidosHoje = diasDesdeHoje(dtLimEmb);
 
-      // hoje -> 1 a 2 dias
+      // =========================
+      // ✅ VOLUME ATUAL POR RANGE
+      // =========================
+      // D0 agora = hoje ou posterior (mesma regra do filtro "Limite Emb. hoje ou a vencer")
+      if (dtLimEmb.getTime() >= hoje.getTime()) {
+        stats.faixaHojeD0++;
+      }
+
+      // faixas vencidas continuam iguais
+      if (diasVencidosHoje >= 1 && diasVencidosHoje <= 2) {
+        stats.faixaHoje1a2++;
+      }
+
+      if (diasVencidosHoje >= 3 && diasVencidosHoje <= 5) {
+        stats.faixaHoje3a5++;
+      }
+
+      if (diasVencidosHoje >= 6 && diasVencidosHoje <= 10) {
+        stats.faixaHoje6a10++;
+      }
+
+      if (diasVencidosHoje >= 11 && diasVencidosHoje <= 20) {
+        stats.faixaHoje11a20++;
+      }
+
+      // =========================
+      // ✅ MIGRAÇÃO PARA AMANHÃ
+      // =========================
       if (diasVencidosHoje === 0) {
         stats.migracaoHojePara1a2++;
       }
 
-      // 1 a 2 -> 3 a 5
       if (diasVencidosHoje === 2) {
         stats.migracao1a2Para3a5++;
       }
 
-      // 3 a 5 -> 6 a 10
       if (diasVencidosHoje === 5) {
         stats.migracao3a5Para6a10++;
       }
 
-      // 6 a 10 -> 11 a 20
       if (diasVencidosHoje === 10) {
         stats.migracao6a10Para11a20++;
       }
 
-      // 11 a 20 -> acima de 20
       if (diasVencidosHoje === 20) {
         stats.migracao11a20Para20plus++;
       }
