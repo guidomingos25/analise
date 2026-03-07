@@ -1691,7 +1691,7 @@ function renderResumoAnalise(stats){
       ], "chartKpiStatus")}
 
       ${criarCard("📅 CRITICIDADE", [
-        {label:"🔴 D+", valor:stats.totalDmais, cor:"#dc2626"},
+        {label:"🔴 Vencidas", valor:stats.totalDmais, cor:"#dc2626"},
         {label:"🔵 D0", valor:stats.totalD0, cor:"#2563eb"},
         {label:"🟢 D-1", valor:stats.totalDmenos1, cor:"#16a34a"},
         {label:"🟢 ≥ D-2", valor:stats.totalDmenosMaiorIgual2, cor:"#15803d"}
@@ -3220,7 +3220,7 @@ html += `
               if (totalDmais > 0) {
                 htmlDias += `
                   <span style="color:#dc2626; font-weight:800;">
-                    🔴 D+: ${totalDmais}
+                    🔴 Vencidas: ${totalDmais}
                   </span>
                 `;
               }
@@ -4094,7 +4094,7 @@ function atualizarGraficosAnalise(stats){
     _destroyChart(_chartKpiCriticidade);
     _chartKpiCriticidade = _mkBarChart(
       c4.getContext("2d"),
-      ["D+", "D0", "D-1", "≥ D-2"],
+      ["Vencidas", "D0", "D-1", "≥ D-2"],
       [stats.totalDmais, stats.totalD0, stats.totalDmenos1, stats.totalDmenosMaiorIgual2]
     );
   }
@@ -4143,7 +4143,7 @@ function exportarRelatorioExcelAnalise() {
     { Indicador: "Notas Não Programadas", Valor: report.stats.notasNaoProgramadas || 0 },
     { Indicador: "Entrada em Atraso", Valor: report.stats.totalAtraso || 0 },
     { Indicador: "Entrada no Prazo", Valor: report.stats.totalPrazo || 0 },
-    { Indicador: "D+", Valor: report.stats.totalDmais || 0 },
+    { Indicador: "Vencidas", Valor: report.stats.totalDmais || 0 },
     { Indicador: "D0", Valor: report.stats.totalD0 || 0 },
     { Indicador: "D-1", Valor: report.stats.totalDmenos1 || 0 },
     { Indicador: ">= D-2", Valor: report.stats.totalDmenosMaiorIgual2 || 0 }
@@ -4211,7 +4211,7 @@ function exportarRelatorioPDFAnalise() {
       ["Notas Não Programadas", report.stats.notasNaoProgramadas || 0],
       ["Entrada em Atraso", report.stats.totalAtraso || 0],
       ["Entrada no Prazo", report.stats.totalPrazo || 0],
-      ["D+", report.stats.totalDmais || 0],
+      ["Vencidas", report.stats.totalDmais || 0],
       ["D0", report.stats.totalD0 || 0],
       ["D-1", report.stats.totalDmenos1 || 0],
       [">= D-2", report.stats.totalDmenosMaiorIgual2 || 0]
@@ -4223,7 +4223,7 @@ function exportarRelatorioPDFAnalise() {
   doc.autoTable({
     startY: doc.lastAutoTable.finalY + 8,
     head: [[
-      "Cliente", "Vocativos", "Notas", "Atraso", "Prazo", "D+", "D0", "D-1", ">= D-2", "Prog.", "Não Prog."
+      "Cliente", "Vocativos", "Notas", "Atraso", "Prazo", "Vencidas", "D0", "D-1", ">= D-2", "Prog.", "Não Prog."
     ]],
     body: (report.clientes || []).map(r => [
       r.Cliente,
@@ -4252,7 +4252,7 @@ function exportarRelatorioPDFAnalise() {
     startY: 20,
     head: [[
       "Vocativo", "Cliente", "Status", "Carregado Hoje", "Notas PVD", "<= D-1",
-      "Atraso", "Prazo", "D+", "D0", "D-1", "Antes Últ. Carreg.", "Após Últ. Carreg.", "Obs."
+      "Atraso", "Prazo", "Vencidas", "D0", "D-1", "Antes Últ. Carreg.", "Após Últ. Carreg.", "Obs."
     ]],
     body: (report.vocativos || []).map(r => [
       r.Vocativo,
@@ -4389,8 +4389,8 @@ window.addEventListener("DOMContentLoaded", () => {
       </select>
 
       <select id="filtroCriticidadePopup" style="padding:8px 10px; font-size:12px; min-width:0;">
-        <option value="all" selected>🚦 Criticidade (Todos)</option>
-        <option value="Dmais">🔴 D+</option>
+        <option value="all" selected>🚦 Criticidade NF (Todos)</option>
+        <option value="Dmais">🔴 Vencidas</option>
         <option value="D0">🔵 D0</option>
         <option value="Dmenos1">🟢 D-1</option>
         <option value="Dge2">🟢 ≥ D-2</option>
