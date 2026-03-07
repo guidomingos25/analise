@@ -1767,6 +1767,16 @@ function renderResumoAnalise(stats){
         ${stats.migracao11a20Para20plus}
       </span>
     </div>
+    <div class="kpiRow" style="display:grid; grid-template-columns: 24px 48px 1fr 48px; align-items:center; column-gap:8px;">
+      <span style="font-size:16px;">📅</span>
+      <span class="kpiValue" style="color:#000000; font-size:20px; text-align:left;">
+        ${stats.faixaHoje20plus}
+      </span>
+      <span class="kpiLabel" style="text-align:center; display:block; width:100%;">
+        acima de 20 dias
+      </span>
+
+    </div>
   </div>
 
   <div style="
@@ -2208,6 +2218,7 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       faixaHoje3a5: 0,
       faixaHoje6a10: 0,
       faixaHoje11a20: 0,
+      faixaHoje20plus: 0,
 
       // ✅ migração de ranges para amanhã
       migracaoHojePara1a2: 0,
@@ -2999,6 +3010,10 @@ if (dtLimOnly) {
 
       if (diasVencidosHoje >= 11 && diasVencidosHoje <= 20) {
         stats.faixaHoje11a20++;
+      }
+
+      if (diasVencidosHoje > 20) {
+        stats.faixaHoje20plus++;
       }
 
       // =========================
