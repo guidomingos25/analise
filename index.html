@@ -4148,6 +4148,8 @@ function exportarRelatorioExcelAnalise() {
     { Indicador: "Filtro Destino", Valor: report.filtros.destino || "-" },
     { Indicador: "Filtro UF Destino", Valor: report.filtros.ufDestino || "-" },
     { Indicador: "Total Almox", Valor: report.stats.totalAlmox || 0 },
+    { Indicador: "Almox Programados", Valor: report.stats.programados || 0 },
+    { Indicador: "Almox Não Programados", Valor: report.stats.semVeiculo || 0 },
     { Indicador: "Total Notas PVD", Valor: report.stats.totalNotasPVDGeral || 0 },
     { Indicador: "Notas <= D-1", Valor: report.stats.totalNotas || 0 },
     { Indicador: "Notas Programadas", Valor: report.stats.notasProgramadas || 0 },
@@ -4216,6 +4218,8 @@ function exportarRelatorioPDFAnalise() {
     head: [["Indicador", "Valor"]],
     body: [
       ["Total Almox", report.stats.totalAlmox || 0],
+      ["Almox Programados", report.stats.programados || 0],
+      ["Almox Não Programados", report.stats.semVeiculo || 0],
       ["Total Notas PVD", report.stats.totalNotasPVDGeral || 0],
       ["Notas <= D-1", report.stats.totalNotas || 0],
       ["Notas Programadas", report.stats.notasProgramadas || 0],
@@ -4234,7 +4238,7 @@ function exportarRelatorioPDFAnalise() {
   doc.autoTable({
     startY: doc.lastAutoTable.finalY + 8,
     head: [[
-      "Cliente", "Vocativos", "Notas", "Atraso", "Prazo", "Vencidas", "D0", "D-1", ">= D-2", "Prog.", "Não Prog."
+      "Cliente", "Vocativos", "Notas", "Entrada em Atraso", "Entrada no Prazo", "Vencidas", "D0", "D-1", ">= D-2", "Prog.", "Não Prog."
     ]],
     body: (report.clientes || []).map(r => [
       r.Cliente,
@@ -4283,38 +4287,6 @@ function exportarRelatorioPDFAnalise() {
     ]),
     styles: { fontSize: 7, cellPadding: 2 },
     headStyles: { fillColor: [31, 78, 216] }
-  });
-
-  doc.addPage();
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text("Notas Detalhadas", 14, 14);
-
-  doc.autoTable({
-    startY: 20,
-    head: [[
-      "Cliente", "Vocativo", "Status", "Nota", "Fornecedor", "Destino", "UF",
-      "Check-in", "Entrada", "Lim. Emb.", "Lim. Ent.", "Entrada Status", "Criticidade", "Farol"
-    ]],
-    body: (report.notas || []).map(r => [
-      r.Cliente,
-      r.Vocativo,
-      r.StatusVeiculo,
-      r.Nota,
-      r.Fornecedor,
-      r.Destino,
-      r.UFDestino,
-      r.DataCheckin,
-      r.DataEntrada,
-      r.DtLimiteEmbarque,
-      r.DtFinalEntrega,
-      r.EntradaStatus,
-      r.Criticidade,
-      r.Farol
-    ]),
-    styles: { fontSize: 7, cellPadding: 1.8 },
-    headStyles: { fillColor: [15, 118, 110] }
   });
 
   const dataNome = new Date().toISOString().slice(0, 10);
