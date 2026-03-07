@@ -4121,6 +4121,17 @@ function autoWidthFromJson(rows) {
   });
 }
 
+function limparTextoPDF(txt) {
+  return String(txt || "")
+    // remove emojis e símbolos problemáticos do PDF
+    .replace(/[\u{1F300}-\u{1FAFF}]/gu, "")
+    // remove caracteres estranhos comuns que podem quebrar no jsPDF
+    .replace(/[^\p{L}\p{N}\p{P}\p{Zs}<>=/-]/gu, "")
+    // normaliza espaços
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function exportarRelatorioExcelAnalise() {
   const report = getAnaliseReportData();
   if (!report) return;
@@ -4188,13 +4199,13 @@ function exportarRelatorioPDFAnalise() {
   doc.text(sub, 14, 20);
 
   const filtrosTexto = [
-    `Veículo: ${(report.filtros.veiculo || []).join(" | ") || "Todos"}`,
-    `Range: ${report.filtros.dataLimite || "Todos"}`,
-    `Migração: ${report.filtros.migracao || "Todos"}`,
-    `Criticidade: ${report.filtros.criticidade || "Todos"}`,
-    `Cliente: ${report.filtros.cliente || "-"}`,
-    `Destino: ${report.filtros.destino || "-"}`,
-    `UF: ${report.filtros.ufDestino || "-"}`
+    `Veículo: ${limparTextoPDF((report.filtros.veiculo || []).join(" | ") || "Todos")}`,
+    `Range: ${limparTextoPDF(report.filtros.dataLimite || "Todos")}`,
+    `Migração: ${limparTextoPDF(report.filtros.migracao || "Todos")}`,
+    `Criticidade: ${limparTextoPDF(report.filtros.criticidade || "Todos")}`,
+    `Cliente: ${limparTextoPDF(report.filtros.cliente || "-")}`,
+    `Destino: ${limparTextoPDF(report.filtros.destino || "-")}`,
+    `UF: ${limparTextoPDF(report.filtros.ufDestino || "-")}`
   ];
 
   doc.setFontSize(9);
@@ -4369,8 +4380,8 @@ window.addEventListener("DOMContentLoaded", () => {
       <select id="filtroDataLimitePopup" style="padding:8px 10px; font-size:12px; min-width:0;">
         <option value="all" selected>📅 Range (Todos)</option>
         <option value="ateAmanha">⏳ Análise D-1</option>
-        <option value="entradaNF_Atraso6">🧾 Entrada ≥ 6 dias</option>
-        <option value="maxEntCheck_Atraso6">🕒 Entrada/Check-in ≥ 6 dias</option>
+        <option value="entradaNF_Atraso6">🧾 Dt. Entrada ≥ 6 dias</option>
+        <option value="maxEntCheck_Atraso6">🕒 Entrada no armazém ≥ 6 dias</option>
         <option value="limEmb_0_plus">📅 Limite Emb. hoje ou a vencer</option>
         <option value="limEmb_1_2">📅 Limite Emb. vencido de 1 a 2 dias</option>
         <option value="limEmb_3_5">📅 Limite Emb. vencido de 3 a 5 dias</option>
