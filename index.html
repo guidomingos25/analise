@@ -1965,6 +1965,8 @@ async function listarAlmoxPendentes(){
       nota: r["Nota"] || r["Numero OEF"] || "",
       fornecedor: r["Fornecedor"] || "",
       destinatario: r["Destinatario"] || "",
+      peso: r["Peso"] || "",
+      onu: r["ONU"] || "",
       cliente: r["Cliente"] || "",
       destino: r["Destino"] || "",
       uf: r["UF Destino"] || "",
@@ -2884,6 +2886,7 @@ reportNotas.push({
   Nota: n.nota || "",
   Fornecedor: n.fornecedor || "",
   Destinatario: n.destinatario || "",
+  Peso: n.peso || "",
   Destino: n.destino || "",
   UFDestino: n.uf || "",
   Incoterms: n.incoterms || "",
@@ -2901,6 +2904,7 @@ if (!reportClientesMap[clienteNome]) {
     Cliente: clienteNome,
     vocativosSet: new Set(),
     totalNotas: 0,
+    pesoTotal: 0,
     entradaEmAtraso: 0,
     entradaNoPrazo: 0,
     totalDmais: 0,
@@ -2915,6 +2919,8 @@ if (!reportClientesMap[clienteNome]) {
 const clienteAgg = reportClientesMap[clienteNome];
 clienteAgg.vocativosSet.add(almox);
 clienteAgg.totalNotas++;
+const pesoNum = parseFloat(String(n.peso || "0").replace(",", "."));
+if (!isNaN(pesoNum)) clienteAgg.pesoTotal += pesoNum;
 
 if (dentroRegra) clienteAgg.entradaEmAtraso++;
 else clienteAgg.entradaNoPrazo++;
@@ -2932,29 +2938,30 @@ if (dtLimOnly) {
 }
 
       return `
-          <tr ${style}>
-            <td>${n.nota}</td>
-            <td>${n.fornecedor || ""}</td>
-            <td>${n.destinatario || ""}</td>
-            <td>${formatDateBRLocal(n.checkin)}</td>
-            <td>${formatDateBRLocal(n.entrada)}</td>
-            <td>
-  ${formatDateBRLocal(n.dtLim)}
-  ${coincideCarregamento ? bolinhaVerde() : ""}
-</td>
+  <tr ${style}>
+    <td>${n.nota}</td>
+    <td>${n.fornecedor || ""}</td>
+    <td>${n.destinatario || ""}</td>
+    <td>${n.peso || ""}</td>
+    <td>${n.onu || ""}</td>
+    <td>${formatDateBRLocal(n.checkin)}</td>
+    <td>${formatDateBRLocal(n.entrada)}</td>
+    <td>
+      ${formatDateBRLocal(n.dtLim)}
+      ${coincideCarregamento ? bolinhaVerde() : ""}
+    </td>
 
-<td>
-  ${formatDateBRLocal(n.finalEntrega)}
-  ${coincideEntrega ? bolinhaVerde() : ""}
-  
-</td>
-<td style="text-align:center;">
-  ${mostrarCheckVermelho ? iconeCheck("red") : ""}
-  ${!mostrarCheckVermelho && mostrarJoinha ? iconeCheck("green") : ""}
-  ${!mostrarCheckVermelho && !mostrarJoinha && mostrarCheckAmarelo ? iconeCheck("yellow") : ""}
-  ${mostrarCheckCinza ? iconeCheck("gray") : ""}
-</td>
-          </tr>`;
+    <td>
+      ${formatDateBRLocal(n.finalEntrega)}
+      ${coincideEntrega ? bolinhaVerde() : ""}
+    </td>
+    <td style="text-align:center;">
+      ${mostrarCheckVermelho ? iconeCheck("red") : ""}
+      ${!mostrarCheckVermelho && mostrarJoinha ? iconeCheck("green") : ""}
+      ${!mostrarCheckVermelho && !mostrarJoinha && mostrarCheckAmarelo ? iconeCheck("yellow") : ""}
+      ${mostrarCheckCinza ? iconeCheck("gray") : ""}
+    </td>
+  </tr>`;
       }).join("");
 
     stats.totalAtraso += qtdDentroRegra;
@@ -3382,6 +3389,8 @@ html += `
         <th>Nota</th>
         <th>Fornecedor</th>
         <th>Destinatário</th>
+        <th>Peso</th>
+        <th>ONU</th>
         <th>Data Check-in</th>
         <th>Data de Entrada</th>
         <th>Limite de Embarque</th>
@@ -3419,6 +3428,10 @@ const reportClientes = Object.values(reportClientesMap)
     Cliente: c.Cliente,
     TotalVocativos: c.vocativosSet.size,
     TotalNotas: c.totalNotas,
+    PesoTotal: Number(c.pesoTotal || 0).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }),
     EntradaEmAtraso: c.entradaEmAtraso,
     EntradaNoPrazo: c.entradaNoPrazo,
     Dmais: c.totalDmais,
@@ -4251,23 +4264,24 @@ function exportarRelatorioPDFAnalise() {
   });
 
   doc.autoTable({
-    startY: doc.lastAutoTable.finalY + 8,
-    head: [[
-      "Cliente", "Vocativos", "Notas", "Entrada em Atraso", "Entrada no Prazo", "Vencidas", "D0", "D-1", ">= D-2", "Prog.", "Não Prog."
-    ]],
-    body: (report.clientes || []).map(r => [
-      r.Cliente,
-      r.TotalVocativos,
-      r.TotalNotas,
-      r.EntradaEmAtraso,
-      r.EntradaNoPrazo,
-      r.Dmais,
-      r.D0,
-      r.Dmenos1,
-      r.Dge2,
-      r.NotasProgramadas,
-      r.NotasNaoProgramadas
-    ]),
+  startY: doc.lastAutoTable.finalY + 8,
+  head: [[
+    "Cliente", "Vocativos", "Notas", "Peso Total", "Entrada em Atraso", "Entrada no Prazo", "Vencidas", "D0", "D-1", ">= D-2", "Prog.", "Não Prog."
+  ]],
+  body: (report.clientes || []).map(r => [
+    r.Cliente,
+    r.TotalVocativos,
+    r.TotalNotas,
+    r.PesoTotal || "",
+    r.EntradaEmAtraso,
+    r.EntradaNoPrazo,
+    r.Dmais,
+    r.D0,
+    r.Dmenos1,
+    r.Dge2,
+    r.NotasProgramadas,
+    r.NotasNaoProgramadas
+  ]),
     styles: { fontSize: 8 },
     headStyles: { fillColor: [15, 118, 110] }
   });
@@ -4281,28 +4295,30 @@ function exportarRelatorioPDFAnalise() {
   doc.autoTable({
     startY: 20,
     head: [[
-      "Vocativo", "Cliente", "Status", "Carregado Hoje", "Notas PVD", "<= D-1",
-      "Atraso", "Prazo", "Vencidas", "D0", "D-1", "Antes Últ. Carreg.", "Após Últ. Carreg.", "Obs."
-    ]],
-    body: (report.vocativos || []).map(r => [
-      r.Vocativo,
-      r.Cliente,
-      r.StatusVeiculo,
-      r.CarregadoHoje,
-      r.TotalNotasPVD,
-      r.NotasAteD1,
-      r.EntradaEmAtraso,
-      r.EntradaNoPrazo,
-      r.Dmais,
-      r.D0,
-      r.Dmenos1,
-      r.NFsAntesUltimoCarregamento,
-      r.NFsAposUltimoCarregamento,
-      r.Observacao || ""
-    ]),
+  "Vocativo", "Cliente", "Status", "Carregado Hoje", "Notas PVD", "Peso Total PVD", "<= D-1",
+  "Atraso", "Prazo", "Vencidas", "D0", "D-1", "Antes Últ. Carreg.", "Após Últ. Carreg.", "Obs."
+]],
+body: (report.vocativos || []).map(r => [
+  r.Vocativo,
+  r.Cliente,
+  r.StatusVeiculo,
+  r.CarregadoHoje,
+  r.TotalNotasPVD,
+  r.PesoTotalPVD || "",
+  r.NotasAteD1,
+  r.EntradaEmAtraso,
+  r.EntradaNoPrazo,
+  r.Dmais,
+  r.D0,
+  r.Dmenos1,
+  r.NFsAntesUltimoCarregamento,
+  r.NFsAposUltimoCarregamento,
+  r.Observacao || ""
+]),
     styles: { fontSize: 7, cellPadding: 2 },
     headStyles: { fillColor: [31, 78, 216] }
   });
+
 
   const dataNome = new Date().toISOString().slice(0, 10);
   doc.save(`relatorio_analise_programacao_${dataNome}.pdf`);
