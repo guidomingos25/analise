@@ -14,6 +14,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 
   <style>
     /* === SEU CSS ORIGINAL (INALTERADO) === */
@@ -601,6 +603,15 @@ let resultadoFiltrado = [];
 let mostrarAtrasados = true;
 let snapshotVocativos = {}; 
 
+window.currentAnaliseReport = {
+  generatedAt: "",
+  filtros: {},
+  stats: {},
+  vocativos: [],
+  clientes: [],
+  notas: []
+};
+
 // ✅ cache do que veio da planilha (HOJE)
 window.statusHojeServidor = window.statusHojeServidor || {}; // { VOCNORM: "PROGRAMADO" | "NAO PROGRAMADO" }
 window.obsHojeServidor    = window.obsHojeServidor || {};    // { VOCNORM: "texto..." }
@@ -886,7 +897,7 @@ const JANELAS_ALMOX = {
   "SAL-MARABAPA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "SUZ- BELEM-PA-2": { carregamento: ['qua', 'seg', 'sex'], entrega: ['qua', 'seg', 'sex'] },
   "SUZ- LIMEIRA-SP": { carregamento: ['qua', 'seg', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
-  "SUZ-ACAILAN-MA": { carregamento: ['qua', 'sáb'], entrega: ['sex', 'ter'] },
+  "SUZ-ACAILAN-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "SUZ-ARACRUZ-ES": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
   "SUZ-C-ITAPEM-ES": { carregamento: ['sex', 'sáb'], entrega: ['qua', 'seg'] },
   "SUZ-IMPERATRIZ-MA": { carregamento: ['sex', 'ter'], entrega: ['qui', 'seg'] },
@@ -928,7 +939,7 @@ const JANELAS_ALMOX = {
   "VALE-NOVAERA-MG": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
   "VALE-PARAUAP-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "VALE-RIO-PIRACICABA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-  "VALE-SANTA-LUZIA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+  "VALE-SANTA-LUZIA-MG": { carregamento: ['ter'], entrega: ['qui'] },
   "VALE-SAO-LUIS-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
   "VALE-SGONCA-MG": { carregamento: ['ter'], entrega: ['qui'] },
   "VALE-TIMBOPEBA-MG": { carregamento: ['sex'], entrega: ['seg'] },
@@ -1680,7 +1691,7 @@ function renderResumoAnalise(stats){
       ], "chartKpiStatus")}
 
       ${criarCard("📅 CRITICIDADE", [
-        {label:"🔴 D+", valor:stats.totalDmais, cor:"#dc2626"},
+        {label:"🔴 Vencidas", valor:stats.totalDmais, cor:"#dc2626"},
         {label:"🔵 D0", valor:stats.totalD0, cor:"#2563eb"},
         {label:"🟢 D-1", valor:stats.totalDmenos1, cor:"#16a34a"},
         {label:"🟢 ≥ D-2", valor:stats.totalDmenosMaiorIgual2, cor:"#15803d"}
@@ -1755,6 +1766,16 @@ function renderResumoAnalise(stats){
       <span class="kpiValue" style="color:#b45309; text-align:right;">
         ${stats.migracao11a20Para20plus}
       </span>
+    </div>
+    <div class="kpiRow" style="display:grid; grid-template-columns: 24px 48px 1fr 48px; align-items:center; column-gap:8px;">
+      <span style="font-size:16px;">📅</span>
+      <span class="kpiValue" style="color:#000000; font-size:20px; text-align:left;">
+        ${stats.faixaHoje20plus}
+      </span>
+      <span class="kpiLabel" style="text-align:center; display:block; width:100%;">
+        acima de 20 dias
+      </span>
+
     </div>
   </div>
 
@@ -1944,6 +1965,8 @@ async function listarAlmoxPendentes(){
       nota: r["Nota"] || r["Numero OEF"] || "",
       fornecedor: r["Fornecedor"] || "",
       destinatario: r["Destinatario"] || "",
+      peso: r["Peso"] || "",
+      onu: r["ONU"] || "",
       cliente: r["Cliente"] || "",
       destino: r["Destino"] || "",
       uf: r["UF Destino"] || "",
@@ -2197,6 +2220,7 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       faixaHoje3a5: 0,
       faixaHoje6a10: 0,
       faixaHoje11a20: 0,
+      faixaHoje20plus: 0,
 
       // ✅ migração de ranges para amanhã
       migracaoHojePara1a2: 0,
@@ -2206,6 +2230,9 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
       migracao11a20Para20plus: 0
     };
 
+const reportVocativos = [];
+const reportNotas = [];
+const reportClientesMap = {};
 
 
   almoxOrdenados.forEach(([almox,info])=>{
@@ -2834,30 +2861,107 @@ if (
 
       const style = dentroRegra ? 'style="background:#fef2f2; color:#9f1239; font-weight:600;"' : "";
 
-      return `
-          <tr ${style}>
-            <td>${n.nota}</td>
-            <td>${n.fornecedor || ""}</td>
-            <td>${n.destinatario || ""}</td>
-            <td>${formatDateBRLocal(n.checkin)}</td>
-            <td>${formatDateBRLocal(n.entrada)}</td>
-            <td>
-  ${formatDateBRLocal(n.dtLim)}
-  ${coincideCarregamento ? bolinhaVerde() : ""}
-</td>
+      let farolTexto = "Cinza";
+if (mostrarCheckVermelho) farolTexto = "Vermelho";
+else if (mostrarJoinha) farolTexto = "Verde";
+else if (mostrarCheckAmarelo) farolTexto = "Amarelo";
 
-<td>
-  ${formatDateBRLocal(n.finalEntrega)}
-  ${coincideEntrega ? bolinhaVerde() : ""}
-  
-</td>
-<td style="text-align:center;">
-  ${mostrarCheckVermelho ? iconeCheck("red") : ""}
-  ${!mostrarCheckVermelho && mostrarJoinha ? iconeCheck("green") : ""}
-  ${!mostrarCheckVermelho && !mostrarJoinha && mostrarCheckAmarelo ? iconeCheck("yellow") : ""}
-  ${mostrarCheckCinza ? iconeCheck("gray") : ""}
-</td>
-          </tr>`;
+const clienteNome = (n.cliente || "SEM CLIENTE").toString().trim() || "SEM CLIENTE";
+const dtLimOnly = toDateOnly(n.dtLim);
+
+let classificacaoCriticidade = "";
+if (dtLimOnly) {
+  const diasParaLimite = Math.round((dtLimOnly.getTime() - hoje.getTime()) / 86400000);
+  if (diasParaLimite < 0) classificacaoCriticidade = "D+";
+  else if (diasParaLimite === 0) classificacaoCriticidade = "D0";
+  else if (diasParaLimite === 1) classificacaoCriticidade = "D-1";
+  else classificacaoCriticidade = ">= D-2";
+}
+
+reportNotas.push({
+  Cliente: clienteNome,
+  Vocativo: almox,
+  StatusVeiculo: temProgramado ? "PROGRAMADO" : "NAO PROGRAMADO",
+  CarregadoHoje: temCarregadoHoje ? "SIM" : "NAO",
+  Nota: n.nota || "",
+  Fornecedor: n.fornecedor || "",
+  Destinatario: n.destinatario || "",
+  Peso: n.peso || "",
+  Destino: n.destino || "",
+  UFDestino: n.uf || "",
+  Incoterms: n.incoterms || "",
+  DataCheckin: formatDateBRLocal(n.checkin),
+  DataEntrada: formatDateBRLocal(n.entrada),
+  DtLimiteEmbarque: formatDateBRLocal(n.dtLim),
+  DtFinalEntrega: formatDateBRLocal(n.finalEntrega),
+  EntradaStatus: dentroRegra ? "EM ATRASO" : "NO PRAZO",
+  Criticidade: classificacaoCriticidade,
+  Farol: farolTexto
+});
+
+if (!reportClientesMap[clienteNome]) {
+  reportClientesMap[clienteNome] = {
+    Cliente: clienteNome,
+    vocativosSet: new Set(),
+    totalNotas: 0,
+    pesoTotal: 0,
+    entradaEmAtraso: 0,
+    entradaNoPrazo: 0,
+    totalDmais: 0,
+    totalD0: 0,
+    totalDmenos1: 0,
+    totalDge2: 0,
+    notasProgramadas: 0,
+    notasNaoProgramadas: 0
+  };
+}
+
+const clienteAgg = reportClientesMap[clienteNome];
+clienteAgg.vocativosSet.add(almox);
+clienteAgg.totalNotas++;
+const pesoNum = parseFloat(String(n.peso || "0").replace(",", "."));
+if (!isNaN(pesoNum)) clienteAgg.pesoTotal += pesoNum;
+
+if (dentroRegra) clienteAgg.entradaEmAtraso++;
+else clienteAgg.entradaNoPrazo++;
+
+if (temProgramado) clienteAgg.notasProgramadas++;
+else clienteAgg.notasNaoProgramadas++;
+
+if (dtLimOnly) {
+  const diasParaLimite = Math.round((dtLimOnly.getTime() - hoje.getTime()) / 86400000);
+
+  if (diasParaLimite < 0) clienteAgg.totalDmais++;
+  else if (diasParaLimite === 0) clienteAgg.totalD0++;
+  else if (diasParaLimite === 1) clienteAgg.totalDmenos1++;
+  else clienteAgg.totalDge2++;
+}
+
+      return `
+  <tr ${style}>
+    <td>${n.nota}</td>
+    <td>${n.fornecedor || ""}</td>
+    <td>${n.destinatario || ""}</td>
+    <td>${n.peso || ""}</td>
+    <td>${n.onu || ""}</td>
+    <td>${formatDateBRLocal(n.checkin)}</td>
+    <td>${formatDateBRLocal(n.entrada)}</td>
+    <td>
+      ${formatDateBRLocal(n.dtLim)}
+      ${coincideCarregamento ? bolinhaVerde() : ""}
+    </td>
+
+    <td>
+      ${formatDateBRLocal(n.finalEntrega)}
+      ${coincideEntrega ? bolinhaVerde() : ""}
+    </td>
+    <td style="text-align:center;">
+      ${mostrarCheckVermelho ? iconeCheck("red") : ""}
+      ${!mostrarCheckVermelho && mostrarJoinha ? iconeCheck("green") : ""}
+      ${!mostrarCheckVermelho && !mostrarJoinha && mostrarCheckAmarelo ? iconeCheck("yellow") : ""}
+      ${mostrarCheckCinza ? iconeCheck("gray") : ""}
+    </td>
+  </tr>`;
       }).join("");
 
     stats.totalAtraso += qtdDentroRegra;
@@ -2915,6 +3019,10 @@ if (
         stats.faixaHoje11a20++;
       }
 
+      if (diasVencidosHoje > 20) {
+        stats.faixaHoje20plus++;
+      }
+
       // =========================
       // ✅ MIGRAÇÃO PARA AMANHÃ
       // =========================
@@ -2939,17 +3047,20 @@ if (
       }
     });
 
-// ✅ calcula D+, D0, D-1 deste vocativo (igual ao que aparece na tela)
+// ✅ calcula D+, D0, D-1 e >= D-2 deste vocativo
 let dMaisVoc = 0;
 let d0Voc = 0;
 let dMenos1Voc = 0;
+let dGe2Voc = 0;
 
 Object.keys(mapaDias).forEach(k => {
   const dias = Number(k);
   const qtd = mapaDias[dias] || 0;
-  if (dias < 0) dMaisVoc += qtd;       // D+
-  else if (dias === 0) d0Voc += qtd;   // D0
+
+  if (dias < 0) dMaisVoc += qtd;          // D+
+  else if (dias === 0) d0Voc += qtd;      // D0
   else if (dias === 1) dMenos1Voc += qtd; // D-1
+  else if (dias >= 2) dGe2Voc += qtd;     // >= D-2
 });
 
 // ✅ status do veículo em texto (para gravar na planilha)
@@ -2980,6 +3091,34 @@ snapshotVocativos[normalizar(almox)] = {
   
 };
 
+const obsAtualRelatorio =
+  (window.obsDrafts?.[normalizar(almox)] ?? "").trim() ||
+  (window.obsHojeServidor?.[normalizar(almox)] ?? "").trim() ||
+  "";
+
+reportVocativos.push({
+  Vocativo: almox,
+  Cliente: clienteResumo || "",
+  StatusVeiculo: statusVeiculo,
+  CarregadoHoje: temCarregadoHoje ? "SIM" : "NAO",
+  TotalNotasPVD: almoxTotalPVD[almox]?.totalRegistros || 0,
+  PesoTotalPVD: Number(almoxTotalPVD[almox]?.pesoTotal || 0).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }),
+  NotasAteD1: qtdD1TotalSemFiltro,
+  EntradaEmAtraso: qtdDentroRegra || 0,
+  EntradaNoPrazo: qtdForaRegra || 0,
+  Dmais: dMaisVoc || 0,
+  D0: d0Voc || 0,
+  Dmenos1: dMenos1Voc || 0,
+  Dge2: dGe2Voc || 0,
+  NFsAntesUltimoCarregamento: notasAntesCarregamento || 0,
+  NFsAposUltimoCarregamento: notasAposCarregamento || 0,
+  JanelaCarregamento: janelaCarreg,
+  JanelaEntrega: janelaEntrega,
+  Observacao: obsAtualRelatorio
+});
 
 
     const resumoVeic = veiculos.length
@@ -3103,7 +3242,7 @@ html += `
               if (totalDmais > 0) {
                 htmlDias += `
                   <span style="color:#dc2626; font-weight:800;">
-                    🔴 D+: ${totalDmais}
+                    🔴 Vencidas: ${totalDmais}
                   </span>
                 `;
               }
@@ -3211,7 +3350,7 @@ html += `
       onclick="addObsPreset(event, '${normalizar(almox)}', 'RETIRA')">🚚 RETIRA</button>
   
     <button class="quickBtn" type="button"
-      onclick="addObsPreset(event, '${normalizar(almox)}', 'VEÍCULO CARREGADO HOJE')">🔵 VEÍCULO CARREGADO HOJE</button>
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'TEVE CARRO E NÃO CARREGOU')">⚠️ TEVE CARRO E NÃO CARREGOU</button>
   
     <button class="quickBtn" type="button"
       onclick="addObsPreset(event, '${normalizar(almox)}', 'MEDIANTE AUTORIZAÇÃO')">✅ MEDIANTE AUTORIZAÇÃO</button>
@@ -3250,6 +3389,8 @@ html += `
         <th>Nota</th>
         <th>Fornecedor</th>
         <th>Destinatário</th>
+        <th>Peso</th>
+        <th>ONU</th>
         <th>Data Check-in</th>
         <th>Data de Entrada</th>
         <th>Limite de Embarque</th>
@@ -3281,6 +3422,57 @@ aplicarObservacoesNoDOM(window.obsHojeServidor || {});
 
 // 4) reaplica o manual por cima de tudo
 reaplicarStatusDraftsNoSnapshotEUI();
+
+const reportClientes = Object.values(reportClientesMap)
+  .map(c => ({
+    Cliente: c.Cliente,
+    TotalVocativos: c.vocativosSet.size,
+    TotalNotas: c.totalNotas,
+    PesoTotal: Number(c.pesoTotal || 0).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }),
+    EntradaEmAtraso: c.entradaEmAtraso,
+    EntradaNoPrazo: c.entradaNoPrazo,
+    Dmais: c.totalDmais,
+    D0: c.totalD0,
+    Dmenos1: c.totalDmenos1,
+    Dge2: c.totalDge2,
+    NotasProgramadas: c.notasProgramadas,
+    NotasNaoProgramadas: c.notasNaoProgramadas
+  }))
+  .sort((a, b) => (a.Cliente || "").localeCompare((b.Cliente || ""), "pt-BR"));
+
+const reportVocativosOrdenado = [...reportVocativos]
+  .sort((a, b) => (a.Vocativo || "").localeCompare((b.Vocativo || ""), "pt-BR"));
+
+const reportNotasOrdenado = [...reportNotas]
+  .sort((a, b) => {
+    const cmpCliente = (a.Cliente || "").localeCompare((b.Cliente || ""), "pt-BR");
+    if (cmpCliente !== 0) return cmpCliente;
+
+    const cmpVocativo = (a.Vocativo || "").localeCompare((b.Vocativo || ""), "pt-BR");
+    if (cmpVocativo !== 0) return cmpVocativo;
+
+    return (a.Nota || "").toString().localeCompare((b.Nota || "").toString(), "pt-BR");
+  });
+
+window.currentAnaliseReport = {
+  generatedAt: new Date().toLocaleString("pt-BR"),
+  filtros: {
+    veiculo: Array.from(document.getElementById("filterVeiculoPopup")?.selectedOptions || []).map(o => o.text),
+    dataLimite: document.getElementById("filtroDataLimitePopup")?.selectedOptions?.[0]?.text || "Todos",
+    migracao: document.getElementById("filtroMigracaoPopup")?.selectedOptions?.[0]?.text || "Todos",
+    criticidade: document.getElementById("filtroCriticidadePopup")?.selectedOptions?.[0]?.text || "Todos",
+    cliente: document.getElementById("searchClientePopup")?.value || "",
+    destino: document.getElementById("searchDestinoPopup")?.value || "",
+    ufDestino: document.getElementById("searchUFDestinoPopup")?.value || ""
+  },
+  stats: { ...stats },
+  vocativos: reportVocativosOrdenado,
+  clientes: reportClientes,
+  notas: reportNotasOrdenado
+};
 
 renderResumoAnalise(stats);
 abrirPaginaAnalise();
@@ -3930,11 +4122,215 @@ function atualizarGraficosAnalise(stats){
     _destroyChart(_chartKpiCriticidade);
     _chartKpiCriticidade = _mkBarChart(
       c4.getContext("2d"),
-      ["D+", "D0", "D-1", "≥ D-2"],
+      ["Vencidas", "D0", "D-1", "≥ D-2"],
       [stats.totalDmais, stats.totalD0, stats.totalDmenos1, stats.totalDmenosMaiorIgual2]
     );
   }
 }
+
+function getAnaliseReportData() {
+  const report = window.currentAnaliseReport || {};
+  if (!report.vocativos || !report.vocativos.length) {
+    alert("Abra a tela 'Análise Programação' com dados carregados antes de gerar o relatório.");
+    return null;
+  }
+  return report;
+}
+
+function autoWidthFromJson(rows) {
+  if (!rows || !rows.length) return [];
+  const keys = Object.keys(rows[0]);
+  return keys.map(k => {
+    const maxLen = Math.max(
+      k.length,
+      ...rows.map(r => String(r[k] ?? "").length)
+    );
+    return { wch: Math.min(Math.max(maxLen + 2, 12), 40) };
+  });
+}
+
+function limparTextoPDF(txt) {
+  return String(txt || "")
+    // remove emojis e símbolos problemáticos do PDF
+    .replace(/[\u{1F300}-\u{1FAFF}]/gu, "")
+    // remove caracteres estranhos comuns que podem quebrar no jsPDF
+    .replace(/[^\p{L}\p{N}\p{P}\p{Zs}<>=/-]/gu, "")
+    // normaliza espaços
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function exportarRelatorioExcelAnalise() {
+  const report = getAnaliseReportData();
+  if (!report) return;
+
+  const wb = XLSX.utils.book_new();
+
+  const resumoRows = [
+    { Indicador: "Gerado em", Valor: report.generatedAt },
+    { Indicador: "Filtro Veículo", Valor: (report.filtros.veiculo || []).join(" | ") || "Todos" },
+    { Indicador: "Filtro Range", Valor: report.filtros.dataLimite || "Todos" },
+    { Indicador: "Filtro Migração", Valor: report.filtros.migracao || "Todos" },
+    { Indicador: "Filtro Criticidade", Valor: report.filtros.criticidade || "Todos" },
+    { Indicador: "Filtro Cliente", Valor: report.filtros.cliente || "-" },
+    { Indicador: "Filtro Destino", Valor: report.filtros.destino || "-" },
+    { Indicador: "Filtro UF Destino", Valor: report.filtros.ufDestino || "-" },
+    { Indicador: "Total Almox", Valor: report.stats.totalAlmox || 0 },
+    { Indicador: "Almox Programados", Valor: report.stats.programados || 0 },
+    { Indicador: "Almox Não Programados", Valor: report.stats.semVeiculo || 0 },
+    { Indicador: "Total Notas PVD", Valor: report.stats.totalNotasPVDGeral || 0 },
+    { Indicador: "Notas <= D-1", Valor: report.stats.totalNotas || 0 },
+    { Indicador: "Notas Programadas", Valor: report.stats.notasProgramadas || 0 },
+    { Indicador: "Notas Não Programadas", Valor: report.stats.notasNaoProgramadas || 0 },
+    { Indicador: "Entrada em Atraso", Valor: report.stats.totalAtraso || 0 },
+    { Indicador: "Entrada no Prazo", Valor: report.stats.totalPrazo || 0 },
+    { Indicador: "Vencidas", Valor: report.stats.totalDmais || 0 },
+    { Indicador: "D0", Valor: report.stats.totalD0 || 0 },
+    { Indicador: "D-1", Valor: report.stats.totalDmenos1 || 0 },
+    { Indicador: ">= D-2", Valor: report.stats.totalDmenosMaiorIgual2 || 0 }
+  ];
+
+  const wsResumo = XLSX.utils.json_to_sheet(resumoRows);
+  wsResumo["!cols"] = autoWidthFromJson(resumoRows);
+  XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo");
+
+  const wsClientes = XLSX.utils.json_to_sheet(report.clientes || []);
+  wsClientes["!cols"] = autoWidthFromJson(report.clientes || [{ Cliente: "" }]);
+  XLSX.utils.book_append_sheet(wb, wsClientes, "Por Cliente");
+
+  const wsVocativos = XLSX.utils.json_to_sheet(report.vocativos || []);
+  wsVocativos["!cols"] = autoWidthFromJson(report.vocativos || [{ Vocativo: "" }]);
+  XLSX.utils.book_append_sheet(wb, wsVocativos, "Por Vocativo");
+
+  const wsNotas = XLSX.utils.json_to_sheet(report.notas || []);
+  wsNotas["!cols"] = autoWidthFromJson(report.notas || [{ Nota: "" }]);
+  XLSX.utils.book_append_sheet(wb, wsNotas, "Notas Detalhadas");
+
+  const dataNome = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `relatorio_analise_programacao_${dataNome}.xlsx`);
+}
+
+function exportarRelatorioPDFAnalise() {
+  const report = getAnaliseReportData();
+  if (!report) return;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("l", "mm", "a4");
+
+  const titulo = "Relatório Detalhado - Análise Programação";
+  const sub = `Gerado em: ${report.generatedAt}`;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text(titulo, 14, 14);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(sub, 14, 20);
+
+  const filtrosTexto = [
+    `Veículo: ${limparTextoPDF((report.filtros.veiculo || []).join(" | ") || "Todos")}`,
+    `Range: ${limparTextoPDF(report.filtros.dataLimite || "Todos")}`,
+    `Migração: ${limparTextoPDF(report.filtros.migracao || "Todos")}`,
+    `Criticidade: ${limparTextoPDF(report.filtros.criticidade || "Todos")}`,
+    `Cliente: ${limparTextoPDF(report.filtros.cliente || "-")}`,
+    `Destino: ${limparTextoPDF(report.filtros.destino || "-")}`,
+    `UF: ${limparTextoPDF(report.filtros.ufDestino || "-")}`
+  ];
+
+  doc.setFontSize(9);
+  doc.text(filtrosTexto, 14, 27);
+
+  doc.autoTable({
+    startY: 50,
+    head: [["Indicador", "Valor"]],
+    body: [
+      ["Total Almox", report.stats.totalAlmox || 0],
+      ["Almox Programados", report.stats.programados || 0],
+      ["Almox Não Programados", report.stats.semVeiculo || 0],
+      ["Total Notas PVD", report.stats.totalNotasPVDGeral || 0],
+      ["Notas <= D-1", report.stats.totalNotas || 0],
+      ["Notas Programadas", report.stats.notasProgramadas || 0],
+      ["Notas Não Programadas", report.stats.notasNaoProgramadas || 0],
+      ["Entrada em Atraso", report.stats.totalAtraso || 0],
+      ["Entrada no Prazo", report.stats.totalPrazo || 0],
+      ["Vencidas", report.stats.totalDmais || 0],
+      ["D0", report.stats.totalD0 || 0],
+      ["D-1", report.stats.totalDmenos1 || 0],
+      [">= D-2", report.stats.totalDmenosMaiorIgual2 || 0]
+    ],
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [31, 78, 216] }
+  });
+
+  doc.autoTable({
+  startY: doc.lastAutoTable.finalY + 8,
+  head: [[
+    "Cliente", "Vocativos", "Notas", "Peso Total", "Entrada em Atraso", "Entrada no Prazo", "Vencidas", "D0", "D-1", ">= D-2", "Prog.", "Não Prog."
+  ]],
+  body: (report.clientes || []).map(r => [
+    r.Cliente,
+    r.TotalVocativos,
+    r.TotalNotas,
+    r.PesoTotal || "",
+    r.EntradaEmAtraso,
+    r.EntradaNoPrazo,
+    r.Dmais,
+    r.D0,
+    r.Dmenos1,
+    r.Dge2,
+    r.NotasProgramadas,
+    r.NotasNaoProgramadas
+  ]),
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [15, 118, 110] }
+  });
+
+  doc.addPage();
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text("Resumo por Vocativo", 14, 14);
+
+  doc.autoTable({
+    startY: 20,
+    head: [[
+  "Vocativo", "Cliente", "Status", "Carregado Hoje", "Notas PVD", "Peso Total PVD", "<= D-1",
+  "Atraso", "Prazo", "Vencidas", "D0", "D-1", "Antes Últ. Carreg.", "Após Últ. Carreg.", "Obs."
+]],
+body: (report.vocativos || []).map(r => [
+  r.Vocativo,
+  r.Cliente,
+  r.StatusVeiculo,
+  r.CarregadoHoje,
+  r.TotalNotasPVD,
+  r.PesoTotalPVD || "",
+  r.NotasAteD1,
+  r.EntradaEmAtraso,
+  r.EntradaNoPrazo,
+  r.Dmais,
+  r.D0,
+  r.Dmenos1,
+  r.NFsAntesUltimoCarregamento,
+  r.NFsAposUltimoCarregamento,
+  r.Observacao || ""
+]),
+    styles: { fontSize: 7, cellPadding: 2 },
+    headStyles: { fillColor: [31, 78, 216] }
+  });
+
+
+  const dataNome = new Date().toISOString().slice(0, 10);
+  doc.save(`relatorio_analise_programacao_${dataNome}.pdf`);
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  const btnPdf = document.getElementById("btnRelatorioPDF");
+  const btnExcel = document.getElementById("btnRelatorioExcel");
+
+  if (btnPdf) btnPdf.addEventListener("click", exportarRelatorioPDFAnalise);
+  if (btnExcel) btnExcel.addEventListener("click", exportarRelatorioExcelAnalise);
+});
 
 </script>
 
@@ -3943,22 +4339,29 @@ function atualizarGraficosAnalise(stats){
 
   <div class="card" style="margin-top:20px;">
     
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
   <h2 style="margin:0;">🚨 ANÁLISE PROGRAMAÇÃO</h2>
 
-  <!-- AÇÕES NO TOPO (ALINHADAS À DIREITA) -->
-  <div style="display:flex; gap:10px; justify-content:flex-end; align-items:center;">
+  <div style="display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap;">
     <button class="btn secondary" onclick="voltarPaginaPrincipal()">
       ⬅ Voltar
     </button>
 
+    <button class="btn secondary" id="btnRelatorioPDF" type="button">
+      📄 Relatório PDF
+    </button>
+
+    <button class="btn secondary" id="btnRelatorioExcel" type="button">
+      📊 Relatório Excel
+    </button>
+
     <button class="btn" id="btnSalvarTudo" type="button">
-    💾 Salvar tudo
+      💾 Salvar tudo
     </button>
   </div>
 </div>
 
-    <div class="filtersBar">
+<div class="filtersBar">
       
     
 
@@ -3980,8 +4383,8 @@ function atualizarGraficosAnalise(stats){
       <select id="filtroDataLimitePopup" style="padding:8px 10px; font-size:12px; min-width:0;">
         <option value="all" selected>📅 Range (Todos)</option>
         <option value="ateAmanha">⏳ Análise D-1</option>
-        <option value="entradaNF_Atraso6">🧾 Entrada ≥ 6 dias</option>
-        <option value="maxEntCheck_Atraso6">🕒 Entrada/Check-in ≥ 6 dias</option>
+        <option value="entradaNF_Atraso6">🧾 Dt. Entrada ≥ 6 dias</option>
+        <option value="maxEntCheck_Atraso6">🕒 Entrada no armazém ≥ 6 dias</option>
         <option value="limEmb_0_plus">📅 Limite Emb. hoje ou a vencer</option>
         <option value="limEmb_1_2">📅 Limite Emb. vencido de 1 a 2 dias</option>
         <option value="limEmb_3_5">📅 Limite Emb. vencido de 3 a 5 dias</option>
@@ -4000,8 +4403,8 @@ function atualizarGraficosAnalise(stats){
       </select>
 
       <select id="filtroCriticidadePopup" style="padding:8px 10px; font-size:12px; min-width:0;">
-        <option value="all" selected>🚦 Criticidade (Todos)</option>
-        <option value="Dmais">🔴 D+</option>
+        <option value="all" selected>🚦 Criticidade NF (Todos)</option>
+        <option value="Dmais">🔴 Vencidas</option>
         <option value="D0">🔵 D0</option>
         <option value="Dmenos1">🟢 D-1</option>
         <option value="Dge2">🟢 ≥ D-2</option>
