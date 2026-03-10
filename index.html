@@ -526,6 +526,107 @@ h1{
   .search{ min-width:180px; }
 }
 
+/* ===============================
+   Filtro Cliente em Checkbox
+   =============================== */
+.clientFilterBox{
+  position:relative;
+  min-width:0;
+}
+
+.clientFilterTrigger{
+  width:100%;
+  padding:8px 10px;
+  border-radius:12px;
+  border:1px solid #d1d5db;
+  background:#fff;
+  font-size:12px;
+  text-align:left;
+  cursor:pointer;
+  min-height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+
+.clientFilterDropdown{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  width:100%;
+  min-width:260px;
+  max-height:360px;
+  overflow:hidden;
+  background:#fff;
+  border:1px solid #d1d5db;
+  border-radius:14px;
+  box-shadow:0 12px 30px rgba(2,6,23,0.16);
+  z-index:50;
+  display:none;
+}
+
+.clientFilterDropdown.open{
+  display:flex;
+  flex-direction:column;
+}
+
+.clientFilterHead{
+  padding:10px;
+  border-bottom:1px solid #e5e7eb;
+  background:#f8fafc;
+}
+
+.clientFilterSearch{
+  width:100%;
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid #d1d5db;
+  font-size:12px;
+  outline:none;
+}
+
+.clientFilterActions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:8px;
+  font-size:12px;
+}
+
+.clientFilterList{
+  max-height:260px;
+  overflow:auto;
+  padding:8px 10px;
+}
+
+.clientCheckItem{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 2px;
+  font-size:12px;
+  border-bottom:1px solid #f1f5f9;
+}
+
+.clientCheckItem:last-child{
+  border-bottom:none;
+}
+
+.clientCheckItem input{
+  margin:0;
+}
+
+.clientFilterFooter{
+  padding:10px;
+  border-top:1px solid #e5e7eb;
+  background:#f8fafc;
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+
 </style>
 </head>
 
@@ -602,6 +703,9 @@ let resultado = [];
 let resultadoFiltrado = [];
 let mostrarAtrasados = true;
 let snapshotVocativos = {}; 
+let clientesDisponiveisPopup = [];
+let clientesSelecionadosPopup = new Set();
+window._clienteAllMode = true;
 
 window.currentAnaliseReport = {
   generatedAt: "",
@@ -1893,6 +1997,7 @@ async function listarAlmoxPendentes(){
           // ✅ sempre busca status do dia na planilha antes de montar a tela (usa cache)
   const { obs: obsHoje, status: statusHoje } = await carregarObsEStatusHojeCache(false);
 
+
   // 🔹 Hoje e amanhã
   const hoje = new Date();
   hoje.setHours(0,0,0,0);
@@ -2024,6 +2129,7 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
   almoxUltimoVeiculo[a] = almoxUltimoVeiculo[a].slice(0,3);
 });
 
+sincronizarFiltrosDeLista(almoxPend, almoxUltimoVeiculo);
 
   // ===============================
   // ORDENA ALMOX POR QTD DE NOTAS
@@ -2032,9 +2138,8 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
     .sort((a,b)=> b[1].qtd - a[1].qtd);
 
 
-  const termoCliente = normalizar(document.getElementById("searchClientePopup")?.value || "");
   const selectVeiculo = document.getElementById("filterVeiculoPopup");
-  let filtroVeiculo = [];
+let filtroVeiculo = [];
 
   if (selectVeiculo) {
 
@@ -2062,9 +2167,33 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
     document.getElementById("searchUFDestinoPopup")?.value || ""
   );
 
+const clientesDisponiveisFiltrados = getClientesDisponiveisPorOutrosFiltros({
+  almoxPend,
+  almoxUltimoVeiculo,
+  hoje,
+  amanha,
+  modoDataLimite,
+  modoCriticidade,
+  modoMigracao,
+  filtroVeiculo,
+  termoDestino,
+  termoUFDestino
+});
+
+inicializarFiltroClientesPopup(clientesDisponiveisFiltrados);
+bindClienteFilterEvents();
+
+const clientesSelecionadosNorm = getClientesSelecionadosNormalizados();
+const filtroClienteAtivo =
+  clientesSelecionadosNorm.size > 0 &&
+  clientesSelecionadosNorm.size < clientesDisponiveisPopup.length;
+
   function notaPassaFiltros(n) {
   // ====== FILTROS TEXTO ======
-  if (termoCliente && !normalizar(n.cliente || "").includes(termoCliente)) return false;
+  if (filtroClienteAtivo) {
+  const clienteNorm = normalizar(n.cliente || "");
+  if (!clientesSelecionadosNorm.has(clienteNorm)) return false;
+}
   if (termoDestino && !normalizar(n.destino || "").includes(termoDestino)) return false;
 
   if (termoUFDestino) {
@@ -2364,10 +2493,15 @@ if (modoDataLimite && modoDataLimite !== "all") {
 
 
     // ✅ filtro por cliente
-    if(termoCliente){
-      const temCliente = info.notas.some(n => normalizar(n.cliente).includes(termoCliente));
-      if(!temCliente) return;
-    }
+    // ✅ filtro por cliente (checkbox)
+if (filtroClienteAtivo) {
+  const temCliente = info.notas.some(n => {
+    const clienteNorm = normalizar(n.cliente || "");
+    return clientesSelecionadosNorm.has(clienteNorm);
+  });
+
+  if (!temCliente) return;
+}
     if(termoDestino){
       const temDestino = info.notas.some(n => normalizar(n.destino).includes(termoDestino));
       if(!temDestino) return;
@@ -2387,10 +2521,10 @@ if (modoDataLimite && modoDataLimite !== "all") {
     // ✅ Se há filtros por NOTA ativos (criticidade/data/cliente/destino/UF)
     // e não sobrou nenhuma nota, então NÃO mostra o vocativo
     const filtrosNotaAtivos =
-      (modoCriticidade && modoCriticidade !== "all") ||
-      (modoDataLimite && modoDataLimite !== "all") ||
-      (modoMigracao && modoMigracao !== "all") ||
-      !!termoCliente || !!termoDestino || !!termoUFDestino;
+  (modoCriticidade && modoCriticidade !== "all") ||
+  (modoDataLimite && modoDataLimite !== "all") ||
+  (modoMigracao && modoMigracao !== "all") ||
+  filtroClienteAtivo || !!termoDestino || !!termoUFDestino;
 
     if (filtrosNotaAtivos && notasFiltradas.length === 0) {
       return; // ⛔ não renderiza esse vocativo
@@ -3464,7 +3598,11 @@ window.currentAnaliseReport = {
     dataLimite: document.getElementById("filtroDataLimitePopup")?.selectedOptions?.[0]?.text || "Todos",
     migracao: document.getElementById("filtroMigracaoPopup")?.selectedOptions?.[0]?.text || "Todos",
     criticidade: document.getElementById("filtroCriticidadePopup")?.selectedOptions?.[0]?.text || "Todos",
-    cliente: document.getElementById("searchClientePopup")?.value || "",
+    cliente: (
+  clientesSelecionadosPopup.size === clientesDisponiveisPopup.length
+    ? "Todos"
+    : Array.from(clientesSelecionadosPopup).join(" | ")
+),
     destino: document.getElementById("searchDestinoPopup")?.value || "",
     ufDestino: document.getElementById("searchUFDestinoPopup")?.value || ""
   },
@@ -3478,10 +3616,7 @@ renderResumoAnalise(stats);
 abrirPaginaAnalise();
 
 
-  const inputPopup = document.getElementById("searchClientePopup");
-  if(inputPopup){
-    inputPopup.oninput = () => listarAlmoxPendentes();
-  }
+  
   const inputDestinoPopup = document.getElementById("searchDestinoPopup");
   if(inputDestinoPopup){
     inputDestinoPopup.oninput = () => listarAlmoxPendentes();
@@ -4332,6 +4467,746 @@ window.addEventListener("DOMContentLoaded", () => {
   if (btnExcel) btnExcel.addEventListener("click", exportarRelatorioExcelAnalise);
 });
 
+function getClientesUnicosDoPVD() {
+  const set = new Set();
+
+  (detalhadoRows || []).forEach(r => {
+    const cliente = (r["Cliente"] || "").toString().trim();
+    if (cliente) set.add(cliente);
+  });
+
+  return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
+}
+
+function atualizarTextoFiltroCliente() {
+  const el = document.getElementById("clientFilterTriggerText");
+  const total = clientesDisponiveisPopup.length;
+  const qtd = clientesSelecionadosPopup.size;
+
+  if (!el) return;
+
+  if (!total || qtd === total) {
+    el.textContent = "👥 Clientes (Todos)";
+    return;
+  }
+
+  if (qtd === 0) {
+    el.textContent = "👥 Clientes (Nenhum)";
+    return;
+  }
+
+  if (qtd === 1) {
+    const unico = Array.from(clientesSelecionadosPopup)[0] || "";
+    el.textContent = `👥 ${unico}`;
+    return;
+  }
+
+  el.textContent = `👥 Clientes (${qtd})`;
+}
+
+function atualizarContadorFiltroCliente() {
+  const countEl = document.getElementById("clientFilterCount");
+  const checkAll = document.getElementById("clientCheckAll");
+
+  const total = clientesDisponiveisPopup.length;
+  const qtd = clientesSelecionadosPopup.size;
+  const todosSelecionados = total > 0 && qtd === total;
+
+  if (countEl) {
+    countEl.textContent = `${qtd} selecionado(s)`;
+  }
+
+  if (checkAll) {
+    checkAll.checked = todosSelecionados;
+    checkAll.indeterminate = false;
+    checkAll.disabled = total === 0;
+  }
+
+  atualizarTextoFiltroCliente();
+}
+
+function renderClienteFilterList() {
+  const list = document.getElementById("clientFilterList");
+  const search = document.getElementById("clientFilterSearch");
+  if (!list) return;
+
+  const termo = normalizar(search?.value || "");
+
+  const clientesFiltrados = clientesDisponiveisPopup.filter(c => {
+    return !termo || normalizar(c).includes(termo);
+  });
+
+  if (!clientesFiltrados.length) {
+    list.innerHTML = `<div style="padding:8px 2px; font-size:12px; color:#64748b;">Nenhum cliente encontrado</div>`;
+    atualizarContadorFiltroCliente();
+    return;
+  }
+
+  list.innerHTML = clientesFiltrados.map(cliente => {
+    const checked = clientesSelecionadosPopup.has(cliente) ? "checked" : "";
+    const id = `cli_${normalizar(cliente).replace(/[^A-Z0-9]/g, "_")}`;
+
+    return `
+      <label class="clientCheckItem" for="${id}">
+        <input
+          type="checkbox"
+          id="${id}"
+          value="${cliente.replace(/"/g, "&quot;")}"
+          ${checked}
+          onchange="onClienteCheckboxChange(this)"
+        >
+        <span>${cliente}</span>
+      </label>
+    `;
+  }).join("");
+
+  atualizarContadorFiltroCliente();
+}
+
+function inicializarFiltroClientesPopup(clientesBase = null) {
+  clientesDisponiveisPopup = Array.isArray(clientesBase)
+    ? [...clientesBase]
+    : getClientesUnicosDoPVD();
+
+  window._clientesPopupJaInicializado = window._clientesPopupJaInicializado || false;
+
+  if (!clientesDisponiveisPopup.length) {
+    clientesSelecionadosPopup = new Set();
+    window._clienteAllMode = false;
+    renderClienteFilterList();
+    atualizarContadorFiltroCliente();
+    return;
+  }
+
+  // primeira carga
+  if (!window._clientesPopupJaInicializado) {
+    clientesSelecionadosPopup = new Set(clientesDisponiveisPopup);
+    window._clientesPopupJaInicializado = true;
+    window._clienteAllMode = true;
+
+    renderClienteFilterList();
+    atualizarContadorFiltroCliente();
+    return;
+  }
+
+  // se o modo "todos" estiver ativo, seleciona todos os disponíveis atuais
+  if (window._clienteAllMode) {
+    clientesSelecionadosPopup = new Set(clientesDisponiveisPopup);
+  } else {
+    // mantém somente os que ainda existem após os outros filtros
+    clientesSelecionadosPopup = new Set(
+      Array.from(clientesSelecionadosPopup).filter(c => clientesDisponiveisPopup.includes(c))
+    );
+  }
+
+  renderClienteFilterList();
+  atualizarContadorFiltroCliente();
+}
+
+function onClienteCheckboxChange(checkbox) {
+  const cliente = (checkbox.value || "").toString();
+
+  if (checkbox.checked) {
+    clientesSelecionadosPopup.add(cliente);
+  } else {
+    clientesSelecionadosPopup.delete(cliente);
+  }
+
+  const total = clientesDisponiveisPopup.length;
+  const qtd = clientesSelecionadosPopup.size;
+
+  window._clienteAllMode = total > 0 && qtd === total;
+
+  atualizarContadorFiltroCliente();
+  listarAlmoxPendentes();
+}
+
+function onClientCheckAllChange() {
+  const total = clientesDisponiveisPopup.length;
+  const todosSelecionados = total > 0 && clientesSelecionadosPopup.size === total;
+
+  if (todosSelecionados) {
+    clientesSelecionadosPopup = new Set();
+    window._clienteAllMode = false;
+  } else {
+    clientesSelecionadosPopup = new Set(clientesDisponiveisPopup);
+    window._clienteAllMode = true;
+  }
+
+  renderClienteFilterList();
+  atualizarContadorFiltroCliente();
+  listarAlmoxPendentes();
+}
+
+function getClientesSelecionadosNormalizados() {
+  return new Set(
+    Array.from(clientesSelecionadosPopup).map(c => normalizar(c))
+  );
+}
+
+function bindClienteFilterEvents() {
+  const trigger = document.getElementById("clientFilterTrigger");
+  const dropdown = document.getElementById("clientFilterDropdown");
+  const btnClose = document.getElementById("btnClientFilterClose");
+  const search = document.getElementById("clientFilterSearch");
+  const checkAll = document.getElementById("clientCheckAll");
+  const box = document.getElementById("clientFilterBox");
+
+  if (trigger && !trigger.dataset.bound) {
+    trigger.dataset.bound = "1";
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown?.classList.toggle("open");
+    });
+  }
+
+  if (btnClose && !btnClose.dataset.bound) {
+    btnClose.dataset.bound = "1";
+    btnClose.addEventListener("click", () => {
+      dropdown?.classList.remove("open");
+    });
+  }
+
+  if (search && !search.dataset.bound) {
+    search.dataset.bound = "1";
+    search.addEventListener("input", renderClienteFilterList);
+  }
+
+  if (checkAll && !checkAll.dataset.bound) {
+    checkAll.dataset.bound = "1";
+    checkAll.addEventListener("change", function(e) {
+      e.stopPropagation();
+      onClientCheckAllChange();
+    });
+  }
+
+  if (box && !box.dataset.boundOutside) {
+    box.dataset.boundOutside = "1";
+
+    document.addEventListener("click", (e) => {
+      if (!box.contains(e.target)) {
+        dropdown?.classList.remove("open");
+      }
+    });
+  }
+}
+
+function getClientesDisponiveisPorOutrosFiltros({
+  almoxPend,
+  almoxUltimoVeiculo,
+  hoje,
+  amanha,
+  modoDataLimite,
+  modoCriticidade,
+  modoMigracao,
+  filtroVeiculo,
+  termoDestino,
+  termoUFDestino
+}) {
+  const clientesSet = new Set();
+
+  Object.entries(almoxPend || {}).forEach(([almox, info]) => {
+    const veiculos = almoxUltimoVeiculo[almox] || [];
+
+    let temCarregadoHoje = false;
+    let temSemCarregamento = false;
+    let temComCarregamento = false;
+
+    if (veiculos.length) {
+      veiculos.forEach(v => {
+        const dtCarreg = parsePossibleDate(v.dtCarreg);
+
+        if (dtCarreg) {
+          dtCarreg.setHours(0,0,0,0);
+
+          if (dtCarreg.getTime() === hoje.getTime()) {
+            temCarregadoHoje = true;
+          }
+
+          temComCarregamento = true;
+        } else {
+          temSemCarregamento = true;
+        }
+      });
+    }
+
+    let temProgramado = false;
+    let temNaoProgramado = false;
+
+    if (temSemCarregamento) {
+      temProgramado = true;
+    } else if (temComCarregamento) {
+      temNaoProgramado = true;
+    } else if (veiculos.length === 0) {
+      temNaoProgramado = true;
+    }
+
+    const vocNormAtual = normalizar(almox);
+    const overrideManual = window.statusDrafts?.[vocNormAtual];
+    const overrideServidor = window.statusHojeServidor?.[vocNormAtual];
+
+    if (overrideManual) {
+      temProgramado = (overrideManual === "PROGRAMADO");
+      temNaoProgramado = !temProgramado;
+    } else if (overrideServidor === "PROGRAMADO") {
+      temProgramado = true;
+      temNaoProgramado = false;
+    }
+
+    if (filtroVeiculo.length > 0) {
+      let mostrar = false;
+
+      if (filtroVeiculo.includes("carregado") && temCarregadoHoje) mostrar = true;
+      if (filtroVeiculo.includes("programado") && temProgramado) mostrar = true;
+      if (filtroVeiculo.includes("sem") && temNaoProgramado) mostrar = true;
+
+      if (!mostrar) return;
+    }
+
+    (info.notas || []).forEach(n => {
+      if (termoDestino && !normalizar(n.destino || "").includes(termoDestino)) return;
+
+      if (termoUFDestino) {
+        const uf = normalizar(n.uf || "");
+        if (uf !== termoUFDestino) return;
+      }
+
+      if (modoDataLimite && modoDataLimite !== "all") {
+        const dtLimEmb  = toDateOnly(n.dtLim);
+        const dtEntrada = toDateOnly(n.entrada);
+        const dtCheckin = toDateOnly(n.checkin);
+        const dtMaior   = maiorDataEntradaOuCheckin(dtCheckin, dtEntrada);
+
+        if (modoDataLimite === "ateAmanha") {
+          if (!dtLimEmb || !(dtLimEmb.getTime() <= amanha.getTime())) return;
+        }
+
+        if (modoDataLimite === "limEmb_0_plus") {
+          if (!dtLimEmb || !(dtLimEmb.getTime() >= hoje.getTime())) return;
+        }
+
+        if (modoDataLimite === "entradaNF_Atraso6") {
+          if (!dtEntrada) return;
+          const dias = diasDesdeHoje(dtEntrada);
+          if (!(dias != null && dias >= 6)) return;
+        }
+
+        if (modoDataLimite === "maxEntCheck_Atraso6") {
+          if (!dtMaior) return;
+          const dias = diasDesdeHoje(dtMaior);
+          if (!(dias != null && dias >= 6)) return;
+        }
+
+        if (modoDataLimite === "limEmb_1_2") {
+          if (!dtLimEmb) return;
+          const dias = diasDesdeHoje(dtLimEmb);
+          if (!(dias != null && dias >= 1 && dias <= 2)) return;
+        }
+
+        if (modoDataLimite === "limEmb_3_5") {
+          if (!dtLimEmb) return;
+          const dias = diasDesdeHoje(dtLimEmb);
+          if (!(dias != null && dias >= 3 && dias <= 5)) return;
+        }
+
+        if (modoDataLimite === "limEmb_6_10") {
+          if (!dtLimEmb) return;
+          const dias = diasDesdeHoje(dtLimEmb);
+          if (!(dias != null && dias >= 6 && dias <= 10)) return;
+        }
+
+        if (modoDataLimite === "limEmb_10_19") {
+          if (!dtLimEmb) return;
+          const dias = diasDesdeHoje(dtLimEmb);
+          if (!(dias != null && dias >= 11 && dias <= 20)) return;
+        }
+
+        if (modoDataLimite === "limEmb_19_plus") {
+          if (!dtLimEmb) return;
+          const dias = diasDesdeHoje(dtLimEmb);
+          if (!(dias != null && dias > 20)) return;
+        }
+      }
+
+      if (modoCriticidade && modoCriticidade !== "all") {
+        const dtLimEmb = toDateOnly(n.dtLim);
+        if (!dtLimEmb) return;
+
+        const diasParaLimite = Math.round((dtLimEmb.getTime() - hoje.getTime()) / 86400000);
+
+        if (modoCriticidade === "Dmais" && !(diasParaLimite < 0)) return;
+        if (modoCriticidade === "D0" && !(diasParaLimite === 0)) return;
+        if (modoCriticidade === "Dmenos1" && !(diasParaLimite === 1)) return;
+        if (modoCriticidade === "Dge2" && !(diasParaLimite >= 2)) return;
+      }
+
+      if (modoMigracao && modoMigracao !== "all") {
+        const dtLimEmb = toDateOnly(n.dtLim);
+        if (!dtLimEmb) return;
+
+        const diasVencidosHoje = diasDesdeHoje(dtLimEmb);
+
+        if (modoMigracao === "migra_D0_1a2" && diasVencidosHoje !== 0) return;
+        if (modoMigracao === "migra_1a2_3a5" && diasVencidosHoje !== 2) return;
+        if (modoMigracao === "migra_3a5_6a10" && diasVencidosHoje !== 5) return;
+        if (modoMigracao === "migra_6a10_11a20" && diasVencidosHoje !== 10) return;
+        if (modoMigracao === "migra_11a20_20plus" && diasVencidosHoje !== 20) return;
+      }
+
+      const cliente = (n.cliente || "").toString().trim();
+      if (cliente) clientesSet.add(cliente);
+    });
+  });
+
+  return Array.from(clientesSet).sort((a, b) => a.localeCompare(b, "pt-BR"));
+}
+
+function getValorFiltroPopup(id, fallback = "all") {
+  return document.getElementById(id)?.value || fallback;
+}
+
+function getVeiculoSelecionadoPopup() {
+  const selectVeiculo = document.getElementById("filterVeiculoPopup");
+  if (!selectVeiculo) return [];
+
+  const selecionados = Array.from(selectVeiculo.selectedOptions).map(o => o.value);
+
+  if (selecionados.includes("all")) {
+    return ["carregado", "programado", "sem"];
+  }
+
+  return selecionados;
+}
+
+function getContextoFiltrosPopup(overrides = {}) {
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+
+  const amanha = new Date(hoje);
+  amanha.setDate(hoje.getDate() + 1);
+
+  return {
+    hoje,
+    amanha,
+    modoDataLimite: overrides.modoDataLimite ?? getValorFiltroPopup("filtroDataLimitePopup", "all"),
+    modoCriticidade: overrides.modoCriticidade ?? getValorFiltroPopup("filtroCriticidadePopup", "all"),
+    modoMigracao: overrides.modoMigracao ?? getValorFiltroPopup("filtroMigracaoPopup", "all"),
+    filtroVeiculo: overrides.filtroVeiculo ?? getVeiculoSelecionadoPopup(),
+    termoDestino: overrides.termoDestino ?? normalizar(document.getElementById("searchDestinoPopup")?.value || ""),
+    termoUFDestino: overrides.termoUFDestino ?? normalizar(document.getElementById("searchUFDestinoPopup")?.value || ""),
+    clientesSelecionadosNorm: overrides.clientesSelecionadosNorm ?? getClientesSelecionadosNormalizados(),
+    ignorarCliente: overrides.ignorarCliente ?? false
+  };
+}
+
+function getStatusVocativo(almox, veiculos, hoje) {
+  let temCarregadoHoje = false;
+  let temSemCarregamento = false;
+  let temComCarregamento = false;
+
+  if (veiculos.length) {
+    veiculos.forEach(v => {
+      const dtCarreg = parsePossibleDate(v.dtCarreg);
+
+      if (dtCarreg) {
+        dtCarreg.setHours(0,0,0,0);
+
+        if (dtCarreg.getTime() === hoje.getTime()) {
+          temCarregadoHoje = true;
+        }
+
+        temComCarregamento = true;
+      } else {
+        temSemCarregamento = true;
+      }
+    });
+  }
+
+  let temProgramado = false;
+  let temNaoProgramado = false;
+
+  if (temSemCarregamento) {
+    temProgramado = true;
+  } else if (temComCarregamento) {
+    temNaoProgramado = true;
+  } else if (veiculos.length === 0) {
+    temNaoProgramado = true;
+  }
+
+  const vocNormAtual = normalizar(almox);
+  const overrideManual = window.statusDrafts?.[vocNormAtual];
+  const overrideServidor = window.statusHojeServidor?.[vocNormAtual];
+
+  if (overrideManual) {
+    temProgramado = (overrideManual === "PROGRAMADO");
+    temNaoProgramado = !temProgramado;
+  } else if (overrideServidor === "PROGRAMADO") {
+    temProgramado = true;
+    temNaoProgramado = false;
+  }
+
+  return {
+    temCarregadoHoje,
+    temProgramado,
+    temNaoProgramado
+  };
+}
+
+function notaPassaContexto(n, ctx) {
+  const {
+    hoje,
+    amanha,
+    modoDataLimite,
+    modoCriticidade,
+    modoMigracao,
+    termoDestino,
+    termoUFDestino,
+    clientesSelecionadosNorm,
+    ignorarCliente
+  } = ctx;
+
+  if (!ignorarCliente) {
+    const totalClientes = clientesDisponiveisPopup.length;
+    const qtdSelecionados = clientesSelecionadosNorm.size;
+    const filtroClienteAtivo = qtdSelecionados > 0 && qtdSelecionados < totalClientes;
+
+    if (filtroClienteAtivo) {
+      const clienteNorm = normalizar(n.cliente || "");
+      if (!clientesSelecionadosNorm.has(clienteNorm)) return false;
+    }
+  }
+
+  if (termoDestino && !normalizar(n.destino || "").includes(termoDestino)) return false;
+
+  if (termoUFDestino) {
+    const uf = normalizar(n.uf || "");
+    if (uf !== termoUFDestino) return false;
+  }
+
+  if (modoDataLimite && modoDataLimite !== "all") {
+    const dtLimEmb  = toDateOnly(n.dtLim);
+    const dtEntrada = toDateOnly(n.entrada);
+    const dtCheckin = toDateOnly(n.checkin);
+    const dtMaior   = maiorDataEntradaOuCheckin(dtCheckin, dtEntrada);
+
+    if (modoDataLimite === "ateAmanha") {
+      if (!dtLimEmb || !(dtLimEmb.getTime() <= amanha.getTime())) return false;
+    }
+
+    if (modoDataLimite === "limEmb_0_plus") {
+      if (!dtLimEmb || !(dtLimEmb.getTime() >= hoje.getTime())) return false;
+    }
+
+    if (modoDataLimite === "entradaNF_Atraso6") {
+      if (!dtEntrada) return false;
+      const dias = diasDesdeHoje(dtEntrada);
+      if (!(dias != null && dias >= 6)) return false;
+    }
+
+    if (modoDataLimite === "maxEntCheck_Atraso6") {
+      if (!dtMaior) return false;
+      const dias = diasDesdeHoje(dtMaior);
+      if (!(dias != null && dias >= 6)) return false;
+    }
+
+    if (modoDataLimite === "limEmb_1_2") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      if (!(dias != null && dias >= 1 && dias <= 2)) return false;
+    }
+
+    if (modoDataLimite === "limEmb_3_5") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      if (!(dias != null && dias >= 3 && dias <= 5)) return false;
+    }
+
+    if (modoDataLimite === "limEmb_6_10") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      if (!(dias != null && dias >= 6 && dias <= 10)) return false;
+    }
+
+    if (modoDataLimite === "limEmb_10_19") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      if (!(dias != null && dias >= 11 && dias <= 20)) return false;
+    }
+
+    if (modoDataLimite === "limEmb_19_plus") {
+      if (!dtLimEmb) return false;
+      const dias = diasDesdeHoje(dtLimEmb);
+      if (!(dias != null && dias > 20)) return false;
+    }
+  }
+
+  if (modoCriticidade && modoCriticidade !== "all") {
+    const dtLimEmb = toDateOnly(n.dtLim);
+    if (!dtLimEmb) return false;
+
+    const diasParaLimite = Math.round((dtLimEmb.getTime() - hoje.getTime()) / 86400000);
+
+    if (modoCriticidade === "Dmais" && !(diasParaLimite < 0)) return false;
+    if (modoCriticidade === "D0" && !(diasParaLimite === 0)) return false;
+    if (modoCriticidade === "Dmenos1" && !(diasParaLimite === 1)) return false;
+    if (modoCriticidade === "Dge2" && !(diasParaLimite >= 2)) return false;
+  }
+
+  if (modoMigracao && modoMigracao !== "all") {
+    const dtLimEmb = toDateOnly(n.dtLim);
+    if (!dtLimEmb) return false;
+
+    const diasVencidosHoje = diasDesdeHoje(dtLimEmb);
+
+    if (modoMigracao === "migra_D0_1a2" && diasVencidosHoje !== 0) return false;
+    if (modoMigracao === "migra_1a2_3a5" && diasVencidosHoje !== 2) return false;
+    if (modoMigracao === "migra_3a5_6a10" && diasVencidosHoje !== 5) return false;
+    if (modoMigracao === "migra_6a10_11a20" && diasVencidosHoje !== 10) return false;
+    if (modoMigracao === "migra_11a20_20plus" && diasVencidosHoje !== 20) return false;
+  }
+
+  return true;
+}
+
+function vocativoPassaFiltroVeiculo(almox, veiculos, filtroVeiculo, hoje) {
+  if (!filtroVeiculo || !filtroVeiculo.length) return true;
+
+  const st = getStatusVocativo(almox, veiculos, hoje);
+
+  let mostrar = false;
+
+  if (filtroVeiculo.includes("carregado") && st.temCarregadoHoje) mostrar = true;
+  if (filtroVeiculo.includes("programado") && st.temProgramado) mostrar = true;
+  if (filtroVeiculo.includes("sem") && st.temNaoProgramado) mostrar = true;
+
+  return mostrar;
+}
+
+function getOpcoesDisponiveisFiltrosCruzados(almoxPend, almoxUltimoVeiculo) {
+  const opcoes = {
+    veiculo: new Set(),
+    dataLimite: new Set(["all"]),
+    migracao: new Set(["all"]),
+    criticidade: new Set(["all"])
+  };
+
+  const veiculoOpcoes = ["carregado", "programado", "sem"];
+  const dataLimiteOpcoes = [
+    "ateAmanha",
+    "entradaNF_Atraso6",
+    "maxEntCheck_Atraso6",
+    "limEmb_0_plus",
+    "limEmb_1_2",
+    "limEmb_3_5",
+    "limEmb_6_10",
+    "limEmb_10_19",
+    "limEmb_19_plus"
+  ];
+  const migracaoOpcoes = [
+    "migra_D0_1a2",
+    "migra_1a2_3a5",
+    "migra_3a5_6a10",
+    "migra_6a10_11a20",
+    "migra_11a20_20plus"
+  ];
+  const criticidadeOpcoes = ["Dmais", "D0", "Dmenos1", "Dge2"];
+
+  veiculoOpcoes.forEach(valorTeste => {
+    const ctx = getContextoFiltrosPopup({ filtroVeiculo: [valorTeste] });
+
+    const existe = Object.entries(almoxPend).some(([almox, info]) => {
+      const veiculos = almoxUltimoVeiculo[almox] || [];
+      if (!vocativoPassaFiltroVeiculo(almox, veiculos, [valorTeste], ctx.hoje)) return false;
+      return (info.notas || []).some(n => notaPassaContexto(n, ctx));
+    });
+
+    if (existe) opcoes.veiculo.add(valorTeste);
+  });
+
+  dataLimiteOpcoes.forEach(valorTeste => {
+    const ctx = getContextoFiltrosPopup({ modoDataLimite: valorTeste });
+
+    const existe = Object.entries(almoxPend).some(([almox, info]) => {
+      const veiculos = almoxUltimoVeiculo[almox] || [];
+      if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctx.filtroVeiculo, ctx.hoje)) return false;
+      return (info.notas || []).some(n => notaPassaContexto(n, ctx));
+    });
+
+    if (existe) opcoes.dataLimite.add(valorTeste);
+  });
+
+  migracaoOpcoes.forEach(valorTeste => {
+    const ctx = getContextoFiltrosPopup({ modoMigracao: valorTeste });
+
+    const existe = Object.entries(almoxPend).some(([almox, info]) => {
+      const veiculos = almoxUltimoVeiculo[almox] || [];
+      if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctx.filtroVeiculo, ctx.hoje)) return false;
+      return (info.notas || []).some(n => notaPassaContexto(n, ctx));
+    });
+
+    if (existe) opcoes.migracao.add(valorTeste);
+  });
+
+  criticidadeOpcoes.forEach(valorTeste => {
+    const ctx = getContextoFiltrosPopup({ modoCriticidade: valorTeste });
+
+    const existe = Object.entries(almoxPend).some(([almox, info]) => {
+      const veiculos = almoxUltimoVeiculo[almox] || [];
+      if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctx.filtroVeiculo, ctx.hoje)) return false;
+      return (info.notas || []).some(n => notaPassaContexto(n, ctx));
+    });
+
+    if (existe) opcoes.criticidade.add(valorTeste);
+  });
+
+  return opcoes;
+}
+
+function atualizarOpcoesSelectPorDisponibilidade(selectId, valoresDisponiveis, manterAll = true) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+
+  Array.from(select.options).forEach(opt => {
+    const value = opt.value;
+
+    if (manterAll && value === "all") {
+      opt.disabled = false;
+      opt.hidden = false;
+      return;
+    }
+
+    const disponivel = valoresDisponiveis.has(value);
+    opt.disabled = !disponivel;
+    opt.hidden = false;
+  });
+
+  if (select.multiple) {
+    const selecionadosValidos = Array.from(select.selectedOptions).some(o => !o.disabled);
+
+    if (!selecionadosValidos) {
+      Array.from(select.options).forEach(opt => {
+        opt.selected = (opt.value === "all");
+      });
+    }
+  } else {
+    const atual = select.value;
+    const atualOption = Array.from(select.options).find(o => o.value === atual);
+
+    if (!atualOption || atualOption.disabled) {
+      select.value = "all";
+    }
+  }
+}
+
+function sincronizarFiltrosDeLista(almoxPend, almoxUltimoVeiculo) {
+  const opcoes = getOpcoesDisponiveisFiltrosCruzados(almoxPend, almoxUltimoVeiculo);
+
+  atualizarOpcoesSelectPorDisponibilidade("filterVeiculoPopup", opcoes.veiculo, true);
+  atualizarOpcoesSelectPorDisponibilidade("filtroDataLimitePopup", opcoes.dataLimite, true);
+  atualizarOpcoesSelectPorDisponibilidade("filtroMigracaoPopup", opcoes.migracao, true);
+  atualizarOpcoesSelectPorDisponibilidade("filtroCriticidadePopup", opcoes.criticidade, true);
+}
+
 </script>
 
 
@@ -4410,10 +5285,38 @@ window.addEventListener("DOMContentLoaded", () => {
         <option value="Dge2">🟢 ≥ D-2</option>
       </select>
 
-      <input id="searchClientePopup" type="text"
-        placeholder="🔍 Filtrar por Cliente..."
-        style="padding:8px 10px; border-radius:12px; border:1px solid #d1d5db; font-size:12px; min-width:0;"
-/>
+      <div class="clientFilterBox" id="clientFilterBox">
+  <button type="button" class="clientFilterTrigger" id="clientFilterTrigger">
+    <span id="clientFilterTriggerText">👥 Clientes (Todos)</span>
+    <span>▾</span>
+  </button>
+
+  <div class="clientFilterDropdown" id="clientFilterDropdown">
+    <div class="clientFilterHead">
+      <input
+        id="clientFilterSearch"
+        class="clientFilterSearch"
+        type="text"
+        placeholder="Pesquisar cliente..."
+      />
+
+      <div class="clientFilterActions">
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+          <input type="checkbox" id="clientCheckAll" checked>
+          <span>Selecionar todos</span>
+        </label>
+
+        <span id="clientFilterCount">0 selecionados</span>
+      </div>
+    </div>
+
+    <div class="clientFilterList" id="clientFilterList"></div>
+
+    <div class="clientFilterFooter">
+      <button type="button" class="btn secondary" id="btnClientFilterClose">Fechar</button>
+    </div>
+  </div>
+</div>
       <input id="searchDestinoPopup" type="text"
         placeholder="📍 Filtrar por Destino..."
         style="padding:8px 10px; border-radius:12px; border:1px solid #d1d5db; font-size:12px; min-width:0;"
