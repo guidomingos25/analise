@@ -449,6 +449,116 @@ h1{
   min-height: 220px; /* 👈 maior horizontal/vertical */
 }
 
+.kpiWideCard{
+  grid-column: 1 / -1;
+  background: rgba(248,250,252,0.92);
+  border: 1px solid rgba(15,23,42,0.10);
+  border-radius: 18px;
+  padding: 10px 14px;
+  box-shadow: var(--shadowSoft);
+  min-height: 118px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kpiWideTop{
+  display:grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap:8px;
+  align-items:stretch;
+}
+
+.kpiMiniBox{
+  background:#ffffff;
+  border:1px solid rgba(15,23,42,0.08);
+  border-radius:12px;
+  padding:8px 10px;
+  text-align:center;
+}
+
+.kpiWideTopConsolidacao .filtroConsolidacao{
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.kpiWideTopConsolidacao .filtroConsolidacao:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(2,6,23,0.10);
+}
+
+.kpiWideTopConsolidacao .filtroConsolidacao.ativo{
+  border: 2px solid #2563eb;
+  background: #dbeafe;
+}
+
+
+.kpiMiniLabel{
+  font-size:10px;
+  font-weight:800;
+  color:#64748b;
+  letter-spacing:.02em;
+  text-transform:none;
+  margin-bottom:4px;
+  line-height:1.1;
+}
+
+.kpiMiniValue{
+  font-size:18px;
+  font-weight:900;
+  color:#16a34a;
+  line-height:1;
+}
+
+@media (max-width: 1100px){
+  .kpiWideTop{
+    grid-template-columns: repeat(3, minmax(110px, 1fr));
+  }
+}
+
+@media (max-width: 700px){
+  .kpiWideTop{
+    grid-template-columns: repeat(2, minmax(110px, 1fr));
+  }
+}
+
+.kpiWideCardConsolidacao{
+  padding: 6px 10px 10px 10px; /* reduz principalmente o espaço de baixo */
+  min-height: auto;           /* remove a altura mínima que está sobrando */
+  gap: 4px;                   /* reduz espaço entre título e minicards */
+}
+
+
+.kpiWideTopConsolidacao{
+  display: grid;
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+  gap: 4px;
+  align-items: stretch;
+}
+
+.kpiWideTopConsolidacao .kpiMiniBox{
+  padding: 5px 4px 2px 4px; /* menos espaço inferior dentro de cada minicard */
+  border-radius: 10px;
+  min-width: 0;
+}
+
+
+.kpiWideTopConsolidacao .kpiMiniLabel{
+  font-size: 13px;
+  margin-bottom: 2px;
+  line-height: 1;
+}
+
+.kpiWideTopConsolidacao .kpiMiniValue{
+  font-size: 20px;
+  line-height: 1;
+}
+
+.consolidacaoNegativa{
+  color: #dc2626 !important;
+  font-weight: 900;
+}
+
 .kpiHeader{
   display:flex;
   justify-content:space-between;
@@ -725,6 +835,8 @@ let clientesSelecionadosPopup = new Set();
 window._clienteAllMode = true;
 let datasSelecionadasPopup = [];
 let calendarioPopup = null;
+let filtroPrazoConsolidacaoAtivo = null;
+
 
 window.currentAnaliseReport = {
   generatedAt: "",
@@ -1939,7 +2051,110 @@ function renderResumoAnalise(stats){
   </div>
 </div>
 
-    </div>
+          </div>
+
+      <div class="kpiWideCard kpiWideCardConsolidacao">
+  <div class="kpiHeader">
+    <div class="kpiTitle">📦 PRAZO PARA CONSOLIDAÇÃO (DIAS)</div>
+  </div>
+
+  <div class="kpiWideTop kpiWideTopConsolidacao">
+  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'menorIgual6Neg' ? 'ativo' : ''}"
+     data-faixa="menorIgual6Neg"
+     onclick="toggleFiltroPrazoConsolidacao('menorIgual6Neg')">
+
+    <div class="kpiMiniLabel"><=-6</div>
+    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoMenorIgual6Neg}</div>
+  </div>
+
+  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg5' ? 'ativo' : ''}"
+     data-faixa="neg5"
+     onclick="toggleFiltroPrazoConsolidacao('neg5')">
+
+
+    <div class="kpiMiniLabel">-5</div>
+    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg5}</div>
+  </div>
+
+  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg4' ? 'ativo' : ''}"
+     data-faixa="neg4"
+     onclick="toggleFiltroPrazoConsolidacao('neg4')">
+
+
+    <div class="kpiMiniLabel">-4</div>
+    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg4}</div>
+  </div>
+
+  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg3' ? 'ativo' : ''}"
+     data-faixa="neg3"
+     onclick="toggleFiltroPrazoConsolidacao('neg3')">
+
+
+    <div class="kpiMiniLabel">-3</div>
+    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg3}</div>
+  </div>
+
+  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg2' ? 'ativo' : ''}"
+     data-faixa="neg2"
+     onclick="toggleFiltroPrazoConsolidacao('neg2')">
+
+
+    <div class="kpiMiniLabel">-2</div>
+    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg2}</div>
+  </div>
+
+  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg1' ? 'ativo' : ''}"
+     data-faixa="neg1"
+     onclick="toggleFiltroPrazoConsolidacao('neg1')">
+
+
+    <div class="kpiMiniLabel">-1</div>
+    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg1}</div>
+  </div>
+
+  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'faixa0' ? 'ativo' : ''}"
+     data-faixa="faixa0"
+     onclick="toggleFiltroPrazoConsolidacao('faixa0')">
+
+
+    <div class="kpiMiniLabel">0</div>
+    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoFaixa0}</div>
+  </div>
+
+  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'faixa1' ? 'ativo' : ''}"
+     data-faixa="faixa1"
+     onclick="toggleFiltroPrazoConsolidacao('faixa1')">
+
+    <div class="kpiMiniLabel">1</div>
+    <div class="kpiMiniValue">${stats.consolidacaoFaixa1}</div>
+  </div>
+
+  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'faixa2' ? 'ativo' : ''}"
+     data-faixa="faixa2"
+     onclick="toggleFiltroPrazoConsolidacao('faixa2')">
+
+    <div class="kpiMiniLabel">2</div>
+    <div class="kpiMiniValue">${stats.consolidacaoFaixa2}</div>
+  </div>
+
+  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'faixa3' ? 'ativo' : ''}"
+     data-faixa="faixa3"
+     onclick="toggleFiltroPrazoConsolidacao('faixa3')">
+
+    <div class="kpiMiniLabel">3</div>
+    <div class="kpiMiniValue">${stats.consolidacaoFaixa3}</div>
+  </div>
+
+  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'maiorIgual4' ? 'ativo' : ''}"
+     data-faixa="maiorIgual4"
+     onclick="toggleFiltroPrazoConsolidacao('maiorIgual4')">
+
+    <div class="kpiMiniLabel">>=4</div>
+    <div class="kpiMiniValue">${stats.consolidacaoMaiorIgual4}</div>
+  </div>
+  </div>
+</div>
+      </div>
   `;
 
   // 🔎 Atualiza gráficos (UI apenas)
@@ -2043,6 +2258,25 @@ function maiorDataEntradaOuCheckin(dtCheck, dtEntr){
   return c || e || null;
 }
 
+function obterFaixaConsolidacao(dias){
+
+  if (dias <= -6) return "menorIgual6Neg";
+  if (dias === -5) return "neg5";
+  if (dias === -4) return "neg4";
+  if (dias === -3) return "neg3";
+  if (dias === -2) return "neg2";
+  if (dias === -1) return "neg1";
+  if (dias === 0) return "faixa0";
+  if (dias === 1) return "faixa1";
+  if (dias === 2) return "faixa2";
+  if (dias === 3) return "faixa3";
+  if (dias >= 4) return "maiorIgual4";
+
+  return null;
+}
+
+
+
 async function listarAlmoxPendentes(){
     capturarObsDoDOM();
     capturarStatusDoDOM(); // ✅ NOVO: não perder status manual ao filtrar
@@ -2118,6 +2352,7 @@ async function listarAlmoxPendentes(){
     }
 
     almoxPend[almox].notas.push({
+
       dtLim,
       nota: r["Nota"] || r["Numero OEF"] || "",
       fornecedor: r["Fornecedor"] || "",
@@ -2130,7 +2365,24 @@ async function listarAlmoxPendentes(){
       incoterms: r["INCOTERMS"] || "",
       checkin: r["Data de Check in"],
       entrada: r["Data de Entrada da Nota"],
-      finalEntrega: r["Dt Final Entrega"]
+      finalEntrega: r["Dt Final Entrega"],
+
+      diasConsolidacao: (() => {
+
+  const dtLim = toDateOnly(r["Dt Limite Embarque"]);
+  const dtCheck = parsePossibleDate(r["Data de Check in"]);
+  const dtEntrada = parsePossibleDate(r["Data de Entrada da Nota"]);
+
+  const dtMaior = maiorDataEntradaOuCheckin(dtCheck, dtEntrada);
+
+  if (!dtLim || !dtMaior) return null;
+
+  return Math.round(
+    (dtLim.getTime() - dtMaior.getTime()) / 86400000
+  );
+
+})(),
+
     });
 
     if (dtLim.getTime() <= amanha.getTime()) {
@@ -2182,6 +2434,31 @@ Object.keys(almoxUltimoVeiculo).forEach(a=>{
 });
 
 sincronizarFiltrosDeLista(almoxPend, almoxUltimoVeiculo);
+
+// =============================
+// FILTRO GLOBAL PRAZO CONSOLIDAÇÃO
+// =============================
+
+if (filtroPrazoConsolidacaoAtivo) {
+
+  Object.keys(almoxPend).forEach(almox => {
+
+    almoxPend[almox].notas =
+      almoxPend[almox].notas.filter(n => {
+
+        if (n.diasConsolidacao == null) return false;
+
+        return obterFaixaConsolidacao(n.diasConsolidacao) === filtroPrazoConsolidacaoAtivo;
+
+      });
+
+    almoxPend[almox].qtd =
+      almoxPend[almox].notas.length;
+
+  });
+
+}
+
 
   // ===============================
   // ORDENA ALMOX POR QTD DE NOTAS
@@ -2364,6 +2641,26 @@ const filtroClienteAtivo =
 
     return false;
   }
+
+  // ===============================
+// FILTRO PRAZO DE CONSOLIDAÇÃO
+// ===============================
+if (filtroPrazoConsolidacaoAtivo) {
+
+  const dtLim = toDateOnly(n.dtLim);
+  const dtMaior = maiorDataEntradaOuCheckin(n.checkin, n.entrada);
+
+  if (!dtLim || !dtMaior) return false;
+
+  const diasConsolidacao = Math.round(
+    (dtLim.getTime() - dtMaior.getTime()) / 86400000
+  );
+
+  const faixa = obterFaixaConsolidacao(diasConsolidacao);
+
+  if (faixa !== filtroPrazoConsolidacaoAtivo) return false;
+}
+
   return true;
 }
 
@@ -2411,7 +2708,20 @@ const filtroClienteAtivo =
       migracao1a2Para3a5: 0,
       migracao3a5Para6a10: 0,
       migracao6a10Para11a20: 0,
-      migracao11a20Para20plus: 0
+      migracao11a20Para20plus: 0,
+
+      // ✅ tempo de consolidação
+      consolidacaoMenorIgual6Neg: 0,
+      consolidacaoNeg5: 0,
+      consolidacaoNeg4: 0,
+      consolidacaoNeg3: 0,
+      consolidacaoNeg2: 0,
+      consolidacaoNeg1: 0,
+      consolidacaoFaixa0: 0,
+      consolidacaoFaixa1: 0,
+      consolidacaoFaixa2: 0,
+      consolidacaoFaixa3: 0,
+      consolidacaoMaiorIgual4: 0
     };
 
 const reportVocativos = [];
@@ -2550,7 +2860,48 @@ if (modoDataLimite && modoDataLimite !== "all") {
     // ✅ filtro por cliente
     // ✅ filtro por cliente (checkbox)
 // ✅ aplica TODOS os filtros de nota primeiro, inclusive Data Entrada / Check-in
-const notasFiltradas = (info.notas || []).filter(notaPassaFiltros);
+let notasFiltradas = (info.notas || []).filter(notaPassaFiltros);
+
+// ✅ base para o card de prazo de consolidação:
+// aplica todos os filtros normais, mas IGNORA o filtro de prazo de consolidação
+let notasBaseConsolidacao = (info.notas || []).filter(n => {
+  const filtroAtual = filtroPrazoConsolidacaoAtivo;
+  filtroPrazoConsolidacaoAtivo = null;
+  const passa = notaPassaFiltros(n);
+  filtroPrazoConsolidacaoAtivo = filtroAtual;
+  return passa;
+});
+
+// ===============================
+// FILTRO PRAZO DE CONSOLIDAÇÃO
+// ===============================
+
+// ===============================
+// CARD PRAZO DE CONSOLIDAÇÃO
+// não deve se autofiltrar
+// ===============================
+notasBaseConsolidacao.forEach(n => {
+  const dtLim = toDateOnly(n.dtLim);
+  const dtMaior = maiorDataEntradaOuCheckin(n.checkin, n.entrada);
+
+  if (!dtLim || !dtMaior) return;
+
+  const diasConsolidacao = Math.round(
+    (dtLim.getTime() - dtMaior.getTime()) / 86400000
+  );
+
+  if (diasConsolidacao <= -6) stats.consolidacaoMenorIgual6Neg++;
+  else if (diasConsolidacao === -5) stats.consolidacaoNeg5++;
+  else if (diasConsolidacao === -4) stats.consolidacaoNeg4++;
+  else if (diasConsolidacao === -3) stats.consolidacaoNeg3++;
+  else if (diasConsolidacao === -2) stats.consolidacaoNeg2++;
+  else if (diasConsolidacao === -1) stats.consolidacaoNeg1++;
+  else if (diasConsolidacao === 0) stats.consolidacaoFaixa0++;
+  else if (diasConsolidacao === 1) stats.consolidacaoFaixa1++;
+  else if (diasConsolidacao === 2) stats.consolidacaoFaixa2++;
+  else if (diasConsolidacao === 3) stats.consolidacaoFaixa3++;
+  else if (diasConsolidacao >= 4) stats.consolidacaoMaiorIgual4++;
+});
 
 const filtroDataPopupAtivo = Array.isArray(datasSelecionadasPopup) && datasSelecionadasPopup.length > 0;
 
@@ -2561,7 +2912,8 @@ const filtrosNotaAtivos =
   (modoMigracao && modoMigracao !== "all") ||
   filtroClienteAtivo ||
   !!termoDestino ||
-  !!termoUFDestino;
+  !!termoUFDestino ||
+  !!filtroPrazoConsolidacaoAtivo;
   
 
 if (filtrosNotaAtivos && notasFiltradas.length === 0) {
@@ -2737,6 +3089,9 @@ if (filtroVeiculo.length > 0) {
 
   if (!mostrar) return;
 }
+
+
+
 
 // ✅ NOVO: total de notas PVD deste vocativo (já respeitando filtros da tela)
 const totalNotasVoc = (notasFiltradas || []).length;
@@ -3160,7 +3515,14 @@ if (dtLimOnly) {
       }
     });
 
-    notasFiltradas.forEach(n => {
+        notasFiltradas.forEach(n => {
+  // =========================
+  // ✅ TEMPO DE CONSOLIDAÇÃO
+  // dt limite embarque - maior data entre check-in e entrada
+  // =========================
+
+
+
       const dtLimEmb = toDateOnly(n.dtLim);
       if (!dtLimEmb) return;
 
@@ -3725,6 +4087,17 @@ function formatDateTimeBRLocal(v){
   });
 }
 
+function toggleFiltroPrazoConsolidacao(faixa){
+
+  if (filtroPrazoConsolidacaoAtivo === faixa) {
+    filtroPrazoConsolidacaoAtivo = null;
+  } else {
+    filtroPrazoConsolidacaoAtivo = faixa;
+  }
+
+  listarAlmoxPendentes();
+}
+
 
 
 btnProcessar.onclick=processar;
@@ -4210,6 +4583,54 @@ function _mkBarChart(ctx, labels, values){
   });
 }
 
+function _mkHorizontalBarChart(ctx, labels, values){
+  return new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "",
+        data: values,
+        barThickness: 16,
+        maxBarThickness: 18
+      }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: {
+        padding: { left: 4, right: 18, top: 2, bottom: 2 }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+        datalabels: {
+          anchor: "end",
+          align: "right",
+          offset: 4,
+          clamp: true,
+          clip: false,
+          formatter: (v) => _fmt(v),
+          font: { weight: "900", size: 11 }
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          grid: { display: true },
+          ticks: { font: { size: 10 } }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { font: { size: 11, weight: "700" } }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
 function _mkDoughnutChart(ctx, labels, values){
   return new Chart(ctx, {
     type: "doughnut",
@@ -4302,6 +4723,9 @@ function atualizarGraficosAnalise(stats){
       [stats.totalDmais, stats.totalD0, stats.totalDmenos1, stats.totalDmenosMaiorIgual2]
     );
   }
+
+    // tempo de consolidação
+
 }
 
 function getAnaliseReportData() {
