@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -494,13 +493,14 @@ h1{
 .filtersBar{
   display:grid;
   grid-template-columns:
-    minmax(170px, 210px)   /* Programados / Não programados */
-    minmax(180px, 210px)   /* Range */
-    minmax(180px, 210px)   /* Migração */
-    minmax(170px, 190px)   /* Criticidade */
-    minmax(180px, 1fr)     /* Cliente */
-    minmax(180px, 1fr)     /* Destino */
-    minmax(150px, 180px);  /* UF */
+    minmax(170px, 210px)
+    minmax(180px, 210px)
+    minmax(180px, 210px)
+    minmax(170px, 190px)
+    42px
+    minmax(180px, 1fr)
+    minmax(180px, 1fr)
+    minmax(150px, 180px);
   gap:8px;
   align-items:start;
   margin-top:14px;
@@ -628,6 +628,22 @@ h1{
   gap:8px;
 }
 
+#btnDateFilterPopup{
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  height: 38px !important;
+
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 16px;
+  line-height: 1;
+  justify-self: start !important;
+}
+
 </style>
 </head>
 
@@ -707,6 +723,8 @@ let snapshotVocativos = {};
 let clientesDisponiveisPopup = [];
 let clientesSelecionadosPopup = new Set();
 window._clienteAllMode = true;
+let datasSelecionadasPopup = [];
+let calendarioPopup = null;
 
 window.currentAnaliseReport = {
   generatedAt: "",
@@ -1078,6 +1096,30 @@ const filterSelect = document.getElementById("filterSelect");
 const dateFilter = document.getElementById("dateFilter");
 const btnDateFilter = document.getElementById("btnDateFilter"); 
 let datasSelecionadas = [];
+
+window.addEventListener("DOMContentLoaded", () => {
+  const inputPopup = document.getElementById("dateFilterPopup");
+  const btnPopup = document.getElementById("btnDateFilterPopup");
+
+  if (inputPopup && btnPopup) {
+    calendarioPopup = flatpickr(inputPopup, {
+      mode: "multiple",
+      dateFormat: "Y-m-d",
+      locale: "pt",
+      clickOpens: false,
+      positionElement: btnPopup,
+      position: "below",
+      onChange: function(selectedDates) {
+        datasSelecionadasPopup = selectedDates || [];
+        listarAlmoxPendentes();
+      }
+    });
+
+    btnPopup.addEventListener("click", function() {
+      calendarioPopup.open();
+    });
+  }
+});
 
 const calendario = flatpickr("#dateFilter", {
   mode: "multiple",
@@ -1975,6 +2017,15 @@ function toDateOnly(d){
   return y;
 }
 
+function notaPassaFiltroDataPopup(nota, datasSelecionadas) {
+  if (!Array.isArray(datasSelecionadas) || !datasSelecionadas.length) return true;
+
+  const dtMaior = maiorDataEntradaOuCheckin(nota.checkin, nota.entrada);
+  if (!dtMaior) return false;
+
+  return datasSelecionadas.some(dataSel => isSameDate(dtMaior, dataSel));
+}
+
 // dias inteiros (0 = hoje, 1 = ontem, 6 = 6 dias atrás)
 function diasDesdeHoje(data){
   const d = toDateOnly(data);
@@ -2190,6 +2241,9 @@ const filtroClienteAtivo =
   clientesSelecionadosNorm.size < clientesDisponiveisPopup.length;
 
   function notaPassaFiltros(n) {
+
+    // ====== FILTRO DATA ENTRADA / CHECK-IN ======
+  if (!notaPassaFiltroDataPopup(n, datasSelecionadasPopup)) return false;
   // ====== FILTROS TEXTO ======
   if (filtroClienteAtivo) {
   const clienteNorm = normalizar(n.cliente || "");
@@ -2495,41 +2549,24 @@ if (modoDataLimite && modoDataLimite !== "all") {
 
     // ✅ filtro por cliente
     // ✅ filtro por cliente (checkbox)
-if (filtroClienteAtivo) {
-  const temCliente = info.notas.some(n => {
-    const clienteNorm = normalizar(n.cliente || "");
-    return clientesSelecionadosNorm.has(clienteNorm);
-  });
+// ✅ aplica TODOS os filtros de nota primeiro, inclusive Data Entrada / Check-in
+const notasFiltradas = (info.notas || []).filter(notaPassaFiltros);
 
-  if (!temCliente) return;
-}
-    if(termoDestino){
-      const temDestino = info.notas.some(n => normalizar(n.destino).includes(termoDestino));
-      if(!temDestino) return;
-    }
-    // ✅ filtro por UF Destino (comparação EXATA)
-    if (termoUFDestino) {
+const filtroDataPopupAtivo = Array.isArray(datasSelecionadasPopup) && datasSelecionadasPopup.length > 0;
 
-      const temUFDestino = info.notas.some(n => {
-        const uf = normalizar(n.uf || "");
-        return uf === termoUFDestino;
-      });
-
-      if (!temUFDestino) return;
-    }
-
-    const notasFiltradas = (info.notas || []).filter(notaPassaFiltros);
-    // ✅ Se há filtros por NOTA ativos (criticidade/data/cliente/destino/UF)
-    // e não sobrou nenhuma nota, então NÃO mostra o vocativo
-    const filtrosNotaAtivos =
+const filtrosNotaAtivos =
+  filtroDataPopupAtivo ||
   (modoCriticidade && modoCriticidade !== "all") ||
   (modoDataLimite && modoDataLimite !== "all") ||
   (modoMigracao && modoMigracao !== "all") ||
-  filtroClienteAtivo || !!termoDestino || !!termoUFDestino;
+  filtroClienteAtivo ||
+  !!termoDestino ||
+  !!termoUFDestino;
+  
 
-    if (filtrosNotaAtivos && notasFiltradas.length === 0) {
-      return; // ⛔ não renderiza esse vocativo
-    }
+if (filtrosNotaAtivos && notasFiltradas.length === 0) {
+  return; // ⛔ não renderiza esse vocativo
+}
 
     // ordena datas das notas
     notasFiltradas.sort((a,b)=>{
@@ -3599,6 +3636,9 @@ window.currentAnaliseReport = {
     dataLimite: document.getElementById("filtroDataLimitePopup")?.selectedOptions?.[0]?.text || "Todos",
     migracao: document.getElementById("filtroMigracaoPopup")?.selectedOptions?.[0]?.text || "Todos",
     criticidade: document.getElementById("filtroCriticidadePopup")?.selectedOptions?.[0]?.text || "Todos",
+    dataEntradaCheckin: (datasSelecionadasPopup || []).length
+      ? datasSelecionadasPopup.map(d => formatDateBRLocal(d)).join(" | ")
+      : "Todos",
     cliente: (
   clientesSelecionadosPopup.size === clientesDisponiveisPopup.length
     ? "Todos"
@@ -4308,6 +4348,7 @@ function exportarRelatorioExcelAnalise() {
     { Indicador: "Filtro Range", Valor: report.filtros.dataLimite || "Todos" },
     { Indicador: "Filtro Migração", Valor: report.filtros.migracao || "Todos" },
     { Indicador: "Filtro Criticidade", Valor: report.filtros.criticidade || "Todos" },
+    { Indicador: "Filtro Data Entrada/Check-in", Valor: report.filtros.dataEntradaCheckin || "Todos" },
     { Indicador: "Filtro Cliente", Valor: report.filtros.cliente || "-" },
     { Indicador: "Filtro Destino", Valor: report.filtros.destino || "-" },
     { Indicador: "Filtro UF Destino", Valor: report.filtros.ufDestino || "-" },
@@ -4369,6 +4410,7 @@ function exportarRelatorioPDFAnalise() {
     `Range: ${limparTextoPDF(report.filtros.dataLimite || "Todos")}`,
     `Migração: ${limparTextoPDF(report.filtros.migracao || "Todos")}`,
     `Criticidade: ${limparTextoPDF(report.filtros.criticidade || "Todos")}`,
+    `Data Entrada/Check-in: ${limparTextoPDF(report.filtros.dataEntradaCheckin || "Todos")}`,
     `Cliente: ${limparTextoPDF(report.filtros.cliente || "-")}`,
     `Destino: ${limparTextoPDF(report.filtros.destino || "-")}`,
     `UF: ${limparTextoPDF(report.filtros.ufDestino || "-")}`
@@ -4765,6 +4807,9 @@ function getClientesDisponiveisPorOutrosFiltros({
     }
 
     (info.notas || []).forEach(n => {
+
+      if (!notaPassaFiltroDataPopup(n, datasSelecionadasPopup)) return;
+
       if (termoDestino && !normalizar(n.destino || "").includes(termoDestino)) return;
 
       if (termoUFDestino) {
@@ -4965,6 +5010,8 @@ function notaPassaContexto(n, ctx) {
     clientesSelecionadosNorm,
     ignorarCliente
   } = ctx;
+
+  if (!notaPassaFiltroDataPopup(n, datasSelecionadasPopup)) return false;
 
   if (!ignorarCliente) {
     const totalClientes = clientesDisponiveisPopup.length;
@@ -5285,6 +5332,12 @@ function sincronizarFiltrosDeLista(almoxPend, almoxUltimoVeiculo) {
         <option value="Dmenos1">🟢 D-1</option>
         <option value="Dge2">🟢 ≥ D-2</option>
       </select>
+
+      <button id="btnDateFilterPopup" class="btn secondary" type="button" title="Selecionar datas da análise">
+      📅
+      </button>
+
+      <input id="dateFilterPopup" type="text" style="display:none;" />
 
       <div class="clientFilterBox" id="clientFilterBox">
   <button type="button" class="clientFilterTrigger" id="clientFilterTrigger">
