@@ -431,10 +431,24 @@ h1{
 
 .kpiGrid{
   display:grid;
-  grid-template-columns: repeat(4, minmax(260px, 1fr)) minmax(320px, 1fr);
+  grid-template-columns: repeat(5, minmax(220px, 1fr));
   gap:16px;
   margin-bottom:16px;
   align-items:stretch;
+  width:100% !important;
+  min-width:0;
+}
+
+.kpiGrid > .kpiCard,
+.kpiGrid > .legendCard{
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  justify-self:stretch !important;
+}
+
+.kpiGrid > *{
+  min-width: 0;
 }
 
 .kpiCard{
@@ -453,7 +467,7 @@ h1{
   grid-column: 1 / -1;
   background: rgba(248,250,252,0.92);
   border: 1px solid rgba(15,23,42,0.10);
-  border-radius: 18px;
+  border-radius: 12px;
   padding: 10px 14px;
   box-shadow: var(--shadowSoft);
   min-height: 118px;
@@ -464,9 +478,10 @@ h1{
 
 .kpiWideTop{
   display:grid;
-  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap:8px;
   align-items:stretch;
+  width:100%;
 }
 
 .kpiMiniBox{
@@ -523,21 +538,39 @@ h1{
 }
 
 .kpiWideCardConsolidacao{
-  padding: 6px 10px 10px 10px; /* reduz principalmente o espaço de baixo */
-  min-height: auto;           /* remove a altura mínima que está sobrando */
-  gap: 4px;                   /* reduz espaço entre título e minicards */
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  background: rgba(248,250,252,0.92);
+  border: 1px solid rgba(15,23,42,0.10);
+  border-radius: 12px;
+  box-shadow: var(--shadowSoft);
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 10px 14px;
+  gap: 6px;
+  min-height: auto;
+  margin-bottom: 20px;
+
+  overflow: hidden;
 }
 
 
 .kpiWideTopConsolidacao{
   display: grid;
   grid-template-columns: repeat(11, minmax(0, 1fr));
-  gap: 4px;
+  gap: 2px;
   align-items: stretch;
+  width: 100%;
+  min-width: 0;
 }
 
 .kpiWideTopConsolidacao .kpiMiniBox{
-  padding: 5px 4px 2px 4px; /* menos espaço inferior dentro de cada minicard */
+  padding: 4px 1px 2px 1px;
   border-radius: 10px;
   min-width: 0;
 }
@@ -596,8 +629,19 @@ h1{
   border-radius: 18px;
   padding:16px;
   box-shadow: var(--shadowSoft);
-  max-width: 420px;
-  justify-self: end;
+
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  justify-self:stretch !important;
+}
+
+.kpiWideCard,
+.kpiWideCardConsolidacao{
+  grid-column: 1 / -1;
+  width:100%;
+  max-width:100%;
+  min-width:0;
 }
 
 .filtersBar{
@@ -5806,7 +5850,7 @@ function sincronizarFiltrosDeLista(almoxPend, almoxUltimoVeiculo) {
 
 
     </div>
-    <div id="resumoAnalise" class="summary" style="margin-top:10px;"></div>
+    <div id="resumoAnalise" style="margin-top:10px; width:100%;"></div>
     
     <div id="almoxList" style="margin-top:10px; font-size:13px;"></div>
 
