@@ -2900,21 +2900,25 @@ if (modoDataLimite && modoDataLimite !== "all") {
 
 
 
+const veiculos = almoxUltimoVeiculo[almox] || [];
 
-    // ✅ filtro por cliente
-    // ✅ filtro por cliente (checkbox)
 // ✅ aplica TODOS os filtros de nota primeiro, inclusive Data Entrada / Check-in
 let notasFiltradas = (info.notas || []).filter(notaPassaFiltros);
 
 // ✅ base para o card de prazo de consolidação:
-// aplica todos os filtros normais, mas IGNORA o filtro de prazo de consolidação
-let notasBaseConsolidacao = (info.notas || []).filter(n => {
-  const filtroAtual = filtroPrazoConsolidacaoAtivo;
-  filtroPrazoConsolidacaoAtivo = null;
-  const passa = notaPassaFiltros(n);
-  filtroPrazoConsolidacaoAtivo = filtroAtual;
-  return passa;
-});
+// aplica todos os filtros normais, IGNORA apenas o filtro do próprio prazo,
+// mas respeita também o filtro de veículo
+let notasBaseConsolidacao = [];
+
+if (vocativoPassaFiltroVeiculo(almox, veiculos, filtroVeiculo, hoje)) {
+  notasBaseConsolidacao = (info.notas || []).filter(n => {
+    const filtroAtual = filtroPrazoConsolidacaoAtivo;
+    filtroPrazoConsolidacaoAtivo = null;
+    const passa = notaPassaFiltros(n);
+    filtroPrazoConsolidacaoAtivo = filtroAtual;
+    return passa;
+  });
+}
 
 // ===============================
 // FILTRO PRAZO DE CONSOLIDAÇÃO
@@ -2985,7 +2989,6 @@ const qtdD1Filtrado = notasFiltradas.reduce((acc, n) => {
 // ✅ qtd D-1 TOTAL do vocativo (SEM filtros de Cliente/Destino/UF/DataLimite)
 const qtdD1TotalSemFiltro = Number(info.qtd || 0);
 
-    const veiculos = almoxUltimoVeiculo[almox] || [];
     
     // ===============================
 // 📊 CONTADOR NOTAS VS ÚLTIMO CARREGAMENTO
