@@ -2364,6 +2364,13 @@
       return c || e || null;
     }
 
+    function teveVeiculoENaoCarregou(dtCarregamentoUltimoVeiculoVocativo, dtCheck, dtEntr) {
+      const dtCarregamento = toDateOnly(dtCarregamentoUltimoVeiculoVocativo);
+      const dtMaiorEntradaCheckin = maiorDataEntradaOuCheckin(dtCheck, dtEntr);
+      if (!dtCarregamento || !dtMaiorEntradaCheckin) return "";
+      return dtCarregamento > dtMaiorEntradaCheckin ? "TEVE VEÍCULO E NÃO CARREGOU" : "";
+    }
+
     function obterFaixaConsolidacao(dias) {
 
       if (dias <= -6) return "menorIgual6Neg";
@@ -3531,6 +3538,7 @@
             DtLimiteEmbarque: formatDateBRLocal(n.dtLim),
             DtFinalEntrega: formatDateBRLocal(n.finalEntrega),
             DtCarregamentoUltimoVeiculoVocativo: formatDateBRLocal(ultimaDataCarregamento),
+            StatusUltimoVeiculoVocativo: teveVeiculoENaoCarregou(ultimaDataCarregamento, n.checkin, n.entrada),
             EntradaStatus: dentroRegra ? "EM ATRASO" : "NO PRAZO",
             Criticidade: classificacaoCriticidade,
             Farol: farolTexto
