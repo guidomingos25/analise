@@ -2165,58 +2165,45 @@
   </div>
 
   <div class="kpiWideTop kpiWideTopConsolidacao">
-  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'menorIgual6Neg' ? 'ativo' : ''}"
-     data-faixa="menorIgual6Neg"
-     onclick="toggleFiltroPrazoConsolidacao('menorIgual6Neg')">
+  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg21Plus' ? 'ativo' : ''}"
+     data-faixa="neg21Plus"
+     onclick="toggleFiltroPrazoConsolidacao('neg21Plus')">
 
-    <div class="kpiMiniLabel"><=-6</div>
-    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoMenorIgual6Neg}</div>
-  </div>
+    <div class="kpiMiniLabel">&lt;=-21</div>
+    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg21Plus}</div>
+</div>
 
-  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg5' ? 'ativo' : ''}"
-     data-faixa="neg5"
-     onclick="toggleFiltroPrazoConsolidacao('neg5')">
+<div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg11a20' ? 'ativo' : ''}"
+     data-faixa="neg11a20"
+     onclick="toggleFiltroPrazoConsolidacao('neg11a20')">
 
+    <div class="kpiMiniLabel">-11 a -20</div>
+    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg11a20}</div>
+</div>
 
-    <div class="kpiMiniLabel">-5</div>
-    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg5}</div>
-  </div>
+<div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg6a10' ? 'ativo' : ''}"
+     data-faixa="neg6a10"
+     onclick="toggleFiltroPrazoConsolidacao('neg6a10')">
 
-  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg4' ? 'ativo' : ''}"
-     data-faixa="neg4"
-     onclick="toggleFiltroPrazoConsolidacao('neg4')">
+    <div class="kpiMiniLabel">-6 a -10</div>
+    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg6a10}</div>
+</div>
 
+<div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg3a5' ? 'ativo' : ''}"
+     data-faixa="neg3a5"
+     onclick="toggleFiltroPrazoConsolidacao('neg3a5')">
 
-    <div class="kpiMiniLabel">-4</div>
-    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg4}</div>
-  </div>
+    <div class="kpiMiniLabel">-3 a -5</div>
+    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg3a5}</div>
+</div>
 
-  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg3' ? 'ativo' : ''}"
-     data-faixa="neg3"
-     onclick="toggleFiltroPrazoConsolidacao('neg3')">
+<div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg1a2' ? 'ativo' : ''}"
+     data-faixa="neg1a2"
+     onclick="toggleFiltroPrazoConsolidacao('neg1a2')">
 
-
-    <div class="kpiMiniLabel">-3</div>
-    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg3}</div>
-  </div>
-
-  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg2' ? 'ativo' : ''}"
-     data-faixa="neg2"
-     onclick="toggleFiltroPrazoConsolidacao('neg2')">
-
-
-    <div class="kpiMiniLabel">-2</div>
-    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg2}</div>
-  </div>
-
-  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'neg1' ? 'ativo' : ''}"
-     data-faixa="neg1"
-     onclick="toggleFiltroPrazoConsolidacao('neg1')">
-
-
-    <div class="kpiMiniLabel">-1</div>
-    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg1}</div>
-  </div>
+    <div class="kpiMiniLabel">-1 a -2</div>
+    <div class="kpiMiniValue consolidacaoNegativa">${stats.consolidacaoNeg1a2}</div>
+</div>
 
   <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'faixa0' ? 'ativo' : ''}"
      data-faixa="faixa0"
@@ -2251,13 +2238,21 @@
     <div class="kpiMiniValue">${stats.consolidacaoFaixa3}</div>
   </div>
 
-  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'maiorIgual4' ? 'ativo' : ''}"
-     data-faixa="maiorIgual4"
-     onclick="toggleFiltroPrazoConsolidacao('maiorIgual4')">
+  <div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'faixa4' ? 'ativo' : ''}"
+     data-faixa="faixa4"
+     onclick="toggleFiltroPrazoConsolidacao('faixa4')">
 
-    <div class="kpiMiniLabel">>=4</div>
-    <div class="kpiMiniValue">${stats.consolidacaoMaiorIgual4}</div>
-  </div>
+    <div class="kpiMiniLabel">4</div>
+    <div class="kpiMiniValue">${stats.consolidacaoFaixa4}</div>
+</div>
+
+<div class="kpiMiniBox filtroConsolidacao ${filtroPrazoConsolidacaoAtivo === 'maiorIgual5' ? 'ativo' : ''}"
+     data-faixa="maiorIgual5"
+     onclick="toggleFiltroPrazoConsolidacao('maiorIgual5')">
+
+    <div class="kpiMiniLabel">>=5</div>
+    <div class="kpiMiniValue">${stats.consolidacaoMaiorIgual5}</div>
+</div>
   </div>
 </div>
       </div>
@@ -2372,19 +2367,18 @@
     }
 
     function obterFaixaConsolidacao(dias) {
-
-      if (dias <= -6) return "menorIgual6Neg";
-      if (dias === -5) return "neg5";
-      if (dias === -4) return "neg4";
-      if (dias === -3) return "neg3";
-      if (dias === -2) return "neg2";
-      if (dias === -1) return "neg1";
+      if (dias <= -21) return "neg21Plus";
+      if (dias >= -20 && dias <= -11) return "neg11a20";
+      if (dias >= -10 && dias <= -6) return "neg6a10";
+      if (dias >= -5 && dias <= -3) return "neg3a5";
+      if (dias >= -2 && dias <= -1) return "neg1a2";
       if (dias === 0) return "faixa0";
       if (dias === 1) return "faixa1";
       if (dias === 2) return "faixa2";
       if (dias === 3) return "faixa3";
-      if (dias >= 4) return "maiorIgual4";
-
+      if (dias === 4) return "faixa4";
+      if (dias >= 5) return "maiorIgual5";
+return null;
       return null;
     }
 
@@ -2824,17 +2818,17 @@
         migracao11a20Para20plus: 0,
 
 
-        consolidacaoMenorIgual6Neg: 0,
-        consolidacaoNeg5: 0,
-        consolidacaoNeg4: 0,
-        consolidacaoNeg3: 0,
-        consolidacaoNeg2: 0,
-        consolidacaoNeg1: 0,
+        consolidacaoNeg21Plus: 0,
+        consolidacaoNeg11a20: 0,
+        consolidacaoNeg6a10: 0,
+        consolidacaoNeg3a5: 0,
+        consolidacaoNeg1a2: 0,
         consolidacaoFaixa0: 0,
         consolidacaoFaixa1: 0,
         consolidacaoFaixa2: 0,
         consolidacaoFaixa3: 0,
-        consolidacaoMaiorIgual4: 0
+        consolidacaoFaixa4: 0,
+        consolidacaoMaiorIgual5: 0,
       };
 
       const reportVocativos = [];
@@ -3007,17 +3001,17 @@
             (dtLim.getTime() - dtMaior.getTime()) / 86400000
           );
 
-          if (diasConsolidacao <= -6) stats.consolidacaoMenorIgual6Neg++;
-          else if (diasConsolidacao === -5) stats.consolidacaoNeg5++;
-          else if (diasConsolidacao === -4) stats.consolidacaoNeg4++;
-          else if (diasConsolidacao === -3) stats.consolidacaoNeg3++;
-          else if (diasConsolidacao === -2) stats.consolidacaoNeg2++;
-          else if (diasConsolidacao === -1) stats.consolidacaoNeg1++;
+          if (diasConsolidacao <= -21) stats.consolidacaoNeg21Plus++;
+          else if (diasConsolidacao <= -11) stats.consolidacaoNeg11a20++;
+          else if (diasConsolidacao <= -6) stats.consolidacaoNeg6a10++;
+          else if (diasConsolidacao <= -3) stats.consolidacaoNeg3a5++;
+          else if (diasConsolidacao <= -1) stats.consolidacaoNeg1a2++;
           else if (diasConsolidacao === 0) stats.consolidacaoFaixa0++;
           else if (diasConsolidacao === 1) stats.consolidacaoFaixa1++;
           else if (diasConsolidacao === 2) stats.consolidacaoFaixa2++;
           else if (diasConsolidacao === 3) stats.consolidacaoFaixa3++;
-          else if (diasConsolidacao >= 4) stats.consolidacaoMaiorIgual4++;
+          else if (diasConsolidacao === 4) stats.consolidacaoFaixa4++;
+          else if (diasConsolidacao >= 5) stats.consolidacaoMaiorIgual5++;
         });
 
         const filtroDataPopupAtivo = Array.isArray(datasSelecionadasPopup) && datasSelecionadasPopup.length > 0;
