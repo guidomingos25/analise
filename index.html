@@ -2820,7 +2820,8 @@ return null;
 
       Object.keys(almoxUltimoVeiculo).forEach(a => {
         almoxUltimoVeiculo[a].sort((a, b) => b.dtPrev - a.dtPrev);
-        almoxUltimoVeiculo[a] = almoxUltimoVeiculo[a].slice(0, 3);
+        // Mantém todos os veículos para a regra de status do vocativo.
+        // O limite visual de 3 registros é aplicado apenas na exibição.
       });
 
       sincronizarFiltrosDeLista(almoxPend, almoxUltimoVeiculo);
@@ -3415,7 +3416,7 @@ return null;
 
 
 
-        const veicHTML = veiculos.map(v => `
+        const veicHTML = veiculos.slice(0, 3).map(v => `
     <tr>
       <td>${v.id}</td>
       <td>${formatDateBRLocal(v.dtPrev)}</td>
@@ -3910,7 +3911,7 @@ return null;
 
 
         const resumoVeic = veiculos.length
-          ? veiculos.map(v =>
+          ? veiculos.slice(0, 3).map(v =>
             `• ID ${v.id} | Prog: ${formatDateBRLocal(v.dtPrev)} | Carreg: ${formatDateBRLocal(v.dtCarreg)} | Destinos: ${v.destinos} | Entrega: ${formatDateBRLocal(v.dtEntrega)} (Veículo Solicitado: ${v.veiculoSolicitado || ""})`
           ).join("<br>")
           : "Nenhum encontrado";
