@@ -940,6 +940,18 @@
     let clientesDisponiveisPopup = [];
     let clientesSelecionadosPopup = new Set();
     window._clienteAllMode = true;
+    const RANGE_MULTI_OPTIONS = ["ateAmanha", "entradaNF_Atraso6", "maxEntCheck_Atraso6", "limEmb_0_plus", "limEmb_1_2", "limEmb_3_5", "limEmb_6_10", "limEmb_10_19", "limEmb_19_plus"];
+    const MIGRACAO_MULTI_OPTIONS = ["migra_D0_1a2", "migra_1a2_3a5", "migra_3a5_6a10", "migra_6a10_11a20", "migra_11a20_20plus"];
+    const CRITICIDADE_MULTI_OPTIONS = ["Dmais", "D0", "Dmenos1", "Dge2"];
+    let rangeDisponiveisPopup = [];
+    let rangeSelecionadosPopup = new Set();
+    window._rangeAllMode = true;
+    let migracaoDisponiveisPopup = [];
+    let migracaoSelecionadosPopup = new Set();
+    window._migracaoAllMode = true;
+    let criticidadeDisponiveisPopup = [];
+    let criticidadeSelecionadosPopup = new Set();
+    window._criticidadeAllMode = true;
     let datasSelecionadasPopup = [];
     let calendarioPopup = null;
     let filtroPrazoConsolidacaoAtivo = null;
@@ -2384,6 +2396,116 @@ return null;
 
 
 
+    function getMultiFilterValues(selectId, stateSet, availableList) {
+      const select = document.getElementById(selectId);
+      if (!select) return ["all"];
+
+      const available = Array.isArray(availableList) ? availableList : Array.from(select.options)
+        .map(o => o.value)
+        .filter(v => v !== "all" && !((select.querySelector(`option[value="${v}"]`) || {}).disabled));
+
+      const validSelected = Array.from(stateSet || []).filter(v => available.includes(v));
+
+      if (!available.length || !validSelected.length || validSelected.length === available.length) {
+        return ["all"];
+      }
+
+      return validSelected;
+    }
+
+    function isFiltroMultiAtivo(values) {
+      return Array.isArray(values) && values.length > 0 && !values.includes("all");
+    }
+
+    function notaPassaFiltroRangeMultiplo(n, modosDataLimite, hoje, amanha) {
+      if (!isFiltroMultiAtivo(modosDataLimite)) return true;
+
+      const dtLimEmb = toDateOnly(n.dtLim);
+      const dtEntrada = toDateOnly(n.entrada);
+      const dtCheckin = toDateOnly(n.checkin);
+      const dtMaior = maiorDataEntradaOuCheckin(dtCheckin, dtEntrada);
+
+      return modosDataLimite.some(modoDataLimite => {
+        if (modoDataLimite === "ateAmanha") return !!dtLimEmb && dtLimEmb.getTime() <= amanha.getTime();
+        if (modoDataLimite === "limEmb_0_plus") return !!dtLimEmb && dtLimEmb.getTime() >= hoje.getTime();
+        if (modoDataLimite === "entradaNF_Atraso6") {
+          if (!dtEntrada) return false;
+          const dias = diasDesdeHoje(dtEntrada);
+          return dias != null && dias >= 6;
+        }
+        if (modoDataLimite === "maxEntCheck_Atraso6") {
+          if (!dtMaior) return false;
+          const dias = diasDesdeHoje(dtMaior);
+          return dias != null && dias >= 6;
+        }
+        if (modoDataLimite === "limEmb_1_2") {
+          if (!dtLimEmb) return false;
+          const dias = diasDesdeHoje(dtLimEmb);
+          return dias != null && dias >= 1 && dias <= 2;
+        }
+        if (modoDataLimite === "limEmb_3_5") {
+          if (!dtLimEmb) return false;
+          const dias = diasDesdeHoje(dtLimEmb);
+          return dias != null && dias >= 3 && dias <= 5;
+        }
+        if (modoDataLimite === "limEmb_6_10") {
+          if (!dtLimEmb) return false;
+          const dias = diasDesdeHoje(dtLimEmb);
+          return dias != null && dias >= 6 && dias <= 10;
+        }
+        if (modoDataLimite === "limEmb_10_19") {
+          if (!dtLimEmb) return false;
+          const dias = diasDesdeHoje(dtLimEmb);
+          return dias != null && dias >= 11 && dias <= 20;
+        }
+        if (modoDataLimite === "limEmb_19_plus") {
+          if (!dtLimEmb) return false;
+          const dias = diasDesdeHoje(dtLimEmb);
+          return dias != null && dias > 20;
+        }
+        return false;
+      });
+    }
+
+    function notaPassaFiltroCriticidadeMultiplo(n, modosCriticidade, hoje) {
+      if (!isFiltroMultiAtivo(modosCriticidade)) return true;
+      const dtLimEmb = toDateOnly(n.dtLim);
+      if (!dtLimEmb) return false;
+      const diasParaLimite = Math.round((dtLimEmb.getTime() - hoje.getTime()) / 86400000);
+      return modosCriticidade.some(modoCriticidade => {
+        if (modoCriticidade === "Dmais") return diasParaLimite < 0;
+        if (modoCriticidade === "D0") return diasParaLimite === 0;
+        if (modoCriticidade === "Dmenos1") return diasParaLimite === 1;
+        if (modoCriticidade === "Dge2") return diasParaLimite >= 2;
+        return false;
+      });
+    }
+
+    function notaPassaFiltroMigracaoMultiplo(n, modosMigracao) {
+      if (!isFiltroMultiAtivo(modosMigracao)) return true;
+      const dtLimEmb = toDateOnly(n.dtLim);
+      if (!dtLimEmb) return false;
+      const diasVencidosHoje = diasDesdeHoje(dtLimEmb);
+      return modosMigracao.some(modoMigracao => {
+        if (modoMigracao === "migra_D0_1a2") return diasVencidosHoje === 0;
+        if (modoMigracao === "migra_1a2_3a5") return diasVencidosHoje === 2;
+        if (modoMigracao === "migra_3a5_6a10") return diasVencidosHoje === 5;
+        if (modoMigracao === "migra_6a10_11a20") return diasVencidosHoje === 10;
+        if (modoMigracao === "migra_11a20_20plus") return diasVencidosHoje === 20;
+        return false;
+      });
+    }
+
+    function getFiltroMultiTexto(selectId, prefixo) {
+      const select = document.getElementById(selectId);
+      if (!select) return `${prefixo} (Todos)`;
+      const opcoesDisponiveis = Array.from(select.options).filter(o => o.value !== "all" && !o.disabled);
+      const selecionadas = Array.from(select.selectedOptions).filter(o => o.value !== "all" && !o.disabled);
+      if (!opcoesDisponiveis.length || !selecionadas.length || selecionadas.length === opcoesDisponiveis.length) return `${prefixo} (Todos)`;
+      if (selecionadas.length === 1) return selecionadas[0].textContent.trim();
+      return `${prefixo} (${selecionadas.length})`;
+    }
+
     async function listarAlmoxPendentes() {
       capturarObsDoDOM();
       capturarStatusDoDOM();
@@ -2399,11 +2521,9 @@ return null;
 
 
 
-      const modoDataLimite =
-        document.getElementById("filtroDataLimitePopup")?.value || "all";
-
-      const modoCriticidade = document.getElementById("filtroCriticidadePopup")?.value || "all";
-      const modoMigracao = document.getElementById("filtroMigracaoPopup")?.value || "all";
+      const modosDataLimite = getMultiFilterValues("filtroDataLimitePopup", rangeSelecionadosPopup, rangeDisponiveisPopup);
+      const modosCriticidade = getMultiFilterValues("filtroCriticidadePopup", criticidadeSelecionadosPopup, criticidadeDisponiveisPopup);
+      const modosMigracao = getMultiFilterValues("filtroMigracaoPopup", migracaoSelecionadosPopup, migracaoDisponiveisPopup);
 
 
 
@@ -2608,9 +2728,9 @@ return null;
         almoxUltimoVeiculo,
         hoje,
         amanha,
-        modoDataLimite,
-        modoCriticidade,
-        modoMigracao,
+        modosDataLimite,
+        modosCriticidade,
+        modosMigracao,
         filtroVeiculo,
         termoDestino,
         termoUFDestino
@@ -2641,113 +2761,11 @@ return null;
         }
 
 
-        if (modoDataLimite && modoDataLimite !== "all") {
-          const dtLimEmb = toDateOnly(n.dtLim);
-          const dtEntrada = toDateOnly(n.entrada);
-          const dtCheckin = toDateOnly(n.checkin);
-          const dtMaior = maiorDataEntradaOuCheckin(dtCheckin, dtEntrada);
+        if (!notaPassaFiltroRangeMultiplo(n, modosDataLimite, hoje, amanha)) return false;
 
-          if (modoDataLimite === "ateAmanha") {
-            if (!dtLimEmb) return false;
-            return dtLimEmb.getTime() <= amanha.getTime();
-          }
+        if (!notaPassaFiltroCriticidadeMultiplo(n, modosCriticidade, hoje)) return false;
 
-          if (modoDataLimite === "limEmb_0_plus") {
-            if (!dtLimEmb) return false;
-            return dtLimEmb.getTime() >= hoje.getTime();
-          }
-
-          if (modoDataLimite === "entradaNF_Atraso6") {
-            if (!dtEntrada) return false;
-            const dias = diasDesdeHoje(dtEntrada);
-            return (dias != null && dias >= 6);
-          }
-
-          if (modoDataLimite === "maxEntCheck_Atraso6") {
-            if (!dtMaior) return false;
-            const dias = diasDesdeHoje(dtMaior);
-            return (dias != null && dias >= 6);
-          }
-
-          if (modoDataLimite === "limEmb_1_2") {
-            if (!dtLimEmb) return false;
-            const dias = diasDesdeHoje(dtLimEmb);
-            return (dias != null && dias >= 1 && dias <= 2);
-          }
-
-          if (modoDataLimite === "limEmb_3_5") {
-            if (!dtLimEmb) return false;
-            const dias = diasDesdeHoje(dtLimEmb);
-            return (dias != null && dias >= 3 && dias <= 5);
-          }
-
-          if (modoDataLimite === "limEmb_6_10") {
-            if (!dtLimEmb) return false;
-            const dias = diasDesdeHoje(dtLimEmb);
-            return (dias != null && dias >= 6 && dias <= 10);
-          }
-
-          if (modoDataLimite === "limEmb_10_19") {
-            if (!dtLimEmb) return false;
-            const dias = diasDesdeHoje(dtLimEmb);
-            return (dias != null && dias >= 11 && dias <= 20);
-          }
-
-          if (modoDataLimite === "limEmb_19_plus") {
-            if (!dtLimEmb) return false;
-            const dias = diasDesdeHoje(dtLimEmb);
-            return (dias != null && dias > 20);
-          }
-        }
-
-
-
-        if (modoCriticidade && modoCriticidade !== "all") {
-          const dtLimEmb = toDateOnly(n.dtLim);
-          if (!dtLimEmb) return false;
-
-
-          const diasParaLimite = Math.round((dtLimEmb.getTime() - hoje.getTime()) / 86400000);
-
-          if (modoCriticidade === "Dmais") {
-            if (!(diasParaLimite < 0)) return false;
-          } else if (modoCriticidade === "D0") {
-            if (!(diasParaLimite === 0)) return false;
-          } else if (modoCriticidade === "Dmenos1") {
-            if (!(diasParaLimite === 1)) return false;
-          } else if (modoCriticidade === "Dge2") {
-            if (!(diasParaLimite >= 2)) return false;
-          }
-        }
-
-        if (modoMigracao && modoMigracao !== "all") {
-          const dtLimEmb = toDateOnly(n.dtLim);
-          if (!dtLimEmb) return false;
-
-          const diasVencidosHoje = diasDesdeHoje(dtLimEmb);
-
-          if (modoMigracao === "migra_D0_1a2") {
-            return diasVencidosHoje === 0;
-          }
-
-          if (modoMigracao === "migra_1a2_3a5") {
-            return diasVencidosHoje === 2;
-          }
-
-          if (modoMigracao === "migra_3a5_6a10") {
-            return diasVencidosHoje === 5;
-          }
-
-          if (modoMigracao === "migra_6a10_11a20") {
-            return diasVencidosHoje === 10;
-          }
-
-          if (modoMigracao === "migra_11a20_20plus") {
-            return diasVencidosHoje === 20;
-          }
-
-          return false;
-        }
+        if (!notaPassaFiltroMigracaoMultiplo(n, modosMigracao)) return false;
 
 
 
@@ -2839,78 +2857,18 @@ return null;
       almoxOrdenados.forEach(([almox, info]) => {
 
 
+        const filtrosNotaOuPrazoAtivos =
+          (Array.isArray(datasSelecionadasPopup) && datasSelecionadasPopup.length > 0) ||
+          isFiltroMultiAtivo(modosDataLimite) ||
+          isFiltroMultiAtivo(modosCriticidade) ||
+          isFiltroMultiAtivo(modosMigracao) ||
+          filtroClienteAtivo ||
+          !!termoDestino ||
+          !!termoUFDestino ||
+          !!filtroPrazoConsolidacaoAtivo;
 
-
-
-
-        if (modoDataLimite && modoDataLimite !== "all") {
-
-          const passa = info.notas.some(n => {
-
-            const dtLimEmb = toDateOnly(n.dtLim);
-            const dtEntrada = toDateOnly(n.entrada);
-            const dtCheckin = toDateOnly(n.checkin);
-            const dtMaior = maiorDataEntradaOuCheckin(dtCheckin, dtEntrada);
-
-
-            if (modoDataLimite === "ateAmanha") {
-              if (!dtLimEmb) return false;
-              return dtLimEmb.getTime() <= amanha.getTime();
-            }
-
-            if (modoDataLimite === "limEmb_0_plus") {
-              if (!dtLimEmb) return false;
-              return dtLimEmb.getTime() >= hoje.getTime();
-            }
-
-
-            if (modoDataLimite === "entradaNF_Atraso6") {
-              if (!dtEntrada) return false;
-              const dias = diasDesdeHoje(dtEntrada);
-              return (dias != null && dias >= 6);
-            }
-
-
-            if (modoDataLimite === "maxEntCheck_Atraso6") {
-              if (!dtMaior) return false;
-              const dias = diasDesdeHoje(dtMaior);
-              return (dias != null && dias >= 6);
-            }
-
-            if (modoDataLimite === "limEmb_1_2") {
-              if (!dtLimEmb) return false;
-              const dias = diasDesdeHoje(dtLimEmb);
-              return (dias != null && dias >= 1 && dias <= 2);
-            }
-
-            if (modoDataLimite === "limEmb_3_5") {
-              if (!dtLimEmb) return false;
-              const dias = diasDesdeHoje(dtLimEmb);
-              return (dias != null && dias >= 3 && dias <= 5);
-            }
-
-
-            if (modoDataLimite === "limEmb_6_10") {
-              if (!dtLimEmb) return false;
-              const dias = diasDesdeHoje(dtLimEmb);
-              return (dias != null && dias >= 6 && dias <= 10);
-            }
-
-            if (modoDataLimite === "limEmb_10_19") {
-              if (!dtLimEmb) return false;
-              const dias = diasDesdeHoje(dtLimEmb);
-              return (dias != null && dias >= 11 && dias <= 20);
-            }
-
-            if (modoDataLimite === "limEmb_19_plus") {
-              if (!dtLimEmb) return false;
-              const dias = diasDesdeHoje(dtLimEmb);
-              return (dias != null && dias > 20);
-            }
-
-            return true;
-          });
-
+        if (filtrosNotaOuPrazoAtivos) {
+          const passa = (info.notas || []).some(notaPassaFiltros);
           if (!passa) return;
         }
 
@@ -3018,9 +2976,9 @@ return null;
 
         const filtrosNotaAtivos =
           filtroDataPopupAtivo ||
-          (modoCriticidade && modoCriticidade !== "all") ||
-          (modoDataLimite && modoDataLimite !== "all") ||
-          (modoMigracao && modoMigracao !== "all") ||
+          isFiltroMultiAtivo(modosCriticidade) ||
+          isFiltroMultiAtivo(modosDataLimite) ||
+          isFiltroMultiAtivo(modosMigracao) ||
           filtroClienteAtivo ||
           !!termoDestino ||
           !!termoUFDestino ||
@@ -4105,9 +4063,9 @@ return null;
         generatedAt: new Date().toLocaleString("pt-BR"),
         filtros: {
           veiculo: Array.from(document.getElementById("filterVeiculoPopup")?.selectedOptions || []).map(o => o.text),
-          dataLimite: document.getElementById("filtroDataLimitePopup")?.selectedOptions?.[0]?.text || "Todos",
-          migracao: document.getElementById("filtroMigracaoPopup")?.selectedOptions?.[0]?.text || "Todos",
-          criticidade: document.getElementById("filtroCriticidadePopup")?.selectedOptions?.[0]?.text || "Todos",
+          dataLimite: getFiltroMultiTexto("filtroDataLimitePopup", "📅 Range"),
+          migracao: getFiltroMultiTexto("filtroMigracaoPopup", "🔄 Migração"),
+          criticidade: getFiltroMultiTexto("filtroCriticidadePopup", "🚦 Criticidade NF"),
           dataEntradaCheckin: (datasSelecionadasPopup || []).length
             ? datasSelecionadasPopup.map(d => formatDateBRLocal(d)).join(" | ")
             : "Todos",
@@ -4143,18 +4101,7 @@ return null;
       if (filtroPopup) {
         filtroPopup.onchange = () => listarAlmoxPendentes();
       }
-      const filtroDataPopup = document.getElementById("filtroDataLimitePopup");
-      if (filtroDataPopup) {
-        filtroDataPopup.onchange = () => listarAlmoxPendentes();
-      }
-      const filtroCritPopup = document.getElementById("filtroCriticidadePopup");
-      if (filtroCritPopup) {
-        filtroCritPopup.onchange = () => listarAlmoxPendentes();
-      }
-      const filtroMigracaoPopup = document.getElementById("filtroMigracaoPopup");
-      if (filtroMigracaoPopup) {
-        filtroMigracaoPopup.onchange = () => listarAlmoxPendentes();
-      }
+      bindMultiFilterEvents();
     }
 
     function aplicarStatusDefaultNoDOM() {
@@ -5269,9 +5216,9 @@ return null;
       almoxUltimoVeiculo,
       hoje,
       amanha,
-      modoDataLimite,
-      modoCriticidade,
-      modoMigracao,
+      modosDataLimite,
+      modosCriticidade,
+      modosMigracao,
       filtroVeiculo,
       termoDestino,
       termoUFDestino
@@ -5288,14 +5235,9 @@ return null;
         if (veiculos.length) {
           veiculos.forEach(v => {
             const dtCarreg = parsePossibleDate(v.dtCarreg);
-
             if (dtCarreg) {
               dtCarreg.setHours(0, 0, 0, 0);
-
-              if (dtCarreg.getTime() === hoje.getTime()) {
-                temCarregadoHoje = true;
-              }
-
+              if (dtCarreg.getTime() === hoje.getTime()) temCarregadoHoje = true;
               temComCarregamento = true;
             } else {
               temSemCarregamento = true;
@@ -5305,14 +5247,9 @@ return null;
 
         let temProgramado = false;
         let temNaoProgramado = false;
-
-        if (temSemCarregamento) {
-          temProgramado = true;
-        } else if (temComCarregamento) {
-          temNaoProgramado = true;
-        } else if (veiculos.length === 0) {
-          temNaoProgramado = true;
-        }
+        if (temSemCarregamento) temProgramado = true;
+        else if (temComCarregamento) temNaoProgramado = true;
+        else if (veiculos.length === 0) temNaoProgramado = true;
 
         const vocNormAtual = normalizar(almox);
         const overrideManual = window.statusDrafts?.[vocNormAtual];
@@ -5328,106 +5265,22 @@ return null;
 
         if (filtroVeiculo.length > 0) {
           let mostrar = false;
-
           if (filtroVeiculo.includes("carregado") && temCarregadoHoje) mostrar = true;
           if (filtroVeiculo.includes("programado") && temProgramado) mostrar = true;
           if (filtroVeiculo.includes("sem") && temNaoProgramado) mostrar = true;
-
           if (!mostrar) return;
         }
 
         (info.notas || []).forEach(n => {
-
           if (!notaPassaFiltroDataPopup(n, datasSelecionadasPopup)) return;
-
           if (termoDestino && !normalizar(n.destino || "").includes(termoDestino)) return;
-
           if (termoUFDestino) {
             const uf = normalizar(n.uf || "");
             if (uf !== termoUFDestino) return;
           }
-
-          if (modoDataLimite && modoDataLimite !== "all") {
-            const dtLimEmb = toDateOnly(n.dtLim);
-            const dtEntrada = toDateOnly(n.entrada);
-            const dtCheckin = toDateOnly(n.checkin);
-            const dtMaior = maiorDataEntradaOuCheckin(dtCheckin, dtEntrada);
-
-            if (modoDataLimite === "ateAmanha") {
-              if (!dtLimEmb || !(dtLimEmb.getTime() <= amanha.getTime())) return;
-            }
-
-            if (modoDataLimite === "limEmb_0_plus") {
-              if (!dtLimEmb || !(dtLimEmb.getTime() >= hoje.getTime())) return;
-            }
-
-            if (modoDataLimite === "entradaNF_Atraso6") {
-              if (!dtEntrada) return;
-              const dias = diasDesdeHoje(dtEntrada);
-              if (!(dias != null && dias >= 6)) return;
-            }
-
-            if (modoDataLimite === "maxEntCheck_Atraso6") {
-              if (!dtMaior) return;
-              const dias = diasDesdeHoje(dtMaior);
-              if (!(dias != null && dias >= 6)) return;
-            }
-
-            if (modoDataLimite === "limEmb_1_2") {
-              if (!dtLimEmb) return;
-              const dias = diasDesdeHoje(dtLimEmb);
-              if (!(dias != null && dias >= 1 && dias <= 2)) return;
-            }
-
-            if (modoDataLimite === "limEmb_3_5") {
-              if (!dtLimEmb) return;
-              const dias = diasDesdeHoje(dtLimEmb);
-              if (!(dias != null && dias >= 3 && dias <= 5)) return;
-            }
-
-            if (modoDataLimite === "limEmb_6_10") {
-              if (!dtLimEmb) return;
-              const dias = diasDesdeHoje(dtLimEmb);
-              if (!(dias != null && dias >= 6 && dias <= 10)) return;
-            }
-
-            if (modoDataLimite === "limEmb_10_19") {
-              if (!dtLimEmb) return;
-              const dias = diasDesdeHoje(dtLimEmb);
-              if (!(dias != null && dias >= 11 && dias <= 20)) return;
-            }
-
-            if (modoDataLimite === "limEmb_19_plus") {
-              if (!dtLimEmb) return;
-              const dias = diasDesdeHoje(dtLimEmb);
-              if (!(dias != null && dias > 20)) return;
-            }
-          }
-
-          if (modoCriticidade && modoCriticidade !== "all") {
-            const dtLimEmb = toDateOnly(n.dtLim);
-            if (!dtLimEmb) return;
-
-            const diasParaLimite = Math.round((dtLimEmb.getTime() - hoje.getTime()) / 86400000);
-
-            if (modoCriticidade === "Dmais" && !(diasParaLimite < 0)) return;
-            if (modoCriticidade === "D0" && !(diasParaLimite === 0)) return;
-            if (modoCriticidade === "Dmenos1" && !(diasParaLimite === 1)) return;
-            if (modoCriticidade === "Dge2" && !(diasParaLimite >= 2)) return;
-          }
-
-          if (modoMigracao && modoMigracao !== "all") {
-            const dtLimEmb = toDateOnly(n.dtLim);
-            if (!dtLimEmb) return;
-
-            const diasVencidosHoje = diasDesdeHoje(dtLimEmb);
-
-            if (modoMigracao === "migra_D0_1a2" && diasVencidosHoje !== 0) return;
-            if (modoMigracao === "migra_1a2_3a5" && diasVencidosHoje !== 2) return;
-            if (modoMigracao === "migra_3a5_6a10" && diasVencidosHoje !== 5) return;
-            if (modoMigracao === "migra_6a10_11a20" && diasVencidosHoje !== 10) return;
-            if (modoMigracao === "migra_11a20_20plus" && diasVencidosHoje !== 20) return;
-          }
+          if (!notaPassaFiltroRangeMultiplo(n, modosDataLimite, hoje, amanha)) return;
+          if (!notaPassaFiltroCriticidadeMultiplo(n, modosCriticidade, hoje)) return;
+          if (!notaPassaFiltroMigracaoMultiplo(n, modosMigracao)) return;
 
           const cliente = (n.cliente || "").toString().trim();
           if (cliente) clientesSet.add(cliente);
@@ -5464,9 +5317,9 @@ return null;
       return {
         hoje,
         amanha,
-        modoDataLimite: overrides.modoDataLimite ?? getValorFiltroPopup("filtroDataLimitePopup", "all"),
-        modoCriticidade: overrides.modoCriticidade ?? getValorFiltroPopup("filtroCriticidadePopup", "all"),
-        modoMigracao: overrides.modoMigracao ?? getValorFiltroPopup("filtroMigracaoPopup", "all"),
+        modosDataLimite: overrides.modosDataLimite ?? getMultiFilterValues("filtroDataLimitePopup", rangeSelecionadosPopup, rangeDisponiveisPopup),
+        modosCriticidade: overrides.modosCriticidade ?? getMultiFilterValues("filtroCriticidadePopup", criticidadeSelecionadosPopup, criticidadeDisponiveisPopup),
+        modosMigracao: overrides.modosMigracao ?? getMultiFilterValues("filtroMigracaoPopup", migracaoSelecionadosPopup, migracaoDisponiveisPopup),
         filtroVeiculo: overrides.filtroVeiculo ?? getVeiculoSelecionadoPopup(),
         termoDestino: overrides.termoDestino ?? normalizar(document.getElementById("searchDestinoPopup")?.value || ""),
         termoUFDestino: overrides.termoUFDestino ?? normalizar(document.getElementById("searchUFDestinoPopup")?.value || ""),
@@ -5532,9 +5385,9 @@ return null;
       const {
         hoje,
         amanha,
-        modoDataLimite,
-        modoCriticidade,
-        modoMigracao,
+        modosDataLimite,
+        modosCriticidade,
+        modosMigracao,
         termoDestino,
         termoUFDestino,
         clientesSelecionadosNorm,
@@ -5547,7 +5400,6 @@ return null;
         const totalClientes = clientesDisponiveisPopup.length;
         const qtdSelecionados = clientesSelecionadosNorm.size;
         const filtroClienteAtivo = qtdSelecionados > 0 && qtdSelecionados < totalClientes;
-
         if (filtroClienteAtivo) {
           const clienteNorm = normalizar(n.cliente || "");
           if (!clientesSelecionadosNorm.has(clienteNorm)) return false;
@@ -5555,93 +5407,14 @@ return null;
       }
 
       if (termoDestino && !normalizar(n.destino || "").includes(termoDestino)) return false;
-
       if (termoUFDestino) {
         const uf = normalizar(n.uf || "");
         if (uf !== termoUFDestino) return false;
       }
 
-      if (modoDataLimite && modoDataLimite !== "all") {
-        const dtLimEmb = toDateOnly(n.dtLim);
-        const dtEntrada = toDateOnly(n.entrada);
-        const dtCheckin = toDateOnly(n.checkin);
-        const dtMaior = maiorDataEntradaOuCheckin(dtCheckin, dtEntrada);
-
-        if (modoDataLimite === "ateAmanha") {
-          if (!dtLimEmb || !(dtLimEmb.getTime() <= amanha.getTime())) return false;
-        }
-
-        if (modoDataLimite === "limEmb_0_plus") {
-          if (!dtLimEmb || !(dtLimEmb.getTime() >= hoje.getTime())) return false;
-        }
-
-        if (modoDataLimite === "entradaNF_Atraso6") {
-          if (!dtEntrada) return false;
-          const dias = diasDesdeHoje(dtEntrada);
-          if (!(dias != null && dias >= 6)) return false;
-        }
-
-        if (modoDataLimite === "maxEntCheck_Atraso6") {
-          if (!dtMaior) return false;
-          const dias = diasDesdeHoje(dtMaior);
-          if (!(dias != null && dias >= 6)) return false;
-        }
-
-        if (modoDataLimite === "limEmb_1_2") {
-          if (!dtLimEmb) return false;
-          const dias = diasDesdeHoje(dtLimEmb);
-          if (!(dias != null && dias >= 1 && dias <= 2)) return false;
-        }
-
-        if (modoDataLimite === "limEmb_3_5") {
-          if (!dtLimEmb) return false;
-          const dias = diasDesdeHoje(dtLimEmb);
-          if (!(dias != null && dias >= 3 && dias <= 5)) return false;
-        }
-
-        if (modoDataLimite === "limEmb_6_10") {
-          if (!dtLimEmb) return false;
-          const dias = diasDesdeHoje(dtLimEmb);
-          if (!(dias != null && dias >= 6 && dias <= 10)) return false;
-        }
-
-        if (modoDataLimite === "limEmb_10_19") {
-          if (!dtLimEmb) return false;
-          const dias = diasDesdeHoje(dtLimEmb);
-          if (!(dias != null && dias >= 11 && dias <= 20)) return false;
-        }
-
-        if (modoDataLimite === "limEmb_19_plus") {
-          if (!dtLimEmb) return false;
-          const dias = diasDesdeHoje(dtLimEmb);
-          if (!(dias != null && dias > 20)) return false;
-        }
-      }
-
-      if (modoCriticidade && modoCriticidade !== "all") {
-        const dtLimEmb = toDateOnly(n.dtLim);
-        if (!dtLimEmb) return false;
-
-        const diasParaLimite = Math.round((dtLimEmb.getTime() - hoje.getTime()) / 86400000);
-
-        if (modoCriticidade === "Dmais" && !(diasParaLimite < 0)) return false;
-        if (modoCriticidade === "D0" && !(diasParaLimite === 0)) return false;
-        if (modoCriticidade === "Dmenos1" && !(diasParaLimite === 1)) return false;
-        if (modoCriticidade === "Dge2" && !(diasParaLimite >= 2)) return false;
-      }
-
-      if (modoMigracao && modoMigracao !== "all") {
-        const dtLimEmb = toDateOnly(n.dtLim);
-        if (!dtLimEmb) return false;
-
-        const diasVencidosHoje = diasDesdeHoje(dtLimEmb);
-
-        if (modoMigracao === "migra_D0_1a2" && diasVencidosHoje !== 0) return false;
-        if (modoMigracao === "migra_1a2_3a5" && diasVencidosHoje !== 2) return false;
-        if (modoMigracao === "migra_3a5_6a10" && diasVencidosHoje !== 5) return false;
-        if (modoMigracao === "migra_6a10_11a20" && diasVencidosHoje !== 10) return false;
-        if (modoMigracao === "migra_11a20_20plus" && diasVencidosHoje !== 20) return false;
-      }
+      if (!notaPassaFiltroRangeMultiplo(n, modosDataLimite, hoje, amanha)) return false;
+      if (!notaPassaFiltroCriticidadeMultiplo(n, modosCriticidade, hoje)) return false;
+      if (!notaPassaFiltroMigracaoMultiplo(n, modosMigracao)) return false;
 
       return true;
     }
@@ -5702,7 +5475,7 @@ return null;
       });
 
       dataLimiteOpcoes.forEach(valorTeste => {
-        const ctx = getContextoFiltrosPopup({ modoDataLimite: valorTeste });
+        const ctx = getContextoFiltrosPopup({ modosDataLimite: [valorTeste] });
 
         const existe = Object.entries(almoxPend).some(([almox, info]) => {
           const veiculos = almoxUltimoVeiculo[almox] || [];
@@ -5714,7 +5487,7 @@ return null;
       });
 
       migracaoOpcoes.forEach(valorTeste => {
-        const ctx = getContextoFiltrosPopup({ modoMigracao: valorTeste });
+        const ctx = getContextoFiltrosPopup({ modosMigracao: [valorTeste] });
 
         const existe = Object.entries(almoxPend).some(([almox, info]) => {
           const veiculos = almoxUltimoVeiculo[almox] || [];
@@ -5726,7 +5499,7 @@ return null;
       });
 
       criticidadeOpcoes.forEach(valorTeste => {
-        const ctx = getContextoFiltrosPopup({ modoCriticidade: valorTeste });
+        const ctx = getContextoFiltrosPopup({ modosCriticidade: [valorTeste] });
 
         const existe = Object.entries(almoxPend).some(([almox, info]) => {
           const veiculos = almoxUltimoVeiculo[almox] || [];
@@ -5746,21 +5519,55 @@ return null;
 
       Array.from(select.options).forEach(opt => {
         const value = opt.value;
-
         if (manterAll && value === "all") {
           opt.disabled = false;
           opt.hidden = false;
           return;
         }
-
-        const disponivel = valoresDisponiveis.has(value);
-        opt.disabled = !disponivel;
+        opt.disabled = !valoresDisponiveis.has(value);
         opt.hidden = false;
       });
 
+      const isCustomMulti = ["filtroDataLimitePopup", "filtroMigracaoPopup", "filtroCriticidadePopup"].includes(selectId);
+      if (isCustomMulti) {
+        const mapa = {
+          filtroDataLimitePopup: [RANGE_MULTI_OPTIONS, "range"],
+          filtroMigracaoPopup: [MIGRACAO_MULTI_OPTIONS, "migracao"],
+          filtroCriticidadePopup: [CRITICIDADE_MULTI_OPTIONS, "criticidade"]
+        };
+        const [ordem, chave] = mapa[selectId];
+        const disponiveis = ordem.filter(v => valoresDisponiveis.has(v));
+        if (chave === "range") {
+          rangeDisponiveisPopup = [...disponiveis];
+          if (window._rangeAllMode) {
+            rangeSelecionadosPopup = new Set(disponiveis);
+          } else {
+            rangeSelecionadosPopup = new Set(Array.from(rangeSelecionadosPopup).filter(v => disponiveis.includes(v)));
+            window._rangeAllMode = disponiveis.length > 0 && rangeSelecionadosPopup.size === disponiveis.length;
+          }
+        }
+        if (chave === "migracao") {
+          migracaoDisponiveisPopup = [...disponiveis];
+          if (window._migracaoAllMode) {
+            migracaoSelecionadosPopup = new Set(disponiveis);
+          } else {
+            migracaoSelecionadosPopup = new Set(Array.from(migracaoSelecionadosPopup).filter(v => disponiveis.includes(v)));
+            window._migracaoAllMode = disponiveis.length > 0 && migracaoSelecionadosPopup.size === disponiveis.length;
+          }
+        }
+        if (chave === "criticidade") {
+          criticidadeDisponiveisPopup = [...disponiveis];
+          if (window._criticidadeAllMode) {
+            criticidadeSelecionadosPopup = new Set(disponiveis);
+          } else {
+            criticidadeSelecionadosPopup = new Set(Array.from(criticidadeSelecionadosPopup).filter(v => disponiveis.includes(v)));
+            window._criticidadeAllMode = disponiveis.length > 0 && criticidadeSelecionadosPopup.size === disponiveis.length;
+          }
+        }
+      }
+
       if (select.multiple) {
         const selecionadosValidos = Array.from(select.selectedOptions).some(o => !o.disabled);
-
         if (!selecionadosValidos) {
           Array.from(select.options).forEach(opt => {
             opt.selected = (opt.value === "all");
@@ -5769,20 +5576,159 @@ return null;
       } else {
         const atual = select.value;
         const atualOption = Array.from(select.options).find(o => o.value === atual);
-
-        if (!atualOption || atualOption.disabled) {
-          select.value = "all";
-        }
+        if (!atualOption || atualOption.disabled) select.value = "all";
       }
+    }
+
+    function getMultiFilterConfig(tipo) {
+      return {
+        range: {
+          prefixo: "📅 Range", selectId: "filtroDataLimitePopup", triggerTextId: "rangeFilterTriggerText", countId: "rangeFilterCount", checkAllId: "rangeCheckAll", searchId: "rangeFilterSearch", listId: "rangeFilterList", boxId: "rangeFilterBox", dropdownId: "rangeFilterDropdown", closeId: "btnRangeFilterClose", emptyText: "Nenhum range encontrado", disponiveisRef: () => rangeDisponiveisPopup, selecionadosRef: () => rangeSelecionadosPopup, setSelecionados: v => rangeSelecionadosPopup = v, setAllMode: v => window._rangeAllMode = v
+        },
+        migracao: {
+          prefixo: "🔄 Migração", selectId: "filtroMigracaoPopup", triggerTextId: "migracaoFilterTriggerText", countId: "migracaoFilterCount", checkAllId: "migracaoCheckAll", searchId: "migracaoFilterSearch", listId: "migracaoFilterList", boxId: "migracaoFilterBox", dropdownId: "migracaoFilterDropdown", closeId: "btnMigracaoFilterClose", emptyText: "Nenhuma migração encontrada", disponiveisRef: () => migracaoDisponiveisPopup, selecionadosRef: () => migracaoSelecionadosPopup, setSelecionados: v => migracaoSelecionadosPopup = v, setAllMode: v => window._migracaoAllMode = v
+        },
+        criticidade: {
+          prefixo: "🚦 Criticidade NF", selectId: "filtroCriticidadePopup", triggerTextId: "criticidadeFilterTriggerText", countId: "criticidadeFilterCount", checkAllId: "criticidadeCheckAll", searchId: "criticidadeFilterSearch", listId: "criticidadeFilterList", boxId: "criticidadeFilterBox", dropdownId: "criticidadeFilterDropdown", closeId: "btnCriticidadeFilterClose", emptyText: "Nenhuma criticidade encontrada", disponiveisRef: () => criticidadeDisponiveisPopup, selecionadosRef: () => criticidadeSelecionadosPopup, setSelecionados: v => criticidadeSelecionadosPopup = v, setAllMode: v => window._criticidadeAllMode = v
+        }
+      }[tipo];
+    }
+
+    function syncHiddenSelectFromMultiFilter(tipo) {
+      const cfg = getMultiFilterConfig(tipo);
+      const select = document.getElementById(cfg.selectId);
+      if (!select) return;
+      const disponiveis = cfg.disponiveisRef();
+      const selecionados = cfg.selecionadosRef();
+      const todos = disponiveis.length > 0 && selecionados.size === disponiveis.length;
+      Array.from(select.options).forEach(opt => {
+        if (opt.value === "all") opt.selected = todos || !disponiveis.length;
+        else opt.selected = selecionados.has(opt.value) && !opt.disabled;
+      });
+    }
+
+    function atualizarTextoFiltroMulti(tipo) {
+      const cfg = getMultiFilterConfig(tipo);
+      const el = document.getElementById(cfg.triggerTextId);
+      if (!el) return;
+      const disponiveis = cfg.disponiveisRef();
+      const selecionados = cfg.selecionadosRef();
+      const qtd = selecionados.size;
+      const total = disponiveis.length;
+      if (!total || qtd === total) { el.textContent = `${cfg.prefixo} (Todos)`; return; }
+      if (qtd === 0) { el.textContent = `${cfg.prefixo} (Nenhum)`; return; }
+      if (qtd === 1) {
+        const select = document.getElementById(cfg.selectId);
+        const unico = Array.from(selecionados)[0];
+        el.textContent = Array.from(select?.options || []).find(o => o.value === unico)?.textContent?.trim() || unico;
+        return;
+      }
+      el.textContent = `${cfg.prefixo} (${qtd})`;
+    }
+
+    function atualizarContadorFiltroMulti(tipo) {
+      const cfg = getMultiFilterConfig(tipo);
+      const countEl = document.getElementById(cfg.countId);
+      const checkAll = document.getElementById(cfg.checkAllId);
+      const total = cfg.disponiveisRef().length;
+      const qtd = cfg.selecionadosRef().size;
+      const todosSelecionados = total > 0 && qtd === total;
+      if (countEl) countEl.textContent = `${qtd} selecionado(s)`;
+      if (checkAll) { checkAll.checked = todosSelecionados; checkAll.indeterminate = false; checkAll.disabled = total === 0; }
+      syncHiddenSelectFromMultiFilter(tipo);
+      atualizarTextoFiltroMulti(tipo);
+    }
+
+    function renderMultiFilterList(tipo) {
+      const cfg = getMultiFilterConfig(tipo);
+      const list = document.getElementById(cfg.listId);
+      const search = document.getElementById(cfg.searchId);
+      const select = document.getElementById(cfg.selectId);
+      if (!list || !select) return;
+      const termo = normalizar(search?.value || "");
+      const opcoes = Array.from(select.options).filter(o => o.value !== "all" && !o.disabled);
+      const filtradas = opcoes.filter(o => !termo || normalizar(o.textContent || "").includes(termo));
+      if (!filtradas.length) {
+        list.innerHTML = `<div style="padding:8px 2px; font-size:12px; color:#64748b;">${cfg.emptyText}</div>`;
+        atualizarContadorFiltroMulti(tipo);
+        return;
+      }
+      list.innerHTML = filtradas.map(opt => {
+        const checked = cfg.selecionadosRef().has(opt.value) ? "checked" : "";
+        const id = `${tipo}_${opt.value.replace(/[^A-Za-z0-9]/g, "_")}`;
+        return `<label class="clientCheckItem" for="${id}"><input type="checkbox" id="${id}" value="${opt.value.replace(/"/g, "&quot;")}" ${checked} onchange="onMultiFilterCheckboxChange('${tipo}', this)"><span>${opt.textContent.trim()}</span></label>`;
+      }).join("");
+      atualizarContadorFiltroMulti(tipo);
+    }
+
+    function onMultiFilterCheckboxChange(tipo, checkbox) {
+      const cfg = getMultiFilterConfig(tipo);
+      const selecionados = new Set(cfg.selecionadosRef());
+      if (checkbox.checked) selecionados.add(checkbox.value); else selecionados.delete(checkbox.value);
+      cfg.setSelecionados(selecionados);
+      const total = cfg.disponiveisRef().length;
+      cfg.setAllMode(total > 0 && selecionados.size === total);
+      atualizarContadorFiltroMulti(tipo);
+      listarAlmoxPendentes();
+    }
+
+    function onMultiFilterCheckAllChange(tipo) {
+      const cfg = getMultiFilterConfig(tipo);
+      const total = cfg.disponiveisRef().length;
+      const todosSelecionados = total > 0 && cfg.selecionadosRef().size === total;
+      if (todosSelecionados) {
+        cfg.setSelecionados(new Set());
+        cfg.setAllMode(false);
+      } else {
+        cfg.setSelecionados(new Set(cfg.disponiveisRef()));
+        cfg.setAllMode(true);
+      }
+      renderMultiFilterList(tipo);
+      atualizarContadorFiltroMulti(tipo);
+      listarAlmoxPendentes();
+    }
+
+    function bindMultiFilterEvents() {
+      ["range", "migracao", "criticidade"].forEach(tipo => {
+        const cfg = getMultiFilterConfig(tipo);
+        const trigger = document.getElementById(`${tipo}FilterTrigger`);
+        const dropdown = document.getElementById(cfg.dropdownId);
+        const btnClose = document.getElementById(cfg.closeId);
+        const search = document.getElementById(cfg.searchId);
+        const checkAll = document.getElementById(cfg.checkAllId);
+        const box = document.getElementById(cfg.boxId);
+        if (trigger && !trigger.dataset.bound) {
+          trigger.dataset.bound = "1";
+          trigger.addEventListener("click", (e) => { e.stopPropagation(); dropdown?.classList.toggle("open"); });
+        }
+        if (btnClose && !btnClose.dataset.bound) {
+          btnClose.dataset.bound = "1";
+          btnClose.addEventListener("click", () => dropdown?.classList.remove("open"));
+        }
+        if (search && !search.dataset.bound) {
+          search.dataset.bound = "1";
+          search.addEventListener("input", () => renderMultiFilterList(tipo));
+        }
+        if (checkAll && !checkAll.dataset.bound) {
+          checkAll.dataset.bound = "1";
+          checkAll.addEventListener("change", function (e) { e.stopPropagation(); onMultiFilterCheckAllChange(tipo); });
+        }
+        if (box && !box.dataset.boundOutside) {
+          box.dataset.boundOutside = "1";
+          document.addEventListener("click", (e) => { if (!box.contains(e.target)) dropdown?.classList.remove("open"); });
+        }
+      });
     }
 
     function sincronizarFiltrosDeLista(almoxPend, almoxUltimoVeiculo) {
       const opcoes = getOpcoesDisponiveisFiltrosCruzados(almoxPend, almoxUltimoVeiculo);
-
       atualizarOpcoesSelectPorDisponibilidade("filterVeiculoPopup", opcoes.veiculo, true);
       atualizarOpcoesSelectPorDisponibilidade("filtroDataLimitePopup", opcoes.dataLimite, true);
       atualizarOpcoesSelectPorDisponibilidade("filtroMigracaoPopup", opcoes.migracao, true);
       atualizarOpcoesSelectPorDisponibilidade("filtroCriticidadePopup", opcoes.criticidade, true);
+      renderMultiFilterList("range");
+      renderMultiFilterList("migracao");
+      renderMultiFilterList("criticidade");
     }
 
   </script>
@@ -5818,33 +5764,84 @@ return null;
           <option value="programado">🟢 Programados</option>
           <option value="sem">🔴 Não Programados</option>
         </select>
-        <select id="filtroDataLimitePopup" style="padding:8px 10px; font-size:12px; min-width:0;">
-          <option selected="" value="all">📅 Range (Todos)</option>
-          <option value="ateAmanha">⏳ Análise D-1</option>
-          <option value="entradaNF_Atraso6">🧾 Dt. Entrada ≥ 6 dias</option>
-          <option value="maxEntCheck_Atraso6">🕒 Entrada no armazém ≥ 6 dias</option>
-          <option value="limEmb_0_plus">📅 Limite Emb. hoje ou a vencer</option>
-          <option value="limEmb_1_2">📅 Limite Emb. vencido de 1 a 2 dias</option>
-          <option value="limEmb_3_5">📅 Limite Emb. vencido de 3 a 5 dias</option>
-          <option value="limEmb_6_10">📅 Limite Emb. vencido de 6 a 10 dias</option>
-          <option value="limEmb_10_19">📅 Limite Emb. vencido de 11 a 20 dias</option>
-          <option value="limEmb_19_plus">📅 Limite Emb. vencido acima de 20 dias</option>
-        </select>
-        <select id="filtroMigracaoPopup" style="padding:8px 10px; font-size:12px; min-width:0;">
-          <option selected="" value="all">🔄 Migração (Todos)</option>
-          <option value="migra_D0_1a2">📅 D0 → 1 a 2 dias</option>
-          <option value="migra_1a2_3a5">📅 1 a 2 → 3 a 5 dias</option>
-          <option value="migra_3a5_6a10">📅 3 a 5 → 6 a 10 dias</option>
-          <option value="migra_6a10_11a20">📅 6 a 10 → 11 a 20 dias</option>
-          <option value="migra_11a20_20plus">📅 11 a 20 → acima de 20 dias</option>
-        </select>
-        <select id="filtroCriticidadePopup" style="padding:8px 10px; font-size:12px; min-width:0;">
-          <option selected="" value="all">🚦 Criticidade NF (Todos)</option>
-          <option value="Dmais">🔴 Vencidas</option>
-          <option value="D0">🔵 D0</option>
-          <option value="Dmenos1">🟢 D-1</option>
-          <option value="Dge2">🟢 ≥ D-2</option>
-        </select>
+        <div class="clientFilterBox" id="rangeFilterBox">
+          <button class="clientFilterTrigger" id="rangeFilterTrigger" type="button">
+            <span id="rangeFilterTriggerText">📅 Range (Todos)</span>
+            <span>▾</span>
+          </button>
+          <div class="clientFilterDropdown" id="rangeFilterDropdown">
+            <div class="clientFilterHead">
+              <input class="clientFilterSearch" id="rangeFilterSearch" placeholder="Pesquisar range..." type="text" />
+              <div class="clientFilterActions">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input checked="" id="rangeCheckAll" type="checkbox" /><span>Selecionar todos</span></label>
+                <span id="rangeFilterCount">0 selecionados</span>
+              </div>
+            </div>
+            <div class="clientFilterList" id="rangeFilterList"></div>
+            <div class="clientFilterFooter"><button class="btn secondary" id="btnRangeFilterClose" type="button">Fechar</button></div>
+          </div>
+          <select id="filtroDataLimitePopup" multiple="" size="10" style="display:none;">
+            <option value="all">📅 Range (Todos)</option>
+            <option value="ateAmanha">⏳ Análise D-1</option>
+            <option value="entradaNF_Atraso6">🧾 Dt. Entrada ≥ 6 dias</option>
+            <option value="maxEntCheck_Atraso6">🕒 Entrada no armazém ≥ 6 dias</option>
+            <option value="limEmb_0_plus">📅 Limite Emb. hoje ou a vencer</option>
+            <option value="limEmb_1_2">📅 Limite Emb. vencido de 1 a 2 dias</option>
+            <option value="limEmb_3_5">📅 Limite Emb. vencido de 3 a 5 dias</option>
+            <option value="limEmb_6_10">📅 Limite Emb. vencido de 6 a 10 dias</option>
+            <option value="limEmb_10_19">📅 Limite Emb. vencido de 11 a 20 dias</option>
+            <option value="limEmb_19_plus">📅 Limite Emb. vencido acima de 20 dias</option>
+          </select>
+        </div>
+        <div class="clientFilterBox" id="migracaoFilterBox">
+          <button class="clientFilterTrigger" id="migracaoFilterTrigger" type="button">
+            <span id="migracaoFilterTriggerText">🔄 Migração (Todos)</span>
+            <span>▾</span>
+          </button>
+          <div class="clientFilterDropdown" id="migracaoFilterDropdown">
+            <div class="clientFilterHead">
+              <input class="clientFilterSearch" id="migracaoFilterSearch" placeholder="Pesquisar migração..." type="text" />
+              <div class="clientFilterActions">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input checked="" id="migracaoCheckAll" type="checkbox" /><span>Selecionar todos</span></label>
+                <span id="migracaoFilterCount">0 selecionados</span>
+              </div>
+            </div>
+            <div class="clientFilterList" id="migracaoFilterList"></div>
+            <div class="clientFilterFooter"><button class="btn secondary" id="btnMigracaoFilterClose" type="button">Fechar</button></div>
+          </div>
+          <select id="filtroMigracaoPopup" multiple="" size="6" style="display:none;">
+            <option value="all">🔄 Migração (Todos)</option>
+            <option value="migra_D0_1a2">📅 D0 → 1 a 2 dias</option>
+            <option value="migra_1a2_3a5">📅 1 a 2 → 3 a 5 dias</option>
+            <option value="migra_3a5_6a10">📅 3 a 5 → 6 a 10 dias</option>
+            <option value="migra_6a10_11a20">📅 6 a 10 → 11 a 20 dias</option>
+            <option value="migra_11a20_20plus">📅 11 a 20 → acima de 20 dias</option>
+          </select>
+        </div>
+        <div class="clientFilterBox" id="criticidadeFilterBox">
+          <button class="clientFilterTrigger" id="criticidadeFilterTrigger" type="button">
+            <span id="criticidadeFilterTriggerText">🚦 Criticidade NF (Todos)</span>
+            <span>▾</span>
+          </button>
+          <div class="clientFilterDropdown" id="criticidadeFilterDropdown">
+            <div class="clientFilterHead">
+              <input class="clientFilterSearch" id="criticidadeFilterSearch" placeholder="Pesquisar criticidade..." type="text" />
+              <div class="clientFilterActions">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input checked="" id="criticidadeCheckAll" type="checkbox" /><span>Selecionar todos</span></label>
+                <span id="criticidadeFilterCount">0 selecionados</span>
+              </div>
+            </div>
+            <div class="clientFilterList" id="criticidadeFilterList"></div>
+            <div class="clientFilterFooter"><button class="btn secondary" id="btnCriticidadeFilterClose" type="button">Fechar</button></div>
+          </div>
+          <select id="filtroCriticidadePopup" multiple="" size="5" style="display:none;">
+            <option value="all">🚦 Criticidade NF (Todos)</option>
+            <option value="Dmais">🔴 Vencidas</option>
+            <option value="D0">🔵 D0</option>
+            <option value="Dmenos1">🟢 D-1</option>
+            <option value="Dge2">🟢 ≥ D-2</option>
+          </select>
+        </div>
         <button class="btn secondary" id="btnDateFilterPopup" title="Selecionar datas da análise" type="button">
           📅
         </button>
