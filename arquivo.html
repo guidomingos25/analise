@@ -333,7 +333,7 @@
       background:
         radial-gradient(900px 380px at 10% 0%, rgba(37, 99, 235, 0.18), transparent 55%),
         radial-gradient(900px 380px at 90% 0%, rgba(16, 185, 129, 0.14), transparent 55%),
-        linear-gradient(180deg, #0b1220 0%, #0b1220 240px, #f4f6f9 240px, #f4f6f9 100%);
+        linear-gradient(180deg, #0b1220 0%, #0b1220 300px, #f4f6f9 240px, #f4f6f9 100%);
       padding: 28px;
     }
 
@@ -729,22 +729,50 @@
     }
 
     .filtersBar {
-      display: grid;
-      grid-template-columns:
-        minmax(170px, 210px) minmax(180px, 210px) minmax(180px, 210px) minmax(170px, 190px) 42px minmax(180px, 1fr) minmax(180px, 1fr) minmax(150px, 180px);
-      gap: 8px;
-      align-items: start;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: stretch;
       margin-top: 14px;
       margin-bottom: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
     }
 
-    .filtersBar>* {
+    .filtersRow {
+      display: grid;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .filtersRowTop {
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+    }
+
+    .filtersRowBottom {
+      grid-template-columns: minmax(150px, 1fr) repeat(4, minmax(165px, 1fr)) minmax(165px, 1fr) 56px;
+    }
+
+    .filtersRow>* {
       width: 100% !important;
       min-width: 0;
     }
 
+    .filtersCompactInput {
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      font-size: 12px;
+      min-width: 0;
+      width: 100%;
+    }
+
     @media (max-width: 1400px) {
-      .filtersBar {
+      .filtersRowTop {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+      }
+
+      .filtersRowBottom {
         grid-template-columns: repeat(4, minmax(160px, 1fr));
       }
     }
@@ -758,7 +786,8 @@
         grid-template-columns: repeat(2, minmax(260px, 1fr));
       }
 
-      .filtersBar {
+      .filtersRowTop,
+      .filtersRowBottom {
         grid-template-columns: repeat(2, minmax(180px, 1fr));
       }
 
@@ -838,6 +867,33 @@
       max-height: 260px;
       overflow: auto;
       padding: 8px 10px;
+    }
+
+
+    .compactNotesWrap {
+      margin-top: 10px;
+      font-size: 11px;
+      overflow-x: auto;
+    }
+
+    .compactNotesTable {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: auto;
+      font-size: 9px;
+    }
+
+    .compactNotesTable th,
+    .compactNotesTable td {
+      padding: 4px 5px;
+      font-size: 9px;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .compactNotesTable th {
+      font-size: 9px;
+      letter-spacing: 0;
     }
 
     .clientCheckItem {
@@ -943,6 +999,7 @@
     const RANGE_MULTI_OPTIONS = ["ateAmanha", "entradaNF_Atraso6", "maxEntCheck_Atraso6", "limEmb_0_plus", "limEmb_1_2", "limEmb_3_5", "limEmb_6_10", "limEmb_10_19", "limEmb_19_plus"];
     const MIGRACAO_MULTI_OPTIONS = ["migra_D0_1a2", "migra_1a2_3a5", "migra_3a5_6a10", "migra_6a10_11a20", "migra_11a20_20plus"];
     const CRITICIDADE_MULTI_OPTIONS = ["Dmais", "D0", "Dmenos1", "Dge2"];
+    const ENTRADA_NF_MULTI_OPTIONS = ["atrasoComCheckin", "atrasoSemCheckinEXW", "atrasoSemCheckinFCA", "noPrazo"];
     let rangeDisponiveisPopup = [];
     let rangeSelecionadosPopup = new Set();
     window._rangeAllMode = true;
@@ -952,6 +1009,9 @@
     let criticidadeDisponiveisPopup = [];
     let criticidadeSelecionadosPopup = new Set();
     window._criticidadeAllMode = true;
+    let entradaNFDisponiveisPopup = [];
+    let entradaNFSelecionadosPopup = new Set();
+    window._entradaNFAllMode = true;
     let datasSelecionadasPopup = [];
     let calendarioPopup = null;
     let filtroPrazoConsolidacaoAtivo = null;
@@ -1327,6 +1387,67 @@
     const dateFilter = document.getElementById("dateFilter");
     const btnDateFilter = document.getElementById("btnDateFilter");
     let datasSelecionadas = [];
+
+    function exportarRelatorioPDFNotasAnalise() {
+      const report = getAnaliseReportData();
+      if (!report) return;
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF("l", "mm", "a4");
+      const titulo = "Relatório de Notas - Análise Programação";
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text(titulo, 14, 14);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`Gerado em: ${report.generatedAt}`, 14, 20);
+
+      const filtrosTexto = [
+        `Veículo: ${limparTextoPDF((report.filtros.veiculo || []).join(" | ") || "Todos")}`,
+        `Range: ${limparTextoPDF(report.filtros.dataLimite || "Todos")}`,
+        `Migração: ${limparTextoPDF(report.filtros.migracao || "Todos")}`,
+        `Criticidade: ${limparTextoPDF(report.filtros.criticidade || "Todos")}`,
+        `Entrada NF: ${limparTextoPDF(report.filtros.entradaNF || "Todos")}`,
+        `Cliente: ${limparTextoPDF(report.filtros.cliente || "-")}`,
+        `Destino: ${limparTextoPDF(report.filtros.destino || "-")}`,
+        `UF: ${limparTextoPDF(report.filtros.ufDestino || "-")}`,
+        `Nota: ${limparTextoPDF(report.filtros.nota || "-")}`,
+        `Número OEF: ${limparTextoPDF(report.filtros.numeroOEF || "-")}`
+      ];
+      doc.setFontSize(9);
+      doc.text(filtrosTexto, 14, 27);
+
+      const linhas = (report.notas || []).map(r => [
+        limparTextoPDF(r.Fornecedor || ""),
+        limparTextoPDF(r.Cliente || ""),
+        limparTextoPDF(r.Vocativo || ""),
+        limparTextoPDF(r.Nota || ""),
+        limparTextoPDF(r.NumeroOEF || ""),
+        limparTextoPDF(r.RangeDeDias || ""),
+        limparTextoPDF(r.Incoterms || ""),
+        limparTextoPDF(r.BPDestino || ""),
+        limparTextoPDF(r.EndWMS || ""),
+        limparTextoPDF(r.Volumes || ""),
+        limparTextoPDF(r.Mercadoria || ""),
+        limparTextoPDF(r.DataCheckin || ""),
+        limparTextoPDF(r.DataEntrada || ""),
+        limparTextoPDF(r.DtLimiteEmbarque || ""),
+        limparTextoPDF(r.DtFinalEntrega || "")
+      ]);
+
+      doc.autoTable({
+        startY: 40,
+        head: [["Fornecedor", "Cliente", "Vocativo", "Nota", "Número OEF", "Range", "Incoterms", "BP Destino", "End. WMS", "Volumes", "Mercadoria", "Check-in", "Entrada", "Lim. Emb.", "Lim. Entrega"]],
+        body: linhas,
+        styles: { fontSize: 6.5, cellPadding: 1.6 },
+        headStyles: { fillColor: [31, 78, 216] },
+        margin: { top: 40 }
+      });
+
+      const dataNome = new Date().toISOString().slice(0, 10);
+      doc.save(`relatorio_notas_analise_programacao_${dataNome}.pdf`);
+    }
 
     window.addEventListener("DOMContentLoaded", () => {
       const inputPopup = document.getElementById("dateFilterPopup");
@@ -1927,6 +2048,40 @@
       return `${day}/${month}/${year}`;
     }
 
+    function getFieldValue(row, aliases = []) {
+      if (!row) return "";
+      for (const alias of aliases) {
+        if (Object.prototype.hasOwnProperty.call(row, alias)) {
+          const value = row[alias];
+          if (value !== undefined && value !== null && String(value).trim() !== "") return value;
+        }
+      }
+      return "";
+    }
+
+    function getClassificacaoEntradaNF(n) {
+      const dtLim = parsePossibleDate(n.dtLim);
+      const dtCheck = parsePossibleDate(n.checkin);
+      const dtEntr = parsePossibleDate(n.entrada);
+      let dentroRegra = false;
+      if (dtLim) {
+        if (dtCheck && dtCheck >= dtLim) dentroRegra = true;
+        if (dtEntr && dtEntr >= dtLim) dentroRegra = true;
+      }
+      if (!dentroRegra) return "noPrazo";
+      if (dtCheck) return "atrasoComCheckin";
+      const incotermNorm = normalizar(n.incoterms || "");
+      if (incotermNorm === "EXW") return "atrasoSemCheckinEXW";
+      if (incotermNorm === "FCA") return "atrasoSemCheckinFCA";
+      return "atrasoComCheckin";
+    }
+
+    function notaPassaFiltroEntradaNFMultiplo(n, modosEntradaNF) {
+      if (!isFiltroMultiAtivo(modosEntradaNF)) return true;
+      const classificacao = getClassificacaoEntradaNF(n);
+      return modosEntradaNF.includes(classificacao);
+    }
+
     const ORDEM_DIAS = ["dom", "seg", "ter", "qua", "qui", "sex", "sab", "sáb"];
 
     function ordenarDiasSemana(arr) {
@@ -2524,9 +2679,11 @@ return null;
       const modosDataLimite = getMultiFilterValues("filtroDataLimitePopup", rangeSelecionadosPopup, rangeDisponiveisPopup);
       const modosCriticidade = getMultiFilterValues("filtroCriticidadePopup", criticidadeSelecionadosPopup, criticidadeDisponiveisPopup);
       const modosMigracao = getMultiFilterValues("filtroMigracaoPopup", migracaoSelecionadosPopup, migracaoDisponiveisPopup);
-
-
-
+      const modosEntradaNF = getMultiFilterValues("filtroEntradaNFPopup", entradaNFSelecionadosPopup, entradaNFDisponiveisPopup);
+      const termoDestino = normalizar(document.getElementById("searchDestinoPopup")?.value || "");
+      const termoUFDestino = normalizar(document.getElementById("searchUFDestinoPopup")?.value || "");
+      const termoNota = normalizar(document.getElementById("searchNotaPopup")?.value || "");
+      const termoOEF = normalizar(document.getElementById("searchOefPopup")?.value || "");
 
       const almoxPend = {};
 
@@ -2589,7 +2746,13 @@ return null;
           cliente: r["Cliente"] || "",
           destino: r["Destino"] || "",
           uf: r["UF Destino"] || "",
-          incoterms: r["INCOTERMS"] || "",
+          numeroOEF: getFieldValue(r, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF"]) || "",
+          rangeDias: getFieldValue(r, ["RANGE DE DIAS", "Range de Dias", "Range De Dias"]) || "",
+          incoterms: getFieldValue(r, ["INCOTERMS", "Incoterms"]) || "",
+          bpDestino: getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino"]) || "",
+          endWms: getFieldValue(r, ["End. WMS", "END. WMS", "End WMS", "END WMS"]) || "",
+          volumes: getFieldValue(r, ["Volumes", "VOLUMES"]) || "",
+          mercadoria: getFieldValue(r, ["Mercadoria", "MERCADORIA"]) || "",
           checkin: r["Data de Check in"],
           entrada: r["Data de Entrada da Nota"],
           finalEntrega: r["Dt Final Entrega"],
@@ -2657,7 +2820,8 @@ return null;
 
       Object.keys(almoxUltimoVeiculo).forEach(a => {
         almoxUltimoVeiculo[a].sort((a, b) => b.dtPrev - a.dtPrev);
-        almoxUltimoVeiculo[a] = almoxUltimoVeiculo[a].slice(0, 3);
+        // Mantém todos os veículos para a regra de status do vocativo.
+        // O limite visual de 3 registros é aplicado apenas na exibição.
       });
 
       sincronizarFiltrosDeLista(almoxPend, almoxUltimoVeiculo);
@@ -2718,11 +2882,6 @@ return null;
       }
 
 
-      const termoDestino = normalizar(document.getElementById("searchDestinoPopup")?.value || "");
-      const termoUFDestino = normalizar(
-        document.getElementById("searchUFDestinoPopup")?.value || ""
-      );
-
       const clientesDisponiveisFiltrados = getClientesDisponiveisPorOutrosFiltros({
         almoxPend,
         almoxUltimoVeiculo,
@@ -2731,9 +2890,12 @@ return null;
         modosDataLimite,
         modosCriticidade,
         modosMigracao,
+        modosEntradaNF,
         filtroVeiculo,
         termoDestino,
-        termoUFDestino
+        termoUFDestino,
+        termoNota,
+        termoOEF
       });
 
       inicializarFiltroClientesPopup(clientesDisponiveisFiltrados);
@@ -2760,12 +2922,16 @@ return null;
           if (uf !== termoUFDestino) return false;
         }
 
+        if (termoNota && !normalizar(n.nota || "").includes(termoNota)) return false;
+        if (termoOEF && !normalizar(n.numeroOEF || "").includes(termoOEF)) return false;
 
         if (!notaPassaFiltroRangeMultiplo(n, modosDataLimite, hoje, amanha)) return false;
 
         if (!notaPassaFiltroCriticidadeMultiplo(n, modosCriticidade, hoje)) return false;
 
         if (!notaPassaFiltroMigracaoMultiplo(n, modosMigracao)) return false;
+
+        if (!notaPassaFiltroEntradaNFMultiplo(n, modosEntradaNF)) return false;
 
 
 
@@ -2862,9 +3028,12 @@ return null;
           isFiltroMultiAtivo(modosDataLimite) ||
           isFiltroMultiAtivo(modosCriticidade) ||
           isFiltroMultiAtivo(modosMigracao) ||
+          isFiltroMultiAtivo(modosEntradaNF) ||
           filtroClienteAtivo ||
           !!termoDestino ||
           !!termoUFDestino ||
+          !!termoNota ||
+          !!termoOEF ||
           !!filtroPrazoConsolidacaoAtivo;
 
         if (filtrosNotaOuPrazoAtivos) {
@@ -2979,9 +3148,12 @@ return null;
           isFiltroMultiAtivo(modosCriticidade) ||
           isFiltroMultiAtivo(modosDataLimite) ||
           isFiltroMultiAtivo(modosMigracao) ||
+          isFiltroMultiAtivo(modosEntradaNF) ||
           filtroClienteAtivo ||
           !!termoDestino ||
           !!termoUFDestino ||
+          !!termoNota ||
+          !!termoOEF ||
           !!filtroPrazoConsolidacaoAtivo;
 
 
@@ -3244,7 +3416,7 @@ return null;
 
 
 
-        const veicHTML = veiculos.map(v => `
+        const veicHTML = veiculos.slice(0, 3).map(v => `
     <tr>
       <td>${v.id}</td>
       <td>${formatDateBRLocal(v.dtPrev)}</td>
@@ -3479,11 +3651,17 @@ return null;
             StatusVeiculo: temProgramado ? "PROGRAMADO" : "NAO PROGRAMADO",
             CarregadoHoje: temCarregadoHoje ? "SIM" : "NAO",
             Nota: n.nota || "",
+            NumeroOEF: n.numeroOEF || "",
+            RangeDeDias: n.rangeDias || "",
             Fornecedor: n.fornecedor || "",
             Destinatario: n.destinatario || "",
             Peso: n.peso || "",
             Destino: n.destino || "",
+            BPDestino: n.bpDestino || "",
+            EndWMS: n.endWms || "",
             UFDestino: n.uf || "",
+            Volumes: n.volumes || "",
+            Mercadoria: n.mercadoria || "",
             Incoterms: n.incoterms || "",
             DataCheckin: formatDateBRLocal(n.checkin),
             DataEntrada: formatDateBRLocal(n.entrada),
@@ -3537,6 +3715,13 @@ return null;
           return `
   <tr ${style}>
     <td>${n.nota}</td>
+    <td>${n.numeroOEF || ""}</td>
+    <td>${n.rangeDias || ""}</td>
+    <td>${n.incoterms || ""}</td>
+    <td>${n.bpDestino || ""}</td>
+    <td>${n.endWms || ""}</td>
+    <td>${n.volumes || ""}</td>
+    <td>${n.mercadoria || ""}</td>
     <td>${n.fornecedor || ""}</td>
     <td>${n.destinatario || ""}</td>
     <td>${n.peso || ""}</td>
@@ -3726,7 +3911,7 @@ return null;
 
 
         const resumoVeic = veiculos.length
-          ? veiculos.map(v =>
+          ? veiculos.slice(0, 3).map(v =>
             `• ID ${v.id} | Prog: ${formatDateBRLocal(v.dtPrev)} | Carreg: ${formatDateBRLocal(v.dtCarreg)} | Destinos: ${v.destinos} | Entrega: ${formatDateBRLocal(v.dtEntrega)} (Veículo Solicitado: ${v.veiculoSolicitado || ""})`
           ).join("<br>")
           : "Nenhum encontrado";
@@ -3983,12 +4168,19 @@ return null;
 </div>
 </summary>
 
-  <div style="margin-top:10px; font-size:13px;">
+  <div class="compactNotesWrap">
 
-    <h4 style="margin-top:12px;">📦 Notas Pendentes</h4>
-    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+    <h4 style="margin-top:12px; margin-bottom:8px;">📦 Notas Pendentes</h4>
+    <table class="compactNotesTable">
       <tr style="background:#f3f4f6;">
         <th>Nota</th>
+        <th>Número OEF</th>
+        <th>Range de Dias</th>
+        <th>Incoterms</th>
+        <th>BP Destino</th>
+        <th>End. WMS</th>
+        <th>Volumes</th>
+        <th>Mercadoria</th>
         <th>Fornecedor</th>
         <th>Destinatário</th>
         <th>Peso</th>
@@ -4066,6 +4258,7 @@ return null;
           dataLimite: getFiltroMultiTexto("filtroDataLimitePopup", "📅 Range"),
           migracao: getFiltroMultiTexto("filtroMigracaoPopup", "🔄 Migração"),
           criticidade: getFiltroMultiTexto("filtroCriticidadePopup", "🚦 Criticidade NF"),
+          entradaNF: getFiltroMultiTexto("filtroEntradaNFPopup", "⏱ Entrada NF"),
           dataEntradaCheckin: (datasSelecionadasPopup || []).length
             ? datasSelecionadasPopup.map(d => formatDateBRLocal(d)).join(" | ")
             : "Todos",
@@ -4075,7 +4268,9 @@ return null;
               : Array.from(clientesSelecionadosPopup).join(" | ")
           ),
           destino: document.getElementById("searchDestinoPopup")?.value || "",
-          ufDestino: document.getElementById("searchUFDestinoPopup")?.value || ""
+          ufDestino: document.getElementById("searchUFDestinoPopup")?.value || "",
+          nota: document.getElementById("searchNotaPopup")?.value || "",
+          numeroOEF: document.getElementById("searchOefPopup")?.value || ""
         },
         stats: { ...stats },
         vocativos: reportVocativosOrdenado,
@@ -4095,6 +4290,14 @@ return null;
       const inputUFDestinoPopup = document.getElementById("searchUFDestinoPopup");
       if (inputUFDestinoPopup) {
         inputUFDestinoPopup.oninput = () => listarAlmoxPendentes();
+      }
+      const inputNotaPopup = document.getElementById("searchNotaPopup");
+      if (inputNotaPopup) {
+        inputNotaPopup.oninput = () => listarAlmoxPendentes();
+      }
+      const inputOefPopup = document.getElementById("searchOefPopup");
+      if (inputOefPopup) {
+        inputOefPopup.oninput = () => listarAlmoxPendentes();
       }
 
       const filtroPopup = document.getElementById("filterVeiculoPopup");
@@ -4887,10 +5090,13 @@ return null;
         `Range: ${limparTextoPDF(report.filtros.dataLimite || "Todos")}`,
         `Migração: ${limparTextoPDF(report.filtros.migracao || "Todos")}`,
         `Criticidade: ${limparTextoPDF(report.filtros.criticidade || "Todos")}`,
+        `Entrada NF: ${limparTextoPDF(report.filtros.entradaNF || "Todos")}`,
         `Data Entrada/Check-in: ${limparTextoPDF(report.filtros.dataEntradaCheckin || "Todos")}`,
         `Cliente: ${limparTextoPDF(report.filtros.cliente || "-")}`,
         `Destino: ${limparTextoPDF(report.filtros.destino || "-")}`,
-        `UF: ${limparTextoPDF(report.filtros.ufDestino || "-")}`
+        `UF: ${limparTextoPDF(report.filtros.ufDestino || "-")}`,
+        `Nota: ${limparTextoPDF(report.filtros.nota || "-")}`,
+        `Número OEF: ${limparTextoPDF(report.filtros.numeroOEF || "-")}`
       ];
 
       doc.setFontSize(9);
@@ -4981,9 +5187,11 @@ return null;
 
     window.addEventListener("DOMContentLoaded", () => {
       const btnPdf = document.getElementById("btnRelatorioPDF");
+      const btnPdfNotas = document.getElementById("btnRelatorioPDFNotas");
       const btnExcel = document.getElementById("btnRelatorioExcel");
 
       if (btnPdf) btnPdf.addEventListener("click", exportarRelatorioPDFAnalise);
+      if (btnPdfNotas) btnPdfNotas.addEventListener("click", exportarRelatorioPDFNotasAnalise);
       if (btnExcel) btnExcel.addEventListener("click", exportarRelatorioExcelAnalise);
     });
 
@@ -5320,9 +5528,12 @@ return null;
         modosDataLimite: overrides.modosDataLimite ?? getMultiFilterValues("filtroDataLimitePopup", rangeSelecionadosPopup, rangeDisponiveisPopup),
         modosCriticidade: overrides.modosCriticidade ?? getMultiFilterValues("filtroCriticidadePopup", criticidadeSelecionadosPopup, criticidadeDisponiveisPopup),
         modosMigracao: overrides.modosMigracao ?? getMultiFilterValues("filtroMigracaoPopup", migracaoSelecionadosPopup, migracaoDisponiveisPopup),
+        modosEntradaNF: overrides.modosEntradaNF ?? getMultiFilterValues("filtroEntradaNFPopup", entradaNFSelecionadosPopup, entradaNFDisponiveisPopup),
         filtroVeiculo: overrides.filtroVeiculo ?? getVeiculoSelecionadoPopup(),
         termoDestino: overrides.termoDestino ?? normalizar(document.getElementById("searchDestinoPopup")?.value || ""),
         termoUFDestino: overrides.termoUFDestino ?? normalizar(document.getElementById("searchUFDestinoPopup")?.value || ""),
+        termoNota: overrides.termoNota ?? normalizar(document.getElementById("searchNotaPopup")?.value || ""),
+        termoOEF: overrides.termoOEF ?? normalizar(document.getElementById("searchOefPopup")?.value || ""),
         clientesSelecionadosNorm: overrides.clientesSelecionadosNorm ?? getClientesSelecionadosNormalizados(),
         ignorarCliente: overrides.ignorarCliente ?? false
       };
@@ -5388,8 +5599,11 @@ return null;
         modosDataLimite,
         modosCriticidade,
         modosMigracao,
+        modosEntradaNF,
         termoDestino,
         termoUFDestino,
+        termoNota,
+        termoOEF,
         clientesSelecionadosNorm,
         ignorarCliente
       } = ctx;
@@ -5411,10 +5625,13 @@ return null;
         const uf = normalizar(n.uf || "");
         if (uf !== termoUFDestino) return false;
       }
+      if (termoNota && !normalizar(n.nota || "").includes(termoNota)) return false;
+      if (termoOEF && !normalizar(n.numeroOEF || "").includes(termoOEF)) return false;
 
       if (!notaPassaFiltroRangeMultiplo(n, modosDataLimite, hoje, amanha)) return false;
       if (!notaPassaFiltroCriticidadeMultiplo(n, modosCriticidade, hoje)) return false;
       if (!notaPassaFiltroMigracaoMultiplo(n, modosMigracao)) return false;
+      if (!notaPassaFiltroEntradaNFMultiplo(n, modosEntradaNF)) return false;
 
       return true;
     }
@@ -5438,7 +5655,8 @@ return null;
         veiculo: new Set(),
         dataLimite: new Set(["all"]),
         migracao: new Set(["all"]),
-        criticidade: new Set(["all"])
+        criticidade: new Set(["all"]),
+        entradaNF: new Set(["all"])
       };
 
       const veiculoOpcoes = ["carregado", "programado", "sem"];
@@ -5461,6 +5679,7 @@ return null;
         "migra_11a20_20plus"
       ];
       const criticidadeOpcoes = ["Dmais", "D0", "Dmenos1", "Dge2"];
+      const entradaNFOpcoes = ["atrasoComCheckin", "atrasoSemCheckinEXW", "atrasoSemCheckinFCA", "noPrazo"];
 
       veiculoOpcoes.forEach(valorTeste => {
         const ctx = getContextoFiltrosPopup({ filtroVeiculo: [valorTeste] });
@@ -5510,6 +5729,18 @@ return null;
         if (existe) opcoes.criticidade.add(valorTeste);
       });
 
+      entradaNFOpcoes.forEach(valorTeste => {
+        const ctx = getContextoFiltrosPopup({ modosEntradaNF: [valorTeste] });
+
+        const existe = Object.entries(almoxPend).some(([almox, info]) => {
+          const veiculos = almoxUltimoVeiculo[almox] || [];
+          if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctx.filtroVeiculo, ctx.hoje)) return false;
+          return (info.notas || []).some(n => notaPassaContexto(n, ctx));
+        });
+
+        if (existe) opcoes.entradaNF.add(valorTeste);
+      });
+
       return opcoes;
     }
 
@@ -5528,12 +5759,13 @@ return null;
         opt.hidden = false;
       });
 
-      const isCustomMulti = ["filtroDataLimitePopup", "filtroMigracaoPopup", "filtroCriticidadePopup"].includes(selectId);
+      const isCustomMulti = ["filtroDataLimitePopup", "filtroMigracaoPopup", "filtroCriticidadePopup", "filtroEntradaNFPopup"].includes(selectId);
       if (isCustomMulti) {
         const mapa = {
           filtroDataLimitePopup: [RANGE_MULTI_OPTIONS, "range"],
           filtroMigracaoPopup: [MIGRACAO_MULTI_OPTIONS, "migracao"],
-          filtroCriticidadePopup: [CRITICIDADE_MULTI_OPTIONS, "criticidade"]
+          filtroCriticidadePopup: [CRITICIDADE_MULTI_OPTIONS, "criticidade"],
+          filtroEntradaNFPopup: [ENTRADA_NF_MULTI_OPTIONS, "entradaNF"]
         };
         const [ordem, chave] = mapa[selectId];
         const disponiveis = ordem.filter(v => valoresDisponiveis.has(v));
@@ -5564,6 +5796,15 @@ return null;
             window._criticidadeAllMode = disponiveis.length > 0 && criticidadeSelecionadosPopup.size === disponiveis.length;
           }
         }
+        if (chave === "entradaNF") {
+          entradaNFDisponiveisPopup = [...disponiveis];
+          if (window._entradaNFAllMode) {
+            entradaNFSelecionadosPopup = new Set(disponiveis);
+          } else {
+            entradaNFSelecionadosPopup = new Set(Array.from(entradaNFSelecionadosPopup).filter(v => disponiveis.includes(v)));
+            window._entradaNFAllMode = disponiveis.length > 0 && entradaNFSelecionadosPopup.size === disponiveis.length;
+          }
+        }
       }
 
       if (select.multiple) {
@@ -5590,6 +5831,9 @@ return null;
         },
         criticidade: {
           prefixo: "🚦 Criticidade NF", selectId: "filtroCriticidadePopup", triggerTextId: "criticidadeFilterTriggerText", countId: "criticidadeFilterCount", checkAllId: "criticidadeCheckAll", searchId: "criticidadeFilterSearch", listId: "criticidadeFilterList", boxId: "criticidadeFilterBox", dropdownId: "criticidadeFilterDropdown", closeId: "btnCriticidadeFilterClose", emptyText: "Nenhuma criticidade encontrada", disponiveisRef: () => criticidadeDisponiveisPopup, selecionadosRef: () => criticidadeSelecionadosPopup, setSelecionados: v => criticidadeSelecionadosPopup = v, setAllMode: v => window._criticidadeAllMode = v
+        },
+        entradaNF: {
+          prefixo: "⏱ Entrada NF", selectId: "filtroEntradaNFPopup", triggerTextId: "entradaNFFilterTriggerText", countId: "entradaNFFilterCount", checkAllId: "entradaNFCheckAll", searchId: "entradaNFFilterSearch", listId: "entradaNFFilterList", boxId: "entradaNFFilterBox", dropdownId: "entradaNFFilterDropdown", closeId: "btnEntradaNFFilterClose", emptyText: "Nenhuma classificação encontrada", disponiveisRef: () => entradaNFDisponiveisPopup, selecionadosRef: () => entradaNFSelecionadosPopup, setSelecionados: v => entradaNFSelecionadosPopup = v, setAllMode: v => window._entradaNFAllMode = v
         }
       }[tipo];
     }
@@ -5689,7 +5933,7 @@ return null;
     }
 
     function bindMultiFilterEvents() {
-      ["range", "migracao", "criticidade"].forEach(tipo => {
+      ["range", "migracao", "criticidade", "entradaNF"].forEach(tipo => {
         const cfg = getMultiFilterConfig(tipo);
         const trigger = document.getElementById(`${tipo}FilterTrigger`);
         const dropdown = document.getElementById(cfg.dropdownId);
@@ -5726,9 +5970,11 @@ return null;
       atualizarOpcoesSelectPorDisponibilidade("filtroDataLimitePopup", opcoes.dataLimite, true);
       atualizarOpcoesSelectPorDisponibilidade("filtroMigracaoPopup", opcoes.migracao, true);
       atualizarOpcoesSelectPorDisponibilidade("filtroCriticidadePopup", opcoes.criticidade, true);
+      atualizarOpcoesSelectPorDisponibilidade("filtroEntradaNFPopup", opcoes.entradaNF, true);
       renderMultiFilterList("range");
       renderMultiFilterList("migracao");
       renderMultiFilterList("criticidade");
+      renderMultiFilterList("entradaNF");
     }
 
   </script>
@@ -5743,6 +5989,9 @@ return null;
           <button class="btn secondary" id="btnRelatorioPDF" type="button">
             📄 Relatório PDF
           </button>
+          <button class="btn secondary" id="btnRelatorioPDFNotas" type="button">
+            🧾 PDF de Notas
+          </button>
           <button class="btn secondary" id="btnRelatorioExcel" type="button">
             📊 Relatório Excel
           </button>
@@ -5752,13 +6001,14 @@ return null;
         </div>
       </div>
       <div class="filtersBar">
-        <select id="filterVeiculoPopup" multiple="" size="4" style="
-    padding:8px 10px;
-    border-radius:12px;
-    border:1px solid #d1d5db;
-    font-size:12px;
-    min-width:0;
-  ">
+        <div class="filtersRow filtersRowTop">
+          <input class="filtersCompactInput" id="searchDestinoPopup" placeholder="📍 Filtrar por Destino..." type="text">
+          <input class="filtersCompactInput" id="searchUFDestinoPopup" placeholder="🗺️ Filtrar por UF Destino..." type="text" />
+          <input class="filtersCompactInput" id="searchNotaPopup" placeholder="🧾 Filtrar por Nota..." type="text" />
+          <input class="filtersCompactInput" id="searchOefPopup" placeholder="🔢 Filtrar por Número OEF..." type="text" />
+        </div>
+        <div class="filtersRow filtersRowBottom">
+        <select id="filterVeiculoPopup" multiple="" size="4" class="filtersCompactInput">
           <option value="all">✅ Selecionar Todos</option>
           <option value="carregado">🔵 Carregados Hoje</option>
           <option value="programado">🟢 Programados</option>
@@ -5842,10 +6092,30 @@ return null;
             <option value="Dge2">🟢 ≥ D-2</option>
           </select>
         </div>
-        <button class="btn secondary" id="btnDateFilterPopup" title="Selecionar datas da análise" type="button">
-          📅
-        </button>
-        <input id="dateFilterPopup" style="display:none;" type="text">
+        <div class="clientFilterBox" id="entradaNFFilterBox">
+          <button class="clientFilterTrigger" id="entradaNFFilterTrigger" type="button">
+            <span id="entradaNFFilterTriggerText">⏱ Entrada NF (Todos)</span>
+            <span>▾</span>
+          </button>
+          <div class="clientFilterDropdown" id="entradaNFFilterDropdown">
+            <div class="clientFilterHead">
+              <input class="clientFilterSearch" id="entradaNFFilterSearch" placeholder="Pesquisar entrada NF..." type="text" />
+              <div class="clientFilterActions">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input checked="" id="entradaNFCheckAll" type="checkbox" /><span>Selecionar todos</span></label>
+                <span id="entradaNFFilterCount">0 selecionados</span>
+              </div>
+            </div>
+            <div class="clientFilterList" id="entradaNFFilterList"></div>
+            <div class="clientFilterFooter"><button class="btn secondary" id="btnEntradaNFFilterClose" type="button">Fechar</button></div>
+          </div>
+          <select id="filtroEntradaNFPopup" multiple="" size="5" style="display:none;">
+            <option value="all">⏱ Entrada NF (Todos)</option>
+            <option value="atrasoComCheckin">📍 Atraso | Check-in</option>
+            <option value="atrasoSemCheckinEXW">🚚 Atraso | Entrada | EXW</option>
+            <option value="atrasoSemCheckinFCA">🏭 Atraso | Entrada | FCA</option>
+            <option value="noPrazo">🟩 No Prazo</option>
+          </select>
+        </div>
         <div class="clientFilterBox" id="clientFilterBox">
           <button class="clientFilterTrigger" id="clientFilterTrigger" type="button">
             <span id="clientFilterTriggerText">👥 Clientes (Todos)</span>
@@ -5869,13 +6139,11 @@ return null;
             </div>
           </div>
         </div>
-        <input id="searchDestinoPopup" placeholder="📍 Filtrar por Destino..."
-          style="padding:8px 10px; border-radius:12px; border:1px solid #d1d5db; font-size:12px; min-width:0;"
-          type="text">
-        <input id="searchUFDestinoPopup" placeholder="🗺️ Filtrar por UF Destino..."
-          style="padding:8px 10px; border-radius:12px; border:1px solid #d1d5db; font-size:12px; min-width:0;"
-          type="text" />
-        </input></input>
+        <button class="btn secondary" id="btnDateFilterPopup" title="Selecionar datas da análise" type="button">
+          📅
+        </button>
+        <input id="dateFilterPopup" style="display:none;" type="text">
+        </div>
       </div>
       <div id="resumoAnalise" style="margin-top:10px; width:100%;"></div>
       <div id="almoxList" style="margin-top:10px; font-size:13px;"></div>
