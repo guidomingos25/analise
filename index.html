@@ -496,8 +496,8 @@
 
     .kpiGrid {
       display: grid;
-      grid-template-columns: repeat(5, minmax(220px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
       margin-bottom: 16px;
       align-items: stretch;
       width: 100% !important;
@@ -519,13 +519,13 @@
     .kpiCard {
       background: rgba(248, 250, 252, 0.92);
       border: 1px solid rgba(15, 23, 42, 0.10);
-      border-radius: 18px;
-      padding: 16px;
+      border-radius: 16px;
+      padding: 12px 10px;
       box-shadow: var(--shadowSoft);
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      min-height: 220px;
+      gap: 8px;
+      min-height: 188px;
     }
 
     .kpiWideCard {
@@ -666,7 +666,7 @@
 
     .kpiHeader .kpiTitle {
       font-weight: 1000;
-      font-size: 12px;
+      font-size: 10px;
       letter-spacing: .06em;
       text-transform: uppercase;
       color: #111827;
@@ -676,7 +676,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 0;
+      gap: 8px;
+      padding: 5px 0;
       border-bottom: 1px solid rgba(15, 23, 42, 0.06);
     }
 
@@ -685,33 +686,33 @@
     }
 
     .kpiLabel {
-      font-size: 13px;
+      font-size: 11px;
       color: #475569;
       font-weight: 700;
     }
 
     .kpiValue {
       font-weight: 1000;
-      font-size: 20px;
+      font-size: 16px;
       color: #111827;
     }
 
     .kpiChart {
       margin-top: auto;
       border-top: 1px solid rgba(15, 23, 42, 0.08);
-      padding-top: 10px;
+      padding-top: 8px;
     }
 
     .kpiChart canvas {
       width: 100% !important;
-      height: 120px !important;
+      height: 96px !important;
     }
 
     .legendCard {
       background: rgba(248, 250, 252, 0.92);
       border: 1px solid rgba(15, 23, 42, 0.10);
-      border-radius: 18px;
-      padding: 16px;
+      border-radius: 16px;
+      padding: 12px 10px;
       box-shadow: var(--shadowSoft);
 
       width: 100% !important;
@@ -719,6 +720,26 @@
       min-width: 0 !important;
       justify-self: stretch !important;
     }
+
+    .kpiRow.isClickable {
+      cursor: pointer;
+      border-radius: 10px;
+      padding-left: 6px;
+      padding-right: 6px;
+      transition: background .12s ease, box-shadow .12s ease, transform .08s ease;
+    }
+
+    .kpiRow.isClickable:hover {
+      background: #e0f2fe;
+      box-shadow: inset 0 0 0 1px rgba(14, 116, 144, 0.18);
+      transform: translateY(-1px);
+    }
+
+    .kpiRow.isClickable.ativo {
+      background: #dbeafe;
+      box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.28);
+    }
+
 
     .kpiWideCard,
     .kpiWideCardConsolidacao {
@@ -783,7 +804,7 @@
       }
 
       .kpiGrid {
-        grid-template-columns: repeat(2, minmax(260px, 1fr));
+        grid-template-columns: repeat(2, minmax(240px, 1fr));
       }
 
       .filtersRowTop,
@@ -1003,6 +1024,7 @@
     const OBSERVACAO_FILTRO_VAZIA = "__EM_BRANCO__";
     let observacaoDisponiveisPopup = [];
     let observacaoSelecionadosPopup = new Set();
+    let observacaoCardOpcoesFixas = [];
     window._observacaoAllMode = false;
     let rangeDisponiveisPopup = [];
     let rangeSelecionadosPopup = new Set();
@@ -2219,6 +2241,14 @@
 
     function renderResumoAnalise(stats) {
 
+      const observacaoEntries = (observacaoCardOpcoesFixas.length ? observacaoCardOpcoesFixas : Object.keys(stats.observacaoCounts || {}))
+        .map(obsNorm => [obsNorm, Number((stats.observacaoCounts || {})[obsNorm] || 0)])
+        .sort((a, b) => {
+          if (a[0] === OBSERVACAO_FILTRO_VAZIA) return -1;
+          if (b[0] === OBSERVACAO_FILTRO_VAZIA) return 1;
+          return String(a[0]).localeCompare(String(b[0]), "pt-BR");
+        });
+
       document.getElementById("resumoAnalise").innerHTML = `
 
     <div class="kpiGrid">
@@ -2262,11 +2292,11 @@
   <div class="kpiList">
     <div class="kpiRow" style="display:grid; grid-template-columns: 24px 48px 1fr 48px; align-items:center; column-gap:8px;">
       <span style="font-size:16px;">📅</span>
-      <span class="kpiValue" style="color:#000000; font-size:20px; text-align:left;">
+      <span class="kpiValue" style="color:#000000; text-align:left;">
         ${stats.faixaHojeD0}
       </span>
       <span class="kpiLabel" style="text-align:center; display:block; width:100%;">
-        D0 → 1 a 2 dias
+        D0 → 1 a 2
       </span>
       <span class="kpiValue" style="color:#b45309; text-align:right;">
         ${stats.migracaoHojePara1a2}
@@ -2275,11 +2305,11 @@
 
     <div class="kpiRow" style="display:grid; grid-template-columns: 24px 48px 1fr 48px; align-items:center; column-gap:8px;">
       <span style="font-size:16px;">📅</span>
-      <span class="kpiValue" style="color:#000000; font-size:20px; text-align:left;">
+      <span class="kpiValue" style="color:#000000; text-align:left;">
         ${stats.faixaHoje1a2}
       </span>
       <span class="kpiLabel" style="text-align:center; display:block; width:100%;">
-        1 a 2 → 3 a 5 dias
+        1 a 2 → 3 a 5
       </span>
       <span class="kpiValue" style="color:#b45309; text-align:right;">
         ${stats.migracao1a2Para3a5}
@@ -2288,11 +2318,11 @@
 
     <div class="kpiRow" style="display:grid; grid-template-columns: 24px 48px 1fr 48px; align-items:center; column-gap:8px;">
       <span style="font-size:16px;">📅</span>
-      <span class="kpiValue" style="color:#000000; font-size:20px; text-align:left;">
+      <span class="kpiValue" style="color:#000000; text-align:left;">
         ${stats.faixaHoje3a5}
       </span>
       <span class="kpiLabel" style="text-align:center; display:block; width:100%;">
-        3 a 5 → 6 a 10 dias
+        3 a 5 → 6 a 10
       </span>
       <span class="kpiValue" style="color:#b45309; text-align:right;">
         ${stats.migracao3a5Para6a10}
@@ -2301,11 +2331,11 @@
 
     <div class="kpiRow" style="display:grid; grid-template-columns: 24px 48px 1fr 48px; align-items:center; column-gap:8px;">
       <span style="font-size:16px;">📅</span>
-      <span class="kpiValue" style="color:#000000; font-size:20px; text-align:left;">
+      <span class="kpiValue" style="color:#000000; text-align:left;">
         ${stats.faixaHoje6a10}
       </span>
       <span class="kpiLabel" style="text-align:center; display:block; width:100%;">
-        6 a 10 → 11 a 20 dias
+        6 a 10 → 11 a 20
       </span>
       <span class="kpiValue" style="color:#b45309; text-align:right;">
         ${stats.migracao6a10Para11a20}
@@ -2314,11 +2344,11 @@
 
     <div class="kpiRow" style="display:grid; grid-template-columns: 24px 48px 1fr 48px; align-items:center; column-gap:8px;">
       <span style="font-size:16px;">📅</span>
-      <span class="kpiValue" style="color:#000000; font-size:20px; text-align:left;">
+      <span class="kpiValue" style="color:#000000; text-align:left;">
         ${stats.faixaHoje11a20}
       </span>
       <span class="kpiLabel" style="text-align:center; display:block; width:100%;">
-        11 a 20 → acima de 20 dias
+        11 a 20 → acima de 20
       </span>
       <span class="kpiValue" style="color:#b45309; text-align:right;">
         ${stats.migracao11a20Para20plus}
@@ -2326,26 +2356,41 @@
     </div>
     <div class="kpiRow" style="display:grid; grid-template-columns: 24px 48px 1fr 48px; align-items:center; column-gap:8px;">
       <span style="font-size:16px;">📅</span>
-      <span class="kpiValue" style="color:#000000; font-size:20px; text-align:left;">
+      <span class="kpiValue" style="color:#000000; text-align:left;">
         ${stats.faixaHoje20plus}
       </span>
       <span class="kpiLabel" style="text-align:center; display:block; width:100%;">
-        acima de 20 dias
+        acima de 20
       </span>
 
     </div>
   </div>
+</div>
 
-  <div style="
-    margin-top:auto;
-    border-top:1px solid rgba(15,23,42,0.08);
-    padding-top:10px;
-    font-size:12px;
-    font-weight:700;
-    color:#475569;
-    line-height:1.5;
-  ">
-    Considera a virada para amanhã usando a mesma regra do filtro de limite de embarque.
+      <div class="kpiCard">
+  <div class="kpiHeader">
+    <div class="kpiTitle">📝 OBSERVAÇÃO / ANÁLISE</div>
+  </div>
+
+  <div class="kpiList">
+    ${observacaoEntries.length
+      ? observacaoEntries.map(([obsNorm, total]) => {
+          const rotulo = obsNorm === OBSERVACAO_FILTRO_VAZIA
+            ? "(Em branco)"
+            : formatarObservacaoCardTitulo(String(obsNorm || ""));
+          return `
+            <div class="kpiRow">
+              <span class="kpiLabel">${escapeHtmlAttr(rotulo)}</span>
+              <span class="kpiValue" style="color:${obsNorm === OBSERVACAO_FILTRO_VAZIA ? "#64748b" : "#111827"};">${total}</span>
+            </div>
+          `;
+        }).join("")
+      : `
+        <div class="kpiRow">
+          <span class="kpiLabel">Sem observações no contexto atual</span>
+          <span class="kpiValue" style="color:#64748b;">0</span>
+        </div>
+      `}
   </div>
 </div>
 
@@ -2454,6 +2499,30 @@
       atualizarGraficosAnalise(stats);
     }
 
+
+    function isObservacaoCardFiltroAtivo(obsNorm) {
+      if (!Array.isArray(observacaoDisponiveisPopup) || !observacaoDisponiveisPopup.length) return false;
+      if (!observacaoSelecionadosPopup || !(observacaoSelecionadosPopup instanceof Set)) return false;
+      return observacaoSelecionadosPopup.size === 1 && observacaoSelecionadosPopup.has(obsNorm);
+    }
+
+    function aplicarFiltroCardObservacao(obsNorm) {
+      const disponiveis = Array.isArray(observacaoDisponiveisPopup) ? [...observacaoDisponiveisPopup] : [];
+      if (!disponiveis.length) return;
+
+      if (isObservacaoCardFiltroAtivo(obsNorm)) {
+        observacaoSelecionadosPopup = new Set(disponiveis);
+        window._observacaoAllMode = true;
+      } else {
+        observacaoSelecionadosPopup = new Set([obsNorm]);
+        window._observacaoAllMode = false;
+      }
+
+      syncHiddenSelectFromMultiFilter("observacao");
+      atualizarTextoFiltroMulti("observacao");
+      renderCustomMultiFilterOptions("observacao");
+      listarAlmoxPendentes();
+    }
 
     function criarCard(titulo, itens, chartId) {
 
@@ -2611,6 +2680,14 @@
       if (txtNorm.startsWith("PROGRAMADO PARA")) return "PROGRAMADO";
       if (txtNorm === "TEVE CARRO E NÃO FOI CARREGADO" || txtNorm === "TEVE CARRO E NAO FOI CARREGADO") return "NÃO FOI CARREGADO";
       return txt;
+    }
+
+    function formatarObservacaoCardTitulo(valor) {
+      const txt = String(valor || "").trim();
+      if (!txt) return "";
+      return txt
+        .toLocaleLowerCase("pt-BR")
+        .replace(/(^|\s)\S/g, letra => letra.toLocaleUpperCase("pt-BR"));
     }
 
     function normalizarObservacaoFiltro(valor) {
@@ -2843,6 +2920,14 @@
           n.observacaoCalculada = n.observacaoAutomatica;
           n.observacaoFiltroNorm = normalizarObservacaoFiltro(n.observacaoAutomatica || "");
         });
+      });
+
+      observacaoCardOpcoesFixas = Array.from(new Set(
+        Object.values(almoxPendBase).flatMap(info => (info.notas || []).map(n => n.observacaoFiltroNorm ?? normalizarObservacaoFiltro(n.observacaoCalculada || "")))
+      )).sort((a, b) => {
+        if (a === OBSERVACAO_FILTRO_VAZIA) return -1;
+        if (b === OBSERVACAO_FILTRO_VAZIA) return 1;
+        return String(a).localeCompare(String(b), "pt-BR");
       });
 
       window.__analiseProgramacaoCache = {
@@ -3252,6 +3337,8 @@ return null;
         consolidacaoFaixa3: 0,
         consolidacaoFaixa4: 0,
         consolidacaoMaiorIgual5: 0,
+
+        observacaoCounts: {},
       };
 
       const reportVocativos = [];
@@ -3586,6 +3673,10 @@ return null;
         stats.totalAlmox++;
         stats.totalNotas += qtdD1Filtrado;
 
+        notasFiltradas.forEach(n => {
+          const obsNormAtual = n?.observacaoFiltroNorm ?? normalizarObservacaoFiltro(n?.observacaoCalculada || "");
+          stats.observacaoCounts[obsNormAtual] = (stats.observacaoCounts[obsNormAtual] || 0) + 1;
+        });
 
         if (almoxTotalPVD[almox]) {
           stats.totalNotasPVDGeral += notasFiltradas.length;
