@@ -750,7 +750,7 @@
     }
 
     .filtersRowBottom {
-      grid-template-columns: minmax(150px, 1fr) repeat(4, minmax(165px, 1fr)) minmax(165px, 1fr) 56px;
+      grid-template-columns: minmax(150px, 1fr) repeat(5, minmax(165px, 1fr)) minmax(165px, 1fr) 56px;
     }
 
     .filtersRow>* {
@@ -1000,6 +1000,10 @@
     const MIGRACAO_MULTI_OPTIONS = ["migra_D0_1a2", "migra_1a2_3a5", "migra_3a5_6a10", "migra_6a10_11a20", "migra_11a20_20plus"];
     const CRITICIDADE_MULTI_OPTIONS = ["Dmais", "D0", "Dmenos1", "Dge2"];
     const ENTRADA_NF_MULTI_OPTIONS = ["atrasoComCheckin", "atrasoSemCheckinEXW", "atrasoSemCheckinFCA", "noPrazo"];
+    const OBSERVACAO_FILTRO_VAZIA = "__EM_BRANCO__";
+    let observacaoDisponiveisPopup = [];
+    let observacaoSelecionadosPopup = new Set();
+    window._observacaoAllMode = false;
     let rangeDisponiveisPopup = [];
     let rangeSelecionadosPopup = new Set();
     window._rangeAllMode = false;
@@ -1422,7 +1426,8 @@
         `Destino: ${limparTextoPDF(report.filtros.destino || "-")}`,
         `UF: ${limparTextoPDF(report.filtros.ufDestino || "-")}`,
         `Nota: ${limparTextoPDF(report.filtros.nota || "-")}`,
-        `Número OEF: ${limparTextoPDF(report.filtros.numeroOEF || "-")}`
+        `Número OEF: ${limparTextoPDF(report.filtros.numeroOEF || "-")}`,
+        `Observação: ${limparTextoPDF(report.filtros.observacao || "Todos")}`
       ];
       doc.setFontSize(9);
       doc.text(filtrosTexto, 14, 27);
@@ -1444,12 +1449,13 @@
         limparTextoPDF(r.DtLimiteEmbarque || ""),
         limparTextoPDF(r.DtFinalEntrega || ""),
         limparTextoPDF(r.DtPrevisaoUltimoVeiculoProgramado || ""),
-        limparTextoPDF(r.Observacao || "")
+        limparTextoPDF(r.Observacao || ""),
+        limparTextoPDF(r.Programacao || "")
       ]);
 
       doc.autoTable({
         startY: 40,
-        head: [["Fornecedor", "Cliente", "Vocativo", "Nota", "Número OEF", "Range", "INC.", "BP Destino", "End. WMS", "VOL.", "Mercadoria", "CHECK-IN", "ENTRADA", "EMBARQUE", "ENTREGA", "DT. PREVISÃO ÚLT. VEÍCULO PROG.", "Observação"]],
+        head: [["Fornecedor", "Cliente", "Vocativo", "Nota", "Número OEF", "Range", "INC.", "BP Destino", "End. WMS", "VOL.", "Mercadoria", "CHECK-IN", "ENTRADA", "EMBARQUE", "ENTREGA", "DT. PREVISÃO ÚLT. VEÍCULO PROG.", "Observação", "Programação"]],
         body: linhas,
         styles: { fontSize: 6.1, cellPadding: 1.3 },
         headStyles: { fillColor: [31, 78, 216] },
@@ -1588,6 +1594,7 @@
 
       dataRows = [];
       detalhadoRows = [];
+      invalidarCacheAnaliseProgramacao();
       resultado = [];
       resultadoFiltrado = [];
       datasSelecionadas = [];
@@ -2004,6 +2011,7 @@
 
     fileData.onchange = async e => {
       dataRows = await readExcel(e.target.files[0]);
+      invalidarCacheAnaliseProgramacao();
 
 
       document.getElementById("statusData").innerText = "Carregado";
@@ -2015,6 +2023,7 @@
 
     fileDetalhado.onchange = async e => {
       detalhadoRows = await readExcel(e.target.files[0]);
+      invalidarCacheAnaliseProgramacao();
 
 
       if (detalhadoRows.length) {
@@ -2577,17 +2586,12 @@
       const dtCarregamento = toDateOnlyBrasilia(dtCarregamentoUltimoVeiculoVocativo);
       const dtMaiorEntradaCheckin = maiorDataEntradaOuCheckin(dtCheck, dtEntr);
       if (!dtCarregamento || !dtMaiorEntradaCheckin) return "";
-      return dtCarregamento > dtMaiorEntradaCheckin ? "TEVE VEÍCULO E NÃO CARREGOU" : "";
+      return dtCarregamento > dtMaiorEntradaCheckin ? "TEVE VEÍCULO E NÃO FOI CARREGADO" : "";
     }
 
-    function temVeiculoEntreOs3UltimosAposData(veiculos, dataBase) {
-      const dtBase = toDateOnlyBrasilia(dataBase);
-      if (!dtBase || !Array.isArray(veiculos) || veiculos.length === 0) return false;
-
-      return veiculos.slice(0, 3).some(v => {
-        const dtCarreg = toDateOnlyBrasilia(v.dtCarreg);
-        return dtCarreg && dtCarreg > dtBase;
-      });
+    function filtrarVeiculosParaObservacao(veiculos) {
+      if (!Array.isArray(veiculos)) return [];
+      return veiculos.filter(v => normalizar(v?.modalidade || "") !== "EXPRESSO");
     }
 
     function temCarregamentoAposData(veiculos, dataBase) {
@@ -2600,26 +2604,69 @@
       });
     }
 
+    function formatarObservacaoExibicao(valor) {
+      const txt = String(valor || "").trim();
+      if (!txt) return "";
+      const txtNorm = normalizar(txt);
+      if (txtNorm.startsWith("PROGRAMADO PARA")) return "PROGRAMADO";
+      if (txtNorm === "TEVE CARRO E NÃO FOI CARREGADO" || txtNorm === "TEVE CARRO E NAO FOI CARREGADO") return "NÃO FOI CARREGADO";
+      return txt;
+    }
+
+    function normalizarObservacaoFiltro(valor) {
+      const txt = String(valor || "").trim();
+      if (!txt) return OBSERVACAO_FILTRO_VAZIA;
+      return formatarObservacaoExibicao(txt);
+    }
+
+    function getStatusProgramacaoObservacao(veiculos) {
+      const veiculosConsiderados = filtrarVeiculosParaObservacao(veiculos);
+      const ultimaPrevisaoProgramada = getUltimaDataPrevisaoProgramadaObservacao(veiculosConsiderados);
+      if (ultimaPrevisaoProgramada) {
+        return `PROGRAMADO PARA ${formatDateBRLocal(ultimaPrevisaoProgramada)}`;
+      }
+      return "NÃO PROGRAMADO";
+    }
+
+    function getUltimaDataPrevisaoProgramadaObservacao(veiculos) {
+      if (!Array.isArray(veiculos) || !veiculos.length) return null;
+
+      const ultimoProgramado = veiculos
+        .filter(v => {
+          const dtPrev = toDateOnlyBrasilia(v?.dtPrev);
+          const dtCarreg = toDateOnlyBrasilia(v?.dtCarreg);
+          return dtPrev && !dtCarreg;
+        })
+        .sort((a, b) => {
+          const dtA = toDateOnlyBrasilia(a?.dtPrev);
+          const dtB = toDateOnlyBrasilia(b?.dtPrev);
+          return (dtB?.getTime() || 0) - (dtA?.getTime() || 0);
+        })[0];
+
+      return ultimoProgramado ? toDateOnlyBrasilia(ultimoProgramado.dtPrev) : null;
+    }
+
     function calcularObservacaoNF(nota, veiculos) {
       const dtCheck = toDateOnlyBrasilia(nota?.checkin);
       const dtEntrada = toDateOnlyBrasilia(nota?.entrada);
       const dtMaior = maiorDataEntradaOuCheckin(dtCheck, dtEntrada);
+      const veiculosConsiderados = filtrarVeiculosParaObservacao(veiculos);
 
       if (!dtMaior) return "";
 
-      if (temVeiculoEntreOs3UltimosAposData(veiculos, dtMaior)) {
-        return "TEVE CARRO E NÃO CARREGOU";
+      if (temCarregamentoAposData(veiculosConsiderados, dtMaior)) {
+        return "TEVE CARRO E NÃO FOI CARREGADO";
       }
 
       if (dtCheck && dtMaior.getTime() === dtCheck.getTime()) {
-        if (!temCarregamentoAposData(veiculos, dtCheck)) {
+        if (!temCarregamentoAposData(veiculosConsiderados, dtCheck)) {
           return "CHECKIN";
         }
         return "";
       }
 
       if (dtEntrada && dtMaior.getTime() === dtEntrada.getTime()) {
-        if (!temCarregamentoAposData(veiculos, dtEntrada)) {
+        if (!temCarregamentoAposData(veiculosConsiderados, dtEntrada)) {
           const dtLimEmbarque = toDateOnlyBrasilia(nota?.dtLim);
           if (dtLimEmbarque && dtEntrada >= dtLimEmbarque) {
             const incotermNorm = normalizar(nota?.incoterms || "");
@@ -2629,7 +2676,12 @@
         }
       }
 
-      return "";
+      const ultimaPrevisaoProgramada = getUltimaDataPrevisaoProgramadaObservacao(veiculosConsiderados);
+      if (ultimaPrevisaoProgramada) {
+        return `PROGRAMADO PARA ${formatDateBRLocal(ultimaPrevisaoProgramada)}`;
+      }
+
+      return "NÃO PROGRAMADO";
     }
 
     function getChaveObservacaoNF(vocativo, nota) {
@@ -2659,6 +2711,148 @@
       }
 
       return observacaoAutomatica || "";
+    }
+
+    window.__analiseProgramacaoCache = null;
+
+    function invalidarCacheAnaliseProgramacao() {
+      window.__analiseProgramacaoCache = null;
+    }
+
+    function prepararCacheAnaliseProgramacao() {
+      const signature = `${detalhadoRows.length}|${dataRows.length}`;
+      if (window.__analiseProgramacaoCache?.signature === signature) {
+        return window.__analiseProgramacaoCache;
+      }
+
+      const almoxTotalPVD = {};
+      const almoxPendBase = {};
+
+      detalhadoRows.forEach(r => {
+        const almox = normalizar(r["Almoxarifado"]);
+        if (!almox) return;
+
+        if (!almoxTotalPVD[almox]) {
+          almoxTotalPVD[almox] = {
+            totalRegistros: 0,
+            pesoTotal: 0
+          };
+        }
+
+        almoxTotalPVD[almox].totalRegistros++;
+
+        const peso = parseFloat((r["Peso"] || "0").toString().replace(",", "."));
+        if (!isNaN(peso)) {
+          almoxTotalPVD[almox].pesoTotal += peso;
+        }
+
+        const dtLim = parsePossibleDate(r["Dt Limite Embarque"]);
+        if (!dtLim) return;
+        dtLim.setHours(0, 0, 0, 0);
+
+        if (!almoxPendBase[almox]) {
+          almoxPendBase[almox] = {
+            notas: []
+          };
+        }
+
+        const notaObj = {
+          dtLim,
+          nota: r["Nota"] || r["Numero OEF"] || "",
+          fornecedor: r["Fornecedor"] || "",
+          destinatario: r["Destinatario"] || "",
+          peso: r["Peso"] || "",
+          pesado: getFieldValue(r, ["Pesado", "PESADO"]) || "",
+          onu: r["ONU"] || "",
+          cliente: r["Cliente"] || "",
+          destino: r["Destino"] || "",
+          uf: r["UF Destino"] || "",
+          numeroOEF: getFieldValue(r, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF"]) || "",
+          rangeDias: getFieldValue(r, ["RANGE DE DIAS", "Range de Dias", "Range De Dias"]) || "",
+          incoterms: getFieldValue(r, ["INCOTERMS", "Incoterms"]) || "",
+          bpDestino: getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino"]) || "",
+          endWms: getFieldValue(r, ["End. WMS", "END. WMS", "End WMS", "END WMS"]) || "",
+          volumes: getFieldValue(r, ["Volumes", "VOLUMES"]) || "",
+          mercadoria: getFieldValue(r, ["Mercadoria", "MERCADORIA"]) || "",
+          checkin: r["Data de Check in"],
+          entrada: r["Data de Entrada da Nota"],
+          finalEntrega: r["Dt Final Entrega"],
+          diasConsolidacao: (() => {
+            const dtLimite = toDateOnly(r["Dt Limite Embarque"]);
+            const dtCheck = parsePossibleDate(r["Data de Check in"]);
+            const dtEntrada = parsePossibleDate(r["Data de Entrada da Nota"]);
+            const dtMaior = maiorDataEntradaOuCheckin(dtCheck, dtEntrada);
+            if (!dtLimite || !dtMaior) return null;
+            return Math.round((dtLimite.getTime() - dtMaior.getTime()) / 86400000);
+          })()
+        };
+
+        notaObj._clienteNorm = normalizar(notaObj.cliente || "");
+        notaObj._destinoNorm = normalizar(notaObj.destino || "");
+        notaObj._ufNorm = normalizar(notaObj.uf || "");
+        notaObj._notaNorm = normalizar(notaObj.nota || "");
+        notaObj._numeroOEFNorm = normalizar(notaObj.numeroOEF || "");
+
+        almoxPendBase[almox].notas.push(notaObj);
+      });
+
+      const almoxUltimoVeiculo = {};
+      const almoxKeys = Object.keys(almoxPendBase);
+      const almoxRegexCache = {};
+
+      almoxKeys.forEach(almox => {
+        const almoxSafe = almox.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        almoxRegexCache[almox] = new RegExp(`(^|[^A-Z0-9])${almoxSafe}([^A-Z0-9]|$)`);
+      });
+
+      dataRows.forEach(row => {
+        const dtPrev = parsePossibleDate(row["DT. PREVISÃO"]);
+        const dtCarreg = parsePossibleDate(row["DT. CARREGAMENTO"]);
+        if (!dtPrev) return;
+
+        const refsNorm = normalizar(row["REFERENCIAS"] || "");
+        const prioridadeNorm = normalizar(row["PRIORIDADES SOLICITACAO"] || "");
+
+        almoxKeys.forEach(almox => {
+          const regex = almoxRegexCache[almox];
+          if (!(regex.test(refsNorm) || regex.test(prioridadeNorm))) return;
+
+          if (!almoxUltimoVeiculo[almox]) almoxUltimoVeiculo[almox] = [];
+
+          almoxUltimoVeiculo[almox].push({
+            dtPrev,
+            dtCarreg,
+            dtEntrega: row["DT. ENTREGA"] || "",
+            veiculoSolicitado: row["VEÍCULO SOLICITADO"] || "",
+            destinos: row["DESTINOS"] || "",
+            id: row["ID"] || "",
+            refs: row["REFERENCIAS"] || "",
+            modalidade: getFieldValue(row, ["MODALIDADE", "Modalidade"]) || ""
+          });
+        });
+      });
+
+      Object.keys(almoxUltimoVeiculo).forEach(almox => {
+        almoxUltimoVeiculo[almox].sort((a, b) => b.dtPrev - a.dtPrev);
+      });
+
+      Object.entries(almoxPendBase).forEach(([almox, info]) => {
+        const veiculos = almoxUltimoVeiculo[almox] || [];
+        (info.notas || []).forEach(n => {
+          n.observacaoAutomatica = calcularObservacaoNF(n, veiculos);
+          n.observacaoCalculada = n.observacaoAutomatica;
+          n.observacaoFiltroNorm = normalizarObservacaoFiltro(n.observacaoAutomatica || "");
+        });
+      });
+
+      window.__analiseProgramacaoCache = {
+        signature,
+        almoxTotalPVD,
+        almoxPendBase,
+        almoxUltimoVeiculo
+      };
+
+      return window.__analiseProgramacaoCache;
     }
 
     function atualizarObservacaoNF(vocativo, nota, valor) {
@@ -2837,158 +3031,39 @@ return null;
       const modosCriticidade = getMultiFilterValues("filtroCriticidadePopup", criticidadeSelecionadosPopup, criticidadeDisponiveisPopup);
       const modosMigracao = getMultiFilterValues("filtroMigracaoPopup", migracaoSelecionadosPopup, migracaoDisponiveisPopup);
       const modosEntradaNF = getMultiFilterValues("filtroEntradaNFPopup", entradaNFSelecionadosPopup, entradaNFDisponiveisPopup);
+      const modosObservacao = getMultiFilterValues("filtroObservacaoPopup", observacaoSelecionadosPopup, observacaoDisponiveisPopup);
       const termoDestino = normalizar(document.getElementById("searchDestinoPopup")?.value || "");
       const termoUFDestino = normalizar(document.getElementById("searchUFDestinoPopup")?.value || "");
       const termoNota = normalizar(document.getElementById("searchNotaPopup")?.value || "");
       const termoOEF = normalizar(document.getElementById("searchOefPopup")?.value || "");
 
+      const cacheAnalise = prepararCacheAnaliseProgramacao();
+      const almoxTotalPVD = cacheAnalise.almoxTotalPVD;
+      const almoxUltimoVeiculo = cacheAnalise.almoxUltimoVeiculo;
       const almoxPend = {};
 
+      Object.entries(cacheAnalise.almoxPendBase || {}).forEach(([almox, baseInfo]) => {
+        const notasBase = baseInfo?.notas || [];
 
-
-
-      const almoxTotalPVD = {};
-
-      detalhadoRows.forEach(r => {
-        const almox = normalizar(r["Almoxarifado"]);
-        if (!almox) return;
-
-        if (!almoxTotalPVD[almox]) {
-          almoxTotalPVD[almox] = {
-            totalRegistros: 0,
-            pesoTotal: 0
-          };
-        }
-
-        almoxTotalPVD[almox].totalRegistros++;
-
-        const peso = parseFloat(
-          (r["Peso"] || "0")
-            .toString()
-            .replace(",", ".")
-        );
-
-        if (!isNaN(peso)) {
-          almoxTotalPVD[almox].pesoTotal += peso;
-        }
-      });
-
-
-      detalhadoRows.forEach(r => {
-        const almox = normalizar(r["Almoxarifado"]);
-        if (!almox) return;
-
-        const dtLim = parsePossibleDate(r["Dt Limite Embarque"]);
-        if (!dtLim) return;
-
-        dtLim.setHours(0, 0, 0, 0);
-
-
-
-        if (!almoxPend[almox]) {
-          almoxPend[almox] = {
-            notas: [],
-            qtd: 0
-          };
-        }
-
-        almoxPend[almox].notas.push({
-
-          dtLim,
-          nota: r["Nota"] || r["Numero OEF"] || "",
-          fornecedor: r["Fornecedor"] || "",
-          destinatario: r["Destinatario"] || "",
-          peso: r["Peso"] || "",
-          pesado: getFieldValue(r, ["Pesado", "PESADO"]) || "",
-          onu: r["ONU"] || "",
-          cliente: r["Cliente"] || "",
-          destino: r["Destino"] || "",
-          uf: r["UF Destino"] || "",
-          numeroOEF: getFieldValue(r, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF"]) || "",
-          rangeDias: getFieldValue(r, ["RANGE DE DIAS", "Range de Dias", "Range De Dias"]) || "",
-          incoterms: getFieldValue(r, ["INCOTERMS", "Incoterms"]) || "",
-          bpDestino: getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino"]) || "",
-          endWms: getFieldValue(r, ["End. WMS", "END. WMS", "End WMS", "END WMS"]) || "",
-          volumes: getFieldValue(r, ["Volumes", "VOLUMES"]) || "",
-          mercadoria: getFieldValue(r, ["Mercadoria", "MERCADORIA"]) || "",
-          checkin: r["Data de Check in"],
-          entrada: r["Data de Entrada da Nota"],
-          finalEntrega: r["Dt Final Entrega"],
-
-          diasConsolidacao: (() => {
-
-            const dtLim = toDateOnly(r["Dt Limite Embarque"]);
-            const dtCheck = parsePossibleDate(r["Data de Check in"]);
-            const dtEntrada = parsePossibleDate(r["Data de Entrada da Nota"]);
-
-            const dtMaior = maiorDataEntradaOuCheckin(dtCheck, dtEntrada);
-
-            if (!dtLim || !dtMaior) return null;
-
-            return Math.round(
-              (dtLim.getTime() - dtMaior.getTime()) / 86400000
-            );
-
-          })(),
-
+        notasBase.forEach(n => {
+          const observacaoAtual = getObservacaoNFAtual(almox, n.nota, n.observacaoAutomatica || "");
+          n.observacaoCalculada = observacaoAtual;
+          n.observacaoFiltroNorm = normalizarObservacaoFiltro(observacaoAtual || "");
         });
 
-        if (dtLim.getTime() <= amanha.getTime()) {
-          almoxPend[almox].qtd++;
-        }
+        const notas = filtroPrazoConsolidacaoAtivo
+          ? notasBase.filter(n => n.diasConsolidacao != null && obterFaixaConsolidacao(n.diasConsolidacao) === filtroPrazoConsolidacaoAtivo)
+          : notasBase;
 
-
+        almoxPend[almox] = {
+          notas,
+          qtd: filtroPrazoConsolidacaoAtivo
+            ? notas.length
+            : notas.reduce((total, n) => total + ((n.dtLim && n.dtLim.getTime() <= amanha.getTime()) ? 1 : 0), 0)
+        };
       });
 
-
-
-
-
-      const almoxUltimoVeiculo = {};
-      const almoxKeys = Object.keys(almoxPend);
-      const almoxRegexCache = {};
-
-      almoxKeys.forEach(almox => {
-        const almoxSafe = almox.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        almoxRegexCache[almox] = new RegExp(`(^|[^A-Z0-9])${almoxSafe}([^A-Z0-9]|$)`);
-      });
-
-      dataRows.forEach(row => {
-        const dtPrev = parsePossibleDate(row["DT. PREVISÃO"]);
-        const dtCarreg = parsePossibleDate(row["DT. CARREGAMENTO"]);
-        if (!dtPrev) return;
-
-        const refsNorm = normalizar(row["REFERENCIAS"] || "");
-        const prioridadeNorm = normalizar(row["PRIORIDADES SOLICITACAO"] || "");
-
-        almoxKeys.forEach(almox => {
-          const regex = almoxRegexCache[almox];
-
-          if (regex.test(refsNorm) || regex.test(prioridadeNorm)) {
-
-            if (!almoxUltimoVeiculo[almox]) almoxUltimoVeiculo[almox] = [];
-
-            almoxUltimoVeiculo[almox].push({
-              dtPrev,
-              dtCarreg,
-              dtEntrega: row["DT. ENTREGA"] || "",
-              veiculoSolicitado: row["VEÍCULO SOLICITADO"] || "",
-              destinos: row["DESTINOS"] || "",
-              id: row["ID"] || "",
-              refs: row["REFERENCIAS"] || ""
-            });
-
-          }
-        });
-      });
-
-      Object.keys(almoxUltimoVeiculo).forEach(a => {
-        almoxUltimoVeiculo[a].sort((a, b) => b.dtPrev - a.dtPrev);
-        // Mantém todos os veículos para a regra de status do vocativo.
-        // O limite visual de 3 registros é aplicado apenas na exibição.
-      });
-
-      sincronizarFiltrosDeLista(almoxPend, almoxUltimoVeiculo);
+            sincronizarFiltrosDeLista(almoxPend, almoxUltimoVeiculo);
 
 
 
@@ -3055,6 +3130,7 @@ return null;
         modosCriticidade,
         modosMigracao,
         modosEntradaNF,
+        modosObservacao,
         filtroVeiculo,
         termoDestino,
         termoUFDestino,
@@ -3076,18 +3152,18 @@ return null;
         if (!notaPassaFiltroDataPopup(n, datasSelecionadasPopup)) return false;
 
         if (filtroClienteAtivo) {
-          const clienteNorm = normalizar(n.cliente || "");
+          const clienteNorm = n._clienteNorm ?? normalizar(n.cliente || "");
           if (!clientesSelecionadosNorm.has(clienteNorm)) return false;
         }
-        if (termoDestino && !normalizar(n.destino || "").includes(termoDestino)) return false;
+        if (termoDestino && !(n._destinoNorm ?? normalizar(n.destino || "")).includes(termoDestino)) return false;
 
         if (termoUFDestino) {
-          const uf = normalizar(n.uf || "");
+          const uf = n._ufNorm ?? normalizar(n.uf || "");
           if (uf !== termoUFDestino) return false;
         }
 
-        if (termoNota && !normalizar(n.nota || "").includes(termoNota)) return false;
-        if (termoOEF && !normalizar(n.numeroOEF || "").includes(termoOEF)) return false;
+        if (termoNota && !(n._notaNorm ?? normalizar(n.nota || "")).includes(termoNota)) return false;
+        if (termoOEF && !(n._numeroOEFNorm ?? normalizar(n.numeroOEF || "")).includes(termoOEF)) return false;
 
         if (!notaPassaFiltroRangeMultiplo(n, modosDataLimite, hoje, amanha)) return false;
 
@@ -3097,8 +3173,7 @@ return null;
 
         if (!notaPassaFiltroEntradaNFMultiplo(n, modosEntradaNF)) return false;
 
-
-
+        if (!notaPassaFiltroObservacaoMultiplo(n, modosObservacao)) return false;
 
         if (filtroPrazoConsolidacaoAtivo) {
 
@@ -3193,6 +3268,7 @@ return null;
           isFiltroMultiAtivo(modosCriticidade) ||
           isFiltroMultiAtivo(modosMigracao) ||
           isFiltroMultiAtivo(modosEntradaNF) ||
+          isFiltroMultiAtivo(modosObservacao) ||
           filtroClienteAtivo ||
           !!termoDestino ||
           !!termoUFDestino ||
@@ -3797,7 +3873,9 @@ return null;
           else if (mostrarJoinha) farolTexto = "Verde";
           else if (mostrarCheckAmarelo) farolTexto = "Amarelo";
 
-          const observacaoNF = calcularObservacaoNF(n, veiculos);
+          const observacaoNF = n.observacaoCalculada || "";
+          const observacaoExibicao = formatarObservacaoExibicao(observacaoNF);
+          const programacaoObservacao = getStatusProgramacaoObservacao(veiculos);
           const clienteNome = (n.cliente || "SEM CLIENTE").toString().trim() || "SEM CLIENTE";
           const dtLimOnly = toDateOnly(n.dtLim);
 
@@ -3835,7 +3913,8 @@ return null;
             DtCarregamentoUltimoVeiculoVocativo: formatDateBRLocal(ultimaDataCarregamento),
             DtPrevisaoUltimoVeiculoProgramado: temProgramado ? getUltimaDataPrevisaoVeiculoProgramado(veiculos) : "",
             StatusUltimoVeiculoVocativo: teveVeiculoENaoCarregou(ultimaDataCarregamento, n.checkin, n.entrada),
-            Observacao: getObservacaoNFAtual(almox, n.nota, observacaoNF),
+            Observacao: formatarObservacaoExibicao(getObservacaoNFAtual(almox, n.nota, observacaoNF)),
+            Programacao: programacaoObservacao,
             EntradaStatus: dentroRegra ? "EM ATRASO" : "NO PRAZO",
             Criticidade: classificacaoCriticidade,
             Farol: farolTexto
@@ -3910,15 +3989,7 @@ return null;
       ${!mostrarCheckVermelho && !mostrarJoinha && mostrarCheckAmarelo ? iconeCheck("yellow") : ""}
       ${mostrarCheckCinza ? iconeCheck("gray") : ""}
     </td>
-    <td>
-      <input type="text"
-        data-obs-nota="1"
-        data-vocativo="${escapeHtmlAttr(normalizar(almox))}"
-        data-nota="${escapeHtmlAttr(String(n.nota || "").trim())}"
-        value="${escapeHtmlAttr(getObservacaoNFAtual(almox, n.nota, observacaoNF))}"
-        oninput="atualizarObservacaoNF(${JSON.stringify(almox)}, ${JSON.stringify(n.nota || "")}, this.value)"
-        style="width:180px; min-width:180px; font-size:10px; padding:4px 6px; border:1px solid #d1d5db; border-radius:6px; background:#fff;" />
-    </td>
+    <td>${observacaoExibicao || ""}</td>
   </tr>`;
         }).join("");
 
@@ -4313,7 +4384,7 @@ return null;
       onclick="addObsPreset(event, '${normalizar(almox)}', 'RETIRA')">🚚 RETIRA</button>
   
     <button class="quickBtn" type="button"
-      onclick="addObsPreset(event, '${normalizar(almox)}', 'TEVE CARRO E NÃO CARREGOU')">⚠️ TEVE CARRO E NÃO CARREGOU</button>
+      onclick="addObsPreset(event, '${normalizar(almox)}', 'TEVE CARRO E NÃO FOI CARREGADO')">⚠️ TEVE CARRO E NÃO FOI CARREGADO</button>
   
     <button class="quickBtn" type="button"
       onclick="addObsPreset(event, '${normalizar(almox)}', 'MEDIANTE AUTORIZAÇÃO')">✅ MEDIANTE AUTORIZAÇÃO</button>
@@ -4435,8 +4506,9 @@ return null;
           veiculo: Array.from(document.getElementById("filterVeiculoPopup")?.selectedOptions || []).map(o => o.text),
           dataLimite: getFiltroMultiTexto("filtroDataLimitePopup", "📅 Range"),
           migracao: getFiltroMultiTexto("filtroMigracaoPopup", "🔄 Migração"),
-          criticidade: getFiltroMultiTexto("filtroCriticidadePopup", "🚦 Criticidade NF"),
+          criticidade: getFiltroMultiTexto("filtroCriticidadePopup", "🚦 Criticidade"),
           entradaNF: getFiltroMultiTexto("filtroEntradaNFPopup", "⏱ Entrada NF"),
+          observacao: getFiltroMultiTexto("filtroObservacaoPopup", "📝 Observação"),
           dataEntradaCheckin: (datasSelecionadasPopup || []).length
             ? datasSelecionadasPopup.map(d => formatDateBRLocal(d)).join(" | ")
             : "Todos",
@@ -5238,6 +5310,7 @@ return null;
         { Indicador: "Filtro Criticidade", Valor: report.filtros.criticidade || "Todos" },
         { Indicador: "Filtro Data Entrada/Check-in", Valor: report.filtros.dataEntradaCheckin || "Todos" },
         { Indicador: "Filtro Cliente", Valor: report.filtros.cliente || "-" },
+        { Indicador: "Filtro Observação", Valor: report.filtros.observacao || "Todos" },
         { Indicador: "Filtro Destino", Valor: report.filtros.destino || "-" },
         { Indicador: "Filtro UF Destino", Valor: report.filtros.ufDestino || "-" },
         { Indicador: "Total Almox", Valor: report.stats.totalAlmox || 0 },
@@ -5269,7 +5342,8 @@ return null;
 
       const notasDetalhadasExcel = (report.notas || []).map(({ StatusUltimoVeiculoVocativo, ...r }) => ({
         ...r,
-        DtPrevisaoUltimoVeiculoProgramado: r.DtPrevisaoUltimoVeiculoProgramado || ""
+        DtPrevisaoUltimoVeiculoProgramado: r.DtPrevisaoUltimoVeiculoProgramado || "",
+        Programacao: r.Programacao || ""
       }));
       const wsNotas = XLSX.utils.json_to_sheet(notasDetalhadasExcel);
       wsNotas["!cols"] = autoWidthFromJson(notasDetalhadasExcel.length ? notasDetalhadasExcel : [{ Nota: "", DtPrevisaoUltimoVeiculoProgramado: "" }]);
@@ -5277,6 +5351,52 @@ return null;
 
       const dataNome = new Date().toISOString().slice(0, 10);
       XLSX.writeFile(wb, `relatorio_analise_programacao_${dataNome}.xlsx`);
+    }
+
+
+    function exportarRelatorioExcelNotasSimplificado() {
+      const report = getAnaliseReportData();
+      if (!report) return;
+
+      const notasSimplificadas = (report.notas || []).map(r => ({
+        "Nota": r.Nota || "",
+        "Número OEF": r.NumeroOEF || "",
+        "Range de Dias": r.RangeDeDias || "",
+        "INC.": r.Incoterms || "",
+        "CLIENTE": r.Cliente || "",
+        "VOCATIVO": r.Vocativo || "",
+        "DATA CHECK-IN": r.DataCheckin || "",
+        "DATA ENTRADA": r.DataEntrada || "",
+        "DT. LIMITE EMBARQUE": r.DtLimiteEmbarque || "",
+        "DT. LIMITE ENTREGA": r.DtFinalEntrega || "",
+        "OBSERVAÇÃO": r.Observacao || "",
+        "PROGRAMAÇÃO": r.Programacao || ""
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const wsNotas = XLSX.utils.json_to_sheet(notasSimplificadas);
+      wsNotas["!cols"] = autoWidthFromJson(
+        notasSimplificadas.length
+          ? notasSimplificadas
+          : [{
+              "Nota": "",
+              "Número OEF": "",
+              "Range de Dias": "",
+              "INC.": "",
+              "CLIENTE": "",
+              "VOCATIVO": "",
+              "DATA CHECK-IN": "",
+              "DATA ENTRADA": "",
+              "DT. LIMITE EMBARQUE": "",
+              "DT. LIMITE ENTREGA": "",
+              "OBSERVAÇÃO": "",
+              "PROGRAMAÇÃO": ""
+            }]
+      );
+      XLSX.utils.book_append_sheet(wb, wsNotas, "Notas Simplificadas");
+
+      const dataNome = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `relatorio_simplificado_notas_${dataNome}.xlsx`);
     }
 
     function exportarRelatorioPDFAnalise() {
@@ -5401,10 +5521,12 @@ return null;
       const btnPdf = document.getElementById("btnRelatorioPDF");
       const btnPdfNotas = document.getElementById("btnRelatorioPDFNotas");
       const btnExcel = document.getElementById("btnRelatorioExcel");
+      const btnExcelSimplificado = document.getElementById("btnRelatorioExcelSimplificado");
 
       if (btnPdf) btnPdf.addEventListener("click", exportarRelatorioPDFAnalise);
       if (btnPdfNotas) btnPdfNotas.addEventListener("click", exportarRelatorioPDFNotasAnalise);
       if (btnExcel) btnExcel.addEventListener("click", exportarRelatorioExcelAnalise);
+      if (btnExcelSimplificado) btnExcelSimplificado.addEventListener("click", exportarRelatorioExcelNotasSimplificado);
     });
 
     function getClientesUnicosDoPVD() {
@@ -5695,7 +5817,7 @@ return null;
           if (!notaPassaFiltroDataPopup(n, datasSelecionadasPopup)) return;
           if (termoDestino && !normalizar(n.destino || "").includes(termoDestino)) return;
           if (termoUFDestino) {
-            const uf = normalizar(n.uf || "");
+            const uf = n._ufNorm ?? normalizar(n.uf || "");
             if (uf !== termoUFDestino) return;
           }
           if (!notaPassaFiltroRangeMultiplo(n, modosDataLimite, hoje, amanha)) return;
@@ -5741,6 +5863,7 @@ return null;
         modosCriticidade: overrides.modosCriticidade ?? getMultiFilterValues("filtroCriticidadePopup", criticidadeSelecionadosPopup, criticidadeDisponiveisPopup),
         modosMigracao: overrides.modosMigracao ?? getMultiFilterValues("filtroMigracaoPopup", migracaoSelecionadosPopup, migracaoDisponiveisPopup),
         modosEntradaNF: overrides.modosEntradaNF ?? getMultiFilterValues("filtroEntradaNFPopup", entradaNFSelecionadosPopup, entradaNFDisponiveisPopup),
+        modosObservacao: overrides.modosObservacao ?? getMultiFilterValues("filtroObservacaoPopup", observacaoSelecionadosPopup, observacaoDisponiveisPopup),
         filtroVeiculo: overrides.filtroVeiculo ?? getVeiculoSelecionadoPopup(),
         termoDestino: overrides.termoDestino ?? normalizar(document.getElementById("searchDestinoPopup")?.value || ""),
         termoUFDestino: overrides.termoUFDestino ?? normalizar(document.getElementById("searchUFDestinoPopup")?.value || ""),
@@ -5814,6 +5937,12 @@ return null;
       return ultimoProgramado ? formatDateBRLocal(ultimoProgramado.dtPrev) : "";
     }
 
+    function notaPassaFiltroObservacaoMultiplo(n, modosObservacao) {
+      if (!Array.isArray(modosObservacao) || modosObservacao.includes("all")) return true;
+      const obsNorm = n?.observacaoFiltroNorm ?? normalizarObservacaoFiltro(n?.observacaoCalculada || "");
+      return modosObservacao.includes(obsNorm);
+    }
+
     function notaPassaContexto(n, ctx) {
       const {
         hoje,
@@ -5822,6 +5951,7 @@ return null;
         modosCriticidade,
         modosMigracao,
         modosEntradaNF,
+        modosObservacao,
         termoDestino,
         termoUFDestino,
         termoNota,
@@ -5837,23 +5967,24 @@ return null;
         const qtdSelecionados = clientesSelecionadosNorm.size;
         const filtroClienteAtivo = qtdSelecionados > 0 && qtdSelecionados < totalClientes;
         if (filtroClienteAtivo) {
-          const clienteNorm = normalizar(n.cliente || "");
+          const clienteNorm = n._clienteNorm ?? normalizar(n.cliente || "");
           if (!clientesSelecionadosNorm.has(clienteNorm)) return false;
         }
       }
 
-      if (termoDestino && !normalizar(n.destino || "").includes(termoDestino)) return false;
+      if (termoDestino && !(n._destinoNorm ?? normalizar(n.destino || "")).includes(termoDestino)) return false;
       if (termoUFDestino) {
-        const uf = normalizar(n.uf || "");
+        const uf = n._ufNorm ?? normalizar(n.uf || "");
         if (uf !== termoUFDestino) return false;
       }
-      if (termoNota && !normalizar(n.nota || "").includes(termoNota)) return false;
-      if (termoOEF && !normalizar(n.numeroOEF || "").includes(termoOEF)) return false;
+      if (termoNota && !(n._notaNorm ?? normalizar(n.nota || "")).includes(termoNota)) return false;
+      if (termoOEF && !(n._numeroOEFNorm ?? normalizar(n.numeroOEF || "")).includes(termoOEF)) return false;
 
       if (!notaPassaFiltroRangeMultiplo(n, modosDataLimite, hoje, amanha)) return false;
       if (!notaPassaFiltroCriticidadeMultiplo(n, modosCriticidade, hoje)) return false;
       if (!notaPassaFiltroMigracaoMultiplo(n, modosMigracao)) return false;
       if (!notaPassaFiltroEntradaNFMultiplo(n, modosEntradaNF)) return false;
+      if (!notaPassaFiltroObservacaoMultiplo(n, modosObservacao)) return false;
 
       return true;
     }
@@ -5878,7 +6009,9 @@ return null;
         dataLimite: new Set(["all"]),
         migracao: new Set(["all"]),
         criticidade: new Set(["all"]),
-        entradaNF: new Set(["all"])
+        entradaNF: new Set(["all"]),
+        observacao: new Set(["all"]),
+        clientes: new Set()
       };
 
       const veiculoOpcoes = ["carregado", "programado", "sem"];
@@ -5902,6 +6035,11 @@ return null;
       ];
       const criticidadeOpcoes = ["Dmais", "D0", "Dmenos1", "Dge2"];
       const entradaNFOpcoes = ["atrasoComCheckin", "atrasoSemCheckinEXW", "atrasoSemCheckinFCA", "noPrazo"];
+      const observacaoOpcoes = Array.from(new Set(Object.values(almoxPend).flatMap(info => (info.notas || []).map(n => n.observacaoFiltroNorm ?? normalizarObservacaoFiltro(n.observacaoCalculada || ""))))).sort((a, b) => {
+        if (a === OBSERVACAO_FILTRO_VAZIA) return -1;
+        if (b === OBSERVACAO_FILTRO_VAZIA) return 1;
+        return String(a).localeCompare(String(b), "pt-BR");
+      });
 
       veiculoOpcoes.forEach(valorTeste => {
         const ctx = getContextoFiltrosPopup({ filtroVeiculo: [valorTeste] });
@@ -5963,12 +6101,57 @@ return null;
         if (existe) opcoes.entradaNF.add(valorTeste);
       });
 
+      observacaoOpcoes.forEach(valorTeste => {
+        const ctx = getContextoFiltrosPopup({ modosObservacao: [valorTeste] });
+
+        const existe = Object.entries(almoxPend).some(([almox, info]) => {
+          const veiculos = almoxUltimoVeiculo[almox] || [];
+          if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctx.filtroVeiculo, ctx.hoje)) return false;
+          return (info.notas || []).some(n => notaPassaContexto(n, ctx));
+        });
+
+        if (existe) opcoes.observacao.add(valorTeste);
+      });
+
+      const ctxClientes = getContextoFiltrosPopup({ ignorarCliente: true });
+      Object.entries(almoxPend).forEach(([almox, info]) => {
+        const veiculos = almoxUltimoVeiculo[almox] || [];
+        if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctxClientes.filtroVeiculo, ctxClientes.hoje)) return;
+        (info.notas || []).forEach(n => {
+          if (!notaPassaContexto(n, ctxClientes)) return;
+          const cliente = String(n.cliente || "").trim();
+          if (cliente) opcoes.clientes.add(cliente);
+        });
+      });
+
       return opcoes;
+    }
+
+    function atualizarOpcoesFiltroObservacao(valoresDisponiveis) {
+      const select = document.getElementById("filtroObservacaoPopup");
+      if (!select) return;
+      const atuais = Array.from(select.options).map(o => o.value);
+      const desejados = ["all", ...valoresDisponiveis];
+      const precisaRecriar = atuais.length !== desejados.length || atuais.some((v, i) => v !== desejados[i]);
+      if (!precisaRecriar) return;
+      select.innerHTML = `<option value="all">📝 Observação (Todos)</option>` + valoresDisponiveis.map(valor => {
+        const label = valor === OBSERVACAO_FILTRO_VAZIA ? "(Em branco)" : String(valor || "");
+        return `<option value="${escapeHtmlAttr(valor)}">${label}</option>`;
+      }).join("");
     }
 
     function atualizarOpcoesSelectPorDisponibilidade(selectId, valoresDisponiveis, manterAll = true) {
       const select = document.getElementById(selectId);
       if (!select) return;
+
+      if (selectId === "filtroObservacaoPopup") {
+        const disponiveisOrdenados = Array.from(valoresDisponiveis).filter(v => v !== "all").sort((a, b) => {
+          if (a === OBSERVACAO_FILTRO_VAZIA) return -1;
+          if (b === OBSERVACAO_FILTRO_VAZIA) return 1;
+          return String(a).localeCompare(String(b), "pt-BR");
+        });
+        atualizarOpcoesFiltroObservacao(disponiveisOrdenados);
+      }
 
       Array.from(select.options).forEach(opt => {
         const value = opt.value;
@@ -5981,13 +6164,14 @@ return null;
         opt.hidden = false;
       });
 
-      const isCustomMulti = ["filtroDataLimitePopup", "filtroMigracaoPopup", "filtroCriticidadePopup", "filtroEntradaNFPopup"].includes(selectId);
+      const isCustomMulti = ["filtroDataLimitePopup", "filtroMigracaoPopup", "filtroCriticidadePopup", "filtroEntradaNFPopup", "filtroObservacaoPopup"].includes(selectId);
       if (isCustomMulti) {
         const mapa = {
           filtroDataLimitePopup: [RANGE_MULTI_OPTIONS, "range"],
           filtroMigracaoPopup: [MIGRACAO_MULTI_OPTIONS, "migracao"],
           filtroCriticidadePopup: [CRITICIDADE_MULTI_OPTIONS, "criticidade"],
-          filtroEntradaNFPopup: [ENTRADA_NF_MULTI_OPTIONS, "entradaNF"]
+          filtroEntradaNFPopup: [ENTRADA_NF_MULTI_OPTIONS, "entradaNF"],
+          filtroObservacaoPopup: [Array.from(select.options).map(o => o.value).filter(v => v !== "all"), "observacao"]
         };
         const [ordem, chave] = mapa[selectId];
         const disponiveis = ordem.filter(v => valoresDisponiveis.has(v));
@@ -6027,6 +6211,15 @@ return null;
             window._entradaNFAllMode = disponiveis.length > 0 && entradaNFSelecionadosPopup.size === disponiveis.length;
           }
         }
+        if (chave === "observacao") {
+          observacaoDisponiveisPopup = [...disponiveis];
+          if (window._observacaoAllMode) {
+            observacaoSelecionadosPopup = new Set(disponiveis);
+          } else {
+            observacaoSelecionadosPopup = new Set(Array.from(observacaoSelecionadosPopup).filter(v => disponiveis.includes(v)));
+            window._observacaoAllMode = disponiveis.length > 0 && observacaoSelecionadosPopup.size === disponiveis.length;
+          }
+        }
       }
 
       if (select.multiple) {
@@ -6052,10 +6245,13 @@ return null;
           prefixo: "🔄 Migração", selectId: "filtroMigracaoPopup", triggerTextId: "migracaoFilterTriggerText", countId: "migracaoFilterCount", checkAllId: "migracaoCheckAll", searchId: "migracaoFilterSearch", listId: "migracaoFilterList", boxId: "migracaoFilterBox", dropdownId: "migracaoFilterDropdown", closeId: "btnMigracaoFilterClose", emptyText: "Nenhuma migração encontrada", disponiveisRef: () => migracaoDisponiveisPopup, selecionadosRef: () => migracaoSelecionadosPopup, setSelecionados: v => migracaoSelecionadosPopup = v, setAllMode: v => window._migracaoAllMode = v
         },
         criticidade: {
-          prefixo: "🚦 Criticidade NF", selectId: "filtroCriticidadePopup", triggerTextId: "criticidadeFilterTriggerText", countId: "criticidadeFilterCount", checkAllId: "criticidadeCheckAll", searchId: "criticidadeFilterSearch", listId: "criticidadeFilterList", boxId: "criticidadeFilterBox", dropdownId: "criticidadeFilterDropdown", closeId: "btnCriticidadeFilterClose", emptyText: "Nenhuma criticidade encontrada", disponiveisRef: () => criticidadeDisponiveisPopup, selecionadosRef: () => criticidadeSelecionadosPopup, setSelecionados: v => criticidadeSelecionadosPopup = v, setAllMode: v => window._criticidadeAllMode = v
+          prefixo: "🚦 Criticidade", selectId: "filtroCriticidadePopup", triggerTextId: "criticidadeFilterTriggerText", countId: "criticidadeFilterCount", checkAllId: "criticidadeCheckAll", searchId: "criticidadeFilterSearch", listId: "criticidadeFilterList", boxId: "criticidadeFilterBox", dropdownId: "criticidadeFilterDropdown", closeId: "btnCriticidadeFilterClose", emptyText: "Nenhuma criticidade encontrada", disponiveisRef: () => criticidadeDisponiveisPopup, selecionadosRef: () => criticidadeSelecionadosPopup, setSelecionados: v => criticidadeSelecionadosPopup = v, setAllMode: v => window._criticidadeAllMode = v
         },
         entradaNF: {
           prefixo: "⏱ Entrada NF", selectId: "filtroEntradaNFPopup", triggerTextId: "entradaNFFilterTriggerText", countId: "entradaNFFilterCount", checkAllId: "entradaNFCheckAll", searchId: "entradaNFFilterSearch", listId: "entradaNFFilterList", boxId: "entradaNFFilterBox", dropdownId: "entradaNFFilterDropdown", closeId: "btnEntradaNFFilterClose", emptyText: "Nenhuma classificação encontrada", disponiveisRef: () => entradaNFDisponiveisPopup, selecionadosRef: () => entradaNFSelecionadosPopup, setSelecionados: v => entradaNFSelecionadosPopup = v, setAllMode: v => window._entradaNFAllMode = v
+        },
+        observacao: {
+          prefixo: "📝 Observação", selectId: "filtroObservacaoPopup", triggerTextId: "observacaoFilterTriggerText", countId: "observacaoFilterCount", checkAllId: "observacaoCheckAll", searchId: "observacaoFilterSearch", listId: "observacaoFilterList", boxId: "observacaoFilterBox", dropdownId: "observacaoFilterDropdown", closeId: "btnObservacaoFilterClose", emptyText: "Nenhuma observação encontrada", disponiveisRef: () => observacaoDisponiveisPopup, selecionadosRef: () => observacaoSelecionadosPopup, setSelecionados: v => observacaoSelecionadosPopup = v, setAllMode: v => window._observacaoAllMode = v
         }
       }[tipo];
     }
@@ -6122,7 +6318,8 @@ return null;
       list.innerHTML = filtradas.map(opt => {
         const checked = cfg.selecionadosRef().has(opt.value) ? "checked" : "";
         const id = `${tipo}_${opt.value.replace(/[^A-Za-z0-9]/g, "_")}`;
-        return `<label class="clientCheckItem" for="${id}"><input type="checkbox" id="${id}" value="${opt.value.replace(/"/g, "&quot;")}" ${checked} onchange="onMultiFilterCheckboxChange('${tipo}', this)"><span>${opt.textContent.trim()}</span></label>`;
+        const label = (tipo === "observacao" && opt.value === OBSERVACAO_FILTRO_VAZIA) ? "(Em branco)" : opt.textContent.trim();
+        return `<label class="clientCheckItem" for="${id}" onclick="event.stopPropagation()"><input type="checkbox" id="${id}" value="${escapeHtmlAttr(opt.value)}" ${checked} onclick="event.stopPropagation()" onchange="onMultiFilterCheckboxChange('${tipo}', this)"><span>${label}</span></label>`;
       }).join("");
       atualizarContadorFiltroMulti(tipo);
     }
@@ -6155,7 +6352,7 @@ return null;
     }
 
     function bindMultiFilterEvents() {
-      ["range", "migracao", "criticidade", "entradaNF"].forEach(tipo => {
+      ["range", "migracao", "criticidade", "entradaNF", "observacao"].forEach(tipo => {
         const cfg = getMultiFilterConfig(tipo);
         const trigger = document.getElementById(`${tipo}FilterTrigger`);
         const dropdown = document.getElementById(cfg.dropdownId);
@@ -6166,6 +6363,11 @@ return null;
         if (trigger && !trigger.dataset.bound) {
           trigger.dataset.bound = "1";
           trigger.addEventListener("click", (e) => { e.stopPropagation(); dropdown?.classList.toggle("open"); });
+        }
+        if (dropdown && !dropdown.dataset.boundStop) {
+          dropdown.dataset.boundStop = "1";
+          dropdown.addEventListener("click", (e) => e.stopPropagation());
+          dropdown.addEventListener("mousedown", (e) => e.stopPropagation());
         }
         if (btnClose && !btnClose.dataset.bound) {
           btnClose.dataset.bound = "1";
@@ -6193,10 +6395,16 @@ return null;
       atualizarOpcoesSelectPorDisponibilidade("filtroMigracaoPopup", opcoes.migracao, true);
       atualizarOpcoesSelectPorDisponibilidade("filtroCriticidadePopup", opcoes.criticidade, true);
       atualizarOpcoesSelectPorDisponibilidade("filtroEntradaNFPopup", opcoes.entradaNF, true);
+      atualizarOpcoesSelectPorDisponibilidade("filtroObservacaoPopup", opcoes.observacao, true);
+
+      const clientesDisponiveisOrdenados = Array.from(opcoes.clientes).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      inicializarFiltroClientesPopup(clientesDisponiveisOrdenados);
+
       renderMultiFilterList("range");
       renderMultiFilterList("migracao");
       renderMultiFilterList("criticidade");
       renderMultiFilterList("entradaNF");
+      renderMultiFilterList("observacao");
     }
 
   </script>
@@ -6216,6 +6424,9 @@ return null;
           </button>
           <button class="btn secondary" id="btnRelatorioExcel" type="button">
             📊 Relatório Excel
+          </button>
+          <button class="btn secondary" id="btnRelatorioExcelSimplificado" type="button">
+            🧾 Excel Simplificado
           </button>
           <button class="btn" id="btnSalvarTudo" type="button">
             💾 Salvar tudo
@@ -6292,7 +6503,7 @@ return null;
         </div>
         <div class="clientFilterBox" id="criticidadeFilterBox">
           <button class="clientFilterTrigger" id="criticidadeFilterTrigger" type="button">
-            <span id="criticidadeFilterTriggerText">🚦 Criticidade NF (Todos)</span>
+            <span id="criticidadeFilterTriggerText">🚦 Criticidade (Todos)</span>
             <span>▾</span>
           </button>
           <div class="clientFilterDropdown" id="criticidadeFilterDropdown">
@@ -6360,6 +6571,26 @@ return null;
               <button class="btn secondary" id="btnClientFilterClose" type="button">Fechar</button>
             </div>
           </div>
+        </div>
+        <div class="clientFilterBox" id="observacaoFilterBox">
+          <button class="clientFilterTrigger" id="observacaoFilterTrigger" type="button">
+            <span id="observacaoFilterTriggerText">📝 Observação (Todos)</span>
+            <span>▾</span>
+          </button>
+          <div class="clientFilterDropdown" id="observacaoFilterDropdown">
+            <div class="clientFilterHead">
+              <input class="clientFilterSearch" id="observacaoFilterSearch" placeholder="Pesquisar observação..." type="text" />
+              <div class="clientFilterActions">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input id="observacaoCheckAll" type="checkbox" /><span>Selecionar todos</span></label>
+                <span id="observacaoFilterCount">0 selecionados</span>
+              </div>
+            </div>
+            <div class="clientFilterList" id="observacaoFilterList"></div>
+            <div class="clientFilterFooter"><button class="btn secondary" id="btnObservacaoFilterClose" type="button">Fechar</button></div>
+          </div>
+          <select id="filtroObservacaoPopup" multiple="" size="8" style="display:none;">
+            <option value="all">📝 Observação (Todos)</option>
+          </select>
         </div>
         <button class="btn secondary" id="btnDateFilterPopup" title="Selecionar datas da análise" type="button">
           📅
