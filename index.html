@@ -2728,10 +2728,15 @@
       const dtEntrada = toDateOnlyBrasilia(nota?.entrada);
       const dtMaior = maiorDataEntradaOuCheckin(dtCheck, dtEntrada);
       const veiculosConsiderados = filtrarVeiculosParaObservacao(veiculos);
+      const dtLimEmbarque = toDateOnlyBrasilia(nota?.dtLim);
+      const hoje = toDateOnlyBrasilia(new Date());
 
       if (!dtMaior) return "";
 
-      if (temCarregamentoAposData(veiculosConsiderados, dtMaior)) {
+      const nfVencida = !!(dtLimEmbarque && hoje && dtLimEmbarque < hoje);
+
+      // "NÃO FOI CARREGADO" somente para NF vencida
+      if (nfVencida && temCarregamentoAposData(veiculosConsiderados, dtMaior)) {
         return "TEVE CARRO E NÃO FOI CARREGADO";
       }
 
@@ -2744,7 +2749,6 @@
 
       if (dtEntrada && dtMaior.getTime() === dtEntrada.getTime()) {
         if (!temCarregamentoAposData(veiculosConsiderados, dtEntrada)) {
-          const dtLimEmbarque = toDateOnlyBrasilia(nota?.dtLim);
           if (dtLimEmbarque && dtEntrada >= dtLimEmbarque) {
             const incotermNorm = normalizar(nota?.incoterms || "");
             if (incotermNorm === "EXW") return "ATRASO DE COLETA";
