@@ -1055,7 +1055,10 @@
 
     window.statusHojeServidor = window.statusHojeServidor || {};
     window.obsHojeServidor = window.obsHojeServidor || {};
+    window.idHojeServidor = window.idHojeServidor || {};
     window._cacheHojeISO = window._cacheHojeISO || "";
+
+    window.idDrafts = window.idDrafts || {};
 
 
     window.obsDrafts = window.obsDrafts || {};
@@ -1079,7 +1082,8 @@
       if (!force && window._cacheHojeISO === hoje) {
         return {
           obs: window.obsHojeServidor || {},
-          status: window.statusHojeServidor || {}
+          status: window.statusHojeServidor || {},
+          ids: window.idHojeServidor || {}
         };
       }
 
@@ -1092,7 +1096,7 @@
         try { json = JSON.parse(raw); }
         catch {
           console.warn("Apps Script não retornou JSON:", raw);
-          return { obs: {}, status: {} };
+          return { obs: {}, status: {}, ids: {} };
         }
 
         if (!json || !json.ok) {
@@ -1102,6 +1106,7 @@
 
         const mapaObs = {};
         const mapaStatus = {};
+        const mapaId = {};
 
         if (Array.isArray(json.data)) {
           json.data.forEach(row => {
@@ -1113,8 +1118,11 @@
             const stRaw = row.StatusVeiculo || row.statusVeiculo || row.STATUSVEICULO || "";
             const st = parseStatus(stRaw);
 
+            const idVinculado = String(row.ID || row.Id || row.id || "").trim();
+
             mapaObs[voc] = obs;
             mapaStatus[voc] = st;
+            mapaId[voc] = idVinculado;
           });
         }
 
@@ -1122,8 +1130,9 @@
         window._cacheHojeISO = hoje;
         window.obsHojeServidor = mapaObs;
         window.statusHojeServidor = mapaStatus;
+        window.idHojeServidor = mapaId;
 
-        return { obs: mapaObs, status: mapaStatus };
+        return { obs: mapaObs, status: mapaStatus, ids: mapaId };
 
       } catch (e) {
         console.warn("Erro ao buscar obs/status hoje:", e);
@@ -1153,7 +1162,7 @@
 
         const sel = getStatusSelect(vocNorm);
         if (sel) sel.value = st;
-
+        toggleIdField(vocNorm, st);
 
         const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
         if (badgeDiv) {
@@ -2881,6 +2890,44 @@
       const almoxKeys = Object.keys(almoxPendBase);
       const almoxRegexCache = {};
 
+      function getIdVinculadoAtualVocativo(almox) {
+        const vocNorm = normalizar(almox);
+
+        if (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm)) {
+          return String(window.idDrafts[vocNorm] || "").trim();
+        }
+
+        const input = document.querySelector(`input[data-id-vocativo="${vocNorm}"]`);
+        if (input) {
+          return String(input.value || "").trim();
+        }
+
+        return String(window.idHojeServidor?.[vocNorm] || "").trim();
+      }
+
+      function localizarVeiculoPorIdVinculado(idInformado) {
+        const idNorm = normalizar(idInformado);
+        if (!idNorm) return null;
+
+        const row = (dataRows || []).find(r => normalizar(r["ID"] || "") === idNorm);
+        if (!row) return null;
+
+        const dtPrev = parsePossibleDate(row["DT. PREVISÃO"]);
+        if (!dtPrev) return null;
+
+        return {
+          dtPrev,
+          dtCarreg: parsePossibleDate(row["DT. CARREGAMENTO"]),
+          dtEntrega: row["DT. ENTREGA"] || "",
+          veiculoSolicitado: row["VEÍCULO SOLICITADO"] || "",
+          destinos: row["DESTINOS"] || "",
+          id: row["ID"] || "",
+          refs: row["REFERENCIAS"] || "",
+          modalidade: getFieldValue(row, ["MODALIDADE", "Modalidade"]) || "",
+          _idVinculadoManual: true
+        };
+      }
+
       almoxKeys.forEach(almox => {
         const almoxSafe = almox.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         almoxRegexCache[almox] = new RegExp(`(^|[^A-Z0-9])${almoxSafe}([^A-Z0-9]|$)`);
@@ -2911,6 +2958,26 @@
             modalidade: getFieldValue(row, ["MODALIDADE", "Modalidade"]) || ""
           });
         });
+      });
+
+      almoxKeys.forEach(almox => {
+        const idVinculadoAtual = getIdVinculadoAtualVocativo(almox);
+        if (!idVinculadoAtual) return;
+
+        const veiculoVinculado = localizarVeiculoPorIdVinculado(idVinculadoAtual);
+        if (!veiculoVinculado) return;
+
+        if (!almoxUltimoVeiculo[almox]) almoxUltimoVeiculo[almox] = [];
+
+        const jaExiste = almoxUltimoVeiculo[almox].some(v => {
+          const mesmoId = normalizar(v?.id || "") === normalizar(veiculoVinculado.id || "");
+          const mesmaPrev = (parsePossibleDate(v?.dtPrev)?.getTime?.() || 0) === (parsePossibleDate(veiculoVinculado.dtPrev)?.getTime?.() || 0);
+          return mesmoId && mesmaPrev;
+        });
+
+        if (!jaExiste) {
+          almoxUltimoVeiculo[almox].push(veiculoVinculado);
+        }
       });
 
       Object.keys(almoxUltimoVeiculo).forEach(almox => {
@@ -4318,6 +4385,8 @@ return null;
       <option value="PROGRAMADO">🟢 PROGRAMADO</option>
       <option value="NAO PROGRAMADO">🔴 NÃO PROGRAMADO</option>
     </select>
+
+
   </div>
 </div>
 
@@ -4782,8 +4851,9 @@ return null;
         }
 
 
+        await carregarObsEStatusHojeCache(true);
         await carregarObservacoesHojeEPreencher();
-
+        await listarAlmoxPendentes();
 
       } catch (e) {
         alert("❌ Erro ao salvar: " + e.message);
@@ -4792,7 +4862,7 @@ return null;
         savingAll = false;
       }
     }
-    function montarRegistroVocativo(voc) {
+    function montarRegistroVocativo(voc, overrides = {}) {
       const vocNorm = normalizar(voc);
       const t = document.querySelector(`textarea[data-vocativo="${vocNorm}"]`);
       const observacao = (t?.value || "").trim();
@@ -4800,7 +4870,29 @@ return null;
 
       const s = snapshotVocativos[vocNorm] || snapshotVocativos[voc] || {};
       const sel = getStatusSelect(vocNorm);
-      const statusAtual = sel?.value || (window.statusDrafts?.[vocNorm]) || s.StatusVeiculo || "NAO PROGRAMADO";
+      const hasStatusOverride = Object.prototype.hasOwnProperty.call(overrides || {}, "status");
+      const statusAtual = hasStatusOverride
+        ? ((overrides.status === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO")
+        : ((window.statusDrafts?.[vocNorm]) || sel?.value || s.StatusVeiculo || "NAO PROGRAMADO");
+      const hasIdOverride = Object.prototype.hasOwnProperty.call(overrides || {}, "id");
+      const idInput = getIdInput(vocNorm);
+      const idDraftExiste = !!(window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm));
+      const idAtual = statusAtual === "PROGRAMADO"
+        ? String(
+            hasIdOverride
+              ? (overrides.id || "")
+              : (idDraftExiste ? window.idDrafts[vocNorm] : (idInput?.value || window.idHojeServidor?.[vocNorm] || ""))
+          ).trim()
+        : "";
+
+      if (statusAtual === "PROGRAMADO") {
+        if (!idAtual) {
+          throw new Error(`O vocativo ${vocNorm} está PROGRAMADO e exige um ID do veículo.`);
+        }
+        if (!buscarVeiculoPorId(idAtual)) {
+          throw new Error(`O ID ${idAtual} do vocativo ${vocNorm} não foi encontrado na planilha Veículos Carregados.`);
+        }
+      }
 
       return {
         DataRef: hojeISO(),
@@ -4813,32 +4905,33 @@ return null;
         Vencendo_hoje: Number(s.Vencendo_hoje || 0),
         Vencendo_amanhã: Number(s.Vencendo_amanhã || 0),
         NFsEntradaAntesUltimoCarregamento: Number(s.NFsEntradaAntesUltimoCarregamento || 0),
-        Observacao: observacao
+        Observacao: observacao,
+        ID: idAtual
       };
     }
 
-    async function salvarVocativo(voc, ev) {
+    async function salvarVocativo(voc, ev, options = {}) {
       if (ev) { ev.preventDefault(); ev.stopPropagation(); }
 
       const vocNorm = normalizar(voc);
       if (!vocNorm || !snapshotVocativos[vocNorm]) {
-        alert("Vocativo inválido/indisponível.");
-        return;
+        if (!options.silent) alert("Vocativo inválido/indisponível.");
+        return false;
       }
 
-      if (savingVoc.has(vocNorm)) return;
+      if (savingVoc.has(vocNorm)) return false;
       savingVoc.add(vocNorm);
-
 
       const btn = ev?.currentTarget || null;
       lockButton(btn, true, "Salvando...");
 
       try {
+        const registroAtual = montarRegistroVocativo(vocNorm, options.recordOverrides || {});
         const payload = {
           action: "upsertHoje",
           token: APPS_SCRIPT_TOKEN,
           dataRef: hojeISO(),
-          registros: [montarRegistroVocativo(vocNorm)]
+          registros: [registroAtual]
         };
 
         const body = new URLSearchParams();
@@ -4853,29 +4946,41 @@ return null;
         const texto = await response.text();
         console.log("Servidor:", texto);
 
-
         if (!response.ok) {
           throw new Error(`HTTP ${response.status} - ${texto}`);
         }
 
-
-
         const t = document.querySelector(`textarea[data-vocativo="${vocNorm}"]`);
         const obs = (t?.value || "").trim();
-
+        const registroSalvo = montarRegistroVocativo(vocNorm, options.recordOverrides || {});
+        const statusSalvo = registroSalvo.StatusVeiculo || "NAO PROGRAMADO";
+        const idSalvo = String(registroSalvo.ID || "").trim();
 
         window.obsDrafts = window.obsDrafts || {};
-
-        window.statusDrafts = window.statusDrafts || {};
-        window.obsDrafts[vocNorm] = obs;
-
         window.obsHojeOriginal = window.obsHojeOriginal || {};
+        window.statusDrafts = window.statusDrafts || {};
+        window.statusHojeServidor = window.statusHojeServidor || {};
+        window.idDrafts = window.idDrafts || {};
+        window.idHojeServidor = window.idHojeServidor || {};
+
+        window.obsDrafts[vocNorm] = obs;
         window.obsHojeOriginal[vocNorm] = obs;
+        window.statusDrafts[vocNorm] = statusSalvo;
+        window.statusHojeServidor[vocNorm] = statusSalvo;
+        window.idDrafts[vocNorm] = idSalvo;
+        window.idHojeServidor[vocNorm] = idSalvo;
 
+        if (snapshotVocativos[vocNorm]) {
+          snapshotVocativos[vocNorm].StatusVeiculo = statusSalvo;
+        }
 
+        window.__analiseProgramacaoCache = null;
+        await listarAlmoxPendentes();
+        return true;
 
       } catch (e) {
-        alert("❌ Erro ao salvar: " + e.message);
+        if (!options.silent) alert("❌ Erro ao salvar: " + e.message);
+        return false;
       } finally {
         lockButton(btn, false);
         savingVoc.delete(vocNorm);
@@ -4906,6 +5011,7 @@ return null;
 
         const mapa = {};
         const mapaStatus = {};
+        const mapaIds = {};
 
         if (Array.isArray(json.data)) {
           json.data.forEach(row => {
@@ -4914,20 +5020,23 @@ return null;
 
             const stRaw = row.StatusVeiculo || row.statusVeiculo || row.STATUSVEICULO || "";
             const st = parseStatus(stRaw);
+            const idVinculado = String(row.ID || row.Id || row.id || "").trim();
 
             if (voc) {
               mapa[voc] = obs;
               mapaStatus[voc] = st;
+              mapaIds[voc] = idVinculado;
             }
           });
         }
 
 
         window.obsHojeOriginal = { ...mapa };
-
+        window.idHojeServidor = { ...mapaIds };
 
         aplicarObservacoesNoDOM(mapa);
         aplicarStatusNoDOM(mapaStatus);
+        aplicarIdsNoDOM(mapaIds);
 
       } catch (e) {
         console.warn("Erro ao carregar observações do dia:", e);
@@ -4936,6 +5045,70 @@ return null;
 
     function getStatusSelect(vocNorm) {
       return document.querySelector(`select[data-status-vocativo="${vocNorm}"]`);
+    }
+
+    function getIdInput(vocNorm) {
+      return document.querySelector(`input[data-id-vocativo="${vocNorm}"]`);
+    }
+
+    function buscarVeiculoPorId(idInformado) {
+      const idNorm = normalizar(idInformado);
+      if (!idNorm) return null;
+
+      const row = (dataRows || []).find(r => normalizar(r["ID"] || "") === idNorm);
+      if (!row) return null;
+
+      const dtPrev = parsePossibleDate(row["DT. PREVISÃO"]);
+      if (!dtPrev) return null;
+
+      return row;
+    }
+
+    function obterIdObrigatorioProgramado(vocNorm, idInicial = "") {
+      let tentativa = String(idInicial || "").trim();
+
+      while (true) {
+        const valor = window.prompt(`Informe o ID do veículo para marcar o vocativo ${vocNorm} como PROGRAMADO:`, tentativa);
+        if (valor === null) return null;
+
+        tentativa = String(valor || "").trim();
+        if (!tentativa) {
+          alert("Para definir como PROGRAMADO, o ID do veículo é obrigatório.");
+          continue;
+        }
+
+        const veiculo = buscarVeiculoPorId(tentativa);
+        if (!veiculo) {
+          alert("ID não encontrado na planilha Veículos Carregados ou sem DT. PREVISÃO válida.");
+          continue;
+        }
+
+        return String(veiculo["ID"] || tentativa).trim();
+      }
+    }
+
+    function toggleIdField(vocNorm, status) {
+      return;
+    }
+
+    function onIdVinculadoInput(vocNorm, value) {
+      window.idDrafts = window.idDrafts || {};
+      const id = String(value || "").trim();
+      window.idDrafts[vocNorm] = id;
+      if (window.statusDrafts?.[vocNorm] === "PROGRAMADO" && buscarVeiculoPorId(id)) {
+        window.__analiseProgramacaoCache = null;
+      }
+    }
+
+    function aplicarIdsNoDOM(mapaIds) {
+      Object.keys(mapaIds || {}).forEach(voc => {
+        const vocNorm = normalizar(voc);
+        if (!vocNorm) return;
+        if (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm)) return;
+
+        const input = getIdInput(vocNorm);
+        if (input) input.value = String(mapaIds[voc] || "").trim();
+      });
     }
 
     function renderStatusBadge(status, temCarregadoHoje) {
@@ -4971,26 +5144,90 @@ return null;
     }
 
 
-    function onStatusManualChange(vocNorm, value, ev) {
+    async function onStatusManualChange(vocNorm, value, ev) {
       if (ev) { ev.preventDefault(); ev.stopPropagation(); }
 
+      const sel = getStatusSelect(vocNorm);
+      const statusAnterior = (window.statusDrafts && Object.prototype.hasOwnProperty.call(window.statusDrafts, vocNorm))
+        ? window.statusDrafts[vocNorm]
+        : (window.statusHojeServidor?.[vocNorm] || snapshotVocativos?.[vocNorm]?.StatusVeiculo || "NAO PROGRAMADO");
+      const idAnterior = String(
+        (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm))
+          ? window.idDrafts[vocNorm]
+          : (window.idHojeServidor?.[vocNorm] || getIdInput(vocNorm)?.value || "")
+      ).trim();
       const status = (value === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO";
 
+      let idConfirmado = idAnterior;
+
+      if (status === "PROGRAMADO") {
+        idConfirmado = obterIdObrigatorioProgramado(vocNorm, idConfirmado);
+        if (idConfirmado === null) {
+          if (sel) sel.value = statusAnterior;
+          toggleIdField(vocNorm, statusAnterior);
+          return;
+        }
+      }
 
       window.statusDrafts = window.statusDrafts || {};
-      window.statusDrafts[vocNorm] = status;
-
-
+      window.idDrafts = window.idDrafts || {};
       snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
+
+      window.statusDrafts[vocNorm] = status;
       snapshotVocativos[vocNorm].StatusVeiculo = status;
 
+      window.idHojeServidor = window.idHojeServidor || {};
+
+      if (status === "PROGRAMADO") {
+        window.idDrafts[vocNorm] = idConfirmado;
+        window.idHojeServidor[vocNorm] = idConfirmado;
+        const input = getIdInput(vocNorm);
+        if (input) input.value = idConfirmado;
+      } else {
+        window.idDrafts[vocNorm] = "";
+        window.idHojeServidor[vocNorm] = "";
+        const inputExistente = getIdInput(vocNorm);
+        if (inputExistente) inputExistente.value = "";
+      }
 
       const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
       if (badgeDiv) {
         const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
         badgeDiv.innerHTML = renderStatusBadge(status, temCarregadoHoje);
       }
-      listarAlmoxPendentes();
+
+      toggleIdField(vocNorm, status);
+      window.__analiseProgramacaoCache = null;
+      await listarAlmoxPendentes();
+
+      const salvou = await salvarVocativo(vocNorm, null, {
+        silent: false,
+        recordOverrides: {
+          status,
+          id: status === "PROGRAMADO" ? idConfirmado : ""
+        }
+      });
+      if (salvou) return;
+
+      window.statusDrafts[vocNorm] = statusAnterior;
+      window.idDrafts[vocNorm] = idAnterior;
+      window.idHojeServidor = window.idHojeServidor || {};
+      window.idHojeServidor[vocNorm] = idAnterior;
+      snapshotVocativos[vocNorm].StatusVeiculo = statusAnterior;
+
+      if (sel) sel.value = statusAnterior;
+
+      const inputRevert = getIdInput(vocNorm);
+      if (inputRevert) inputRevert.value = idAnterior;
+
+      if (badgeDiv) {
+        const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
+        badgeDiv.innerHTML = renderStatusBadge(statusAnterior, temCarregadoHoje);
+      }
+
+      toggleIdField(vocNorm, statusAnterior);
+      window.__analiseProgramacaoCache = null;
+      await listarAlmoxPendentes();
     }
 
 
@@ -5017,7 +5254,7 @@ return null;
 
         snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
         snapshotVocativos[vocNorm].StatusVeiculo = statusServidor;
-
+        toggleIdField(vocNorm, window.statusDrafts?.[vocNorm] || statusServidor);
 
         const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
         if (badgeDiv) {
@@ -5449,39 +5686,6 @@ return null;
     }
 
 
-    function getStatusProgramacaoAtualRelatorioSimplificado(row) {
-      const vocNorm = normalizar(row?.Vocativo || "");
-      const sel = vocNorm ? document.querySelector(`select[data-status-vocativo="${vocNorm}"]`) : null;
-      const programacaoOriginal = String(row?.Programacao || "").trim();
-      const programacaoOriginalUpper = programacaoOriginal.toUpperCase();
-      const statusAtual =
-        sel?.value ||
-        window.statusDrafts?.[vocNorm] ||
-        snapshotVocativos?.[vocNorm]?.StatusVeiculo ||
-        row?.StatusVeiculo ||
-        (programacaoOriginalUpper.includes("PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO");
-
-      if (statusAtual === "PROGRAMADO") {
-        if (programacaoOriginalUpper.startsWith("PROGRAMADO PARA")) {
-          return programacaoOriginal;
-        }
-        return "PROGRAMADO";
-      }
-
-      return "NÃO PROGRAMADO";
-    }
-
-    function getObservacaoVocativoAtualRelatorioSimplificado(row) {
-      const vocNorm = normalizar(row?.Vocativo || "");
-      const t = vocNorm ? document.querySelector(`textarea[data-vocativo="${vocNorm}"]`) : null;
-      return (
-        (t?.value || "").trim() ||
-        (window.obsDrafts?.[vocNorm] || "").trim() ||
-        (window.obsHojeServidor?.[vocNorm] || "").trim() ||
-        ""
-      );
-    }
-
     function exportarRelatorioExcelNotasSimplificado() {
       const report = getAnaliseReportData();
       if (!report) return;
@@ -5498,8 +5702,7 @@ return null;
         "DT. LIMITE EMBARQUE": r.DtLimiteEmbarque || "",
         "DT. LIMITE ENTREGA": r.DtFinalEntrega || "",
         "OBSERVAÇÃO": r.Observacao || "",
-        "OBSERVAÇÃO VOCATIVO": getObservacaoVocativoAtualRelatorioSimplificado(r),
-        "PROGRAMAÇÃO": getStatusProgramacaoAtualRelatorioSimplificado(r)
+        "PROGRAMAÇÃO": r.Programacao || ""
       }));
 
       const wb = XLSX.utils.book_new();
@@ -5519,7 +5722,6 @@ return null;
               "DT. LIMITE EMBARQUE": "",
               "DT. LIMITE ENTREGA": "",
               "OBSERVAÇÃO": "",
-              "OBSERVAÇÃO VOCATIVO": "",
               "PROGRAMAÇÃO": ""
             }]
       );
