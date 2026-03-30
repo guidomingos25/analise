@@ -5449,6 +5449,39 @@ return null;
     }
 
 
+    function getStatusProgramacaoAtualRelatorioSimplificado(row) {
+      const vocNorm = normalizar(row?.Vocativo || "");
+      const sel = vocNorm ? document.querySelector(`select[data-status-vocativo="${vocNorm}"]`) : null;
+      const programacaoOriginal = String(row?.Programacao || "").trim();
+      const programacaoOriginalUpper = programacaoOriginal.toUpperCase();
+      const statusAtual =
+        sel?.value ||
+        window.statusDrafts?.[vocNorm] ||
+        snapshotVocativos?.[vocNorm]?.StatusVeiculo ||
+        row?.StatusVeiculo ||
+        (programacaoOriginalUpper.includes("PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO");
+
+      if (statusAtual === "PROGRAMADO") {
+        if (programacaoOriginalUpper.startsWith("PROGRAMADO PARA")) {
+          return programacaoOriginal;
+        }
+        return "PROGRAMADO";
+      }
+
+      return "NÃO PROGRAMADO";
+    }
+
+    function getObservacaoVocativoAtualRelatorioSimplificado(row) {
+      const vocNorm = normalizar(row?.Vocativo || "");
+      const t = vocNorm ? document.querySelector(`textarea[data-vocativo="${vocNorm}"]`) : null;
+      return (
+        (t?.value || "").trim() ||
+        (window.obsDrafts?.[vocNorm] || "").trim() ||
+        (window.obsHojeServidor?.[vocNorm] || "").trim() ||
+        ""
+      );
+    }
+
     function exportarRelatorioExcelNotasSimplificado() {
       const report = getAnaliseReportData();
       if (!report) return;
@@ -5465,7 +5498,8 @@ return null;
         "DT. LIMITE EMBARQUE": r.DtLimiteEmbarque || "",
         "DT. LIMITE ENTREGA": r.DtFinalEntrega || "",
         "OBSERVAÇÃO": r.Observacao || "",
-        "PROGRAMAÇÃO": r.Programacao || ""
+        "OBSERVAÇÃO VOCATIVO": getObservacaoVocativoAtualRelatorioSimplificado(r),
+        "PROGRAMAÇÃO": getStatusProgramacaoAtualRelatorioSimplificado(r)
       }));
 
       const wb = XLSX.utils.book_new();
@@ -5485,6 +5519,7 @@ return null;
               "DT. LIMITE EMBARQUE": "",
               "DT. LIMITE ENTREGA": "",
               "OBSERVAÇÃO": "",
+              "OBSERVAÇÃO VOCATIVO": "",
               "PROGRAMAÇÃO": ""
             }]
       );
