@@ -1056,6 +1056,7 @@
     window.statusHojeServidor = window.statusHojeServidor || {};
     window.obsHojeServidor = window.obsHojeServidor || {};
     window.idHojeServidor = window.idHojeServidor || {};
+    window.idsHistoricosServidor = window.idsHistoricosServidor || {};
     window._cacheHojeISO = window._cacheHojeISO || "";
 
     window.idDrafts = window.idDrafts || {};
@@ -1074,6 +1075,20 @@
 
     let savingAll = false;
     const savingVoc = new Set();
+    const filaSalvarVocativo = new Map();
+    const filaSalvarVocativoEmExecucao = new Set();
+    const versaoMudancaVocativo = new Map();
+    let filaRenderAnalise = Promise.resolve();
+    let sequenciaRenderAnalise = 0;
+
+    function agendarListarAlmoxPendentes() {
+      const minhaSequencia = ++sequenciaRenderAnalise;
+      filaRenderAnalise = filaRenderAnalise
+        .catch(() => {})
+        .then(() => listarAlmoxPendentes(minhaSequencia));
+      return filaRenderAnalise;
+    }
+
 
     async function carregarObsEStatusHojeCache(force = false) {
       const hoje = hojeISO();
@@ -1127,16 +1142,59 @@
         }
 
 
-        window._cacheHojeISO = hoje;
-        window.obsHojeServidor = mapaObs;
-        window.statusHojeServidor = mapaStatus;
-        window.idHojeServidor = mapaId;
+        const estadoMesclado = aplicarOverridesLocaisNoEstadoHoje(mapaObs, mapaStatus, mapaId);
 
-        return { obs: mapaObs, status: mapaStatus, ids: mapaId };
+        window._cacheHojeISO = hoje;
+        window.obsHojeServidor = estadoMesclado.obs;
+        window.statusHojeServidor = estadoMesclado.status;
+        window.idHojeServidor = estadoMesclado.ids;
+
+        return { obs: estadoMesclado.obs, status: estadoMesclado.status, ids: estadoMesclado.ids };
 
       } catch (e) {
         console.warn("Erro ao buscar obs/status hoje:", e);
         return { obs: {}, status: {} };
+      }
+    }
+
+    async function carregarIdsHistoricosVinculados(force = false) {
+      try {
+        if (!force && window.idsHistoricosServidor && Object.keys(window.idsHistoricosServidor).length) {
+          return window.idsHistoricosServidor;
+        }
+
+        const url = `${APPS_SCRIPT_URL}?action=idsHistoricos&token=${encodeURIComponent(APPS_SCRIPT_TOKEN)}&t=${Date.now()}`;
+        const resp = await fetch(url, { cache: "no-store" });
+        const raw = await resp.text();
+
+        let json;
+        try { json = JSON.parse(raw); }
+        catch {
+          console.warn("Apps Script não retornou JSON válido para idsHistoricos:", raw);
+          return {};
+        }
+
+        if (!json || !json.ok || !Array.isArray(json.data)) {
+          console.warn("Apps Script retornou idsHistoricos inválido:", json);
+          return {};
+        }
+
+        const mapa = {};
+        json.data.forEach(row => {
+          const voc = normalizar(row.Vocativo || row.vocativo || row.VOCATIVO || "");
+          const id = String(row.ID || row.Id || row.id || "").trim();
+          if (!voc || !id) return;
+          if (!mapa[voc]) mapa[voc] = [];
+          if (!mapa[voc].some(x => normalizar(x) === normalizar(id))) {
+            mapa[voc].push(id);
+          }
+        });
+
+        window.idsHistoricosServidor = mapa;
+        return mapa;
+      } catch (e) {
+        console.warn("Erro ao buscar ids históricos:", e);
+        return {};
       }
     }
 
@@ -1149,7 +1207,58 @@
       });
     }
 
+    function aplicarOverridesLocaisNoEstadoHoje(mapaObs = {}, mapaStatus = {}, mapaId = {}) {
+      window.obsDrafts = window.obsDrafts || {};
+      window.statusDrafts = window.statusDrafts || {};
+      window.idDrafts = window.idDrafts || {};
+      window.vinculosManuaisTempoReal = window.vinculosManuaisTempoReal || {};
 
+      const chaves = new Set([
+        ...Object.keys(mapaObs || {}),
+        ...Object.keys(mapaStatus || {}),
+        ...Object.keys(mapaId || {}),
+        ...Object.keys(window.obsDrafts || {}),
+        ...Object.keys(window.statusDrafts || {}),
+        ...Object.keys(window.idDrafts || {}),
+        ...Object.keys(window.vinculosManuaisTempoReal || {})
+      ]);
+
+      chaves.forEach(voc => {
+        const vocNorm = normalizar(voc);
+        if (!vocNorm) return;
+
+        if (Object.prototype.hasOwnProperty.call(window.obsDrafts, vocNorm)) {
+          mapaObs[vocNorm] = String(window.obsDrafts[vocNorm] || "").trim();
+        }
+
+        if (Object.prototype.hasOwnProperty.call(window.statusDrafts, vocNorm)) {
+          mapaStatus[vocNorm] = window.statusDrafts[vocNorm] === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO";
+        }
+
+        if (Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm)) {
+          mapaId[vocNorm] = String(window.idDrafts[vocNorm] || "").trim();
+        }
+
+        const vinculo = window.vinculosManuaisTempoReal[vocNorm];
+        if (vinculo) {
+          mapaStatus[vocNorm] = vinculo.status === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO";
+          mapaId[vocNorm] = vinculo.status === "PROGRAMADO" ? String(vinculo.id || "").trim() : "";
+        }
+
+        if ((mapaStatus[vocNorm] || "") !== "PROGRAMADO") {
+          mapaId[vocNorm] = "";
+        }
+
+        window.vinculosManuaisTempoReal[vocNorm] = {
+          status: mapaStatus[vocNorm] === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO",
+          id: mapaStatus[vocNorm] === "PROGRAMADO" ? String(mapaId[vocNorm] || "").trim() : ""
+        };
+      });
+
+      return { obs: mapaObs, status: mapaStatus, ids: mapaId };
+    }
+
+    
     function reaplicarStatusDraftsNoSnapshotEUI() {
       const drafts = window.statusDrafts || {};
       Object.keys(drafts).forEach(vocNorm => {
@@ -2890,8 +2999,23 @@
       const almoxKeys = Object.keys(almoxPendBase);
       const almoxRegexCache = {};
 
+      function getVinculoManualTempoReal(vocNorm) {
+        const mapa = window.vinculosManuaisTempoReal || {};
+        const item = mapa[vocNorm];
+        if (!item) return null;
+        return {
+          status: item.status === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO",
+          id: item.status === "PROGRAMADO" ? String(item.id || "").trim() : ""
+        };
+      }
+
       function getIdVinculadoAtualVocativo(almox) {
         const vocNorm = normalizar(almox);
+
+        const vinculoTempoReal = getVinculoManualTempoReal(vocNorm);
+        if (vinculoTempoReal) {
+          return vinculoTempoReal.status === "PROGRAMADO" ? vinculoTempoReal.id : "";
+        }
 
         if (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm)) {
           return String(window.idDrafts[vocNorm] || "").trim();
@@ -2903,6 +3027,19 @@
         }
 
         return String(window.idHojeServidor?.[vocNorm] || "").trim();
+      }
+
+      function getIdsHistoricosVocativo(almox) {
+        const vocNorm = normalizar(almox);
+        const lista = Array.isArray(window.idsHistoricosServidor?.[vocNorm])
+          ? window.idsHistoricosServidor[vocNorm].map(x => String(x || "").trim()).filter(Boolean)
+          : [];
+        const removidos = new Set(
+          Array.isArray(window.idsRemovidosTempoReal?.[vocNorm])
+            ? window.idsRemovidosTempoReal[vocNorm].map(x => normalizar(x)).filter(Boolean)
+            : []
+        );
+        return lista.filter(id => !removidos.has(normalizar(id)));
       }
 
       function localizarVeiculoPorIdVinculado(idInformado) {
@@ -2961,23 +3098,33 @@
       });
 
       almoxKeys.forEach(almox => {
-        const idVinculadoAtual = getIdVinculadoAtualVocativo(almox);
-        if (!idVinculadoAtual) return;
-
-        const veiculoVinculado = localizarVeiculoPorIdVinculado(idVinculadoAtual);
-        if (!veiculoVinculado) return;
-
         if (!almoxUltimoVeiculo[almox]) almoxUltimoVeiculo[almox] = [];
 
-        const jaExiste = almoxUltimoVeiculo[almox].some(v => {
-          const mesmoId = normalizar(v?.id || "") === normalizar(veiculoVinculado.id || "");
-          const mesmaPrev = (parsePossibleDate(v?.dtPrev)?.getTime?.() || 0) === (parsePossibleDate(veiculoVinculado.dtPrev)?.getTime?.() || 0);
-          return mesmoId && mesmaPrev;
-        });
+        const idsCombinados = [];
+        const vistos = new Set();
+        const adicionarId = (valor) => {
+          const id = String(valor || "").trim();
+          const idNorm = normalizar(id);
+          if (!idNorm || vistos.has(idNorm)) return;
+          vistos.add(idNorm);
+          idsCombinados.push(id);
+        };
 
-        if (!jaExiste) {
-          almoxUltimoVeiculo[almox].push(veiculoVinculado);
-        }
+        getIdsHistoricosVocativo(almox).forEach(adicionarId);
+        adicionarId(getIdVinculadoAtualVocativo(almox));
+
+        idsCombinados.forEach(idAtual => {
+          const veiculoVinculado = localizarVeiculoPorIdVinculado(idAtual);
+          if (!veiculoVinculado) return;
+
+          const jaExiste = almoxUltimoVeiculo[almox].some(v => {
+            return normalizar(v?.id || "") === normalizar(veiculoVinculado.id || "");
+          });
+
+          if (!jaExiste) {
+            almoxUltimoVeiculo[almox].push(veiculoVinculado);
+          }
+        });
       });
 
       Object.keys(almoxUltimoVeiculo).forEach(almox => {
@@ -3167,14 +3314,21 @@ return null;
       return `${prefixo} (${selecionadas.length})`;
     }
 
-    async function listarAlmoxPendentes() {
-      capturarObsDoDOM();
-      capturarObsNotasDoDOM();
-      capturarStatusDoDOM();
+    async function listarAlmoxPendentes(renderSeq = ++sequenciaRenderAnalise) {
+      abrirPaginaAnalise();
 
-      const { obs: obsHoje, status: statusHoje } = await carregarObsEStatusHojeCache(false);
+      const listaElLoading = document.getElementById("almoxList");
+      if (listaElLoading) {
+        listaElLoading.innerHTML = '<div class="card" style="margin-top:12px;"><div class="status">Carregando análise programação...</div></div>';
+      }
 
+      try {
+        capturarObsDoDOM();
+        capturarObsNotasDoDOM();
+        capturarStatusDoDOM();
 
+        const { obs: obsHoje, status: statusHoje } = await carregarObsEStatusHojeCache(false);
+        const idsHistoricos = await carregarIdsHistoricosVinculados(false);
 
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
@@ -4613,6 +4767,8 @@ return null;
 
       });
 
+      if (renderSeq !== sequenciaRenderAnalise) return;
+
       document.getElementById("almoxList").innerHTML = html || "<i>Nenhum almox crítico</i>";
 
       restaurarObsNoDOM();
@@ -4693,7 +4849,6 @@ return null;
       };
 
       renderResumoAnalise(stats);
-      abrirPaginaAnalise();
 
 
 
@@ -4719,6 +4874,13 @@ return null;
         filtroPopup.onchange = () => listarAlmoxPendentes();
       }
       bindMultiFilterEvents();
+      } catch (err) {
+        console.error("Erro ao abrir Análise Programação:", err);
+        const listaElErro = document.getElementById("almoxList");
+        if (listaElErro) {
+          listaElErro.innerHTML = `<div class="card" style="margin-top:12px; border:1px solid #fecaca; background:#fef2f2; color:#991b1b;">❌ Erro ao carregar Análise Programação: ${String(err && err.message ? err.message : err)}</div>`;
+        }
+      }
     }
 
     function aplicarStatusDefaultNoDOM() {
@@ -4782,7 +4944,7 @@ return null;
 
     dateFilter.onchange = aplicarFiltrosEBusca;
 
-    document.getElementById("btnAlmoxPendentes").onclick = listarAlmoxPendentes;
+    document.getElementById("btnAlmoxPendentes").onclick = agendarListarAlmoxPendentes;
 
     chkMostrarAtrasados.onchange = () => {
       mostrarAtrasados = chkMostrarAtrasados.checked;
@@ -4914,6 +5076,7 @@ return null;
       if (ev) { ev.preventDefault(); ev.stopPropagation(); }
 
       const vocNorm = normalizar(voc);
+      const seqSolicitada = Number(options.seq || 0);
       if (!vocNorm || !snapshotVocativos[vocNorm]) {
         if (!options.silent) alert("Vocativo inválido/indisponível.");
         return false;
@@ -4955,6 +5118,11 @@ return null;
         const registroSalvo = montarRegistroVocativo(vocNorm, options.recordOverrides || {});
         const statusSalvo = registroSalvo.StatusVeiculo || "NAO PROGRAMADO";
         const idSalvo = String(registroSalvo.ID || "").trim();
+        const haMudancaMaisNova = seqSolicitada > 0 && (versaoMudancaVocativo.get(vocNorm) || 0) !== seqSolicitada;
+
+        if (haMudancaMaisNova) {
+          return true;
+        }
 
         window.obsDrafts = window.obsDrafts || {};
         window.obsHojeOriginal = window.obsHojeOriginal || {};
@@ -4969,13 +5137,22 @@ return null;
         window.statusHojeServidor[vocNorm] = statusSalvo;
         window.idDrafts[vocNorm] = idSalvo;
         window.idHojeServidor[vocNorm] = idSalvo;
+        registrarIdsRemovidosTempoReal(vocNorm, statusSalvo, idSalvo, "");
+        window.idsHistoricosServidor = window.idsHistoricosServidor || {};
+        if (idSalvo) {
+          window.idsHistoricosServidor[vocNorm] = Array.isArray(window.idsHistoricosServidor[vocNorm]) ? window.idsHistoricosServidor[vocNorm] : [];
+          if (!window.idsHistoricosServidor[vocNorm].some(x => normalizar(x) === normalizar(idSalvo))) {
+            window.idsHistoricosServidor[vocNorm].push(idSalvo);
+          }
+        }
+        atualizarVinculoManualTempoReal(vocNorm, statusSalvo, idSalvo);
 
         if (snapshotVocativos[vocNorm]) {
           snapshotVocativos[vocNorm].StatusVeiculo = statusSalvo;
         }
 
         window.__analiseProgramacaoCache = null;
-        await listarAlmoxPendentes();
+        await agendarListarAlmoxPendentes();
         return true;
 
       } catch (e) {
@@ -5031,12 +5208,17 @@ return null;
         }
 
 
-        window.obsHojeOriginal = { ...mapa };
-        window.idHojeServidor = { ...mapaIds };
+        await carregarIdsHistoricosVinculados(true);
 
-        aplicarObservacoesNoDOM(mapa);
-        aplicarStatusNoDOM(mapaStatus);
-        aplicarIdsNoDOM(mapaIds);
+        const estadoMesclado = aplicarOverridesLocaisNoEstadoHoje({ ...mapa }, { ...mapaStatus }, { ...mapaIds });
+
+        window.obsHojeOriginal = { ...estadoMesclado.obs };
+        window.statusHojeServidor = { ...estadoMesclado.status };
+        window.idHojeServidor = { ...estadoMesclado.ids };
+
+        aplicarObservacoesNoDOM(estadoMesclado.obs);
+        aplicarStatusNoDOM(estadoMesclado.status);
+        aplicarIdsNoDOM(estadoMesclado.ids);
 
       } catch (e) {
         console.warn("Erro ao carregar observações do dia:", e);
@@ -5062,6 +5244,77 @@ return null;
       if (!dtPrev) return null;
 
       return row;
+    }
+
+    function montarVeiculoVinculadoManual(idInformado) {
+      const row = buscarVeiculoPorId(idInformado);
+      if (!row) return null;
+
+      const dtPrev = parsePossibleDate(row["DT. PREVISÃO"]);
+      if (!dtPrev) return null;
+
+      return {
+        dtPrev,
+        dtCarreg: parsePossibleDate(row["DT. CARREGAMENTO"]),
+        dtEntrega: row["DT. ENTREGA"] || "",
+        veiculoSolicitado: row["VEÍCULO SOLICITADO"] || "",
+        destinos: row["DESTINOS"] || "",
+        id: row["ID"] || "",
+        refs: row["REFERENCIAS"] || "",
+        modalidade: getFieldValue(row, ["MODALIDADE", "Modalidade"]) || "",
+        _idVinculadoManual: true
+      };
+    }
+
+    function registrarIdsRemovidosTempoReal(vocNorm, status, idAtual = "", idAnterior = "") {
+      window.idsRemovidosTempoReal = window.idsRemovidosTempoReal || {};
+      const chave = normalizar(vocNorm);
+      if (!chave) return;
+
+      const removidos = new Set((window.idsRemovidosTempoReal[chave] || []).map(x => String(x || "").trim()).filter(Boolean));
+      const idAtualTrim = String(idAtual || "").trim();
+      const idAnteriorTrim = String(idAnterior || "").trim();
+
+      if (status === "PROGRAMADO") {
+        if (idAtualTrim) removidos.delete(idAtualTrim);
+      } else {
+        if (idAnteriorTrim) removidos.add(idAnteriorTrim);
+        if (idAtualTrim) removidos.add(idAtualTrim);
+      }
+
+      window.idsRemovidosTempoReal[chave] = Array.from(removidos);
+    }
+
+    function atualizarVinculoManualTempoReal(vocNorm, status, idVinculado = "") {
+      window.vinculosManuaisTempoReal = window.vinculosManuaisTempoReal || {};
+      window.vinculosManuaisTempoReal[vocNorm] = {
+        status: status === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO",
+        id: status === "PROGRAMADO" ? String(idVinculado || "").trim() : ""
+      };
+    }
+
+    function atualizarCacheVeiculoVinculadoVocativo(vocNorm, status, idVinculado = "") {
+      const cache = window.__analiseProgramacaoCache;
+      if (!cache || !cache.almoxUltimoVeiculo) return;
+
+      const almoxReal = Object.keys(cache.almoxUltimoVeiculo).find(k => normalizar(k) === vocNorm)
+        || Object.keys(cache.almoxPendBase || {}).find(k => normalizar(k) === vocNorm)
+        || snapshotVocativos?.[vocNorm]?.Vocativo
+        || vocNorm;
+
+      cache.almoxUltimoVeiculo[almoxReal] = (cache.almoxUltimoVeiculo[almoxReal] || [])
+        .filter(v => !v?._idVinculadoManual);
+
+      if (status === "PROGRAMADO") {
+        const veiculoManual = montarVeiculoVinculadoManual(idVinculado);
+        if (veiculoManual) cache.almoxUltimoVeiculo[almoxReal].push(veiculoManual);
+      }
+
+      cache.almoxUltimoVeiculo[almoxReal].sort((a, b) => {
+        const ta = parsePossibleDate(a?.dtPrev)?.getTime?.() || 0;
+        const tb = parsePossibleDate(b?.dtPrev)?.getTime?.() || 0;
+        return tb - ta;
+      });
     }
 
     function obterIdObrigatorioProgramado(vocNorm, idInicial = "") {
@@ -5143,6 +5396,69 @@ return null;
       return html;
     }
 
+    function aplicarEstadoVocativoNaUI(vocNorm, status, idVinculado = "") {
+      window.statusDrafts = window.statusDrafts || {};
+      window.idDrafts = window.idDrafts || {};
+      snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
+
+      window.statusDrafts[vocNorm] = status;
+      window.idDrafts[vocNorm] = status === "PROGRAMADO" ? String(idVinculado || "").trim() : "";
+      snapshotVocativos[vocNorm].StatusVeiculo = status;
+
+      const sel = getStatusSelect(vocNorm);
+      if (sel) sel.value = status;
+
+      const input = getIdInput(vocNorm);
+      if (input) input.value = status === "PROGRAMADO" ? String(idVinculado || "").trim() : "";
+
+      const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
+      if (badgeDiv) {
+        const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
+        badgeDiv.innerHTML = renderStatusBadge(status, temCarregadoHoje);
+      }
+
+      toggleIdField(vocNorm, status);
+      atualizarVinculoManualTempoReal(vocNorm, status, status === "PROGRAMADO" ? idVinculado : "");
+      atualizarCacheVeiculoVinculadoVocativo(vocNorm, status, status === "PROGRAMADO" ? idVinculado : "");
+      window.__analiseProgramacaoCache = null;
+      return agendarListarAlmoxPendentes();
+    }
+
+    async function enfileirarSalvarVocativo(vocNorm, payload) {
+      filaSalvarVocativo.set(vocNorm, payload);
+
+      if (filaSalvarVocativoEmExecucao.has(vocNorm)) return;
+      filaSalvarVocativoEmExecucao.add(vocNorm);
+
+      try {
+        while (filaSalvarVocativo.has(vocNorm)) {
+          const atual = filaSalvarVocativo.get(vocNorm);
+          filaSalvarVocativo.delete(vocNorm);
+
+          const ultimoPersistidoStatus = window.statusHojeServidor?.[vocNorm]
+            || snapshotVocativos?.[vocNorm]?.StatusVeiculo
+            || "NAO PROGRAMADO";
+          const ultimoPersistidoId = String(window.idHojeServidor?.[vocNorm] || "").trim();
+
+          const salvou = await salvarVocativo(vocNorm, null, {
+            silent: atual.silent,
+            seq: atual.seq,
+            recordOverrides: {
+              status: atual.status,
+              id: atual.id
+            }
+          });
+
+          const haMudancaMaisNova = (versaoMudancaVocativo.get(vocNorm) || 0) !== atual.seq;
+          if (!salvou && !haMudancaMaisNova) {
+            await aplicarEstadoVocativoNaUI(vocNorm, ultimoPersistidoStatus, ultimoPersistidoStatus === "PROGRAMADO" ? ultimoPersistidoId : "");
+          }
+        }
+      } finally {
+        filaSalvarVocativoEmExecucao.delete(vocNorm);
+      }
+    }
+
 
     async function onStatusManualChange(vocNorm, value, ev) {
       if (ev) { ev.preventDefault(); ev.stopPropagation(); }
@@ -5158,76 +5474,32 @@ return null;
       ).trim();
       const status = (value === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO";
 
+      registrarIdsRemovidosTempoReal(vocNorm, status, "", idAnterior);
+
       let idConfirmado = idAnterior;
 
       if (status === "PROGRAMADO") {
         idConfirmado = obterIdObrigatorioProgramado(vocNorm, idConfirmado);
         if (idConfirmado === null) {
+          registrarIdsRemovidosTempoReal(vocNorm, statusAnterior, statusAnterior === "PROGRAMADO" ? idAnterior : "", "");
           if (sel) sel.value = statusAnterior;
           toggleIdField(vocNorm, statusAnterior);
           return;
         }
+        registrarIdsRemovidosTempoReal(vocNorm, status, idConfirmado, "");
       }
 
-      window.statusDrafts = window.statusDrafts || {};
-      window.idDrafts = window.idDrafts || {};
-      snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
+      await aplicarEstadoVocativoNaUI(vocNorm, status, status === "PROGRAMADO" ? idConfirmado : "");
 
-      window.statusDrafts[vocNorm] = status;
-      snapshotVocativos[vocNorm].StatusVeiculo = status;
+      const seq = (versaoMudancaVocativo.get(vocNorm) || 0) + 1;
+      versaoMudancaVocativo.set(vocNorm, seq);
 
-      window.idHojeServidor = window.idHojeServidor || {};
-
-      if (status === "PROGRAMADO") {
-        window.idDrafts[vocNorm] = idConfirmado;
-        window.idHojeServidor[vocNorm] = idConfirmado;
-        const input = getIdInput(vocNorm);
-        if (input) input.value = idConfirmado;
-      } else {
-        window.idDrafts[vocNorm] = "";
-        window.idHojeServidor[vocNorm] = "";
-        const inputExistente = getIdInput(vocNorm);
-        if (inputExistente) inputExistente.value = "";
-      }
-
-      const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
-      if (badgeDiv) {
-        const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
-        badgeDiv.innerHTML = renderStatusBadge(status, temCarregadoHoje);
-      }
-
-      toggleIdField(vocNorm, status);
-      window.__analiseProgramacaoCache = null;
-      await listarAlmoxPendentes();
-
-      const salvou = await salvarVocativo(vocNorm, null, {
-        silent: false,
-        recordOverrides: {
-          status,
-          id: status === "PROGRAMADO" ? idConfirmado : ""
-        }
+      await enfileirarSalvarVocativo(vocNorm, {
+        seq,
+        status,
+        id: status === "PROGRAMADO" ? idConfirmado : "",
+        silent: false
       });
-      if (salvou) return;
-
-      window.statusDrafts[vocNorm] = statusAnterior;
-      window.idDrafts[vocNorm] = idAnterior;
-      window.idHojeServidor = window.idHojeServidor || {};
-      window.idHojeServidor[vocNorm] = idAnterior;
-      snapshotVocativos[vocNorm].StatusVeiculo = statusAnterior;
-
-      if (sel) sel.value = statusAnterior;
-
-      const inputRevert = getIdInput(vocNorm);
-      if (inputRevert) inputRevert.value = idAnterior;
-
-      if (badgeDiv) {
-        const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
-        badgeDiv.innerHTML = renderStatusBadge(statusAnterior, temCarregadoHoje);
-      }
-
-      toggleIdField(vocNorm, statusAnterior);
-      window.__analiseProgramacaoCache = null;
-      await listarAlmoxPendentes();
     }
 
 
