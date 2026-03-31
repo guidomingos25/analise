@@ -1081,6 +1081,31 @@
     let filaRenderAnalise = Promise.resolve();
     let sequenciaRenderAnalise = 0;
 
+    window.__analisePerf = window.__analisePerf || {
+      clientesCacheKey: "",
+      clientesCacheValue: null,
+      opcoesCacheKey: "",
+      opcoesCacheValue: null,
+      clienteListRenderKey: "",
+      multiListRenderKeys: {}
+    };
+
+    function buildPerfCacheKey(parts = []) {
+      return parts.map(v => {
+        if (v == null) return "";
+        if (typeof v === "string") return v;
+        try { return JSON.stringify(v); } catch (_) { return String(v); }
+      }).join("|");
+    }
+
+    function safeRequestAnimationFrame(fn) {
+      return new Promise(resolve => {
+        const exec = () => resolve(fn());
+        if (typeof requestAnimationFrame === "function") requestAnimationFrame(exec);
+        else setTimeout(exec, 0);
+      });
+    }
+
     function agendarListarAlmoxPendentes() {
       const minhaSequencia = ++sequenciaRenderAnalise;
       filaRenderAnalise = filaRenderAnalise
@@ -1994,7 +2019,7 @@
 
       if (filterSelect.value === "with") f = f.filter(r => r.matches.length);
       if (filterSelect.value === "without") f = f.filter(r => !r.matches.length);
-      if (q) f = f.filter(r => normalizar(JSON.stringify(r)).includes(q));
+      if (q) f = f.filter(r => (r.__searchBlobNorm || "").includes(q));
 
 
       resultadoFiltrado = f;
@@ -2008,10 +2033,23 @@
     function processar() {
 
 
-      const detalhadoPre = detalhadoRows.map(r => ({
-        ...r,
-        __almoxNorm: normalizar(r["Almoxarifado"] || "")
-      }));
+      const regexCacheProcessar = new Map();
+      const detalhadoPre = detalhadoRows.map(r => {
+        const almoxNorm = normalizar(r["Almoxarifado"] || "");
+        let regexAlmox = null;
+        if (almoxNorm) {
+          if (!regexCacheProcessar.has(almoxNorm)) {
+            const almoxSafe = almoxNorm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            regexCacheProcessar.set(almoxNorm, new RegExp(`(^|[^A-Z0-9])${almoxSafe}([^A-Z0-9]|$)`));
+          }
+          regexAlmox = regexCacheProcessar.get(almoxNorm);
+        }
+        return {
+          ...r,
+          __almoxNorm: almoxNorm,
+          __regexAlmox: regexAlmox
+        };
+      });
 
       resultado = dataRows.map(row => {
         const dtCarreg = parsePossibleDate(row["DT. CARREGAMENTO"]);
@@ -2035,10 +2073,8 @@
           if (!almox) return false;
 
 
-          const almoxSafe = almox.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-
-          const regex = new RegExp(`(^|[^A-Z0-9])${almoxSafe}([^A-Z0-9]|$)`);
+          const regex = r.__regexAlmox;
+          if (!regex) return false;
 
 
 
@@ -2063,7 +2099,29 @@
           return da - db;
         });
 
-        return { dataRow: row, matches };
+        return {
+          dataRow: row,
+          matches,
+          __searchBlobNorm: normalizar([
+            row["ID"] || "",
+            row["DESTINOS"] || "",
+            row["REFERENCIAS"] || "",
+            row["VEÍCULO SOLICITADO"] || "",
+            row["VEICULO CONTRATADO"] || "",
+            row["MODALIDADE"] || "",
+            row["DT. CARREGAMENTO"] || "",
+            row["DT. PREVISÃO"] || "",
+            ...matches.map(m => [
+              m["Nota"] || "",
+              m["Numero OEF"] || m["Número OEF"] || "",
+              m["Cliente"] || "",
+              m["Fornecedor"] || "",
+              m["Destino"] || "",
+              m["UF Destino"] || "",
+              m["Mercadoria"] || ""
+            ].join(" "))
+          ].join(" "))
+        };
       });
 
       renderSummary();
@@ -2916,6 +2974,14 @@
 
     function invalidarCacheAnaliseProgramacao() {
       window.__analiseProgramacaoCache = null;
+      if (window.__analisePerf) {
+        window.__analisePerf.clientesCacheKey = "";
+        window.__analisePerf.clientesCacheValue = null;
+        window.__analisePerf.opcoesCacheKey = "";
+        window.__analisePerf.opcoesCacheValue = null;
+        window.__analisePerf.clienteListRenderKey = "";
+        window.__analisePerf.multiListRenderKeys = {};
+      }
     }
 
     function prepararCacheAnaliseProgramacao() {
@@ -2926,6 +2992,12 @@
 
       const almoxTotalPVD = {};
       const almoxPendBase = {};
+      const dataRowsByIdNorm = new Map();
+
+      (dataRows || []).forEach(r => {
+        const idNorm = normalizar(r["ID"] || "");
+        if (idNorm && !dataRowsByIdNorm.has(idNorm)) dataRowsByIdNorm.set(idNorm, r);
+      });
 
       detalhadoRows.forEach(r => {
         const almox = normalizar(r["Almoxarifado"]);
@@ -3021,11 +3093,6 @@
           return String(window.idDrafts[vocNorm] || "").trim();
         }
 
-        const input = document.querySelector(`input[data-id-vocativo="${vocNorm}"]`);
-        if (input) {
-          return String(input.value || "").trim();
-        }
-
         return String(window.idHojeServidor?.[vocNorm] || "").trim();
       }
 
@@ -3046,7 +3113,7 @@
         const idNorm = normalizar(idInformado);
         if (!idNorm) return null;
 
-        const row = (dataRows || []).find(r => normalizar(r["ID"] || "") === idNorm);
+        const row = dataRowsByIdNorm.get(idNorm);
         if (!row) return null;
 
         const dtPrev = parsePossibleDate(row["DT. PREVISÃO"]);
@@ -3148,11 +3215,17 @@
         return String(a).localeCompare(String(b), "pt-BR");
       });
 
+      const clientesUnicos = Array.from(new Set(
+        Object.values(almoxPendBase).flatMap(info => (info.notas || []).map(n => String(n.cliente || "").trim()).filter(Boolean))
+      )).sort((a, b) => a.localeCompare(b, "pt-BR"));
+
       window.__analiseProgramacaoCache = {
         signature,
         almoxTotalPVD,
         almoxPendBase,
-        almoxUltimoVeiculo
+        almoxUltimoVeiculo,
+        clientesUnicos,
+        dataRowsByIdNorm
       };
 
       return window.__analiseProgramacaoCache;
@@ -3323,10 +3396,6 @@ return null;
       }
 
       try {
-        capturarObsDoDOM();
-        capturarObsNotasDoDOM();
-        capturarStatusDoDOM();
-
         const { obs: obsHoje, status: statusHoje } = await carregarObsEStatusHojeCache(false);
         const idsHistoricos = await carregarIdsHistoricosVinculados(false);
 
@@ -5015,7 +5084,7 @@ return null;
 
         await carregarObsEStatusHojeCache(true);
         await carregarObservacoesHojeEPreencher();
-        await listarAlmoxPendentes();
+        await agendarListarAlmoxPendentes();
 
       } catch (e) {
         alert("❌ Erro ao salvar: " + e.message);
@@ -5427,7 +5496,8 @@ return null;
       toggleIdField(vocNorm, status);
       atualizarVinculoManualTempoReal(vocNorm, status, status === "PROGRAMADO" ? idVinculado : "");
       atualizarCacheVeiculoVinculadoVocativo(vocNorm, status, status === "PROGRAMADO" ? idVinculado : "");
-      window.__analiseProgramacaoCache = null;
+      window.__analisePerf.opcoesCacheKey = "";
+      window.__analisePerf.clientesCacheKey = "";
       return agendarListarAlmoxPendentes();
     }
 
@@ -6209,8 +6279,22 @@ return null;
         return !termo || normalizar(c).includes(termo);
       });
 
+      const renderKey = buildPerfCacheKey([
+        termo,
+        clientesDisponiveisPopup.join("||"),
+        Array.from(clientesSelecionadosPopup).sort().join("||")
+      ]);
+
       if (!clientesFiltrados.length) {
-        list.innerHTML = `<div style="padding:8px 2px; font-size:12px; color:#64748b;">Nenhum cliente encontrado</div>`;
+        if (window.__analisePerf.clienteListRenderKey !== "__empty__") {
+          list.innerHTML = `<div style="padding:8px 2px; font-size:12px; color:#64748b;">Nenhum cliente encontrado</div>`;
+          window.__analisePerf.clienteListRenderKey = "__empty__";
+        }
+        atualizarContadorFiltroCliente();
+        return;
+      }
+
+      if (window.__analisePerf.clienteListRenderKey === renderKey) {
         atualizarContadorFiltroCliente();
         return;
       }
@@ -6233,6 +6317,7 @@ return null;
     `;
       }).join("");
 
+      window.__analisePerf.clienteListRenderKey = renderKey;
       atualizarContadorFiltroCliente();
     }
 
@@ -6372,10 +6457,35 @@ return null;
       modosDataLimite,
       modosCriticidade,
       modosMigracao,
+      modosEntradaNF = ["all"],
+      modosObservacao = ["all"],
       filtroVeiculo,
       termoDestino,
-      termoUFDestino
+      termoUFDestino,
+      termoNota = "",
+      termoOEF = ""
     }) {
+      const perf = window.__analisePerf || (window.__analisePerf = {});
+      const cacheKey = buildPerfCacheKey([
+        "clientes",
+        Object.keys(almoxPend || {}).length,
+        JSON.stringify(modosDataLimite || []),
+        JSON.stringify(modosCriticidade || []),
+        JSON.stringify(modosMigracao || []),
+        JSON.stringify(modosEntradaNF || []),
+        JSON.stringify(modosObservacao || []),
+        JSON.stringify(filtroVeiculo || []),
+        termoDestino || "",
+        termoUFDestino || "",
+        termoNota || "",
+        termoOEF || "",
+        (datasSelecionadasPopup || []).map(d => d?.toISOString?.().slice(0, 10) || "").join(","),
+        filtroPrazoConsolidacaoAtivo || ""
+      ]);
+      if (perf.clientesCacheKey === cacheKey && Array.isArray(perf.clientesCacheValue)) {
+        return perf.clientesCacheValue.slice();
+      }
+
       const clientesSet = new Set();
 
       Object.entries(almoxPend || {}).forEach(([almox, info]) => {
@@ -6426,21 +6536,28 @@ return null;
 
         (info.notas || []).forEach(n => {
           if (!notaPassaFiltroDataPopup(n, datasSelecionadasPopup)) return;
-          if (termoDestino && !normalizar(n.destino || "").includes(termoDestino)) return;
+          if (termoDestino && !((n._destinoNorm ?? normalizar(n.destino || "")).includes(termoDestino))) return;
           if (termoUFDestino) {
             const uf = n._ufNorm ?? normalizar(n.uf || "");
             if (uf !== termoUFDestino) return;
           }
+          if (termoNota && !((n._notaNorm ?? normalizar(n.nota || "")).includes(termoNota))) return;
+          if (termoOEF && !((n._numeroOEFNorm ?? normalizar(n.numeroOEF || "")).includes(termoOEF))) return;
           if (!notaPassaFiltroRangeMultiplo(n, modosDataLimite, hoje, amanha)) return;
           if (!notaPassaFiltroCriticidadeMultiplo(n, modosCriticidade, hoje)) return;
           if (!notaPassaFiltroMigracaoMultiplo(n, modosMigracao)) return;
+          if (!notaPassaFiltroEntradaNFMultiplo(n, modosEntradaNF)) return;
+          if (!notaPassaFiltroObservacaoMultiplo(n, modosObservacao)) return;
 
           const cliente = (n.cliente || "").toString().trim();
           if (cliente) clientesSet.add(cliente);
         });
       });
 
-      return Array.from(clientesSet).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      const out = Array.from(clientesSet).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      perf.clientesCacheKey = cacheKey;
+      perf.clientesCacheValue = out.slice();
+      return out;
     }
 
     function getValorFiltroPopup(id, fallback = "all") {
@@ -6615,6 +6732,28 @@ return null;
     }
 
     function getOpcoesDisponiveisFiltrosCruzados(almoxPend, almoxUltimoVeiculo) {
+      const perf = window.__analisePerf || (window.__analisePerf = {});
+      const ctxBase = getContextoFiltrosPopup();
+      const cacheKey = buildPerfCacheKey([
+        "opcoes",
+        Object.keys(almoxPend || {}).length,
+        JSON.stringify(ctxBase.modosDataLimite || []),
+        JSON.stringify(ctxBase.modosCriticidade || []),
+        JSON.stringify(ctxBase.modosMigracao || []),
+        JSON.stringify(ctxBase.modosEntradaNF || []),
+        JSON.stringify(ctxBase.modosObservacao || []),
+        JSON.stringify(ctxBase.filtroVeiculo || []),
+        ctxBase.termoDestino || "",
+        ctxBase.termoUFDestino || "",
+        ctxBase.termoNota || "",
+        ctxBase.termoOEF || "",
+        (datasSelecionadasPopup || []).map(d => d?.toISOString?.().slice(0, 10) || "").join(","),
+        filtroPrazoConsolidacaoAtivo || ""
+      ]);
+      if (perf.opcoesCacheKey === cacheKey && perf.opcoesCacheValue) {
+        return perf.opcoesCacheValue;
+      }
+
       const opcoes = {
         veiculo: new Set(),
         dataLimite: new Set(["all"]),
@@ -6735,6 +6874,8 @@ return null;
         });
       });
 
+      perf.opcoesCacheKey = cacheKey;
+      perf.opcoesCacheValue = opcoes;
       return opcoes;
     }
 
@@ -6921,8 +7062,21 @@ return null;
       const termo = normalizar(search?.value || "");
       const opcoes = Array.from(select.options).filter(o => o.value !== "all" && !o.disabled);
       const filtradas = opcoes.filter(o => !termo || normalizar(o.textContent || "").includes(termo));
+      const renderKey = buildPerfCacheKey([
+        tipo,
+        termo,
+        opcoes.map(o => o.value).join("||"),
+        Array.from(cfg.selecionadosRef()).sort().join("||")
+      ]);
       if (!filtradas.length) {
-        list.innerHTML = `<div style="padding:8px 2px; font-size:12px; color:#64748b;">${cfg.emptyText}</div>`;
+        if ((window.__analisePerf.multiListRenderKeys || {})[tipo] !== "__empty__") {
+          list.innerHTML = `<div style="padding:8px 2px; font-size:12px; color:#64748b;">${cfg.emptyText}</div>`;
+          window.__analisePerf.multiListRenderKeys[tipo] = "__empty__";
+        }
+        atualizarContadorFiltroMulti(tipo);
+        return;
+      }
+      if ((window.__analisePerf.multiListRenderKeys || {})[tipo] === renderKey) {
         atualizarContadorFiltroMulti(tipo);
         return;
       }
@@ -6932,6 +7086,7 @@ return null;
         const label = (tipo === "observacao" && opt.value === OBSERVACAO_FILTRO_VAZIA) ? "(Em branco)" : opt.textContent.trim();
         return `<label class="clientCheckItem" for="${id}" onclick="event.stopPropagation()"><input type="checkbox" id="${id}" value="${escapeHtmlAttr(opt.value)}" ${checked} onclick="event.stopPropagation()" onchange="onMultiFilterCheckboxChange('${tipo}', this)"><span>${label}</span></label>`;
       }).join("");
+      window.__analisePerf.multiListRenderKeys[tipo] = renderKey;
       atualizarContadorFiltroMulti(tipo);
     }
 
