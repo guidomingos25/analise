@@ -1106,6 +1106,32 @@
       });
     }
 
+    function capturarEstadoViewportAnalise() {
+      const paginaAnalise = document.getElementById("paginaAnalise");
+      const lista = document.getElementById("almoxList");
+      return {
+        paginaAnaliseVisivel: !!paginaAnalise && paginaAnalise.style.display !== "none",
+        scrollX: window.scrollX || window.pageXOffset || 0,
+        scrollY: window.scrollY || window.pageYOffset || 0,
+        vocativosAbertos: lista
+          ? Array.from(lista.querySelectorAll('details[data-vocativo][open]')).map(el => normalizar(el.getAttribute('data-vocativo') || "")).filter(Boolean)
+          : [],
+        tinhaListaRenderizada: !!(lista && lista.querySelector('details[data-vocativo]'))
+      };
+    }
+
+    function restaurarEstadoViewportAnalise(state) {
+      if (!state || !state.paginaAnaliseVisivel) return;
+      const lista = document.getElementById("almoxList");
+      if (lista && Array.isArray(state.vocativosAbertos) && state.vocativosAbertos.length) {
+        state.vocativosAbertos.forEach(vocNorm => {
+          const detail = lista.querySelector(`details[data-vocativo="${vocNorm}"]`);
+          if (detail) detail.open = true;
+        });
+      }
+      window.scrollTo(state.scrollX || 0, state.scrollY || 0);
+    }
+
     function agendarListarAlmoxPendentes() {
       const minhaSequencia = ++sequenciaRenderAnalise;
       filaRenderAnalise = filaRenderAnalise
@@ -1266,17 +1292,12 @@
 
         const vinculo = window.vinculosManuaisTempoReal[vocNorm];
         if (vinculo) {
-          mapaStatus[vocNorm] = vinculo.status === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO";
-          mapaId[vocNorm] = vinculo.status === "PROGRAMADO" ? String(vinculo.id || "").trim() : "";
-        }
-
-        if ((mapaStatus[vocNorm] || "") !== "PROGRAMADO") {
-          mapaId[vocNorm] = "";
+          mapaId[vocNorm] = String(vinculo.id || "").trim();
         }
 
         window.vinculosManuaisTempoReal[vocNorm] = {
           status: mapaStatus[vocNorm] === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO",
-          id: mapaStatus[vocNorm] === "PROGRAMADO" ? String(mapaId[vocNorm] || "").trim() : ""
+          id: String(mapaId[vocNorm] || "").trim()
         };
       });
 
@@ -3077,7 +3098,7 @@
         if (!item) return null;
         return {
           status: item.status === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO",
-          id: item.status === "PROGRAMADO" ? String(item.id || "").trim() : ""
+          id: String(item.id || "").trim()
         };
       }
 
@@ -3086,7 +3107,7 @@
 
         const vinculoTempoReal = getVinculoManualTempoReal(vocNorm);
         if (vinculoTempoReal) {
-          return vinculoTempoReal.status === "PROGRAMADO" ? vinculoTempoReal.id : "";
+          return String(vinculoTempoReal.id || "").trim();
         }
 
         if (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm)) {
@@ -3102,11 +3123,18 @@
           ? window.idsHistoricosServidor[vocNorm].map(x => String(x || "").trim()).filter(Boolean)
           : [];
         const removidos = new Set(
-          Array.isArray(window.idsRemovidosTempoReal?.[vocNorm])
-            ? window.idsRemovidosTempoReal[vocNorm].map(x => normalizar(x)).filter(Boolean)
-            : []
+          (window.idsRemovidosTempoReal?.[vocNorm] || [])
+            .map(x => normalizar(String(x || "").trim()))
+            .filter(Boolean)
         );
-        return lista.filter(id => !removidos.has(normalizar(id)));
+
+        const vistos = new Set();
+        return lista.filter(id => {
+          const idNorm = normalizar(id);
+          if (!idNorm || vistos.has(idNorm) || removidos.has(idNorm)) return false;
+          vistos.add(idNorm);
+          return true;
+        });
       }
 
       function localizarVeiculoPorIdVinculado(idInformado) {
@@ -3195,11 +3223,12 @@
       });
 
       Object.keys(almoxUltimoVeiculo).forEach(almox => {
+        almoxUltimoVeiculo[almox] = filtrarVeiculosAtivosVocativo(normalizar(almox), almoxUltimoVeiculo[almox] || []);
         almoxUltimoVeiculo[almox].sort((a, b) => b.dtPrev - a.dtPrev);
       });
 
       Object.entries(almoxPendBase).forEach(([almox, info]) => {
-        const veiculos = almoxUltimoVeiculo[almox] || [];
+        const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), almoxUltimoVeiculo[almox] || []);
         (info.notas || []).forEach(n => {
           n.observacaoAutomatica = calcularObservacaoNF(n, veiculos);
           n.observacaoCalculada = n.observacaoAutomatica;
@@ -3388,16 +3417,17 @@ return null;
     }
 
     async function listarAlmoxPendentes(renderSeq = ++sequenciaRenderAnalise) {
+      const viewportState = capturarEstadoViewportAnalise();
       abrirPaginaAnalise();
 
       const listaElLoading = document.getElementById("almoxList");
-      if (listaElLoading) {
+      if (listaElLoading && !viewportState.tinhaListaRenderizada) {
         listaElLoading.innerHTML = '<div class="card" style="margin-top:12px;"><div class="status">Carregando análise programação...</div></div>';
       }
 
       try {
         const { obs: obsHoje, status: statusHoje } = await carregarObsEStatusHojeCache(false);
-        const idsHistoricos = await carregarIdsHistoricosVinculados(false);
+        const idsHistoricos = await carregarIdsHistoricosVinculados(true);
 
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
@@ -3711,7 +3741,7 @@ return null;
 
 
 
-        const veiculos = almoxUltimoVeiculo[almox] || [];
+        const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), almoxUltimoVeiculo[almox] || []);
 
 
         let notasFiltradas = (info.notas || []).filter(notaPassaFiltros);
@@ -3916,21 +3946,15 @@ return null;
 
 
         const vocNormAtual = normalizar(almox);
-
-        const overrideManual = window.statusDrafts?.[vocNormAtual];
-        const overrideServidor = window.statusHojeServidor?.[vocNormAtual];
-
-        if (overrideManual) {
-          temProgramado = (overrideManual === "PROGRAMADO");
-          temNaoProgramado = !temProgramado;
-
-        } else if (overrideServidor === "PROGRAMADO") {
-
-          temProgramado = true;
-          temNaoProgramado = false;
-
-
-        }
+        const idVinculadoAtualBotao = String(
+          (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNormAtual))
+            ? window.idDrafts[vocNormAtual]
+            : ((window.vinculosManuaisTempoReal?.[vocNormAtual]?.id || "") || (window.idHojeServidor?.[vocNormAtual] || ""))
+        ).trim();
+        const vincularIdLabel = idVinculadoAtualBotao ? `🔗 ID: ${idVinculadoAtualBotao}` : "🔗 VINCULAR ID";
+        const vincularIdTitle = idVinculadoAtualBotao
+          ? `ID vinculado: ${idVinculadoAtualBotao}. Clique para alterar ou limpar o vínculo.`
+          : "Clique para vincular um ID ao vocativo.";
 
         if (filtroVeiculo.length > 0) {
 
@@ -4597,19 +4621,15 @@ return null;
     ${statusVeiculoBadge}
   </div>
 
-  <div style="display:flex; align-items:center; gap:8px; margin-left:10px;">
-    
-
-    <select
-      data-status-vocativo="${normalizar(almox)}"
-      style="padding:6px 10px; border-radius:10px; border:1px solid #d1d5db; font-weight:800;"
-      onchange="onStatusManualChange('${normalizar(almox)}', this.value, event)"
-    >
-      <option value="PROGRAMADO">🟢 PROGRAMADO</option>
-      <option value="NAO PROGRAMADO">🔴 NÃO PROGRAMADO</option>
-    </select>
-
-
+  <div style="display:flex; align-items:center; gap:8px; margin-left:10px; flex-wrap:wrap; justify-content:flex-end;">
+    <button
+      class="btn secondary"
+      type="button"
+      data-vincular-id-vocativo="${normalizar(almox)}"
+      style="padding:6px 10px; font-weight:800;"
+      title="${vincularIdTitle}"
+      onclick="onVincularIdClick('${normalizar(almox)}', event)"
+    >${vincularIdLabel}</button>
   </div>
 </div>
 
@@ -4840,6 +4860,8 @@ return null;
 
       document.getElementById("almoxList").innerHTML = html || "<i>Nenhum almox crítico</i>";
 
+      restaurarEstadoViewportAnalise(viewportState);
+
       restaurarObsNoDOM();
       restaurarObsNotasNoDOM();
 
@@ -4848,7 +4870,7 @@ return null;
 
 
       aplicarStatusNoDOM(window.statusHojeServidor || {});
-
+      aplicarIdsNoDOM(window.idHojeServidor || {});
 
       aplicarObservacoesNoDOM(window.obsHojeServidor || {});
 
@@ -5055,7 +5077,14 @@ return null;
         }
 
 
-        const registros = vocativosVisiveis.map(v => montarRegistroVocativo(v));
+        const registros = vocativosVisiveis
+          .map(v => montarRegistroVocativo(v))
+          .filter(r => String(r?.Observacao || "").trim());
+
+        if (!registros.length) {
+          alert("Nenhum vocativo visível com observação preenchida para salvar.");
+          return;
+        }
 
         const payload = {
           action: "replaceHoje",
@@ -5100,37 +5129,45 @@ return null;
 
 
       const s = snapshotVocativos[vocNorm] || snapshotVocativos[voc] || {};
-      const sel = getStatusSelect(vocNorm);
       const hasStatusOverride = Object.prototype.hasOwnProperty.call(overrides || {}, "status");
-      const statusAtual = hasStatusOverride
-        ? ((overrides.status === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO")
-        : ((window.statusDrafts?.[vocNorm]) || sel?.value || s.StatusVeiculo || "NAO PROGRAMADO");
       const hasIdOverride = Object.prototype.hasOwnProperty.call(overrides || {}, "id");
       const idInput = getIdInput(vocNorm);
       const idDraftExiste = !!(window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm));
       const vinculoTempoReal = window.vinculosManuaisTempoReal?.[vocNorm] || null;
-      let idAtual = statusAtual === "PROGRAMADO"
-        ? String(
-            hasIdOverride
-              ? (overrides.id || "")
-              : (
-                  idDraftExiste
-                    ? window.idDrafts[vocNorm]
-                    : (
-                        vinculoTempoReal?.status === "PROGRAMADO"
-                          ? (vinculoTempoReal.id || "")
-                          : (idInput?.value || window.idHojeServidor?.[vocNorm] || "")
-                      )
-                )
-          ).trim()
-        : "";
+      let idAtual = String(
+        hasIdOverride
+          ? (overrides.id || "")
+          : (
+              idDraftExiste
+                ? window.idDrafts[vocNorm]
+                : (
+                    (vinculoTempoReal?.id || "")
+                    || (idInput?.value || "")
+                    || (window.idHojeServidor?.[vocNorm] || "")
+                  )
+            )
+      ).trim();
 
-      if (statusAtual === "PROGRAMADO" && idAtual) {
-        const veiculoEncontrado = buscarVeiculoPorId(idAtual);
-        if (veiculoEncontrado?.["ID"]) {
-          idAtual = String(veiculoEncontrado["ID"] || idAtual).trim();
-        }
+      let statusAtual = "NAO PROGRAMADO";
+      let temCarregadoHojeAtual = false;
+
+      if (idAtual) {
+        const calculoStatus = calcularStatusPorIdVinculado(idAtual);
+        if (calculoStatus.id) idAtual = calculoStatus.id;
+        const visualAtual = obterStatusVisualVocativo(vocNorm, calculoStatus.status);
+        statusAtual = visualAtual.status;
+        temCarregadoHojeAtual = (visualAtual.temCarregadoHoje === true) || (calculoStatus.temCarregadoHoje === true);
+      } else {
+        const fallbackStatus = hasStatusOverride
+          ? ((overrides.status === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO")
+          : ((window.statusDrafts?.[vocNorm]) || s.StatusVeiculo || "NAO PROGRAMADO");
+        const visualAtual = obterStatusVisualVocativo(vocNorm, fallbackStatus);
+        statusAtual = visualAtual.status;
+        temCarregadoHojeAtual = visualAtual.temCarregadoHoje === true;
       }
+
+      snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
+      snapshotVocativos[vocNorm].TemCarregadoHoje = temCarregadoHojeAtual === true;
 
       return {
         DataRef: hojeISO(),
@@ -5211,16 +5248,13 @@ return null;
         window.obsHojeOriginal[vocNorm] = obs;
         window.statusDrafts[vocNorm] = statusSalvo;
         window.statusHojeServidor[vocNorm] = statusSalvo;
+        const idAntesSalvar = String(window.idHojeServidor[vocNorm] || "").trim();
         window.idDrafts[vocNorm] = idSalvo;
         window.idHojeServidor[vocNorm] = idSalvo;
-        registrarIdsRemovidosTempoReal(vocNorm, statusSalvo, idSalvo, "");
-        window.idsHistoricosServidor = window.idsHistoricosServidor || {};
-        if (idSalvo) {
-          window.idsHistoricosServidor[vocNorm] = Array.isArray(window.idsHistoricosServidor[vocNorm]) ? window.idsHistoricosServidor[vocNorm] : [];
-          if (!window.idsHistoricosServidor[vocNorm].some(x => normalizar(x) === normalizar(idSalvo))) {
-            window.idsHistoricosServidor[vocNorm].push(idSalvo);
-          }
-        }
+        registrarIdsRemovidosTempoReal(vocNorm, statusSalvo, idSalvo, idAntesSalvar);
+        ajustarIdsHistoricosLocaisVocativo(vocNorm, idSalvo, idAntesSalvar);
+
+        await carregarIdsHistoricosVinculados(true);
         atualizarVinculoManualTempoReal(vocNorm, statusSalvo, idSalvo);
 
         if (snapshotVocativos[vocNorm]) {
@@ -5228,7 +5262,9 @@ return null;
         }
 
         window.__analiseProgramacaoCache = null;
-        await agendarListarAlmoxPendentes();
+        if (!seqSolicitada) {
+          await agendarListarAlmoxPendentes();
+        }
         return true;
 
       } catch (e) {
@@ -5305,8 +5341,69 @@ return null;
       return document.querySelector(`select[data-status-vocativo="${vocNorm}"]`);
     }
 
+    function getVincularIdButton(vocNorm) {
+      return document.querySelector(`button[data-vincular-id-vocativo="${vocNorm}"]`);
+    }
+
     function getIdInput(vocNorm) {
       return document.querySelector(`input[data-id-vocativo="${vocNorm}"]`);
+    }
+
+    function obterStatusVisualVocativo(vocNorm, fallbackStatus = "NAO PROGRAMADO") {
+      const cache = window.__analiseProgramacaoCache;
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+
+      if (cache && cache.almoxUltimoVeiculo) {
+        const almoxReal = Object.keys(cache.almoxUltimoVeiculo).find(k => normalizar(k) === vocNorm)
+          || Object.keys(cache.almoxPendBase || {}).find(k => normalizar(k) === vocNorm)
+          || snapshotVocativos?.[vocNorm]?.Vocativo
+          || vocNorm;
+        const veiculos = cache.almoxUltimoVeiculo[almoxReal] || [];
+        const visual = getStatusVocativo(almoxReal, veiculos, hoje);
+        return {
+          status: visual.temProgramado ? "PROGRAMADO" : "NAO PROGRAMADO",
+          temCarregadoHoje: visual.temCarregadoHoje === true
+        };
+      }
+
+      return {
+        status: fallbackStatus === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO",
+        temCarregadoHoje: false
+      };
+    }
+
+    function isSameDateOnly(a, b) {
+      if (!(a instanceof Date) || !(b instanceof Date)) return false;
+      return a.getFullYear() === b.getFullYear()
+        && a.getMonth() === b.getMonth()
+        && a.getDate() === b.getDate();
+    }
+
+    function calcularStatusPorIdVinculado(idInformado) {
+      const veiculo = buscarVeiculoPorId(idInformado);
+      if (!veiculo) {
+        return {
+          status: "NAO PROGRAMADO",
+          id: "",
+          temCarregadoHoje: false,
+          veiculo: null
+        };
+      }
+
+      const idCanonico = String(veiculo["ID"] || idInformado || "").trim();
+      const dtCarreg = parsePossibleDate(veiculo["DT. CARREGAMENTO"]);
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      const dtCarregOnly = dtCarreg ? new Date(dtCarreg.getFullYear(), dtCarreg.getMonth(), dtCarreg.getDate()) : null;
+      const temCarregadoHoje = !!(dtCarregOnly && isSameDateOnly(dtCarregOnly, hoje));
+
+      return {
+        status: dtCarreg ? "NAO PROGRAMADO" : "PROGRAMADO",
+        id: idCanonico,
+        temCarregadoHoje,
+        veiculo
+      };
     }
 
     function buscarVeiculoPorId(idInformado) {
@@ -5342,20 +5439,49 @@ return null;
       };
     }
 
+
+    function filtrarVeiculosAtivosVocativo(vocNorm, lista = []) {
+      const removidos = new Set(
+        (window.idsRemovidosTempoReal?.[vocNorm] || [])
+          .map(x => normalizar(String(x || "").trim()))
+          .filter(Boolean)
+      );
+      if (!removidos.size) return Array.isArray(lista) ? lista.slice() : [];
+
+      return (Array.isArray(lista) ? lista : []).filter(v => {
+        const idNorm = normalizar(v?.id || "");
+        if (!idNorm) return true;
+        return !removidos.has(idNorm);
+      });
+    }
+
     function registrarIdsRemovidosTempoReal(vocNorm, status, idAtual = "", idAnterior = "") {
       window.idsRemovidosTempoReal = window.idsRemovidosTempoReal || {};
       const chave = normalizar(vocNorm);
       if (!chave) return;
 
-      const removidos = new Set((window.idsRemovidosTempoReal[chave] || []).map(x => String(x || "").trim()).filter(Boolean));
+      const removidos = new Set(
+        (window.idsRemovidosTempoReal[chave] || [])
+          .map(x => String(x || "").trim())
+          .filter(Boolean)
+      );
       const idAtualTrim = String(idAtual || "").trim();
       const idAnteriorTrim = String(idAnterior || "").trim();
+      const idAtualNorm = normalizar(idAtualTrim);
+      const idAnteriorNorm = normalizar(idAnteriorTrim);
 
-      if (status === "PROGRAMADO") {
-        if (idAtualTrim) removidos.delete(idAtualTrim);
-      } else {
-        if (idAnteriorTrim) removidos.add(idAnteriorTrim);
-        if (idAtualTrim) removidos.add(idAtualTrim);
+      if (idAtualTrim) {
+        Array.from(removidos).forEach(id => {
+          if (normalizar(id) === idAtualNorm) removidos.delete(id);
+        });
+      }
+
+      if (idAnteriorTrim && (!idAtualTrim || idAnteriorNorm !== idAtualNorm)) {
+        let jaExiste = false;
+        removidos.forEach(id => {
+          if (normalizar(id) === idAnteriorNorm) jaExiste = true;
+        });
+        if (!jaExiste) removidos.add(idAnteriorTrim);
       }
 
       window.idsRemovidosTempoReal[chave] = Array.from(removidos);
@@ -5365,8 +5491,36 @@ return null;
       window.vinculosManuaisTempoReal = window.vinculosManuaisTempoReal || {};
       window.vinculosManuaisTempoReal[vocNorm] = {
         status: status === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO",
-        id: status === "PROGRAMADO" ? String(idVinculado || "").trim() : ""
+        id: String(idVinculado || "").trim()
       };
+    }
+
+    function ajustarIdsHistoricosLocaisVocativo(vocNorm, idNovo = "", idAnterior = "") {
+      window.idsHistoricosServidor = window.idsHistoricosServidor || {};
+      const chave = normalizar(vocNorm);
+      if (!chave) return;
+
+      const listaAtual = Array.isArray(window.idsHistoricosServidor[chave])
+        ? window.idsHistoricosServidor[chave].map(x => String(x || "").trim()).filter(Boolean)
+        : [];
+
+      const idNovoTrim = String(idNovo || "").trim();
+      const idAnteriorTrim = String(idAnterior || "").trim();
+      const idNovoNorm = normalizar(idNovoTrim);
+      const idAnteriorNorm = normalizar(idAnteriorTrim);
+
+      let lista = listaAtual.filter(id => {
+        const idNorm = normalizar(id);
+        if (!idNorm) return false;
+        if (idAnteriorNorm && idNorm === idAnteriorNorm && (!idNovoNorm || idNorm !== idNovoNorm)) return false;
+        return true;
+      });
+
+      if (idNovoTrim && !lista.some(id => normalizar(id) === idNovoNorm)) {
+        lista.push(idNovoTrim);
+      }
+
+      window.idsHistoricosServidor[chave] = lista;
     }
 
     function atualizarCacheVeiculoVinculadoVocativo(vocNorm, status, idVinculado = "") {
@@ -5378,41 +5532,70 @@ return null;
         || snapshotVocativos?.[vocNorm]?.Vocativo
         || vocNorm;
 
-      cache.almoxUltimoVeiculo[almoxReal] = (cache.almoxUltimoVeiculo[almoxReal] || [])
+      const veiculosBase = filtrarVeiculosAtivosVocativo(vocNorm, (cache.almoxUltimoVeiculo[almoxReal] || []))
         .filter(v => !v?._idVinculadoManual);
 
-      if (status === "PROGRAMADO") {
-        const veiculoManual = montarVeiculoVinculadoManual(idVinculado);
-        if (veiculoManual) cache.almoxUltimoVeiculo[almoxReal].push(veiculoManual);
-      }
+      const removidos = new Set(
+        (window.idsRemovidosTempoReal?.[vocNorm] || [])
+          .map(x => normalizar(String(x || "").trim()))
+          .filter(Boolean)
+      );
 
-      cache.almoxUltimoVeiculo[almoxReal].sort((a, b) => {
+      const idsCombinados = [];
+      const vistos = new Set();
+      const adicionarId = (valor) => {
+        const id = String(valor || "").trim();
+        const idNorm = normalizar(id);
+        if (!idNorm || vistos.has(idNorm) || removidos.has(idNorm)) return;
+        vistos.add(idNorm);
+        idsCombinados.push(id);
+      };
+
+      const historicos = Array.isArray(window.idsHistoricosServidor?.[vocNorm])
+        ? window.idsHistoricosServidor[vocNorm]
+        : [];
+      historicos.forEach(adicionarId);
+      adicionarId(idVinculado);
+
+      idsCombinados.forEach(idAtual => {
+        const veiculoManual = montarVeiculoVinculadoManual(idAtual);
+        if (!veiculoManual) return;
+
+        const jaExiste = veiculosBase.some(v => normalizar(v?.id || "") === normalizar(veiculoManual.id || ""));
+        if (!jaExiste) veiculosBase.push(veiculoManual);
+      });
+
+      veiculosBase.sort((a, b) => {
         const ta = parsePossibleDate(a?.dtPrev)?.getTime?.() || 0;
         const tb = parsePossibleDate(b?.dtPrev)?.getTime?.() || 0;
         return tb - ta;
       });
+
+      cache.almoxUltimoVeiculo[almoxReal] = veiculosBase;
     }
 
-    function obterIdObrigatorioProgramado(vocNorm, idInicial = "") {
+    function solicitarIdVinculo(vocNorm, idInicial = "") {
       let tentativa = String(idInicial || "").trim();
 
       while (true) {
-        const valor = window.prompt(`Informe o ID do veículo para marcar o vocativo ${vocNorm} como PROGRAMADO:`, tentativa);
+        const valor = window.prompt(
+          `Informe o ID do veículo para vincular ao vocativo ${vocNorm}.\n\nDeixe em branco e confirme para desvincular o ID atual.`,
+          tentativa
+        );
         if (valor === null) return null;
 
         tentativa = String(valor || "").trim();
         if (!tentativa) {
-          alert("Para definir como PROGRAMADO, o ID do veículo é obrigatório.");
-          continue;
+          return "";
         }
 
-        const veiculo = buscarVeiculoPorId(tentativa);
-        if (!veiculo) {
+        const calculo = calcularStatusPorIdVinculado(tentativa);
+        if (!calculo.veiculo) {
           alert("ID não encontrado na planilha Veículos Carregados ou sem DT. PREVISÃO válida.");
           continue;
         }
 
-        return String(veiculo["ID"] || tentativa).trim();
+        return calculo.id;
       }
     }
 
@@ -5424,7 +5607,7 @@ return null;
       window.idDrafts = window.idDrafts || {};
       const id = String(value || "").trim();
       window.idDrafts[vocNorm] = id;
-      if (window.statusDrafts?.[vocNorm] === "PROGRAMADO" && buscarVeiculoPorId(id)) {
+      if (id && buscarVeiculoPorId(id)) {
         window.__analiseProgramacaoCache = null;
       }
     }
@@ -5435,8 +5618,16 @@ return null;
         if (!vocNorm) return;
         if (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm)) return;
 
+        const idAtual = String(mapaIds[voc] || "").trim();
         const input = getIdInput(vocNorm);
-        if (input) input.value = String(mapaIds[voc] || "").trim();
+        if (input) input.value = idAtual;
+        const btnVincular = getVincularIdButton(vocNorm);
+        if (btnVincular) {
+          btnVincular.textContent = idAtual ? `🔗 ID: ${idAtual}` : "🔗 VINCULAR ID";
+          btnVincular.title = idAtual
+            ? `ID vinculado: ${idAtual}. Clique para alterar ou limpar o vínculo.`
+            : "Clique para vincular um ID ao vocativo.";
+        }
       });
     }
 
@@ -5472,32 +5663,50 @@ return null;
       return html;
     }
 
-    function aplicarEstadoVocativoNaUI(vocNorm, status, idVinculado = "") {
+    function aplicarEstadoVocativoNaUI(vocNorm, status, idVinculado = "", options = {}) {
       window.statusDrafts = window.statusDrafts || {};
       window.idDrafts = window.idDrafts || {};
       snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
 
-      window.statusDrafts[vocNorm] = status;
-      window.idDrafts[vocNorm] = status === "PROGRAMADO" ? String(idVinculado || "").trim() : "";
-      snapshotVocativos[vocNorm].StatusVeiculo = status;
+      const idLimpo = String(idVinculado || "").trim();
+      const calculo = idLimpo ? calcularStatusPorIdVinculado(idLimpo) : { status: "NAO PROGRAMADO", id: "", temCarregadoHoje: false };
+      const idFinal = idLimpo ? calculo.id : "";
+
+      atualizarVinculoManualTempoReal(vocNorm, status, idFinal);
+      atualizarCacheVeiculoVinculadoVocativo(vocNorm, status, idFinal);
+
+      const visual = obterStatusVisualVocativo(vocNorm, idFinal ? (status === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO") : ((status === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO"));
+      const statusFinal = visual.status;
+      const temCarregadoHoje = visual.temCarregadoHoje === true;
+
+      window.statusDrafts[vocNorm] = statusFinal;
+      window.idDrafts[vocNorm] = idFinal;
+      snapshotVocativos[vocNorm].StatusVeiculo = statusFinal;
+      snapshotVocativos[vocNorm].TemCarregadoHoje = temCarregadoHoje;
 
       const sel = getStatusSelect(vocNorm);
-      if (sel) sel.value = status;
+      if (sel) sel.value = statusFinal;
 
       const input = getIdInput(vocNorm);
-      if (input) input.value = status === "PROGRAMADO" ? String(idVinculado || "").trim() : "";
+      if (input) input.value = idFinal;
+
+      const btnVincular = getVincularIdButton(vocNorm);
+      if (btnVincular) {
+        btnVincular.textContent = idFinal ? `🔗 ID: ${idFinal}` : "🔗 VINCULAR ID";
+        btnVincular.title = idFinal
+          ? `ID vinculado: ${idFinal}. Clique para alterar ou limpar o vínculo.`
+          : "Clique para vincular um ID ao vocativo.";
+      }
 
       const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
       if (badgeDiv) {
-        const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
-        badgeDiv.innerHTML = renderStatusBadge(status, temCarregadoHoje);
+        badgeDiv.innerHTML = renderStatusBadge(statusFinal, temCarregadoHoje);
       }
 
-      toggleIdField(vocNorm, status);
-      atualizarVinculoManualTempoReal(vocNorm, status, status === "PROGRAMADO" ? idVinculado : "");
-      atualizarCacheVeiculoVinculadoVocativo(vocNorm, status, status === "PROGRAMADO" ? idVinculado : "");
+      toggleIdField(vocNorm, statusFinal);
       window.__analisePerf.opcoesCacheKey = "";
       window.__analisePerf.clientesCacheKey = "";
+      if (options.skipRender === true) return Promise.resolve();
       return agendarListarAlmoxPendentes();
     }
 
@@ -5528,7 +5737,7 @@ return null;
 
           const haMudancaMaisNova = (versaoMudancaVocativo.get(vocNorm) || 0) !== atual.seq;
           if (!salvou && !haMudancaMaisNova) {
-            await aplicarEstadoVocativoNaUI(vocNorm, ultimoPersistidoStatus, ultimoPersistidoStatus === "PROGRAMADO" ? ultimoPersistidoId : "");
+            await aplicarEstadoVocativoNaUI(vocNorm, ultimoPersistidoStatus, ultimoPersistidoId);
           }
         }
       } finally {
@@ -5537,44 +5746,82 @@ return null;
     }
 
 
-    async function onStatusManualChange(vocNorm, value, ev) {
+    async function onDesvincularIdClick(vocNorm, ev) {
       if (ev) { ev.preventDefault(); ev.stopPropagation(); }
 
-      const sel = getStatusSelect(vocNorm);
-      const statusAnterior = (window.statusDrafts && Object.prototype.hasOwnProperty.call(window.statusDrafts, vocNorm))
-        ? window.statusDrafts[vocNorm]
-        : (window.statusHojeServidor?.[vocNorm] || snapshotVocativos?.[vocNorm]?.StatusVeiculo || "NAO PROGRAMADO");
-      const idAnterior = String(
-        (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm))
-          ? window.idDrafts[vocNorm]
-          : (window.idHojeServidor?.[vocNorm] || getIdInput(vocNorm)?.value || "")
-      ).trim();
-      const status = (value === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO";
-
-      registrarIdsRemovidosTempoReal(vocNorm, status, "", idAnterior);
-
-      let idConfirmado = idAnterior;
-
-      if (status === "PROGRAMADO") {
-        idConfirmado = obterIdObrigatorioProgramado(vocNorm, idConfirmado);
-        if (idConfirmado === null) {
-          registrarIdsRemovidosTempoReal(vocNorm, statusAnterior, statusAnterior === "PROGRAMADO" ? idAnterior : "", "");
-          if (sel) sel.value = statusAnterior;
-          toggleIdField(vocNorm, statusAnterior);
-          return;
-        }
-        registrarIdsRemovidosTempoReal(vocNorm, status, idConfirmado, "");
+      const idServidor = String(window.idHojeServidor?.[vocNorm] || "").trim();
+      if (!idServidor) {
+        alert("Este vocativo não possui ID vinculado salvo na planilha Google.");
+        return;
       }
 
-      await aplicarEstadoVocativoNaUI(vocNorm, status, status === "PROGRAMADO" ? idConfirmado : "");
+      const idInformado = String(
+        prompt(`Informe o ID que deseja desvincular do vocativo ${vocNorm}:`, idServidor) || ""
+      ).trim();
+
+      if (!idInformado) {
+        return;
+      }
+
+      if (normalizar(idInformado) !== normalizar(idServidor)) {
+        alert(`O ID ${idInformado} não está vinculado a este vocativo na planilha Google.`);
+        return;
+      }
+
+      const confirmar = confirm(`Deseja realmente desvincular o ID ${idServidor} do vocativo ${vocNorm}?`);
+      if (!confirmar) {
+        return;
+      }
+
+      registrarIdsRemovidosTempoReal(vocNorm, "NAO PROGRAMADO", "", idServidor);
+      ajustarIdsHistoricosLocaisVocativo(vocNorm, "", idServidor);
+
+      await aplicarEstadoVocativoNaUI(vocNorm, "NAO PROGRAMADO", "");
 
       const seq = (versaoMudancaVocativo.get(vocNorm) || 0) + 1;
       versaoMudancaVocativo.set(vocNorm, seq);
 
       await enfileirarSalvarVocativo(vocNorm, {
         seq,
-        status,
-        id: status === "PROGRAMADO" ? idConfirmado : "",
+        status: "NAO PROGRAMADO",
+        id: "",
+        silent: false
+      });
+    }
+
+    async function onVincularIdClick(vocNorm, ev) {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+
+      const idAnterior = String(
+        (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm))
+          ? window.idDrafts[vocNorm]
+          : (window.idHojeServidor?.[vocNorm] || getIdInput(vocNorm)?.value || "")
+      ).trim();
+      const statusAnterior = (window.statusDrafts && Object.prototype.hasOwnProperty.call(window.statusDrafts, vocNorm))
+        ? window.statusDrafts[vocNorm]
+        : (window.statusHojeServidor?.[vocNorm] || snapshotVocativos?.[vocNorm]?.StatusVeiculo || "NAO PROGRAMADO");
+
+      const idConfirmado = solicitarIdVinculo(vocNorm, idAnterior);
+      if (idConfirmado === null) {
+        return;
+      }
+
+      const calculoNovo = idConfirmado ? calcularStatusPorIdVinculado(idConfirmado) : { status: "NAO PROGRAMADO", id: "", temCarregadoHoje: false };
+      const statusNovo = idConfirmado ? calculoNovo.status : "NAO PROGRAMADO";
+
+      registrarIdsRemovidosTempoReal(vocNorm, statusNovo, idConfirmado || "", idAnterior);
+      ajustarIdsHistoricosLocaisVocativo(vocNorm, idConfirmado || "", idAnterior);
+
+      await aplicarEstadoVocativoNaUI(vocNorm, statusNovo, idConfirmado || "");
+      const statusVisualAtual = window.statusDrafts?.[vocNorm] || statusNovo;
+
+      const seq = (versaoMudancaVocativo.get(vocNorm) || 0) + 1;
+      versaoMudancaVocativo.set(vocNorm, seq);
+
+      await enfileirarSalvarVocativo(vocNorm, {
+        seq,
+        status: statusVisualAtual,
+        id: idConfirmado || "",
         silent: false
       });
     }
@@ -5598,17 +5845,31 @@ return null;
           return;
         }
 
+        const idServidor = String(window.idHojeServidor?.[vocNorm] || "").trim();
+        const calculoStatus = idServidor ? calcularStatusPorIdVinculado(idServidor) : null;
+        const visualStatus = obterStatusVisualVocativo(vocNorm, statusServidor);
+        const statusFinal = visualStatus.status;
+
         const sel = getStatusSelect(vocNorm);
-        if (sel) sel.value = statusServidor;
+        if (sel) sel.value = statusFinal;
 
         snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
-        snapshotVocativos[vocNorm].StatusVeiculo = statusServidor;
-        toggleIdField(vocNorm, window.statusDrafts?.[vocNorm] || statusServidor);
+        snapshotVocativos[vocNorm].StatusVeiculo = statusFinal;
+        snapshotVocativos[vocNorm].TemCarregadoHoje = (visualStatus.temCarregadoHoje === true) || (calculoStatus?.temCarregadoHoje === true);
+        toggleIdField(vocNorm, statusFinal);
+
+        const btnVincular = getVincularIdButton(vocNorm);
+        if (btnVincular) {
+          btnVincular.textContent = idServidor ? `🔗 ID: ${idServidor}` : "🔗 VINCULAR ID";
+          btnVincular.title = idServidor
+            ? `ID vinculado: ${idServidor}. Clique para alterar ou limpar o vínculo.`
+            : "Clique para vincular um ID ao vocativo.";
+        }
 
         const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
         if (badgeDiv) {
           const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
-          badgeDiv.innerHTML = renderStatusBadge(statusServidor, temCarregadoHoje);
+          badgeDiv.innerHTML = renderStatusBadge(statusFinal, temCarregadoHoje);
         }
       });
     }
@@ -6489,7 +6750,7 @@ return null;
       const clientesSet = new Set();
 
       Object.entries(almoxPend || {}).forEach(([almox, info]) => {
-        const veiculos = almoxUltimoVeiculo[almox] || [];
+        const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), almoxUltimoVeiculo[almox] || []);
 
         let temCarregadoHoje = false;
         let temSemCarregamento = false;
@@ -6515,16 +6776,6 @@ return null;
         else if (veiculos.length === 0) temNaoProgramado = true;
 
         const vocNormAtual = normalizar(almox);
-        const overrideManual = window.statusDrafts?.[vocNormAtual];
-        const overrideServidor = window.statusHojeServidor?.[vocNormAtual];
-
-        if (overrideManual) {
-          temProgramado = (overrideManual === "PROGRAMADO");
-          temNaoProgramado = !temProgramado;
-        } else if (overrideServidor === "PROGRAMADO") {
-          temProgramado = true;
-          temNaoProgramado = false;
-        }
 
         if (filtroVeiculo.length > 0) {
           let mostrar = false;
@@ -6607,7 +6858,7 @@ return null;
       let temSemCarregamento = false;
       let temComCarregamento = false;
 
-      if (veiculos.length) {
+      if (Array.isArray(veiculos) && veiculos.length) {
         veiculos.forEach(v => {
           const dtCarreg = parsePossibleDate(v.dtCarreg);
 
@@ -6625,28 +6876,8 @@ return null;
         });
       }
 
-      let temProgramado = false;
-      let temNaoProgramado = false;
-
-      if (temSemCarregamento) {
-        temProgramado = true;
-      } else if (temComCarregamento) {
-        temNaoProgramado = true;
-      } else if (veiculos.length === 0) {
-        temNaoProgramado = true;
-      }
-
-      const vocNormAtual = normalizar(almox);
-      const overrideManual = window.statusDrafts?.[vocNormAtual];
-      const overrideServidor = window.statusHojeServidor?.[vocNormAtual];
-
-      if (overrideManual) {
-        temProgramado = (overrideManual === "PROGRAMADO");
-        temNaoProgramado = !temProgramado;
-      } else if (overrideServidor === "PROGRAMADO") {
-        temProgramado = true;
-        temNaoProgramado = false;
-      }
+      const temProgramado = !!temSemCarregamento;
+      const temNaoProgramado = !temProgramado;
 
       return {
         temCarregadoHoje,
@@ -6795,7 +7026,7 @@ return null;
         const ctx = getContextoFiltrosPopup({ filtroVeiculo: [valorTeste] });
 
         const existe = Object.entries(almoxPend).some(([almox, info]) => {
-          const veiculos = almoxUltimoVeiculo[almox] || [];
+          const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), almoxUltimoVeiculo[almox] || []);
           if (!vocativoPassaFiltroVeiculo(almox, veiculos, [valorTeste], ctx.hoje)) return false;
           return (info.notas || []).some(n => notaPassaContexto(n, ctx));
         });
@@ -6807,7 +7038,7 @@ return null;
         const ctx = getContextoFiltrosPopup({ modosDataLimite: [valorTeste] });
 
         const existe = Object.entries(almoxPend).some(([almox, info]) => {
-          const veiculos = almoxUltimoVeiculo[almox] || [];
+          const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), almoxUltimoVeiculo[almox] || []);
           if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctx.filtroVeiculo, ctx.hoje)) return false;
           return (info.notas || []).some(n => notaPassaContexto(n, ctx));
         });
@@ -6819,7 +7050,7 @@ return null;
         const ctx = getContextoFiltrosPopup({ modosMigracao: [valorTeste] });
 
         const existe = Object.entries(almoxPend).some(([almox, info]) => {
-          const veiculos = almoxUltimoVeiculo[almox] || [];
+          const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), almoxUltimoVeiculo[almox] || []);
           if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctx.filtroVeiculo, ctx.hoje)) return false;
           return (info.notas || []).some(n => notaPassaContexto(n, ctx));
         });
@@ -6831,7 +7062,7 @@ return null;
         const ctx = getContextoFiltrosPopup({ modosCriticidade: [valorTeste] });
 
         const existe = Object.entries(almoxPend).some(([almox, info]) => {
-          const veiculos = almoxUltimoVeiculo[almox] || [];
+          const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), almoxUltimoVeiculo[almox] || []);
           if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctx.filtroVeiculo, ctx.hoje)) return false;
           return (info.notas || []).some(n => notaPassaContexto(n, ctx));
         });
@@ -6843,7 +7074,7 @@ return null;
         const ctx = getContextoFiltrosPopup({ modosEntradaNF: [valorTeste] });
 
         const existe = Object.entries(almoxPend).some(([almox, info]) => {
-          const veiculos = almoxUltimoVeiculo[almox] || [];
+          const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), almoxUltimoVeiculo[almox] || []);
           if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctx.filtroVeiculo, ctx.hoje)) return false;
           return (info.notas || []).some(n => notaPassaContexto(n, ctx));
         });
@@ -6855,7 +7086,7 @@ return null;
         const ctx = getContextoFiltrosPopup({ modosObservacao: [valorTeste] });
 
         const existe = Object.entries(almoxPend).some(([almox, info]) => {
-          const veiculos = almoxUltimoVeiculo[almox] || [];
+          const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), almoxUltimoVeiculo[almox] || []);
           if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctx.filtroVeiculo, ctx.hoje)) return false;
           return (info.notas || []).some(n => notaPassaContexto(n, ctx));
         });
@@ -6865,7 +7096,7 @@ return null;
 
       const ctxClientes = getContextoFiltrosPopup({ ignorarCliente: true });
       Object.entries(almoxPend).forEach(([almox, info]) => {
-        const veiculos = almoxUltimoVeiculo[almox] || [];
+        const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), almoxUltimoVeiculo[almox] || []);
         if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctxClientes.filtroVeiculo, ctxClientes.hoje)) return;
         (info.notas || []).forEach(n => {
           if (!notaPassaContexto(n, ctxClientes)) return;
