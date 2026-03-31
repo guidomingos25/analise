@@ -5039,20 +5039,27 @@ return null;
       const hasIdOverride = Object.prototype.hasOwnProperty.call(overrides || {}, "id");
       const idInput = getIdInput(vocNorm);
       const idDraftExiste = !!(window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm));
-      const idAtual = statusAtual === "PROGRAMADO"
+      const vinculoTempoReal = window.vinculosManuaisTempoReal?.[vocNorm] || null;
+      let idAtual = statusAtual === "PROGRAMADO"
         ? String(
             hasIdOverride
               ? (overrides.id || "")
-              : (idDraftExiste ? window.idDrafts[vocNorm] : (idInput?.value || window.idHojeServidor?.[vocNorm] || ""))
+              : (
+                  idDraftExiste
+                    ? window.idDrafts[vocNorm]
+                    : (
+                        vinculoTempoReal?.status === "PROGRAMADO"
+                          ? (vinculoTempoReal.id || "")
+                          : (idInput?.value || window.idHojeServidor?.[vocNorm] || "")
+                      )
+                )
           ).trim()
         : "";
 
-      if (statusAtual === "PROGRAMADO") {
-        if (!idAtual) {
-          throw new Error(`O vocativo ${vocNorm} está PROGRAMADO e exige um ID do veículo.`);
-        }
-        if (!buscarVeiculoPorId(idAtual)) {
-          throw new Error(`O ID ${idAtual} do vocativo ${vocNorm} não foi encontrado na planilha Veículos Carregados.`);
+      if (statusAtual === "PROGRAMADO" && idAtual) {
+        const veiculoEncontrado = buscarVeiculoPorId(idAtual);
+        if (veiculoEncontrado?.["ID"]) {
+          idAtual = String(veiculoEncontrado["ID"] || idAtual).trim();
         }
       }
 
