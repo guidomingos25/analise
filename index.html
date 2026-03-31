@@ -5151,20 +5151,18 @@ return null;
       let statusAtual = "NAO PROGRAMADO";
       let temCarregadoHojeAtual = false;
 
+      const fallbackStatus = hasStatusOverride
+        ? ((overrides.status === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO")
+        : ((window.statusDrafts?.[vocNorm]) || s.StatusVeiculo || "NAO PROGRAMADO");
+
       if (idAtual) {
-        const calculoStatus = calcularStatusPorIdVinculado(idAtual);
-        if (calculoStatus.id) idAtual = calculoStatus.id;
-        const visualAtual = obterStatusVisualVocativo(vocNorm, calculoStatus.status);
-        statusAtual = visualAtual.status;
-        temCarregadoHojeAtual = (visualAtual.temCarregadoHoje === true) || (calculoStatus.temCarregadoHoje === true);
-      } else {
-        const fallbackStatus = hasStatusOverride
-          ? ((overrides.status === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO")
-          : ((window.statusDrafts?.[vocNorm]) || s.StatusVeiculo || "NAO PROGRAMADO");
-        const visualAtual = obterStatusVisualVocativo(vocNorm, fallbackStatus);
-        statusAtual = visualAtual.status;
-        temCarregadoHojeAtual = visualAtual.temCarregadoHoje === true;
+        const veiculoCanonico = buscarVeiculoPorId(idAtual);
+        if (veiculoCanonico) idAtual = String(veiculoCanonico["ID"] || idAtual || "").trim();
       }
+
+      const visualAtual = obterStatusVisualVocativo(vocNorm, fallbackStatus);
+      statusAtual = visualAtual.status;
+      temCarregadoHojeAtual = visualAtual.temCarregadoHoje === true;
 
       snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
       snapshotVocativos[vocNorm].TemCarregadoHoje = temCarregadoHojeAtual === true;
@@ -5669,13 +5667,13 @@ return null;
       snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
 
       const idLimpo = String(idVinculado || "").trim();
-      const calculo = idLimpo ? calcularStatusPorIdVinculado(idLimpo) : { status: "NAO PROGRAMADO", id: "", temCarregadoHoje: false };
-      const idFinal = idLimpo ? calculo.id : "";
+      const veiculoCanonico = idLimpo ? buscarVeiculoPorId(idLimpo) : null;
+      const idFinal = veiculoCanonico ? String(veiculoCanonico["ID"] || idLimpo || "").trim() : idLimpo;
 
       atualizarVinculoManualTempoReal(vocNorm, status, idFinal);
       atualizarCacheVeiculoVinculadoVocativo(vocNorm, status, idFinal);
 
-      const visual = obterStatusVisualVocativo(vocNorm, idFinal ? (status === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO") : ((status === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO"));
+      const visual = obterStatusVisualVocativo(vocNorm, status === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO");
       const statusFinal = visual.status;
       const temCarregadoHoje = visual.temCarregadoHoje === true;
 
@@ -5806,14 +5804,11 @@ return null;
         return;
       }
 
-      const calculoNovo = idConfirmado ? calcularStatusPorIdVinculado(idConfirmado) : { status: "NAO PROGRAMADO", id: "", temCarregadoHoje: false };
-      const statusNovo = idConfirmado ? calculoNovo.status : "NAO PROGRAMADO";
-
-      registrarIdsRemovidosTempoReal(vocNorm, statusNovo, idConfirmado || "", idAnterior);
+      registrarIdsRemovidosTempoReal(vocNorm, statusAnterior, idConfirmado || "", idAnterior);
       ajustarIdsHistoricosLocaisVocativo(vocNorm, idConfirmado || "", idAnterior);
 
-      await aplicarEstadoVocativoNaUI(vocNorm, statusNovo, idConfirmado || "");
-      const statusVisualAtual = window.statusDrafts?.[vocNorm] || statusNovo;
+      await aplicarEstadoVocativoNaUI(vocNorm, statusAnterior, idConfirmado || "");
+      const statusVisualAtual = window.statusDrafts?.[vocNorm] || snapshotVocativos?.[vocNorm]?.StatusVeiculo || statusAnterior;
 
       const seq = (versaoMudancaVocativo.get(vocNorm) || 0) + 1;
       versaoMudancaVocativo.set(vocNorm, seq);
@@ -5846,7 +5841,6 @@ return null;
         }
 
         const idServidor = String(window.idHojeServidor?.[vocNorm] || "").trim();
-        const calculoStatus = idServidor ? calcularStatusPorIdVinculado(idServidor) : null;
         const visualStatus = obterStatusVisualVocativo(vocNorm, statusServidor);
         const statusFinal = visualStatus.status;
 
@@ -5855,7 +5849,7 @@ return null;
 
         snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
         snapshotVocativos[vocNorm].StatusVeiculo = statusFinal;
-        snapshotVocativos[vocNorm].TemCarregadoHoje = (visualStatus.temCarregadoHoje === true) || (calculoStatus?.temCarregadoHoje === true);
+        snapshotVocativos[vocNorm].TemCarregadoHoje = visualStatus.temCarregadoHoje === true;
         toggleIdField(vocNorm, statusFinal);
 
         const btnVincular = getVincularIdButton(vocNorm);
