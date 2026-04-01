@@ -1057,6 +1057,8 @@
     window.obsHojeServidor = window.obsHojeServidor || {};
     window.idHojeServidor = window.idHojeServidor || {};
     window.idsHistoricosServidor = window.idsHistoricosServidor || {};
+    window.statusNotasBancoServidor = window.statusNotasBancoServidor || {};
+    window._statusNotasBancoStamp = window._statusNotasBancoStamp || 0;
     window._cacheHojeISO = window._cacheHojeISO || "";
 
     window.idDrafts = window.idDrafts || {};
@@ -1245,6 +1247,51 @@
         return mapa;
       } catch (e) {
         console.warn("Erro ao buscar ids históricos:", e);
+        return {};
+      }
+    }
+
+    async function carregarStatusNotasBanco(force = false) {
+      try {
+        if (!force && window.statusNotasBancoServidor && Object.keys(window.statusNotasBancoServidor).length) {
+          return window.statusNotasBancoServidor;
+        }
+
+        const url = `${BANCO_CARREGAMENTO_WEBAPP_URL}?action=statusNotas&t=${Date.now()}`;
+        const resp = await fetch(url, { cache: "no-store" });
+        const raw = await resp.text();
+
+        let json;
+        try { json = JSON.parse(raw); }
+        catch {
+          console.warn("Apps Script do BANCO CARREGAMENTO não retornou JSON válido:", raw);
+          return {};
+        }
+
+        if (!json || !json.ok || !Array.isArray(json.data)) {
+          console.warn("Apps Script do BANCO CARREGAMENTO retornou statusNotas inválido:", json);
+          return {};
+        }
+
+        const mapa = {};
+        json.data.forEach(row => {
+          const notaNorm = normalizar(row.NUMERO_NF || row.numero_nf || row.numeroNf || row.Nota || row.nota || "");
+          const coletaNorm = normalizar(row.COLETA || row.coleta || row.NumeroOEF || row.numeroOef || "");
+          const status = String(row.STATUS || row.status || "").trim();
+          if (!notaNorm || !coletaNorm) return;
+          mapa[`${notaNorm}||${coletaNorm}`] = {
+            nota: String(row.NUMERO_NF || row.numero_nf || row.numeroNf || row.Nota || row.nota || "").trim(),
+            coleta: String(row.COLETA || row.coleta || row.NumeroOEF || row.numeroOef || "").trim(),
+            status,
+            dataHora: String(row.DATA_HORA || row.dataHora || "").trim()
+          };
+        });
+
+        window.statusNotasBancoServidor = mapa;
+        window._statusNotasBancoStamp = Date.now();
+        return mapa;
+      } catch (e) {
+        console.warn("Erro ao buscar status das notas do BANCO CARREGAMENTO:", e);
         return {};
       }
     }
@@ -3005,8 +3052,8 @@
       }
     }
 
-    function prepararCacheAnaliseProgramacao() {
-      const signature = `${detalhadoRows.length}|${dataRows.length}`;
+    async function prepararCacheAnaliseProgramacao() {
+      const signature = `${detalhadoRows.length}|${dataRows.length}|${window._statusNotasBancoStamp || 0}`;
       if (window.__analiseProgramacaoCache?.signature === signature) {
         return window.__analiseProgramacaoCache;
       }
@@ -3014,6 +3061,7 @@
       const almoxTotalPVD = {};
       const almoxPendBase = {};
       const dataRowsByIdNorm = new Map();
+      const statusNotasBanco = await carregarStatusNotasBanco(false);
 
       (dataRows || []).forEach(r => {
         const idNorm = normalizar(r["ID"] || "");
@@ -3084,6 +3132,7 @@
         notaObj._ufNorm = normalizar(notaObj.uf || "");
         notaObj._notaNorm = normalizar(notaObj.nota || "");
         notaObj._numeroOEFNorm = normalizar(notaObj.numeroOEF || "");
+        notaObj.statusBanco = statusNotasBanco[`${notaObj._notaNorm}||${notaObj._numeroOEFNorm}`]?.status || "";
 
         almoxPendBase[almox].notas.push(notaObj);
       });
@@ -3426,8 +3475,11 @@ return null;
       }
 
       try {
-        const { obs: obsHoje, status: statusHoje } = await carregarObsEStatusHojeCache(false);
-        const idsHistoricos = await carregarIdsHistoricosVinculados(true);
+        const [{ obs: obsHoje, status: statusHoje }, idsHistoricos] = await Promise.all([
+          carregarObsEStatusHojeCache(false),
+          carregarIdsHistoricosVinculados(true),
+          carregarStatusNotasBanco(true)
+        ]).then(([obsStatus, idsHistoricos]) => [obsStatus, idsHistoricos]);
 
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
@@ -3446,7 +3498,7 @@ return null;
       const termoNota = normalizar(document.getElementById("searchNotaPopup")?.value || "");
       const termoOEF = normalizar(document.getElementById("searchOefPopup")?.value || "");
 
-      const cacheAnalise = prepararCacheAnaliseProgramacao();
+      const cacheAnalise = await prepararCacheAnaliseProgramacao();
       const almoxTotalPVD = cacheAnalise.almoxTotalPVD;
       const almoxUltimoVeiculo = cacheAnalise.almoxUltimoVeiculo;
       const almoxPend = {};
@@ -4304,6 +4356,7 @@ return null;
             CarregadoHoje: temCarregadoHoje ? "SIM" : "NAO",
             Nota: n.nota || "",
             NumeroOEF: n.numeroOEF || "",
+            StatusBanco: n.statusBanco || "",
             RangeDeDias: n.rangeDias || "",
             Fornecedor: n.fornecedor || "",
             Destinatario: n.destinatario || "",
@@ -4371,6 +4424,7 @@ return null;
   <tr ${style}>
     <td>${n.nota}</td>
     <td>${n.numeroOEF || ""}</td>
+    <td>${n.statusBanco || ""}</td>
     <td>${n.rangeDias || ""}</td>
     <td>${n.incoterms || ""}</td>
     <td>${n.bpDestino || ""}</td>
@@ -4829,6 +4883,7 @@ return null;
       <tr style="background:#f3f4f6;">
         <th>Nota</th>
         <th>Número OEF</th>
+        <th>Status</th>
         <th>Range de Dias</th>
         <th>INC.</th>
         <th>BP Destino</th>
@@ -5044,6 +5099,7 @@ return null;
 
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz-AaiXcFqw12hLnth9QF-XxMen6MniH6vIxxSVkttQm_nxrSan2tSNlDqDxU0h0NUg/exec";
     const APPS_SCRIPT_TOKEN = "1234";
+    const BANCO_CARREGAMENTO_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxPNjmyPSmxpyPZidtHBdrX0OMiZvt-dIsSwglEBgI0VGInq0T9n0Vll_e83z47KYESw/exec";
 
     function hojeISO() {
       const d = new Date();
