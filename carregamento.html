@@ -31,7 +31,7 @@
       --shadow: 0 10px 30px rgba(0,0,0,0.08);
       --radius: 16px;
       --radius-sm: 12px;
-      --input-h: 46px;
+      --input-h: 42px;
     }
 
     html, body {
@@ -50,32 +50,32 @@
       width: 100%;
       max-width: 980px;
       margin: 0 auto;
-      padding: 14px;
+      padding: 10px;
     }
 
     .card {
       background: var(--card);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 18px;
+      padding: 14px;
     }
 
     h1 {
       margin: 0 0 8px;
-      font-size: 24px;
+      font-size: 22px;
       line-height: 1.2;
     }
 
     .subtitle {
-      margin: 0 0 18px;
+      margin: 0 0 16px;
       color: var(--muted);
-      font-size: 14px;
-      line-height: 1.45;
+      font-size: 13px;
+      line-height: 1.4;
     }
 
     .section {
-      margin-bottom: 16px;
-      padding: 14px;
+      margin-bottom: 14px;
+      padding: 12px;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       background: var(--soft);
@@ -83,13 +83,13 @@
 
     .section-title {
       display: block;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       font-size: 14px;
       font-weight: 700;
     }
 
     .field {
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .field:last-child {
@@ -110,11 +110,12 @@
       height: var(--input-h);
       border: 1px solid var(--border-strong);
       border-radius: 10px;
-      padding: 0 12px;
-      font-size: 16px;
+      padding: 0 10px;
+      font-size: 14px;
       outline: none;
       background: #fff;
       color: var(--text);
+      min-width: 0;
     }
 
     .input:focus,
@@ -129,37 +130,59 @@
 
     .linha-item {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      margin-bottom: 12px;
-      padding: 12px;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-areas:
+        "nf coleta status"
+        "acao acao acao";
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 10px;
       border: 1px solid var(--border);
       border-radius: 12px;
       background: #fff;
+      align-items: end;
     }
 
     .campo-wrap {
       width: 100%;
+      min-width: 0;
     }
 
     .campo-wrap label {
       display: block;
-      margin-bottom: 6px;
-      font-size: 12px;
+      margin-bottom: 4px;
+      font-size: 10px;
       font-weight: 700;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.02em;
+      line-height: 1.1;
+    }
+
+    .campo-wrap.nf-wrap {
+      grid-area: nf;
+    }
+
+    .campo-wrap.coleta-wrap {
+      grid-area: coleta;
+    }
+
+    .campo-wrap.status-wrap {
+      grid-area: status;
+    }
+
+    .campo-wrap.acao-wrap {
+      grid-area: acao;
     }
 
     .btn {
       border: none;
       border-radius: 10px;
-      padding: 12px 16px;
+      padding: 10px 14px;
       font-size: 14px;
       font-weight: 700;
       cursor: pointer;
-      min-height: 44px;
+      min-height: 42px;
     }
 
     .btn-add {
@@ -176,6 +199,7 @@
       width: 100%;
       background: var(--danger);
       color: #fff;
+      min-height: 40px;
     }
 
     .btn-remove:hover {
@@ -221,6 +245,31 @@
       color: var(--error-tx);
     }
 
+    @media (max-width: 420px) {
+      .container {
+        padding: 8px;
+      }
+
+      .card {
+        padding: 12px;
+      }
+
+      .linha-item {
+        gap: 6px;
+        padding: 8px;
+      }
+
+      .input,
+      .select {
+        font-size: 13px;
+        padding: 0 8px;
+      }
+
+      .campo-wrap label {
+        font-size: 9px;
+      }
+    }
+
     @media (min-width: 768px) {
       .container {
         padding: 24px;
@@ -257,10 +306,12 @@
 
       .linha-item {
         grid-template-columns: 1fr 1fr 1fr auto;
+        grid-template-areas: "nf coleta status acao";
         align-items: end;
         padding: 0;
         border: none;
         background: transparent;
+        gap: 10px;
       }
 
       .campo-wrap label {
@@ -294,12 +345,14 @@
           <div class="field">
             <label for="idVeiculo">ID DO VEÍCULO</label>
             <input
-              type="text"
-              id="idVeiculo"
-              class="input"
-              placeholder="Digite o ID do veículo"
-              required
-            />
+                type="text"
+                id="idVeiculo"
+                class="input"
+                placeholder="Digite o ID do veículo"
+                inputmode="numeric"
+                autocomplete="off"
+                required
+                />
           </div>
         </div>
 
@@ -347,6 +400,44 @@
       return html;
     }
 
+    function somenteNumeros(valor) {
+  return String(valor || "").replace(/\D+/g, "");
+}
+
+function aplicarMascaraNumericaNoCampo(input) {
+  if (!input) return;
+
+  input.addEventListener("input", () => {
+    const posicaoInicial = input.selectionStart;
+    const valorOriginal = input.value;
+    const valorLimpo = somenteNumeros(valorOriginal);
+
+    if (valorOriginal !== valorLimpo) {
+      input.value = valorLimpo;
+
+      const diferenca = valorOriginal.length - valorLimpo.length;
+      const novaPosicao = Math.max((posicaoInicial || 0) - diferenca, 0);
+      try {
+        input.setSelectionRange(novaPosicao, novaPosicao);
+      } catch (_) {}
+    }
+  });
+
+  input.addEventListener("paste", () => {
+    setTimeout(() => {
+      input.value = somenteNumeros(input.value);
+    }, 0);
+  });
+}
+
+function aplicarValidacaoNumericaGlobal() {
+  aplicarMascaraNumericaNoCampo(document.getElementById("idVeiculo"));
+
+  document.querySelectorAll(".campo-nf, .campo-coleta").forEach(input => {
+    aplicarMascaraNumericaNoCampo(input);
+  });
+}
+
     function adicionarLinha(nf = "", coleta = "", status = "") {
       const container = document.getElementById("itensContainer");
 
@@ -354,32 +445,34 @@
       row.className = "linha-item";
 
       row.innerHTML = `
-        <div class="campo-wrap">
-          <label>Número de NF</label>
-          <input type="text" class="input campo-nf" placeholder="Número de NF" value="${nf}">
+        <div class="campo-wrap nf-wrap">
+            <label>Número de NF</label>
+            <input type="text" class="input campo-nf somente-numeros" placeholder="NF" value="${nf}" inputmode="numeric" autocomplete="off">
         </div>
 
-        <div class="campo-wrap">
-          <label>Coleta</label>
-          <input type="text" class="input campo-coleta" placeholder="Coleta" value="${coleta}">
+        <div class="campo-wrap coleta-wrap">
+            <label>Coleta</label>
+            <input type="text" class="input campo-coleta somente-numeros" placeholder="Coleta" value="${coleta}" inputmode="numeric" autocomplete="off">
         </div>
 
-        <div class="campo-wrap">
-          <label>Status</label>
-          <select class="select campo-status">
+        <div class="campo-wrap status-wrap">
+            <label>Status</label>
+            <select class="select campo-status">
             ${criarOptionsStatus(status)}
-          </select>
+            </select>
         </div>
 
-        <div class="campo-wrap">
-          <label>Ação</label>
-          <button type="button" class="btn btn-remove">Remover</button>
+        <div class="campo-wrap acao-wrap">
+            <label>Ação</label>
+            <button type="button" class="btn btn-remove">Remover</button>
         </div>
-      `;
-
+        `;
       row.querySelector(".btn-remove").addEventListener("click", () => {
         row.remove();
       });
+
+aplicarMascaraNumericaNoCampo(row.querySelector(".campo-nf"));
+aplicarMascaraNumericaNoCampo(row.querySelector(".campo-coleta"));
 
       container.appendChild(row);
     }
@@ -400,15 +493,16 @@
       event.preventDefault();
 
       const btnEnviar = document.getElementById("btnEnviar");
-      const idVeiculo = document.getElementById("idVeiculo").value.trim();
+      const idVeiculo = somenteNumeros(document.getElementById("idVeiculo").value.trim());
+      document.getElementById("idVeiculo").value = idVeiculo;
 
       const linhas = [...document.querySelectorAll(".linha-item")];
 
       const itens = linhas.map((linha) => ({
-        nf: linha.querySelector(".campo-nf").value.trim(),
-        coleta: linha.querySelector(".campo-coleta").value.trim(),
+        nf: somenteNumeros(linha.querySelector(".campo-nf").value.trim()),
+        coleta: somenteNumeros(linha.querySelector(".campo-coleta").value.trim()),
         status: linha.querySelector(".campo-status").value.trim()
-      })).filter(item => item.nf || item.coleta || item.status);
+        })).filter(item => item.nf || item.coleta || item.status);
 
       if (!idVeiculo) {
         mostrarStatus("Informe o ID do veículo.", "error");
@@ -459,6 +553,7 @@
 
     document.getElementById("formCadastro").addEventListener("submit", enviarFormulario);
 
+    aplicarMascaraNumericaNoCampo(document.getElementById("idVeiculo"));
     adicionarLinha();
   </script>
 </body>
