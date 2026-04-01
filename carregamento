@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cadastro de Veículo</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      padding: 28px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+
+    p {
+      margin: 0 0 24px;
+      color: #6b7280;
+    }
+
+    .section {
+      margin-bottom: 24px;
+      padding: 18px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .input,
+    .select {
+      width: 100%;
+      height: 44px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 0 12px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+    }
+
+    .input:focus,
+    .select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .linha-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-add {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .btn-add:hover {
+      background: #d1d5db;
+    }
+
+    .btn-remove {
+      background: #ef4444;
+      color: white;
+      min-width: 44px;
+    }
+
+    .btn-remove:hover {
+      background: #dc2626;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: #2563eb;
+      color: white;
+      margin-top: 8px;
+    }
+
+    .btn-submit:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-submit:disabled {
+      background: #93c5fd;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 10px;
+      display: none;
+      font-size: 14px;
+    }
+
+    .status.success {
+      display: block;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+    }
+
+    .status.error {
+      display: block;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+
+    .linha-head {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #6b7280;
+      padding: 0 4px;
+    }
+
+    @media (max-width: 900px) {
+      .linha-item,
+      .linha-head {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-remove {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Cadastro de Veículo</h1>
+    <p>Informe o ID do veículo e adicione quantas linhas de NF, coleta e status forem necessárias.</p>
+
+    <form id="formCadastro">
+      <div class="section">
+        <div class="field">
+          <label for="idVeiculo">ID DO VEÍCULO</label>
+          <input
+            type="text"
+            id="idVeiculo"
+            class="input"
+            placeholder="Digite o ID do veículo"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="section">
+        <label style="display:block; margin-bottom:10px; font-weight:700;">Linhas do registro</label>
+
+        <div class="linha-head">
+          <div>NÚMERO DE NF</div>
+          <div>COLETA</div>
+          <div>STATUS</div>
+          <div>AÇÃO</div>
+        </div>
+
+        <div id="itensContainer"></div>
+
+        <button type="button" class="btn btn-add" onclick="adicionarLinha()">
+          + Adicionar linha
+        </button>
+      </div>
+
+      <button type="submit" class="btn btn-submit" id="btnEnviar">Enviar</button>
+
+      <div id="status" class="status"></div>
+    </form>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxPNjmyPSmxpyPZidtHBdrX0OMiZvt-dIsSwglEBgI0VGInq0T9n0Vll_e83z47KYESw/exec";
+
+    const STATUS_OPTIONS = [
+      "NÃO LOCALIZADA",
+      "NÃO COUBE",
+      "PROCESSO DE RECEBIMENTO",
+      "PENDÊNCIA",
+      "SEM PESAGEM"
+    ];
+
+    function criarOptionsStatus(selected = "") {
+      let html = '<option value="">Selecione</option>';
+      for (const opt of STATUS_OPTIONS) {
+        const isSelected = opt === selected ? "selected" : "";
+        html += `<option value="${opt}" ${isSelected}>${opt}</option>`;
+      }
+      return html;
+    }
+
+    function adicionarLinha(nf = "", coleta = "", status = "") {
+      const container = document.getElementById("itensContainer");
+
+      const row = document.createElement("div");
+      row.className = "linha-item";
+
+      row.innerHTML = `
+        <input type="text" class="input campo-nf" placeholder="Número de NF" value="${nf}">
+        <input type="text" class="input campo-coleta" placeholder="Coleta" value="${coleta}">
+        <select class="select campo-status">
+          ${criarOptionsStatus(status)}
+        </select>
+        <button type="button" class="btn btn-remove">X</button>
+      `;
+
+      row.querySelector(".btn-remove").addEventListener("click", () => {
+        row.remove();
+      });
+
+      container.appendChild(row);
+    }
+
+    function mostrarStatus(mensagem, tipo) {
+      const status = document.getElementById("status");
+      status.textContent = mensagem;
+      status.className = `status ${tipo}`;
+    }
+
+    function limparFormulario() {
+      document.getElementById("idVeiculo").value = "";
+      document.getElementById("itensContainer").innerHTML = "";
+      adicionarLinha();
+    }
+
+    async function enviarFormulario(event) {
+      event.preventDefault();
+
+      const btnEnviar = document.getElementById("btnEnviar");
+      const idVeiculo = document.getElementById("idVeiculo").value.trim();
+
+      const linhas = [...document.querySelectorAll(".linha-item")];
+
+      const itens = linhas.map((linha) => ({
+        nf: linha.querySelector(".campo-nf").value.trim(),
+        coleta: linha.querySelector(".campo-coleta").value.trim(),
+        status: linha.querySelector(".campo-status").value.trim()
+      })).filter(item => item.nf || item.coleta || item.status);
+
+      if (!idVeiculo) {
+        mostrarStatus("Informe o ID do veículo.", "error");
+        return;
+      }
+
+      if (!itens.length) {
+        mostrarStatus("Adicione pelo menos uma linha.", "error");
+        return;
+      }
+
+      const linhaInvalida = itens.find(item => !item.nf || !item.coleta || !item.status);
+      if (linhaInvalida) {
+        mostrarStatus("Todas as linhas devem ter NF, coleta e status preenchidos.", "error");
+        return;
+      }
+
+      btnEnviar.disabled = true;
+      btnEnviar.textContent = "Enviando...";
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            idVeiculo,
+            itens
+          }),
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          }
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.message || "Falha ao salvar.");
+        }
+
+        mostrarStatus(`Sucesso! ${result.quantidade || itens.length} linha(s) salva(s) na planilha.`, "success");
+        limparFormulario();
+      } catch (error) {
+        mostrarStatus("Erro ao enviar: " + error.message, "error");
+      } finally {
+        btnEnviar.disabled = false;
+        btnEnviar.textContent = "Enviar";
+      }
+    }
+
+    document.getElementById("formCadastro").addEventListener("submit", enviarFormulario);
+
+    adicionarLinha();
+  </script>
+</body>
+</html>
