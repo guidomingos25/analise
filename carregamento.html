@@ -2,80 +2,154 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Cadastro de Veículo</title>
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --border-strong: #d1d5db;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --soft: #fafafa;
+      --success-bg: #ecfdf5;
+      --success-bd: #a7f3d0;
+      --success-tx: #065f46;
+      --error-bg: #fef2f2;
+      --error-bd: #fecaca;
+      --error-tx: #991b1b;
+      --shadow: 0 10px 30px rgba(0,0,0,0.08);
+      --radius: 16px;
+      --radius-sm: 12px;
+      --input-h: 46px;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      font-family: Arial, sans-serif;
+      color: var(--text);
+    }
 
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      color: #1f2937;
+      min-height: 100vh;
     }
 
     .container {
-      max-width: 1100px;
-      margin: 40px auto;
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      padding: 28px;
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
     }
 
     h1 {
       margin: 0 0 8px;
-      font-size: 28px;
+      font-size: 24px;
+      line-height: 1.2;
     }
 
-    p {
-      margin: 0 0 24px;
-      color: #6b7280;
+    .subtitle {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
     }
 
     .section {
-      margin-bottom: 24px;
-      padding: 18px;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      background: #fafafa;
+      margin-bottom: 16px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--soft);
+    }
+
+    .section-title {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 14px;
+      font-weight: 700;
     }
 
     .field {
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
     }
 
     .field label {
       display: block;
       margin-bottom: 6px;
+      font-size: 13px;
       font-weight: 700;
-      font-size: 14px;
+      color: var(--text);
     }
 
     .input,
     .select {
       width: 100%;
-      height: 44px;
-      border: 1px solid #d1d5db;
+      height: var(--input-h);
+      border: 1px solid var(--border-strong);
       border-radius: 10px;
       padding: 0 12px;
-      font-size: 14px;
+      font-size: 16px;
       outline: none;
       background: #fff;
+      color: var(--text);
     }
 
     .input:focus,
     .select:focus {
-      border-color: #2563eb;
+      border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .linha-head {
+      display: none;
     }
 
     .linha-item {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto;
+      grid-template-columns: 1fr;
       gap: 10px;
-      margin-bottom: 10px;
-      align-items: center;
+      margin-bottom: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .campo-wrap {
+      width: 100%;
+    }
+
+    .campo-wrap label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
     }
 
     .btn {
@@ -85,9 +159,11 @@
       font-size: 14px;
       font-weight: 700;
       cursor: pointer;
+      min-height: 44px;
     }
 
     .btn-add {
+      width: 100%;
       background: #e5e7eb;
       color: #111827;
     }
@@ -97,24 +173,24 @@
     }
 
     .btn-remove {
-      background: #ef4444;
-      color: white;
-      min-width: 44px;
+      width: 100%;
+      background: var(--danger);
+      color: #fff;
     }
 
     .btn-remove:hover {
-      background: #dc2626;
+      background: var(--danger-hover);
     }
 
     .btn-submit {
       width: 100%;
-      background: #2563eb;
-      color: white;
-      margin-top: 8px;
+      background: var(--primary);
+      color: #fff;
+      margin-top: 4px;
     }
 
     .btn-submit:hover {
-      background: #1d4ed8;
+      background: var(--primary-hover);
     }
 
     .btn-submit:disabled {
@@ -123,90 +199,132 @@
     }
 
     .status {
-      margin-top: 18px;
+      margin-top: 16px;
       padding: 14px;
       border-radius: 10px;
       display: none;
       font-size: 14px;
+      line-height: 1.45;
     }
 
     .status.success {
       display: block;
-      background: #ecfdf5;
-      border: 1px solid #a7f3d0;
-      color: #065f46;
+      background: var(--success-bg);
+      border: 1px solid var(--success-bd);
+      color: var(--success-tx);
     }
 
     .status.error {
       display: block;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      color: #991b1b;
+      background: var(--error-bg);
+      border: 1px solid var(--error-bd);
+      color: var(--error-tx);
     }
 
-    .linha-head {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto;
-      gap: 10px;
-      margin-bottom: 10px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #6b7280;
-      padding: 0 4px;
-    }
+    @media (min-width: 768px) {
+      .container {
+        padding: 24px;
+      }
 
-    @media (max-width: 900px) {
-      .linha-item,
+      .card {
+        padding: 28px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .subtitle {
+        font-size: 15px;
+        margin-bottom: 24px;
+      }
+
+      .section {
+        padding: 18px;
+        margin-bottom: 24px;
+      }
+
       .linha-head {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr auto;
+        gap: 10px;
+        margin-bottom: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        padding: 0 4px;
+      }
+
+      .linha-item {
+        grid-template-columns: 1fr 1fr 1fr auto;
+        align-items: end;
+        padding: 0;
+        border: none;
+        background: transparent;
+      }
+
+      .campo-wrap label {
+        font-size: 0;
+        margin: 0;
+        height: 0;
+        overflow: hidden;
       }
 
       .btn-remove {
-        width: 100%;
+        width: auto;
+        min-width: 48px;
+      }
+
+      .btn-add {
+        width: auto;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Cadastro de Veículo</h1>
-    <p>Informe o ID do veículo e adicione quantas linhas de NF, coleta e status forem necessárias.</p>
+    <div class="card">
+      <h1>Cadastro de Veículo</h1>
+      <p class="subtitle">
+        Informe o ID do veículo e adicione quantas linhas de NF, coleta e status forem necessárias.
+      </p>
 
-    <form id="formCadastro">
-      <div class="section">
-        <div class="field">
-          <label for="idVeiculo">ID DO VEÍCULO</label>
-          <input
-            type="text"
-            id="idVeiculo"
-            class="input"
-            placeholder="Digite o ID do veículo"
-            required
-          />
-        </div>
-      </div>
-
-      <div class="section">
-        <label style="display:block; margin-bottom:10px; font-weight:700;">Linhas do registro</label>
-
-        <div class="linha-head">
-          <div>NÚMERO DE NF</div>
-          <div>COLETA</div>
-          <div>STATUS</div>
-          <div>AÇÃO</div>
+      <form id="formCadastro">
+        <div class="section">
+          <div class="field">
+            <label for="idVeiculo">ID DO VEÍCULO</label>
+            <input
+              type="text"
+              id="idVeiculo"
+              class="input"
+              placeholder="Digite o ID do veículo"
+              required
+            />
+          </div>
         </div>
 
-        <div id="itensContainer"></div>
+        <div class="section">
+          <span class="section-title">Linhas do registro</span>
 
-        <button type="button" class="btn btn-add" onclick="adicionarLinha()">
-          + Adicionar linha
-        </button>
-      </div>
+          <div class="linha-head">
+            <div>NÚMERO DE NF</div>
+            <div>COLETA</div>
+            <div>STATUS</div>
+            <div>AÇÃO</div>
+          </div>
 
-      <button type="submit" class="btn btn-submit" id="btnEnviar">Enviar</button>
+          <div id="itensContainer"></div>
 
-      <div id="status" class="status"></div>
-    </form>
+          <button type="button" class="btn btn-add" onclick="adicionarLinha()">
+            + Adicionar linha
+          </button>
+        </div>
+
+        <button type="submit" class="btn btn-submit" id="btnEnviar">Enviar</button>
+
+        <div id="status" class="status"></div>
+      </form>
+    </div>
   </div>
 
   <script>
@@ -236,12 +354,27 @@
       row.className = "linha-item";
 
       row.innerHTML = `
-        <input type="text" class="input campo-nf" placeholder="Número de NF" value="${nf}">
-        <input type="text" class="input campo-coleta" placeholder="Coleta" value="${coleta}">
-        <select class="select campo-status">
-          ${criarOptionsStatus(status)}
-        </select>
-        <button type="button" class="btn btn-remove">X</button>
+        <div class="campo-wrap">
+          <label>Número de NF</label>
+          <input type="text" class="input campo-nf" placeholder="Número de NF" value="${nf}">
+        </div>
+
+        <div class="campo-wrap">
+          <label>Coleta</label>
+          <input type="text" class="input campo-coleta" placeholder="Coleta" value="${coleta}">
+        </div>
+
+        <div class="campo-wrap">
+          <label>Status</label>
+          <select class="select campo-status">
+            ${criarOptionsStatus(status)}
+          </select>
+        </div>
+
+        <div class="campo-wrap">
+          <label>Ação</label>
+          <button type="button" class="btn btn-remove">Remover</button>
+        </div>
       `;
 
       row.querySelector(".btn-remove").addEventListener("click", () => {
