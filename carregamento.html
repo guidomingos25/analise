@@ -251,14 +251,14 @@
       mostrarStatus("Salvando no Supabase...", "info");
 
       try {
-        const result = await chamarSupabaseFunction("upsert-nota-status", {
+        const result = await chamarSupabaseFunction("upsert-status-nota", {
           method: "POST",
           body: { idVeiculo, itens }
         });
 
         if (!result?.ok) throw new Error(result?.message || "Falha ao salvar.");
 
-        mostrarStatus(`Sucesso! ${result.quantidade || itens.length} linha(s) salva(s) no banco de dados.`, "success");
+        mostrarStatus(`Sucesso! ${(result.data?.length ?? itens.length)} linha(s) salva(s) no banco de dados.`, "success");
         limparFormulario();
       } catch (error) {
         mostrarStatus("Erro ao enviar: " + error.message, "error");
