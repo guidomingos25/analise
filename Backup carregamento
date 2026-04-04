@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Cadastro de Notas</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --border-strong: #d1d5db;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --soft: #fafafa;
+      --success-bg: #ecfdf5;
+      --success-bd: #a7f3d0;
+      --success-tx: #065f46;
+      --error-bg: #fef2f2;
+      --error-bd: #fecaca;
+      --error-tx: #991b1b;
+      --shadow: 0 10px 30px rgba(0,0,0,0.08);
+      --radius: 16px;
+      --radius-sm: 12px;
+      --input-h: 42px;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      font-family: Arial, sans-serif;
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 10px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .section {
+      margin-bottom: 14px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--soft);
+    }
+
+    .section-title {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .field {
+      margin-bottom: 12px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .input,
+    .select {
+      width: 100%;
+      height: var(--input-h);
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      padding: 0 10px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+      color: var(--text);
+      min-width: 0;
+    }
+
+    .input:focus,
+    .select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .linha-head {
+      display: none;
+    }
+
+    .linha-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-areas:
+        "nf coleta status"
+        "acao acao acao";
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      align-items: end;
+    }
+
+    .campo-wrap {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .campo-wrap label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      line-height: 1.1;
+    }
+
+    .campo-wrap.nf-wrap {
+      grid-area: nf;
+    }
+
+    .campo-wrap.coleta-wrap {
+      grid-area: coleta;
+    }
+
+    .campo-wrap.status-wrap {
+      grid-area: status;
+    }
+
+    .campo-wrap.acao-wrap {
+      grid-area: acao;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      min-height: 42px;
+    }
+
+    .btn-add {
+      width: 100%;
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .btn-add:hover {
+      background: #d1d5db;
+    }
+
+    .btn-remove {
+      width: 100%;
+      background: var(--danger);
+      color: #fff;
+      min-height: 40px;
+    }
+
+    .btn-remove:hover {
+      background: var(--danger-hover);
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      margin-top: 4px;
+    }
+
+    .btn-submit:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-submit:disabled {
+      background: #93c5fd;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 10px;
+      display: none;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .status.success {
+      display: block;
+      background: var(--success-bg);
+      border: 1px solid var(--success-bd);
+      color: var(--success-tx);
+    }
+
+    .status.error {
+      display: block;
+      background: var(--error-bg);
+      border: 1px solid var(--error-bd);
+      color: var(--error-tx);
+    }
+
+    @media (max-width: 420px) {
+      .container {
+        padding: 8px;
+      }
+
+      .card {
+        padding: 12px;
+      }
+
+      .linha-item {
+        gap: 6px;
+        padding: 8px;
+      }
+
+      .input,
+      .select {
+        font-size: 13px;
+        padding: 0 8px;
+      }
+
+      .campo-wrap label {
+        font-size: 9px;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .container {
+        padding: 24px;
+      }
+
+      .card {
+        padding: 28px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .subtitle {
+        font-size: 15px;
+        margin-bottom: 24px;
+      }
+
+      .section {
+        padding: 18px;
+        margin-bottom: 24px;
+      }
+
+      .linha-head {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr auto;
+        gap: 10px;
+        margin-bottom: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        padding: 0 4px;
+      }
+
+      .linha-item {
+        grid-template-columns: 1fr 1fr 1fr auto;
+        grid-template-areas: "nf coleta status acao";
+        align-items: end;
+        padding: 0;
+        border: none;
+        background: transparent;
+        gap: 10px;
+      }
+
+      .campo-wrap label {
+        font-size: 0;
+        margin: 0;
+        height: 0;
+        overflow: hidden;
+      }
+
+      .btn-remove {
+        width: auto;
+        min-width: 48px;
+      }
+
+      .btn-add {
+        width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Cadastro de Notas</h1>
+      <p class="subtitle">
+        Informe o ID do veículo e adicione quantas linhas de NF, coleta e status forem necessárias.
+      </p>
+
+      <form id="formCadastro">
+        <div class="section">
+          <div class="field">
+            <label for="idVeiculo">ID DO VEÍCULO</label>
+            <input
+                type="text"
+                id="idVeiculo"
+                class="input"
+                placeholder="Digite o ID do veículo"
+                inputmode="numeric"
+                autocomplete="off"
+                required
+                />
+          </div>
+        </div>
+
+        <div class="section">
+          <span class="section-title">Linhas do registro</span>
+
+          <div class="linha-head">
+            <div>NÚMERO DE NF</div>
+            <div>COLETA</div>
+            <div>STATUS</div>
+            <div>AÇÃO</div>
+          </div>
+
+          <div id="itensContainer"></div>
+
+          <button type="button" class="btn btn-add" onclick="adicionarLinha()">
+            + Adicionar linha
+          </button>
+        </div>
+
+        <button type="submit" class="btn btn-submit" id="btnEnviar">Enviar</button>
+
+        <div id="status" class="status"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxPNjmyPSmxpyPZidtHBdrX0OMiZvt-dIsSwglEBgI0VGInq0T9n0Vll_e83z47KYESw/exec";
+
+    const STATUS_OPTIONS = [
+      "NÃO LOCALIZADA",
+      "NÃO COUBE",
+      "PROCESSO DE RECEBIMENTO",
+      "PENDÊNCIA",
+      "SEM PESAGEM"
+    ];
+
+    function criarOptionsStatus(selected = "") {
+      let html = '<option value="">Selecione</option>';
+      for (const opt of STATUS_OPTIONS) {
+        const isSelected = opt === selected ? "selected" : "";
+        html += `<option value="${opt}" ${isSelected}>${opt}</option>`;
+      }
+      return html;
+    }
+
+    function somenteNumeros(valor) {
+  return String(valor || "").replace(/\D+/g, "");
+}
+
+function aplicarMascaraNumericaNoCampo(input) {
+  if (!input) return;
+
+  input.addEventListener("input", () => {
+    const posicaoInicial = input.selectionStart;
+    const valorOriginal = input.value;
+    const valorLimpo = somenteNumeros(valorOriginal);
+
+    if (valorOriginal !== valorLimpo) {
+      input.value = valorLimpo;
+
+      const diferenca = valorOriginal.length - valorLimpo.length;
+      const novaPosicao = Math.max((posicaoInicial || 0) - diferenca, 0);
+      try {
+        input.setSelectionRange(novaPosicao, novaPosicao);
+      } catch (_) {}
+    }
+  });
+
+  input.addEventListener("paste", () => {
+    setTimeout(() => {
+      input.value = somenteNumeros(input.value);
+    }, 0);
+  });
+}
+
+function aplicarValidacaoNumericaGlobal() {
+  aplicarMascaraNumericaNoCampo(document.getElementById("idVeiculo"));
+
+  document.querySelectorAll(".campo-nf, .campo-coleta").forEach(input => {
+    aplicarMascaraNumericaNoCampo(input);
+  });
+}
+
+    function adicionarLinha(nf = "", coleta = "", status = "") {
+      const container = document.getElementById("itensContainer");
+
+      const row = document.createElement("div");
+      row.className = "linha-item";
+
+      row.innerHTML = `
+        <div class="campo-wrap nf-wrap">
+            <label>Número de NF</label>
+            <input type="text" class="input campo-nf somente-numeros" placeholder="NF" value="${nf}" inputmode="numeric" autocomplete="off">
+        </div>
+
+        <div class="campo-wrap coleta-wrap">
+            <label>Coleta</label>
+            <input type="text" class="input campo-coleta somente-numeros" placeholder="Coleta" value="${coleta}" inputmode="numeric" autocomplete="off">
+        </div>
+
+        <div class="campo-wrap status-wrap">
+            <label>Status</label>
+            <select class="select campo-status">
+            ${criarOptionsStatus(status)}
+            </select>
+        </div>
+
+        <div class="campo-wrap acao-wrap">
+            <label>Ação</label>
+            <button type="button" class="btn btn-remove">Remover</button>
+        </div>
+        `;
+      row.querySelector(".btn-remove").addEventListener("click", () => {
+        row.remove();
+      });
+
+aplicarMascaraNumericaNoCampo(row.querySelector(".campo-nf"));
+aplicarMascaraNumericaNoCampo(row.querySelector(".campo-coleta"));
+
+      container.appendChild(row);
+    }
+
+    function mostrarStatus(mensagem, tipo) {
+      const status = document.getElementById("status");
+      status.textContent = mensagem;
+      status.className = `status ${tipo}`;
+    }
+
+    function limparFormulario() {
+      document.getElementById("idVeiculo").value = "";
+      document.getElementById("itensContainer").innerHTML = "";
+      adicionarLinha();
+    }
+
+    async function enviarFormulario(event) {
+      event.preventDefault();
+
+      const btnEnviar = document.getElementById("btnEnviar");
+      const idVeiculo = somenteNumeros(document.getElementById("idVeiculo").value.trim());
+      document.getElementById("idVeiculo").value = idVeiculo;
+
+      const linhas = [...document.querySelectorAll(".linha-item")];
+
+      const itens = linhas.map((linha) => ({
+        nf: somenteNumeros(linha.querySelector(".campo-nf").value.trim()),
+        coleta: somenteNumeros(linha.querySelector(".campo-coleta").value.trim()),
+        status: linha.querySelector(".campo-status").value.trim()
+        })).filter(item => item.nf || item.coleta || item.status);
+
+      if (!idVeiculo) {
+        mostrarStatus("Informe o ID do veículo.", "error");
+        return;
+      }
+
+      if (!itens.length) {
+        mostrarStatus("Adicione pelo menos uma linha.", "error");
+        return;
+      }
+
+      const linhaInvalida = itens.find(item => !item.nf || !item.coleta || !item.status);
+      if (linhaInvalida) {
+        mostrarStatus("Todas as linhas devem ter NF, coleta e status preenchidos.", "error");
+        return;
+      }
+
+      btnEnviar.disabled = true;
+      btnEnviar.textContent = "Enviando...";
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            idVeiculo,
+            itens
+          }),
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          }
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.message || "Falha ao salvar.");
+        }
+
+        mostrarStatus(`Sucesso! ${result.quantidade || itens.length} linha(s) salva(s) na planilha.`, "success");
+        limparFormulario();
+      } catch (error) {
+        mostrarStatus("Erro ao enviar: " + error.message, "error");
+      } finally {
+        btnEnviar.disabled = false;
+        btnEnviar.textContent = "Enviar";
+      }
+    }
+
+    document.getElementById("formCadastro").addEventListener("submit", enviarFormulario);
+
+    aplicarMascaraNumericaNoCampo(document.getElementById("idVeiculo"));
+    adicionarLinha();
+  </script>
+</body>
+</html>
