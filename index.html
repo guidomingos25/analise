@@ -7908,7 +7908,7 @@ return null;
     function exportarRelatorioExcelNotasSimplificado() {
       const report = getAnaliseReportData();
       if (!report) return;
-
+    
       const notasSimplificadas = (report.notas || []).map(r => ({
         "Nota": r.Nota || "",
         "Número OEF": r.NumeroOEF || "",
@@ -7916,6 +7916,7 @@ return null;
         "INC.": r.Incoterms || "",
         "CLIENTE": r.Cliente || "",
         "VOCATIVO": r.Vocativo || "",
+        "PESO": r.Peso || "",
         "DATA CHECK-IN": r.DataCheckin || "",
         "DATA ENTRADA": r.DataEntrada || "",
         "DT. LIMITE EMBARQUE": r.DtLimiteEmbarque || "",
@@ -7924,7 +7925,7 @@ return null;
         "PROGRAMAÇÃO": r.Programacao || "",
         "STATUS": r.StatusBanco || ""
       }));
-
+    
       const wb = XLSX.utils.book_new();
       const wsNotas = XLSX.utils.json_to_sheet(notasSimplificadas);
       wsNotas["!cols"] = autoWidthFromJson(
@@ -7937,6 +7938,7 @@ return null;
               "INC.": "",
               "CLIENTE": "",
               "VOCATIVO": "",
+              "PESO": "",
               "DATA CHECK-IN": "",
               "DATA ENTRADA": "",
               "DT. LIMITE EMBARQUE": "",
@@ -7947,7 +7949,7 @@ return null;
             }]
       );
       XLSX.utils.book_append_sheet(wb, wsNotas, "Notas Simplificadas");
-
+    
       const dataNome = new Date().toISOString().slice(0, 10);
       XLSX.writeFile(wb, `relatorio_simplificado_notas_${dataNome}.xlsx`);
     }
