@@ -7921,7 +7921,8 @@ return null;
         "DT. LIMITE EMBARQUE": r.DtLimiteEmbarque || "",
         "DT. LIMITE ENTREGA": r.DtFinalEntrega || "",
         "OBSERVAÇÃO": r.Observacao || "",
-        "PROGRAMAÇÃO": r.Programacao || ""
+        "PROGRAMAÇÃO": r.Programacao || "",
+        "STATUS": r.StatusBanco || ""
       }));
 
       const wb = XLSX.utils.book_new();
@@ -7941,7 +7942,8 @@ return null;
               "DT. LIMITE EMBARQUE": "",
               "DT. LIMITE ENTREGA": "",
               "OBSERVAÇÃO": "",
-              "PROGRAMAÇÃO": ""
+              "PROGRAMAÇÃO": "",
+              "STATUS": ""
             }]
       );
       XLSX.utils.book_append_sheet(wb, wsNotas, "Notas Simplificadas");
