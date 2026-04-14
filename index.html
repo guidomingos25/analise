@@ -2396,11 +2396,20 @@
       const aliases = FLEET_DATE_ALIASES[tipo] || [];
       const valorOriginal = getRowValueByAliases(row, aliases);
       const dtOriginal = parsePossibleDate(valorOriginal);
+
       if ((tipo === 'contratacao' || tipo === 'carregamento') && isFleetRowFinalizado(row)) {
         if (dtOriginal) return dtOriginal;
+
+        const dtContratacaoOriginal = parsePossibleDate(getRowValueByAliases(row, FLEET_DATE_ALIASES.contratacao || []));
+        const hoje = new Date();
+        if (dtContratacaoOriginal && isSameDate(dtContratacaoOriginal, hoje)) {
+          return dtOriginal;
+        }
+
         const dtPrev = parsePossibleDate(getRowValueByAliases(row, FLEET_DATE_ALIASES.previsao || []));
         if (dtPrev) return dtPrev;
       }
+
       return dtOriginal;
     }
 
