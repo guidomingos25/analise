@@ -2395,11 +2395,13 @@
     function getFleetDateValue(row, tipo) {
       const aliases = FLEET_DATE_ALIASES[tipo] || [];
       const valorOriginal = getRowValueByAliases(row, aliases);
+      const dtOriginal = parsePossibleDate(valorOriginal);
       if ((tipo === 'contratacao' || tipo === 'carregamento') && isFleetRowFinalizado(row)) {
+        if (dtOriginal) return dtOriginal;
         const dtPrev = parsePossibleDate(getRowValueByAliases(row, FLEET_DATE_ALIASES.previsao || []));
         if (dtPrev) return dtPrev;
       }
-      return parsePossibleDate(valorOriginal);
+      return dtOriginal;
     }
 
     function getFleetDateKey(row, tipo) {
@@ -2771,7 +2773,7 @@
         else if (!contrKey) item.pendentesContratacao += 1;
 
         if (carrKey && (!usarFiltroData || keysFiltro.has(carrKey))) item.carregados += 1;
-        else if (!carrKey) item.pendentesCarregamento += 1;
+        else if (!carrKey && (!!prevKey || !!contrKey)) item.pendentesCarregamento += 1;
       });
 
       return Array.from(mapa.values()).sort((a, b) => {
@@ -2864,7 +2866,7 @@
 
     function getFleetCompatibleTypesForPending(tipo) {
       if (tipo === "pendentesContratacao") return ["programados"];
-      if (tipo === "pendentesCarregamento") return ["contratados"];
+      if (tipo === "pendentesCarregamento") return ["programados", "contratados"];
       return [];
     }
 
@@ -2879,7 +2881,7 @@
       }
 
       if (tipo === "pendentesCarregamento") {
-        return !!contrKey && !carrKey && (!temRestricaoData || keysSelecionadas.has(contrKey));
+        return !carrKey && (!!prevKey || !!contrKey) && (!temRestricaoData || [prevKey, contrKey].some(key => key && keysSelecionadas.has(key)));
       }
 
       return false;
@@ -2912,17 +2914,42 @@
       return { tiposDisponiveis, pendenciasDisponiveis };
     }
 
-    function syncFleetTypeFilterUI() {
+    function getFleetFilterOptionCounts(rows = []) {
+      const tiposAtivos = getSelectedFleetStatusTypes();
+      const pendenciasAtivas = getSelectedFleetPendingTypes();
+      const counts = {
+        tipos: {},
+        pendencias: {}
+      };
+      ["programados", "contratados", "carregados"].forEach(tipo => {
+        counts.tipos[tipo] = getFleetFilteredRows(rows, {
+          tiposSelecionados: new Set([tipo]),
+          pendenciasSelecionadas: new Set(pendenciasAtivas)
+        }).length;
+      });
+      ["pendentesContratacao", "pendentesCarregamento"].forEach(tipo => {
+        counts.pendencias[tipo] = getFleetFilteredRows(rows, {
+          tiposSelecionados: new Set(tiposAtivos),
+          pendenciasSelecionadas: new Set([tipo])
+        }).length;
+      });
+      return counts;
+    }
+
+    function syncFleetTypeFilterUI(rows = []) {
       const tipos = getSelectedFleetStatusTypes();
-      const disponibilidade = window.fleetFilterAvailability || { tiposDisponiveis: {}, pendenciasDisponiveis: {} };
+      const optionCounts = getFleetFilterOptionCounts(rows);
 
       document.querySelectorAll('#fleetStatusFilterDropdown input[data-fleet-type]').forEach(input => {
         const tipo = input.dataset.fleetType;
-        const disponivel = disponibilidade.tiposDisponiveis?.[tipo] !== false;
         input.checked = fleetTipoSelecionados.has(tipo);
-        input.disabled = !disponivel;
+        input.disabled = false;
         const label = input.closest('.fleetCheckItem');
-        if (label) label.style.opacity = disponivel ? '1' : '0.45';
+        if (label) {
+          label.style.opacity = '1';
+          const span = label.querySelector('span:last-child');
+          if (span) span.textContent = `${({ programados: '📅 Programados', contratados: '🤝 Contratados', carregados: '📦 Carregados' })[tipo] || getFleetTypeLabel(tipo)} (${optionCounts.tipos[tipo] || 0})`;
+        }
       });
 
       const triggerText = document.getElementById('fleetStatusFilterTriggerText');
@@ -2935,11 +2962,14 @@
       const pendencias = getSelectedFleetPendingTypes();
       document.querySelectorAll('#fleetPendingFilterDropdown input[data-fleet-pending]').forEach(input => {
         const tipo = input.dataset.fleetPending;
-        const disponivel = disponibilidade.pendenciasDisponiveis?.[tipo] !== false;
         input.checked = fleetPendenciaSelecionados.has(tipo);
-        input.disabled = !disponivel;
+        input.disabled = false;
         const label = input.closest('.fleetCheckItem');
-        if (label) label.style.opacity = disponivel ? '1' : '0.45';
+        if (label) {
+          label.style.opacity = '1';
+          const span = label.querySelector('span:last-child');
+          if (span) span.textContent = `${({ pendentesContratacao: '🕒 Pendentes de contratação', pendentesCarregamento: '🚚 Pendentes de carregamento' })[tipo] || getFleetPendingLabel(tipo)} (${optionCounts.pendencias[tipo] || 0})`;
+        }
       });
 
       const pendingTriggerText = document.getElementById('fleetPendingFilterTriggerText');
@@ -2980,6 +3010,49 @@
         (datasSelecionadasResumoVeiculos || []).map(d => getDateKeyOnly(d)).filter(Boolean)
       )).filter(key => recentSet.has(key)).sort((a, b) => Number(a) - Number(b));
       return manualKeys.length ? manualKeys : recentKeys;
+    }
+
+    function getFleetAvailableDateKeys(rows = []) {
+      const recentKeys = getFleetRecentRecordDateKeys(rows, 10);
+      const recentSet = new Set(recentKeys);
+      if (!recentKeys.length) return [];
+
+      const rowsBase = getFleetFilteredRows(rows, {
+        tiposSelecionados: new Set(getSelectedFleetStatusTypes()),
+        pendenciasSelecionadas: new Set(getSelectedFleetPendingTypes()),
+        keysSelecionadas: recentKeys
+      });
+
+      return Array.from(new Set(
+        (rowsBase || []).flatMap(row => [
+          getFleetDateKey(row, 'previsao'),
+          getFleetDateKey(row, 'contratacao'),
+          getFleetDateKey(row, 'carregamento')
+        ].filter(key => key && recentSet.has(key)))
+      )).sort((a, b) => Number(a) - Number(b));
+    }
+
+    function syncFleetDateFilterUI(rows = []) {
+      const availableKeys = getFleetAvailableDateKeys(rows);
+      const datasSelecionadasAtuais = Array.isArray(datasSelecionadasResumoVeiculos) ? datasSelecionadasResumoVeiculos.slice() : [];
+      const keysSelecionadasAtuais = Array.from(new Set(datasSelecionadasAtuais.map(d => getDateKeyOnly(d)).filter(Boolean)));
+      const keysHabilitadas = Array.from(new Set([...availableKeys, ...keysSelecionadasAtuais])).sort((a, b) => Number(a) - Number(b));
+
+      if (calendarioResumoVeiculos) {
+        calendarioResumoVeiculos.set('enable', keysHabilitadas.map(key => new Date(Number(key))));
+        calendarioResumoVeiculos.setDate(datasSelecionadasAtuais, false);
+      }
+
+      const btnFleet = document.getElementById('btnDateFilterFleetPage');
+      if (btnFleet) {
+        const totalDatasCalendario = keysHabilitadas.length;
+        btnFleet.disabled = !totalDatasCalendario;
+        btnFleet.title = totalDatasCalendario
+          ? `Selecionar datas do resumo de veículos (${availableKeys.length} data(s) compatível(is) com os filtros atuais)`
+          : 'Nenhuma data disponível para os filtros atuais';
+      }
+
+      return availableKeys;
     }
 
     function getFleetFilteredRows(rows = [], options = {}) {
@@ -3071,7 +3144,7 @@
           totais.carregadosComData++;
           const linha = ensureLinha(carrKey);
           if (linha) linha.carregados++;
-        } else if (!carrKey) {
+        } else if (!carrKey && (!!prevKey || !!contrKey)) {
           totais.pendentesCarregamento++;
         }
       });
@@ -3191,7 +3264,7 @@
               <div class="fleetDateCard isPendente">
                 <div class="fleetDateCardTitle">Pendentes de carregamento</div>
                 <div class="fleetDateCardValue">${pendentesCarregamento.length}</div>
-                <div class="fleetTagList"><span class="fleetTag isMuted">Programados para ${getDateLabelFromKey(keySelecionada)} sem DT. CARREGAMENTO</span></div>
+                <div class="fleetTagList"><span class="fleetTag isMuted">Programados/contratados relacionados a ${getDateLabelFromKey(keySelecionada)} sem DT. CARREGAMENTO</span></div>
               </div>
             </div>
             <div class="fleetDateTablesGrid">
@@ -3260,31 +3333,15 @@
 
       try {
         const rowsBaseResumo = (dataRows || []).filter(isValidFleetResumoRow);
+        const datasDisponiveisAtuais = syncFleetDateFilterUI(rowsBaseResumo);
         window.fleetFilterAvailability = getFleetFilterAvailability(rowsBaseResumo);
 
-        const tiposDisponiveisAtuais = new Set(
-          Object.entries(window.fleetFilterAvailability.tiposDisponiveis || {})
-            .filter(([, disponivel]) => disponivel)
-            .map(([tipo]) => tipo)
-        );
-        if (tiposDisponiveisAtuais.size) {
-          fleetTipoSelecionados = new Set(Array.from(fleetTipoSelecionados).filter(tipo => tiposDisponiveisAtuais.has(tipo)));
-          if (!fleetTipoSelecionados.size) fleetTipoSelecionados = new Set(Array.from(tiposDisponiveisAtuais));
-        }
-
-        const pendenciasDisponiveisAtuais = new Set(
-          Object.entries(window.fleetFilterAvailability.pendenciasDisponiveis || {})
-            .filter(([, disponivel]) => disponivel)
-            .map(([tipo]) => tipo)
-        );
-        fleetPendenciaSelecionados = new Set(Array.from(fleetPendenciaSelecionados).filter(tipo => pendenciasDisponiveisAtuais.has(tipo)));
-
-        syncFleetTypeFilterUI();
+        syncFleetTypeFilterUI(rowsBaseResumo);
 
         const tiposSelecionados = getSelectedFleetStatusTypes();
         const rowsFiltradas = getFleetFilteredRows(rowsBaseResumo);
         const selectedDateKeys = getFleetEffectiveSelectedDateKeys(rowsBaseResumo);
-        const datasSelecionadasValidas = Array.from(new Set((datasSelecionadasResumoVeiculos || []).map(d => getDateKeyOnly(d)).filter(Boolean))).filter(key => selectedDateKeys.includes(key)).sort((a, b) => Number(a) - Number(b));
+        const datasSelecionadasValidas = Array.from(new Set((datasSelecionadasResumoVeiculos || []).map(d => getDateKeyOnly(d)).filter(Boolean))).filter(key => getFleetRecentRecordDateKeys(rowsBaseResumo, 10).includes(key)).sort((a, b) => Number(a) - Number(b));
         const pendenciasSelecionadas = getSelectedFleetPendingTypes();
         const overview = getFleetOverviewDataByTypes(rowsFiltradas, tiposSelecionados, selectedDateKeys);
 
@@ -3330,10 +3387,9 @@
               <td>${item.programados}</td>
               <td>${item.contratados}</td>
               <td>${item.carregados}</td>
-              <td><b>${item.totalSelecionado}</b></td>
-            </tr>
+              </tr>
           `).join("")
-        : `<tr><td colspan="5" style="text-align:center; color:#64748b;">Nenhum registro encontrado com os filtros atuais.</td></tr>`;
+        : `<tr><td colspan="4" style="text-align:center; color:#64748b;">Nenhum registro encontrado com os filtros atuais.</td></tr>`;
 
       const rowsFiltradasOrdenadas = sortFleetRows(rowsFiltradas);
       const resumoPorVeiculo = getFleetVehicleTypeSummary(rowsFiltradas, selectedDateKeys);
@@ -3374,7 +3430,6 @@
         ? resumoPorVeiculo.map(item => `
             <tr>
               <td><b>${item.veiculo}</b></td>
-              <td>${item.total}</td>
               <td>${item.programados}</td>
               <td>${item.contratados}</td>
               <td>${item.carregados}</td>
@@ -3382,7 +3437,7 @@
               <td>${item.pendentesCarregamento}</td>
             </tr>
           `).join('')
-        : `<tr><td colspan="7" style="text-align:center; color:#64748b;">Nenhum tipo de veículo encontrado com os filtros atuais.</td></tr>`;
+        : `<tr><td colspan="6" style="text-align:center; color:#64748b;">Nenhum tipo de veículo encontrado com os filtros atuais.</td></tr>`;
 
       window.currentFleetVehicleReport = {
         generatedAt: new Date().toLocaleString('pt-BR'),
@@ -3461,7 +3516,6 @@
                     <th>Programados</th>
                     <th>Contratados</th>
                     <th>Carregados</th>
-                    <th>Total exibido</th>
                   </tr>
                 </thead>
                 <tbody>${linhasTabela}</tbody>
@@ -3476,7 +3530,6 @@
                 <thead>
                   <tr>
                     <th>Veículo</th>
-                    <th>Total listado</th>
                     <th>Programados</th>
                     <th>Contratados</th>
                     <th>Carregados</th>
@@ -3546,7 +3599,7 @@
       document.getElementById("paginaPrincipal").style.display = "none";
       document.getElementById("paginaAnalise").style.display = "none";
       document.getElementById("paginaResumoVeiculos").style.display = "block";
-      syncFleetTypeFilterUI();
+      syncFleetTypeFilterUI((dataRows || []).filter(isValidFleetResumoRow));
       renderResumoVeiculosPage();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -9789,7 +9842,7 @@ return null;
           if (!fleetTipoSelecionados.size) {
             fleetTipoSelecionados = new Set(["programados", "contratados", "carregados"]);
           }
-          syncFleetTypeFilterUI();
+          syncFleetTypeFilterUI((dataRows || []).filter(isValidFleetResumoRow));
           renderResumoVeiculosPage();
         });
       });
@@ -9800,7 +9853,7 @@ return null;
           if (!tipo) return;
           if (input.checked) fleetPendenciaSelecionados.add(tipo);
           else fleetPendenciaSelecionados.delete(tipo);
-          syncFleetTypeFilterUI();
+          syncFleetTypeFilterUI((dataRows || []).filter(isValidFleetResumoRow));
           renderResumoVeiculosPage();
         });
       });
@@ -9812,7 +9865,7 @@ return null;
 
       document.getElementById('btnFleetEmitirRelatorio')?.addEventListener('click', exportarRelatorioResumoVeiculos);
 
-      syncFleetTypeFilterUI();
+      syncFleetTypeFilterUI((dataRows || []).filter(isValidFleetResumoRow));
     });
 
   </script>
