@@ -2462,7 +2462,7 @@
           totais.carregadosComData++;
           if (!resumoPorData.has(carrKey)) resumoPorData.set(carrKey, { key: carrKey, programados: 0, contratados: 0, carregados: 0 });
           resumoPorData.get(carrKey).carregados++;
-        } else {
+        } else if (contrKey) {
           totais.pendentesCarregamento++;
         }
       });
@@ -2782,7 +2782,7 @@
         else if (!contrKey) item.pendentesContratacao += 1;
 
         if (carrKey && (!usarFiltroData || keysFiltro.has(carrKey))) item.carregados += 1;
-        else if (!carrKey && (!!prevKey || !!contrKey)) item.pendentesCarregamento += 1;
+        else if (!carrKey && !!contrKey) item.pendentesCarregamento += 1;
       });
 
       return Array.from(mapa.values()).sort((a, b) => {
@@ -2875,7 +2875,7 @@
 
     function getFleetCompatibleTypesForPending(tipo) {
       if (tipo === "pendentesContratacao") return ["programados"];
-      if (tipo === "pendentesCarregamento") return ["programados", "contratados"];
+      if (tipo === "pendentesCarregamento") return ["contratados"];
       return [];
     }
 
@@ -2890,7 +2890,7 @@
       }
 
       if (tipo === "pendentesCarregamento") {
-        return !carrKey && (!!prevKey || !!contrKey) && (!temRestricaoData || [prevKey, contrKey].some(key => key && keysSelecionadas.has(key)));
+        return !!contrKey && !carrKey && (!temRestricaoData || keysSelecionadas.has(contrKey));
       }
 
       return false;
@@ -3153,7 +3153,7 @@
           totais.carregadosComData++;
           const linha = ensureLinha(carrKey);
           if (linha) linha.carregados++;
-        } else if (!carrKey && (!!prevKey || !!contrKey)) {
+        } else if (!carrKey && !!contrKey && (!usarFiltroData || keysFiltro.has(contrKey))) {
           totais.pendentesCarregamento++;
         }
       });
@@ -3243,7 +3243,7 @@
         const contratados = rows.filter(row => getFleetDateKey(row, 'contratacao') === keySelecionada);
         const carregados = rows.filter(row => getFleetDateKey(row, 'carregamento') === keySelecionada);
         const pendentesContratacao = programados.filter(row => !getFleetDateKey(row, 'contratacao'));
-        const pendentesCarregamento = programados.filter(row => !getFleetDateKey(row, 'carregamento'));
+        const pendentesCarregamento = contratados.filter(row => !getFleetDateKey(row, 'carregamento'));
 
         return `
           <div class="fleetPagePanel">
@@ -3273,7 +3273,7 @@
               <div class="fleetDateCard isPendente">
                 <div class="fleetDateCardTitle">Pendentes de carregamento</div>
                 <div class="fleetDateCardValue">${pendentesCarregamento.length}</div>
-                <div class="fleetTagList"><span class="fleetTag isMuted">Programados/contratados relacionados a ${getDateLabelFromKey(keySelecionada)} sem DT. CARREGAMENTO</span></div>
+                <div class="fleetTagList"><span class="fleetTag isMuted">Contratados em ${getDateLabelFromKey(keySelecionada)} sem DT. CARREGAMENTO</span></div>
               </div>
             </div>
             <div class="fleetDateTablesGrid">
