@@ -1190,7 +1190,7 @@
 
     .fleetFilterBar {
       display: grid;
-      grid-template-columns: minmax(260px, 1.8fr) minmax(220px, 1fr) minmax(220px, 1fr) 56px;
+      grid-template-columns: repeat(4, minmax(170px, 1fr)) minmax(220px, 1fr) minmax(220px, 1fr) 56px;
       gap: 8px;
       align-items: start;
       margin-top: 14px;
@@ -1399,6 +1399,86 @@
       background: #dbeafe;
     }
 
+    .fleetSortHeader {
+      cursor: pointer;
+      user-select: none;
+      position: sticky;
+      top: 0;
+    }
+
+    .fleetSortHeader:hover {
+      background: #dbeafe;
+    }
+
+    .fleetSortHeaderInner {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .fleetSortIcon {
+      font-size: 10px;
+      color: #475569;
+      min-width: 12px;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .fleetVehicleTypeSummaryGrid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+      margin-bottom: 14px;
+      align-items: start;
+    }
+
+    .fleetVehicleTypeSummaryTableWrap {
+      max-height: 320px;
+      overflow: auto;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .fleetVehicleTypeSummaryTable {
+      width: 100%;
+      min-width: 520px;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .fleetVehicleTypeSummaryTable th,
+    .fleetVehicleTypeSummaryTable td {
+      padding: 9px 10px;
+      border: 1px solid #e5e7eb;
+      white-space: nowrap;
+    }
+
+    .fleetVehicleTypeSummaryTable th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #eff6ff;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #1e3a8a;
+    }
+
+    .fleetVehicleTypeSummaryTable tbody tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    .fleetVehicleTypeSummaryTable tbody tr:hover {
+      background: #e0f2fe;
+    }
+
+    @media (max-width: 1200px) {
+      .fleetVehicleTypeSummaryGrid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .fleetEmptyState {
       padding: 28px 18px;
       border: 1px dashed #cbd5e1;
@@ -1561,7 +1641,7 @@
     }
 
     .fleetRecordsSection .fleetPageTable {
-      min-width: 1180px;
+      min-width: 1320px;
     }
 
     @media (max-width: 1200px) {
@@ -1576,9 +1656,9 @@
       }
     }
 
-    @media (max-width: 1100px) {
+    @media (max-width: 1400px) {
       .fleetFilterBar {
-        grid-template-columns: minmax(220px, 1.5fr) minmax(200px, 1fr) minmax(200px, 1fr) 56px;
+        grid-template-columns: repeat(4, minmax(170px, 1fr));
       }
     }
 
@@ -2531,6 +2611,220 @@
     let calendarioResumoVeiculos = null;
     let fleetTipoSelecionados = new Set(["programados", "contratados", "carregados"]);
     let fleetPendenciaSelecionados = new Set();
+    let fleetTableSortState = { key: 'previsao', direction: 'asc' };
+
+    function getFleetVehicleTypeValue(row) {
+      return String(
+        row['VEÍCULO SOLICITADO'] ||
+        row['VEICULO SOLICITADO'] ||
+        row['VEÍCULO CONTRATADO'] ||
+        row['VEICULO CONTRATADO'] ||
+        '-'
+      ).trim() || '-';
+    }
+
+    function getFleetClientValue(row) {
+      return String(
+        row['CLIENTES'] ||
+        row['CLIENTE'] ||
+        '-'
+      ).trim() || '-';
+    }
+
+    function getFleetVehicleTypeSummaryGroupLabel(tipoRaw) {
+      const tipo = String(tipoRaw || '').trim().toUpperCase();
+      if ([
+        'CAMINHÃO BI-TRUCK',
+        'CAMINHÃO TRUCK 15',
+        'CAMINHÃO TRUCK 12,5'
+      ].includes(tipo)) return 'CAMINHÃO TRUCK';
+
+      if ([
+        'CJ 4 EIXOS (CARRETA)',
+        'CJ 6 EIXOS (CARRETA LS)',
+        'CJ 6 EIXOS (VANDERLEA)',
+        'CARRETA 14M',
+        'CARRETA LS 4° EIXO',
+        'CJ 5 EIXOS (CARRETA L)'
+      ].includes(tipo)) return 'CARRETA';
+
+      if ([
+        'UTL 0.6 TON (FIORINO)',
+        'UTL 1.5 TON (VAN)',
+        'UTL 2.10 TON (VAN)',
+        'VUC (1 A 3 TON)'
+      ].includes(tipo)) return 'UTILITÁRIO';
+
+      return String(tipoRaw || '').trim() || '-';
+    }
+
+    function getFleetSortValue(row, key) {
+      switch (key) {
+        case 'id': {
+          const raw = String(row['ID'] || '').trim();
+          const num = Number(raw);
+          return Number.isFinite(num) ? num : raw;
+        }
+        case 'referencias':
+          return String(row['REFERENCIAS'] || '').trim();
+        case 'veiculo':
+          return getFleetVehicleTypeValue(row);
+        case 'cliente':
+          return String(getFleetClientValue(row)).trim();
+        case 'destino':
+          return String(row['DESTINOS'] || '').trim();
+        case 'previsao':
+          return getFleetDateValue(row, 'previsao') || null;
+        case 'contratacao':
+          return getFleetDateValue(row, 'contratacao') || null;
+        case 'carregamento':
+          return getFleetDateValue(row, 'carregamento') || null;
+        case 'ocorrencia': {
+          const prev = getFleetDateValue(row, 'previsao');
+          const contr = getFleetDateValue(row, 'contratacao');
+          const carr = getFleetDateValue(row, 'carregamento');
+          return [
+            prev ? 'Programados' : '',
+            contr ? 'Contratados' : '',
+            carr ? 'Carregados' : ''
+          ].filter(Boolean).join(' · ');
+        }
+        default:
+          return '';
+      }
+    }
+
+    function compareFleetSortValues(a, b, direction = 'asc') {
+      const dir = direction === 'desc' ? -1 : 1;
+      const va = a == null ? null : a;
+      const vb = b == null ? null : b;
+
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+
+      if (va instanceof Date && vb instanceof Date) {
+        return (va.getTime() - vb.getTime()) * dir;
+      }
+
+      if (typeof va === 'number' && typeof vb === 'number') {
+        return (va - vb) * dir;
+      }
+
+      return String(va).localeCompare(String(vb), 'pt-BR', { numeric: true, sensitivity: 'base' }) * dir;
+    }
+
+    function sortFleetRows(rows = []) {
+      const state = fleetTableSortState || { key: 'previsao', direction: 'asc' };
+      return rows.slice().sort((a, b) => {
+        const primary = compareFleetSortValues(
+          getFleetSortValue(a, state.key),
+          getFleetSortValue(b, state.key),
+          state.direction
+        );
+        if (primary !== 0) return primary;
+
+        const fallbackPrevisao = compareFleetSortValues(getFleetDateValue(a, 'previsao'), getFleetDateValue(b, 'previsao'), 'asc');
+        if (fallbackPrevisao !== 0) return fallbackPrevisao;
+
+        const fallbackId = compareFleetSortValues(
+          Number(String(a['ID'] || '').trim()) || String(a['ID'] || '').trim(),
+          Number(String(b['ID'] || '').trim()) || String(b['ID'] || '').trim(),
+          'asc'
+        );
+        if (fallbackId !== 0) return fallbackId;
+
+        return compareFleetSortValues(String(a['DESTINOS'] || '').trim(), String(b['DESTINOS'] || '').trim(), 'asc');
+      });
+    }
+
+    function getFleetVehicleTypeSummary(rows = [], selectedDateKeys = []) {
+      const keysFiltro = new Set((selectedDateKeys || []).filter(Boolean));
+      const usarFiltroData = keysFiltro.size > 0;
+      const mapa = new Map();
+
+      (rows || []).forEach(row => {
+        const tipoVeiculo = getFleetVehicleTypeSummaryGroupLabel(getFleetVehicleTypeValue(row));
+        const prevKey = getFleetDateKey(row, 'previsao');
+        const contrKey = getFleetDateKey(row, 'contratacao');
+        const carrKey = getFleetDateKey(row, 'carregamento');
+
+        if (usarFiltroData && ![prevKey, contrKey, carrKey].some(key => key && keysFiltro.has(key))) return;
+
+        if (!mapa.has(tipoVeiculo)) {
+          mapa.set(tipoVeiculo, {
+            veiculo: tipoVeiculo,
+            total: 0,
+            programados: 0,
+            contratados: 0,
+            carregados: 0,
+            pendentesContratacao: 0,
+            pendentesCarregamento: 0
+          });
+        }
+
+        const item = mapa.get(tipoVeiculo);
+        item.total += 1;
+
+        if (prevKey && (!usarFiltroData || keysFiltro.has(prevKey))) item.programados += 1;
+        if (contrKey && (!usarFiltroData || keysFiltro.has(contrKey))) item.contratados += 1;
+        else if (!contrKey) item.pendentesContratacao += 1;
+
+        if (carrKey && (!usarFiltroData || keysFiltro.has(carrKey))) item.carregados += 1;
+        else if (!carrKey) item.pendentesCarregamento += 1;
+      });
+
+      return Array.from(mapa.values()).sort((a, b) => {
+        if (b.total !== a.total) return b.total - a.total;
+        return String(a.veiculo).localeCompare(String(b.veiculo), 'pt-BR', { numeric: true, sensitivity: 'base' });
+      });
+    }
+
+    function getFleetTableHeaderHtml(label, key) {
+      const ativo = fleetTableSortState && fleetTableSortState.key === key;
+      const icon = !ativo ? '↕' : (fleetTableSortState.direction === 'asc' ? '▲' : '▼');
+      return `<th class="fleetSortHeader" data-fleet-sort="${key}"><span class="fleetSortHeaderInner"><span>${label}</span><span class="fleetSortIcon">${icon}</span></span></th>`;
+    }
+
+    function bindFleetTableSortHandlers() {
+      document.querySelectorAll('[data-fleet-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const key = th.getAttribute('data-fleet-sort');
+          if (!key) return;
+          if (fleetTableSortState.key === key) {
+            fleetTableSortState.direction = fleetTableSortState.direction === 'asc' ? 'desc' : 'asc';
+          } else {
+            fleetTableSortState = { key, direction: 'asc' };
+          }
+          renderResumoVeiculosPage();
+        });
+      });
+    }
+
+    function exportarRelatorioResumoVeiculos() {
+      const report = window.currentFleetVehicleReport;
+      if (!report || !Array.isArray(report.rows) || !report.rows.length) {
+        alert('Não há veículos listados para emitir o relatório.');
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+      const wsDados = XLSX.utils.json_to_sheet(report.rows);
+      const wsResumo = XLSX.utils.json_to_sheet(report.summary);
+      const wsResumoData = XLSX.utils.json_to_sheet(report.summaryByDate || []);
+
+      XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo por veículo');
+      XLSX.utils.book_append_sheet(wb, wsResumoData, 'Resumo por data');
+      XLSX.utils.book_append_sheet(wb, wsDados, 'Registros');
+
+      const stamp = new Date();
+      const yyyy = stamp.getFullYear();
+      const mm = String(stamp.getMonth() + 1).padStart(2, '0');
+      const dd = String(stamp.getDate()).padStart(2, '0');
+      const hh = String(stamp.getHours()).padStart(2, '0');
+      const mi = String(stamp.getMinutes()).padStart(2, '0');
+      XLSX.writeFile(wb, `relatorio_resumo_veiculos_${yyyy}${mm}${dd}_${hh}${mi}.xlsx`);
+    }
 
     function getSelectedFleetStatusTypes() {
       const valores = Array.from(fleetTipoSelecionados || []);
@@ -2619,7 +2913,10 @@
     }
 
     function getFleetFilteredRows(rows = []) {
-      const termo = normalizar(document.getElementById("fleetSearchInput")?.value || "");
+      const termoId = normalizar(document.getElementById("fleetSearchIdInput")?.value || "");
+      const termoPlaca = normalizar(document.getElementById("fleetSearchPlacaInput")?.value || "");
+      const termoDestino = normalizar(document.getElementById("fleetSearchDestinosInput")?.value || "");
+      const termoCliente = normalizar(document.getElementById("fleetSearchClientesInput")?.value || "");
       const tiposSelecionados = new Set(getSelectedFleetStatusTypes());
       const pendenciasSelecionadas = new Set(getSelectedFleetPendingTypes());
       const keysSelecionadas = new Set(getFleetEffectiveSelectedDateKeys(rows));
@@ -2633,27 +2930,15 @@
         const rowDentroDaJanela = !keysSelecionadas.size || [prevKey, contrKey, carrKey].some(key => key && keysSelecionadas.has(key));
         if (!rowDentroDaJanela) return false;
 
-        if (termo) {
-          const textoRow = normalizar([
-            row["ID"],
-            row["REFERENCIAS"],
-            row["VEÍCULO SOLICITADO"],
-            row["VEICULO SOLICITADO"],
-            row["VEICULO CONTRATADO"],
-            row["VEÍCULO CONTRATADO"],
-            row["DESTINOS"],
-            row["CLIENTE"],
-            row["OBS. CARREGAMENTO"],
-            row["LIDER"],
-            row["LÍDER"],
-            row["CONFERENTE"],
-            row["OPERADOR"],
-            getFleetDateValue(row, 'previsao'),
-            getFleetDateValue(row, 'contratacao'),
-            getFleetDateValue(row, 'carregamento')
-          ].filter(Boolean).join(" "));
-          if (!textoRow.includes(termo)) return false;
-        }
+        if (termoId && !normalizar(row["ID"] || "").includes(termoId)) return false;
+        if (termoPlaca && !normalizar(row["PLACA"] || "").includes(termoPlaca)) return false;
+        if (termoDestino && !normalizar(row["DESTINOS"] || "").includes(termoDestino)) return false;
+        const clienteRow = normalizar([
+          row["CLIENTES"],
+          row["CLIENTE"],
+          getFleetClientValue(row)
+        ].filter(Boolean).join(" "));
+        if (termoCliente && !clienteRow.includes(termoCliente)) return false;
 
         const hasPendingFilter = pendenciasSelecionadas.size > 0;
         if (hasPendingFilter) {
@@ -2795,7 +3080,7 @@
                   return `
                   <tr>
                     <td>${row['ID'] || '-'}</td>
-                    <td>${row['CLIENTE'] || '-'}</td>
+                    <td>${getFleetClientValue(row)}</td>
                     <td>${row['DESTINOS'] || '-'}</td>
                     <td>${formatarData(getFleetDateValue(row, 'previsao'))}</td>
                     <td>${formatarData(valorEvento)}</td>
@@ -2965,23 +3250,8 @@
           `).join("")
         : `<tr><td colspan="5" style="text-align:center; color:#64748b;">Nenhum registro encontrado com os filtros atuais.</td></tr>`;
 
-      const rowsFiltradasOrdenadas = rowsFiltradas.slice().sort((a, b) => {
-        const da = getFleetDateValue(a, 'previsao');
-        const db = getFleetDateValue(b, 'previsao');
-        const ta = da ? da.getTime() : Number.POSITIVE_INFINITY;
-        const tb = db ? db.getTime() : Number.POSITIVE_INFINITY;
-        if (ta !== tb) return ta - tb;
-
-        const ida = String(a['ID'] || '').trim();
-        const idb = String(b['ID'] || '').trim();
-        if (ida && idb) {
-          const na = Number(ida);
-          const nb = Number(idb);
-          if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
-        }
-
-        return String(a['DESTINOS'] || '').localeCompare(String(b['DESTINOS'] || ''), 'pt-BR');
-      });
+      const rowsFiltradasOrdenadas = sortFleetRows(rowsFiltradas);
+      const resumoPorVeiculo = getFleetVehicleTypeSummary(rowsFiltradas, selectedDateKeys);
 
       const registrosTabela = rowsFiltradasOrdenadas.length
         ? rowsFiltradasOrdenadas.map(row => {
@@ -3002,8 +3272,9 @@
             return `
               <tr>
                 <td>${row['ID'] || '-'}</td>
-                <td>${row['VEÍCULO SOLICITADO'] || row['VEICULO SOLICITADO'] || row['VEÍCULO CONTRATADO'] || row['VEICULO CONTRATADO'] || '-'}</td>
-                <td>${row['CLIENTE'] || '-'}</td>
+                <td>${row['REFERENCIAS'] || '-'}</td>
+                <td>${getFleetVehicleTypeValue(row)}</td>
+                <td>${getFleetClientValue(row)}</td>
                 <td>${row['DESTINOS'] || '-'}</td>
                 <td>${formatarData(prev)}</td>
                 <td>${formatarData(contr)}</td>
@@ -3012,11 +3283,88 @@
               </tr>
             `;
         }).join('')
-        : `<tr><td colspan="8" style="text-align:center; color:#64748b;">Nenhum veículo encontrado com os filtros atuais.</td></tr>`;
+        : `<tr><td colspan="9" style="text-align:center; color:#64748b;">Nenhum veículo encontrado com os filtros atuais.</td></tr>`;
+
+      const resumoPorVeiculoTabela = resumoPorVeiculo.length
+        ? resumoPorVeiculo.map(item => `
+            <tr>
+              <td><b>${item.veiculo}</b></td>
+              <td>${item.total}</td>
+              <td>${item.programados}</td>
+              <td>${item.contratados}</td>
+              <td>${item.carregados}</td>
+              <td>${item.pendentesContratacao}</td>
+              <td>${item.pendentesCarregamento}</td>
+            </tr>
+          `).join('')
+        : `<tr><td colspan="7" style="text-align:center; color:#64748b;">Nenhum tipo de veículo encontrado com os filtros atuais.</td></tr>`;
+
+      window.currentFleetVehicleReport = {
+        generatedAt: new Date().toLocaleString('pt-BR'),
+        filtros: {
+          id: document.getElementById("fleetSearchIdInput")?.value || '',
+          placa: document.getElementById("fleetSearchPlacaInput")?.value || '',
+          destinos: document.getElementById("fleetSearchDestinosInput")?.value || '',
+          clientes: document.getElementById("fleetSearchClientesInput")?.value || '',
+          tipos: tiposSelecionados.map(getFleetTypeLabel),
+          pendencias: pendenciasSelecionadas.map(getFleetPendingLabel),
+          datas: selectedDateKeys.map(getDateLabelFromKey)
+        },
+        summary: resumoPorVeiculo.map(item => ({
+          'Veículo': item.veiculo,
+          'Total listado': item.total,
+          'Programados': item.programados,
+          'Contratados': item.contratados,
+          'Carregados': item.carregados,
+          'Pendentes de contratação': item.pendentesContratacao,
+          'Pendentes de carregamento': item.pendentesCarregamento
+        })),
+        summaryByDate: overview.linhas.map(item => ({
+          'Data': getDateLabelFromKey(item.key),
+          'Programados': item.programados,
+          'Contratados': item.contratados,
+          'Carregados': item.carregados,
+          'Total exibido': item.totalSelecionado
+        })),
+        rows: rowsFiltradasOrdenadas.map(row => {
+          const prev = getFleetDateValue(row, 'previsao');
+          const contr = getFleetDateValue(row, 'contratacao');
+          const carr = getFleetDateValue(row, 'carregamento');
+          const matchedKeys = selectedDateKeys.slice();
+          const matchedTiposBase = matchedKeys.length
+            ? Array.from(new Set(matchedKeys.flatMap(key => getFleetMatchedTypesForDate(row, key)))).map(getFleetTypeLabel).join(', ')
+            : ['programados','contratados','carregados'].filter(t => {
+                if (t === 'programados') return !!getDateKeyOnly(prev);
+                if (t === 'contratados') return !!getDateKeyOnly(contr);
+                if (t === 'carregados') return !!getDateKeyOnly(carr);
+                return false;
+              }).map(getFleetTypeLabel).join(', ');
+          const matchedPendencias = getSelectedFleetPendingTypes().filter(tipo => rowMatchesFleetPendingType(row, tipo)).map(getFleetPendingLabel).join(', ');
+          const matchedTipos = [matchedTiposBase, matchedPendencias].filter(Boolean).join(' · ');
+          return {
+            'ID': row['ID'] || '',
+            'Referências': row['REFERENCIAS'] || '',
+            'Veículo': getFleetVehicleTypeValue(row),
+            'Cliente': getFleetClientValue(row) === '-' ? '' : getFleetClientValue(row),
+            'Destino': row['DESTINOS'] || '',
+            'DT. Previsão': formatarData(prev),
+            'DT. Contratação': formatarData(contr),
+            'DT. Carregamento': formatarData(carr),
+            'Ocorrência no filtro': matchedTipos || ''
+          };
+        })
+      };
 
       resumoEl.innerHTML = `
         ${kpis}
-        <div class="fleetPageLayout">
+        <div class="fleetPagePanel" style="margin-bottom:14px;">
+          <div class="fleetPageChartBox">
+            <div class="fleetPagePanelTitle">Programados x contratados x carregados</div>
+            <div class="fleetPagePanelSub">O gráfico acompanha somente a janela dos últimos 10 dias com registros ou as datas escolhidas dentro dessa janela.</div>
+            <div class="fleetPageChartCanvasWrap"><canvas id="chartFleetResumoPaginaCombo"></canvas></div>
+          </div>
+        </div>
+        <div class="fleetVehicleTypeSummaryGrid">
           <div class="fleetPagePanel">
             <div class="fleetPagePanelTitle">Resumo por data</div>
             <div class="fleetPagePanelSub">Mostra somente o ocorrido dentro dos últimos 10 dias com registros ou, quando selecionado, nas datas escolhidas dentro dessa janela.</div>
@@ -3036,29 +3384,58 @@
             </div>
           </div>
           <div class="fleetPagePanel">
-            <div class="fleetPageChartBox">
-              <div class="fleetPagePanelTitle">Programados x contratados x carregados</div>
-              <div class="fleetPagePanelSub">O gráfico acompanha somente a janela dos últimos 10 dias com registros ou as datas escolhidas dentro dessa janela.</div>
-              <div class="fleetPageChartCanvasWrap"><canvas id="chartFleetResumoPaginaCombo"></canvas></div>
+            <div class="fleetPagePanelTitle">Resumo por veículo</div>
+            <div class="fleetPagePanelSub">Somatório por tipo de veículo considerando exatamente os veículos listados na base filtrada atual, com consolidação dos grupos solicitados.</div>
+            <div class="fleetVehicleTypeSummaryTableWrap">
+              <table class="fleetVehicleTypeSummaryTable">
+                <thead>
+                  <tr>
+                    <th>Veículo</th>
+                    <th>Total listado</th>
+                    <th>Programados</th>
+                    <th>Contratados</th>
+                    <th>Carregados</th>
+                    <th>Pend. contratação</th>
+                    <th>Pend. carregamento</th>
+                  </tr>
+                </thead>
+                <tbody>${resumoPorVeiculoTabela}</tbody>
+              </table>
+            </div>
+            <div class="fleetTagList" style="margin-top:10px;">
+              <span class="fleetTag">Veículos listados: ${rowsFiltradasOrdenadas.length}</span>
+              <span class="fleetTag">Tipos consolidados: ${resumoPorVeiculo.length}</span>
+              <span class="fleetTag">Ordenação atual: ${({
+                id: 'ID',
+                referencias: 'Referências',
+                veiculo: 'Veículo',
+                cliente: 'Cliente',
+                destino: 'Destino',
+                previsao: 'DT. Previsão',
+                contratacao: 'DT. Contratação',
+                carregamento: 'DT. Carregamento',
+                ocorrencia: 'Ocorrência'
+              })[fleetTableSortState.key] || fleetTableSortState.key} ${fleetTableSortState.direction === 'asc' ? '↑' : '↓'}</span>
             </div>
           </div>
         </div>
         <div class="fleetDateDetailsWrap">${getFleetDateDetailSections(rowsFiltradas, tiposSelecionados)}</div>
         <div class="fleetPagePanel fleetRecordsSection">
           <div class="fleetPagePanelTitle">Registros de veículos</div>
-          <div class="fleetPagePanelSub">Lista completa dos veículos da base filtrada, com datas, destino e cliente.</div>
+          <div class="fleetPagePanelSub">Clique no cabeçalho de qualquer coluna para ordenar os veículos listados na tabela, sem alterar a regra de cálculo da página.</div>
           <div class="fleetPageTableWrap">
             <table class="fleetPageTable">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Veículo</th>
-                  <th>Cliente</th>
-                  <th>Destino</th>
-                  <th>DT. PREVISÃO</th>
-                  <th>DT. CONTRATAÇÃO</th>
-                  <th>DT. CARREGAMENTO</th>
-                  <th>Ocorrência no filtro</th>
+                  ${getFleetTableHeaderHtml('ID', 'id')}
+                  ${getFleetTableHeaderHtml('REFERÊNCIAS', 'referencias')}
+                  ${getFleetTableHeaderHtml('Veículo', 'veiculo')}
+                  ${getFleetTableHeaderHtml('Cliente', 'cliente')}
+                  ${getFleetTableHeaderHtml('Destino', 'destino')}
+                  ${getFleetTableHeaderHtml('DT. PREVISÃO', 'previsao')}
+                  ${getFleetTableHeaderHtml('DT. CONTRATAÇÃO', 'contratacao')}
+                  ${getFleetTableHeaderHtml('DT. CARREGAMENTO', 'carregamento')}
+                  ${getFleetTableHeaderHtml('Ocorrência no filtro', 'ocorrencia')}
                 </tr>
               </thead>
               <tbody>${registrosTabela}</tbody>
@@ -3067,6 +3444,7 @@
         </div>
       `;
 
+      bindFleetTableSortHandlers();
       renderResumoVeiculosCharts(overview, tiposSelecionados);
       } catch (err) {
         console.error('Erro ao renderizar Resumo de Veículos:', err);
@@ -9294,7 +9672,9 @@ return null;
         btnFleet.addEventListener("click", () => calendarioResumoVeiculos && calendarioResumoVeiculos.open());
       }
 
-      document.getElementById("fleetSearchInput")?.addEventListener("input", renderResumoVeiculosPage);
+      ["fleetSearchIdInput", "fleetSearchPlacaInput", "fleetSearchDestinosInput", "fleetSearchClientesInput"].forEach(id => {
+        document.getElementById(id)?.addEventListener("input", renderResumoVeiculosPage);
+      });
 
       const fleetDropdown = document.getElementById('fleetStatusFilterDropdown');
       const fleetTrigger = document.getElementById('fleetStatusFilterTrigger');
@@ -9344,6 +9724,9 @@ return null;
         fleetDropdown?.classList.remove('open');
         fleetPendingDropdown?.classList.remove('open');
       });
+
+      document.getElementById('btnFleetEmitirRelatorio')?.addEventListener('click', exportarRelatorioResumoVeiculos);
+
       syncFleetTypeFilterUI();
     });
 
@@ -9555,12 +9938,16 @@ return null;
           <div class="fleetPageHint" id="fleetBaseInfo">Base filtrada: 0 veículo(s)</div>
         </div>
         <div class="fleetPageActions">
+          <button class="btn secondary" id="btnFleetEmitirRelatorio" type="button">📄 Emitir relatório</button>
           <button class="btn secondary" onclick="voltarParaAnaliseProgramacao()">⬅ Voltar para Análise Programação</button>
         </div>
       </div>
 
       <div class="fleetFilterBar">
-        <input class="filtersCompactInput" id="fleetSearchInput" placeholder="🔎 Pesquisar por ID, veículo, destino, cliente, observação..." type="text" />
+        <input class="filtersCompactInput" id="fleetSearchIdInput" placeholder="🔎 Filtrar ID" type="text" />
+        <input class="filtersCompactInput" id="fleetSearchPlacaInput" placeholder="🔎 Filtrar PLACA" type="text" />
+        <input class="filtersCompactInput" id="fleetSearchDestinosInput" placeholder="🔎 Filtrar DESTINOS" type="text" />
+        <input class="filtersCompactInput" id="fleetSearchClientesInput" placeholder="🔎 Filtrar CLIENTES" type="text" />
         <div class="fleetMultiFilterBox" id="fleetStatusFilterBox">
           <button class="fleetMultiTrigger" id="fleetStatusFilterTrigger" type="button">
             <span id="fleetStatusFilterTriggerText">✅ Tipos exibidos (Todos)</span>
