@@ -2850,17 +2850,81 @@
       })[tipo] || tipo;
     }
 
-    function rowMatchesFleetPendingType(row, tipo) {
-      if (tipo === "pendentesContratacao") return !getFleetDateKey(row, 'contratacao');
-      if (tipo === "pendentesCarregamento") return !getFleetDateKey(row, 'carregamento');
+    function rowMatchesFleetType(row, tipo, keysSelecionadas) {
+      const prevKey = getFleetDateKey(row, 'previsao');
+      const contrKey = getFleetDateKey(row, 'contratacao');
+      const carrKey = getFleetDateKey(row, 'carregamento');
+      const temRestricaoData = !!(keysSelecionadas && keysSelecionadas.size);
+
+      if (tipo === "programados") return !!prevKey && (!temRestricaoData || keysSelecionadas.has(prevKey));
+      if (tipo === "contratados") return !!contrKey && (!temRestricaoData || keysSelecionadas.has(contrKey));
+      if (tipo === "carregados") return !!carrKey && (!temRestricaoData || keysSelecionadas.has(carrKey));
       return false;
+    }
+
+    function getFleetCompatibleTypesForPending(tipo) {
+      if (tipo === "pendentesContratacao") return ["programados"];
+      if (tipo === "pendentesCarregamento") return ["contratados"];
+      return [];
+    }
+
+    function rowMatchesFleetPendingType(row, tipo, keysSelecionadas) {
+      const prevKey = getFleetDateKey(row, 'previsao');
+      const contrKey = getFleetDateKey(row, 'contratacao');
+      const carrKey = getFleetDateKey(row, 'carregamento');
+      const temRestricaoData = !!(keysSelecionadas && keysSelecionadas.size);
+
+      if (tipo === "pendentesContratacao") {
+        return !!prevKey && !contrKey && (!temRestricaoData || keysSelecionadas.has(prevKey));
+      }
+
+      if (tipo === "pendentesCarregamento") {
+        return !!contrKey && !carrKey && (!temRestricaoData || keysSelecionadas.has(contrKey));
+      }
+
+      return false;
+    }
+
+    function getFleetFilterAvailability(rows = []) {
+      const keysSelecionadas = new Set(getFleetEffectiveSelectedDateKeys(rows));
+      const rowsBase = getFleetFilteredRows(rows, {
+        tiposSelecionados: new Set(["programados", "contratados", "carregados"]),
+        pendenciasSelecionadas: new Set()
+      });
+
+      const tipos = ["programados", "contratados", "carregados"];
+      const pendencias = ["pendentesContratacao", "pendentesCarregamento"];
+
+      const tiposDisponiveis = {};
+      tipos.forEach(tipo => {
+        tiposDisponiveis[tipo] = rowsBase.some(row => rowMatchesFleetType(row, tipo, keysSelecionadas));
+      });
+
+      const pendenciasDisponiveis = {};
+      pendencias.forEach(tipo => {
+        const compativeis = getFleetCompatibleTypesForPending(tipo);
+        pendenciasDisponiveis[tipo] = rowsBase.some(row =>
+          rowMatchesFleetPendingType(row, tipo, keysSelecionadas) &&
+          compativeis.some(tipoCompativel => rowMatchesFleetType(row, tipoCompativel, keysSelecionadas))
+        );
+      });
+
+      return { tiposDisponiveis, pendenciasDisponiveis };
     }
 
     function syncFleetTypeFilterUI() {
       const tipos = getSelectedFleetStatusTypes();
+      const disponibilidade = window.fleetFilterAvailability || { tiposDisponiveis: {}, pendenciasDisponiveis: {} };
+
       document.querySelectorAll('#fleetStatusFilterDropdown input[data-fleet-type]').forEach(input => {
-        input.checked = fleetTipoSelecionados.has(input.dataset.fleetType);
+        const tipo = input.dataset.fleetType;
+        const disponivel = disponibilidade.tiposDisponiveis?.[tipo] !== false;
+        input.checked = fleetTipoSelecionados.has(tipo);
+        input.disabled = !disponivel;
+        const label = input.closest('.fleetCheckItem');
+        if (label) label.style.opacity = disponivel ? '1' : '0.45';
       });
+
       const triggerText = document.getElementById('fleetStatusFilterTriggerText');
       if (triggerText) {
         triggerText.textContent = tipos.length === 3
@@ -2870,8 +2934,14 @@
 
       const pendencias = getSelectedFleetPendingTypes();
       document.querySelectorAll('#fleetPendingFilterDropdown input[data-fleet-pending]').forEach(input => {
-        input.checked = fleetPendenciaSelecionados.has(input.dataset.fleetPending);
+        const tipo = input.dataset.fleetPending;
+        const disponivel = disponibilidade.pendenciasDisponiveis?.[tipo] !== false;
+        input.checked = fleetPendenciaSelecionados.has(tipo);
+        input.disabled = !disponivel;
+        const label = input.closest('.fleetCheckItem');
+        if (label) label.style.opacity = disponivel ? '1' : '0.45';
       });
+
       const pendingTriggerText = document.getElementById('fleetPendingFilterTriggerText');
       if (pendingTriggerText) {
         pendingTriggerText.textContent = pendencias.length
@@ -2912,14 +2982,14 @@
       return manualKeys.length ? manualKeys : recentKeys;
     }
 
-    function getFleetFilteredRows(rows = []) {
+    function getFleetFilteredRows(rows = [], options = {}) {
       const termoId = normalizar(document.getElementById("fleetSearchIdInput")?.value || "");
       const termoPlaca = normalizar(document.getElementById("fleetSearchPlacaInput")?.value || "");
       const termoDestino = normalizar(document.getElementById("fleetSearchDestinosInput")?.value || "");
       const termoCliente = normalizar(document.getElementById("fleetSearchClientesInput")?.value || "");
-      const tiposSelecionados = new Set(getSelectedFleetStatusTypes());
-      const pendenciasSelecionadas = new Set(getSelectedFleetPendingTypes());
-      const keysSelecionadas = new Set(getFleetEffectiveSelectedDateKeys(rows));
+      const tiposSelecionados = new Set(options.tiposSelecionados || getSelectedFleetStatusTypes());
+      const pendenciasSelecionadas = new Set(options.pendenciasSelecionadas || getSelectedFleetPendingTypes());
+      const keysSelecionadas = new Set(options.keysSelecionadas || getFleetEffectiveSelectedDateKeys(rows));
 
       return (rows || []).filter(row => {
         if (!isValidFleetResumoRow(row)) return false;
@@ -2940,24 +3010,18 @@
         ].filter(Boolean).join(" "));
         if (termoCliente && !clienteRow.includes(termoCliente)) return false;
 
-        const hasPendingFilter = pendenciasSelecionadas.size > 0;
-        if (hasPendingFilter) {
-          let pendingMatched = false;
-          for (const tipoPendencia of pendenciasSelecionadas) {
-            if (!rowMatchesFleetPendingType(row, tipoPendencia)) continue;
-            if (prevKey && keysSelecionadas.has(prevKey)) {
-              pendingMatched = true;
-              break;
-            }
-          }
-          if (!pendingMatched) return false;
-        }
+        const matchedTipos = Array.from(tiposSelecionados).filter(tipo => rowMatchesFleetType(row, tipo, keysSelecionadas));
+        if (!matchedTipos.length) return false;
 
-        let matched = false;
-        if (tiposSelecionados.has('programados') && prevKey && keysSelecionadas.has(prevKey)) matched = true;
-        if (tiposSelecionados.has('contratados') && contrKey && keysSelecionadas.has(contrKey)) matched = true;
-        if (tiposSelecionados.has('carregados') && carrKey && keysSelecionadas.has(carrKey)) matched = true;
-        if (!matched && !hasPendingFilter) return false;
+        if (pendenciasSelecionadas.size) {
+          const matchedPendencias = Array.from(pendenciasSelecionadas).filter(tipoPendencia => {
+            if (!rowMatchesFleetPendingType(row, tipoPendencia, keysSelecionadas)) return false;
+            const tiposCompativeis = getFleetCompatibleTypesForPending(tipoPendencia);
+            return matchedTipos.some(tipo => tiposCompativeis.includes(tipo));
+          });
+
+          if (!matchedPendencias.length) return false;
+        }
 
         return true;
       });
@@ -3195,8 +3259,29 @@
       if (!resumoEl) return;
 
       try {
-        const tiposSelecionados = getSelectedFleetStatusTypes();
         const rowsBaseResumo = (dataRows || []).filter(isValidFleetResumoRow);
+        window.fleetFilterAvailability = getFleetFilterAvailability(rowsBaseResumo);
+
+        const tiposDisponiveisAtuais = new Set(
+          Object.entries(window.fleetFilterAvailability.tiposDisponiveis || {})
+            .filter(([, disponivel]) => disponivel)
+            .map(([tipo]) => tipo)
+        );
+        if (tiposDisponiveisAtuais.size) {
+          fleetTipoSelecionados = new Set(Array.from(fleetTipoSelecionados).filter(tipo => tiposDisponiveisAtuais.has(tipo)));
+          if (!fleetTipoSelecionados.size) fleetTipoSelecionados = new Set(Array.from(tiposDisponiveisAtuais));
+        }
+
+        const pendenciasDisponiveisAtuais = new Set(
+          Object.entries(window.fleetFilterAvailability.pendenciasDisponiveis || {})
+            .filter(([, disponivel]) => disponivel)
+            .map(([tipo]) => tipo)
+        );
+        fleetPendenciaSelecionados = new Set(Array.from(fleetPendenciaSelecionados).filter(tipo => pendenciasDisponiveisAtuais.has(tipo)));
+
+        syncFleetTypeFilterUI();
+
+        const tiposSelecionados = getSelectedFleetStatusTypes();
         const rowsFiltradas = getFleetFilteredRows(rowsBaseResumo);
         const selectedDateKeys = getFleetEffectiveSelectedDateKeys(rowsBaseResumo);
         const datasSelecionadasValidas = Array.from(new Set((datasSelecionadasResumoVeiculos || []).map(d => getDateKeyOnly(d)).filter(Boolean))).filter(key => selectedDateKeys.includes(key)).sort((a, b) => Number(a) - Number(b));
@@ -3267,7 +3352,7 @@
                   if (t === 'carregados') return !!getDateKeyOnly(carr);
                   return false;
                 }).map(getFleetTypeLabel).join(', ');
-            const matchedPendencias = getSelectedFleetPendingTypes().filter(tipo => rowMatchesFleetPendingType(row, tipo)).map(getFleetPendingLabel).join(', ');
+            const matchedPendencias = getSelectedFleetPendingTypes().filter(tipo => rowMatchesFleetPendingType(row, tipo, new Set(selectedDateKeys))).map(getFleetPendingLabel).join(', ');
             const matchedTipos = [matchedTiposBase, matchedPendencias].filter(Boolean).join(' · ');
             return `
               <tr>
@@ -3339,7 +3424,7 @@
                 if (t === 'carregados') return !!getDateKeyOnly(carr);
                 return false;
               }).map(getFleetTypeLabel).join(', ');
-          const matchedPendencias = getSelectedFleetPendingTypes().filter(tipo => rowMatchesFleetPendingType(row, tipo)).map(getFleetPendingLabel).join(', ');
+          const matchedPendencias = getSelectedFleetPendingTypes().filter(tipo => rowMatchesFleetPendingType(row, tipo, new Set(selectedDateKeys))).map(getFleetPendingLabel).join(', ');
           const matchedTipos = [matchedTiposBase, matchedPendencias].filter(Boolean).join(' · ');
           return {
             'ID': row['ID'] || '',
