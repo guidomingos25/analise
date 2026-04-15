@@ -1371,14 +1371,15 @@
       width: 100%;
       min-width: 760px;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 10px;
     }
 
     .fleetPageTable th,
     .fleetPageTable td {
-      padding: 9px 10px;
+      padding: 6px 7px;
       border: 1px solid #e5e7eb;
       white-space: nowrap;
+      line-height: 1.2;
     }
 
     .fleetPageTable th {
@@ -1386,7 +1387,7 @@
       top: 0;
       z-index: 2;
       background: #e5e7eb;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 800;
       text-transform: uppercase;
     }
@@ -1444,14 +1445,15 @@
       width: 100%;
       min-width: 520px;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 10px;
     }
 
     .fleetVehicleTypeSummaryTable th,
     .fleetVehicleTypeSummaryTable td {
-      padding: 9px 10px;
+      padding: 6px 7px;
       border: 1px solid #e5e7eb;
       white-space: nowrap;
+      line-height: 1.2;
     }
 
     .fleetVehicleTypeSummaryTable th {
@@ -1459,7 +1461,7 @@
       top: 0;
       z-index: 1;
       background: #eff6ff;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 800;
       text-transform: uppercase;
       color: #1e3a8a;
@@ -1498,8 +1500,9 @@
 
     .fleetDateSectionGrid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 10px;
+      align-items: stretch;
     }
 
     .fleetDateCard {
@@ -1508,6 +1511,11 @@
       border-radius: 14px;
       padding: 12px;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+      height: 100%;
     }
 
     .fleetDateCard.isProgramado {
@@ -1555,11 +1563,7 @@
     }
 
     .fleetDateTablesGrid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 12px;
-      align-items: start;
+      display: contents;
     }
 
     .fleetMiniPanel {
@@ -1568,6 +1572,7 @@
       border-radius: 14px;
       padding: 8px;
       min-width: 0;
+      margin-top: 2px;
     }
 
     .fleetMiniPanelTitle {
@@ -1590,7 +1595,7 @@
 
     .fleetMiniTable {
       width: 100%;
-      min-width: 320px;
+      min-width: 0;
       border-collapse: collapse;
       font-size: 10px;
     }
@@ -1637,11 +1642,30 @@
     }
 
     .fleetRecordsSection {
-      margin-top: 14px;
+      margin-top: 0;
+      margin-bottom: 16px;
+    }
+
+    .fleetRecordsSection .fleetPageTableWrap {
+      max-height: 560px;
     }
 
     .fleetRecordsSection .fleetPageTable {
-      min-width: 1320px;
+      min-width: 4200px;
+      table-layout: auto;
+    }
+
+    .fleetRecordsSection .fleetPageTable th,
+    .fleetRecordsSection .fleetPageTable td {
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width: 1400px) {
+      .fleetDateSectionGrid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
     }
 
     @media (max-width: 1200px) {
@@ -1652,7 +1676,7 @@
         grid-template-columns: 1fr;
       }
       .fleetDateSectionGrid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
 
@@ -1673,6 +1697,9 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
       .fleetFilterBar {
+        grid-template-columns: 1fr;
+      }
+      .fleetDateSectionGrid {
         grid-template-columns: 1fr;
       }
     }
@@ -2370,6 +2397,25 @@
       setor: ["SETOR", "Setor", "setor"]
     };
 
+
+    function parseFleetDateTime(value) {
+      if (!value) return null;
+      if (Object.prototype.toString.call(value) === "[object Date]") return new Date(value.getTime());
+      if (typeof value === 'number') return excelSerialToDateLocal(value);
+      if (typeof value === 'string') {
+        const txt = value.trim();
+        let m = txt.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+        if (m) {
+          return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4] || 0), Number(m[5] || 0), Number(m[6] || 0));
+        }
+        m = txt.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+        if (m) {
+          return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4] || 0), Number(m[5] || 0), Number(m[6] || 0));
+        }
+      }
+      return parsePossibleDate(value);
+    }
+
     function getRowValueByAliases(row, aliases = []) {
       if (!row || typeof row !== "object") return "";
       for (const key of aliases) {
@@ -2395,18 +2441,18 @@
     function getFleetDateValue(row, tipo) {
       const aliases = FLEET_DATE_ALIASES[tipo] || [];
       const valorOriginal = getRowValueByAliases(row, aliases);
-      const dtOriginal = parsePossibleDate(valorOriginal);
+      const dtOriginal = parseFleetDateTime(valorOriginal);
 
       if ((tipo === 'contratacao' || tipo === 'carregamento') && isFleetRowFinalizado(row)) {
         if (dtOriginal) return dtOriginal;
 
-        const dtContratacaoOriginal = parsePossibleDate(getRowValueByAliases(row, FLEET_DATE_ALIASES.contratacao || []));
+        const dtContratacaoOriginal = parseFleetDateTime(getRowValueByAliases(row, FLEET_DATE_ALIASES.contratacao || []));
         const hoje = new Date();
         if (dtContratacaoOriginal && isSameDate(dtContratacaoOriginal, hoje)) {
           return dtOriginal;
         }
 
-        const dtPrev = parsePossibleDate(getRowValueByAliases(row, FLEET_DATE_ALIASES.previsao || []));
+        const dtPrev = parseFleetDateTime(getRowValueByAliases(row, FLEET_DATE_ALIASES.previsao || []));
         if (dtPrev) return dtPrev;
       }
 
@@ -2642,6 +2688,120 @@
       ).trim() || '-';
     }
 
+
+    const FLEET_RECORD_COLUMNS = [
+      { label: 'ID', key: 'id', aliases: ['ID'] },
+      { label: 'SETOR', key: 'setor', aliases: ['SETOR', 'Setor', 'setor'] },
+      { label: 'MODALIDADE', key: 'modalidade', aliases: ['MODALIDADE'] },
+      { label: 'VEÍCULO SOLICITADO', key: 'veiculoSolicitado', aliases: ['VEÍCULO SOLICITADO', 'VEICULO SOLICITADO'] },
+      { label: 'VEICULO CONTRATADO', key: 'veiculoContratado', aliases: ['VEICULO CONTRATADO', 'VEÍCULO CONTRATADO'] },
+      { label: 'PLACA', key: 'placa', aliases: ['PLACA'] },
+      { label: 'MOTORISTA', key: 'motorista', aliases: ['MOTORISTA'] },
+      { label: 'CONTATO', key: 'contato', aliases: ['CONTATO'] },
+      { label: 'PROGRAMADOR', key: 'programador', aliases: ['PROGRAMADOR'] },
+      { label: 'CONTRATANTE', key: 'contratante', aliases: ['CONTRATANTE'] },
+      { label: 'QUIMICO', key: 'quimico', aliases: ['QUIMICO', 'QUÍMICO'] },
+      { label: 'DESTINOS', key: 'destinos', aliases: ['DESTINOS'] },
+      { label: 'CLIENTES', key: 'clientes', aliases: ['CLIENTES', 'CLIENTE'] },
+      { label: 'REFERENCIAS', key: 'referencias', aliases: ['REFERENCIAS', 'REFERÊNCIAS'] },
+      { label: 'AGENDAMENTO', key: 'agendamento', aliases: ['AGENDAMENTO'] },
+      { label: 'DT. PROGRAMAÇÃO', key: 'dtProgramacao', aliases: ['DT. PROGRAMAÇÃO', 'DT. PROGRAMAÇÃO', 'DT PROGRAMAÇÃO', 'DT PROGRAMACAO'] , isDateTime: true },
+      { label: 'DT. PREVISÃO', key: 'previsao', aliases: ['DT. PREVISÃO', 'DT PREVISÃO', 'DT PREVISAO', 'DT.PREVISÃO', 'DT.PREVISAO'], isDateTime: true },
+      { label: 'DT. CONTRATAÇÃO', key: 'contratacao', aliases: ['DT. CONTRATAÇÃO', 'DT CONTRATAÇÃO', 'DT CONTRATACAO', 'DT.CONTRATAÇÃO', 'DT.CONTRATACAO'], isDateTime: true },
+      { label: 'DT. CHECKLIST', key: 'dtChecklist', aliases: ['DT. CHECKLIST', 'DT CHECKLIST'], isDateTime: true },
+      { label: 'OBS. CHECKLIST', key: 'obsChecklist', aliases: ['OBS. CHECKLIST', 'OBS CHECKLIST'] },
+      { label: 'DT. CARREGAMENTO', key: 'carregamento', aliases: ['DT. CARREGAMENTO', 'DT CARREGAMENTO', 'DT.CARREGAMENTO'], isDateTime: true },
+      { label: 'OBS. CARREGAMENTO', key: 'obsCarregamento', aliases: ['OBS. CARREGAMENTO', 'OBS CARREGAMENTO'] },
+      { label: 'DT. MANIFESTO', key: 'dtManifesto', aliases: ['DT. MANIFESTO', 'DT MANIFESTO'], isDateTime: true },
+      { label: 'OBS. EXPEDIÇÃO', key: 'obsExpedicao', aliases: ['OBS. EXPEDIÇÃO', 'OBS. EXPEDICAO', 'OBS EXPEDIÇÃO', 'OBS EXPEDICAO'] },
+      { label: 'DT. ENTREGA', key: 'dtEntrega', aliases: ['DT. ENTREGA', 'DT ENTREGA'], isDateTime: true },
+      { label: 'LIDER', key: 'lider', aliases: ['LIDER', 'LÍDER'] },
+      { label: 'CONFERENTE', key: 'conferente', aliases: ['CONFERENTE'] },
+      { label: 'OPERADOR', key: 'operador', aliases: ['OPERADOR'] },
+      { label: 'PRIORIDADES SOLICITACAO', key: 'prioridadesSolicitacao', aliases: ['PRIORIDADES SOLICITACAO', 'PRIORIDADES SOLICITAÇÃO'] },
+      { label: 'QTDD. NFS.', key: 'qtddNfs', aliases: ['QTDD. NFS.', 'QTDD. NFS', 'QTDE. NFS.', 'QTDE. NFS'] }
+    ];
+
+    const FLEET_RECORD_COLUMN_MAP = Object.fromEntries(FLEET_RECORD_COLUMNS.map(col => [col.key, col]));
+
+    function getFleetColumnRawValue(row, key) {
+      const col = FLEET_RECORD_COLUMN_MAP[key];
+      if (!col) return '';
+      if (key === 'clientes') return getFleetClientValue(row) === '-' ? '' : getFleetClientValue(row);
+      if (key === 'veiculoSolicitado') return String(getFieldValue(row, col.aliases) || '').trim();
+      if (key === 'veiculoContratado') return String(getFieldValue(row, col.aliases) || '').trim();
+      return getFieldValue(row, col.aliases);
+    }
+
+    function getFleetColumnDisplayValue(row, key) {
+      const col = FLEET_RECORD_COLUMN_MAP[key];
+      if (!col) return '';
+      if (col.isDateTime) {
+        const valorData = key === 'previsao' ? getFleetDateValue(row, 'previsao')
+          : key === 'contratacao' ? getFleetDateValue(row, 'contratacao')
+          : key === 'carregamento' ? getFleetDateValue(row, 'carregamento')
+          : parseFleetDateTime(getFleetColumnRawValue(row, key));
+        return formatarDataHora(valorData);
+      }
+      const valor = getFleetColumnRawValue(row, key);
+      return valor == null || String(valor).trim() === '' ? '' : String(valor).trim();
+    }
+
+    function getFleetComparisonStatus(baseDate, compareDate) {
+      const base = parseFleetDateTime(baseDate);
+      const compare = parseFleetDateTime(compareDate);
+      if (!base || !compare) return null;
+
+      const baseKey = getDateKeyOnly(base);
+      const compareKey = getDateKeyOnly(compare);
+      if (!baseKey || !compareKey) return null;
+
+      if (Number(compareKey) > Number(baseKey)) return 'atraso';
+      if (Number(compareKey) < Number(baseKey)) return 'adiantado';
+      return 'noPrazo';
+    }
+
+    function getFleetResumoChartTotals(rows = [], selectedDateKeys = []) {
+      const keysFiltro = new Set((selectedDateKeys || []).filter(Boolean));
+      const usarFiltroData = keysFiltro.size > 0;
+      const totais = {
+        programados: 0,
+        contratacaoAdiantada: 0,
+        contratacaoAtraso: 0,
+        contratacaoNoPrazo: 0,
+        carregamentoAdiantado: 0,
+        carregamentoAtraso: 0,
+        carregamentoNoPrazo: 0
+      };
+
+      (rows || []).forEach(row => {
+        const prev = getFleetDateValue(row, 'previsao');
+        const contr = getFleetDateValue(row, 'contratacao');
+        const carr = getFleetDateValue(row, 'carregamento');
+        const prevKey = getDateKeyOnly(prev);
+        const contrKey = getDateKeyOnly(contr);
+        const carrKey = getDateKeyOnly(carr);
+
+        const entraPrev = !!prevKey && (!usarFiltroData || keysFiltro.has(prevKey));
+        const entraContr = !!contrKey && (!usarFiltroData || keysFiltro.has(contrKey));
+        const entraCarr = !!carrKey && (!usarFiltroData || keysFiltro.has(carrKey));
+
+        if (entraPrev) totais.programados += 1;
+
+        const statusContr = getFleetComparisonStatus(prev, contr);
+        if (entraContr && statusContr === 'atraso') totais.contratacaoAtraso += 1;
+        else if (entraContr && statusContr === 'adiantado') totais.contratacaoAdiantada += 1;
+        else if (entraContr && statusContr === 'noPrazo') totais.contratacaoNoPrazo += 1;
+
+        const statusCarr = getFleetComparisonStatus(contr, carr);
+        if (entraCarr && statusCarr === 'atraso') totais.carregamentoAtraso += 1;
+        else if (entraCarr && statusCarr === 'adiantado') totais.carregamentoAdiantado += 1;
+        else if (entraCarr && statusCarr === 'noPrazo') totais.carregamentoNoPrazo += 1;
+      });
+
+      return totais;
+    }
+
     function getFleetVehicleTypeSummaryGroupLabel(tipoRaw) {
       const tipo = String(tipoRaw || '').trim().toUpperCase();
       if ([
@@ -2670,39 +2830,23 @@
     }
 
     function getFleetSortValue(row, key) {
-      switch (key) {
-        case 'id': {
-          const raw = String(row['ID'] || '').trim();
-          const num = Number(raw);
-          return Number.isFinite(num) ? num : raw;
+      const col = FLEET_RECORD_COLUMN_MAP[key];
+      if (col) {
+        if (col.isDateTime) {
+          if (key === 'previsao') return getFleetDateValue(row, 'previsao') || null;
+          if (key === 'contratacao') return getFleetDateValue(row, 'contratacao') || null;
+          if (key === 'carregamento') return getFleetDateValue(row, 'carregamento') || null;
+          return parseFleetDateTime(getFleetColumnRawValue(row, key)) || null;
         }
-        case 'referencias':
-          return String(row['REFERENCIAS'] || '').trim();
-        case 'veiculo':
-          return getFleetVehicleTypeValue(row);
-        case 'cliente':
-          return String(getFleetClientValue(row)).trim();
-        case 'destino':
-          return String(row['DESTINOS'] || '').trim();
-        case 'previsao':
-          return getFleetDateValue(row, 'previsao') || null;
-        case 'contratacao':
-          return getFleetDateValue(row, 'contratacao') || null;
-        case 'carregamento':
-          return getFleetDateValue(row, 'carregamento') || null;
-        case 'ocorrencia': {
-          const prev = getFleetDateValue(row, 'previsao');
-          const contr = getFleetDateValue(row, 'contratacao');
-          const carr = getFleetDateValue(row, 'carregamento');
-          return [
-            prev ? 'Programados' : '',
-            contr ? 'Contratados' : '',
-            carr ? 'Carregados' : ''
-          ].filter(Boolean).join(' · ');
+        const raw = getFleetColumnRawValue(row, key);
+        if (key === 'id') {
+          const txt = String(raw || '').trim();
+          const num = Number(txt);
+          return Number.isFinite(num) ? num : txt;
         }
-        default:
-          return '';
+        return String(raw || '').trim();
       }
+      return '';
     }
 
     function compareFleetSortValues(a, b, direction = 'asc') {
@@ -3172,16 +3316,20 @@
       return { totais, linhas };
     }
 
-    function getFleetPrevisaoBreakdownTags(rows = []) {
+    function getFleetDateBreakdownTags(rows = [], mode = 'previsao', label = 'DT. PREVISÃO') {
       const map = new Map();
       (rows || []).forEach(row => {
-        const key = getFleetDateKey(row, 'previsao') || 'SEM_DATA';
+        const key = getFleetDateKey(row, mode) || 'SEM_DATA';
         map.set(key, (map.get(key) || 0) + 1);
       });
       return Array.from(map.entries())
         .sort((a, b) => (a[0] === 'SEM_DATA' ? 1 : b[0] === 'SEM_DATA' ? -1 : Number(a[0]) - Number(b[0])))
-        .map(([key, total]) => `<span class="fleetTag${key === 'SEM_DATA' ? ' isMuted' : ''}">DT. PREVISÃO ${key === 'SEM_DATA' ? 'sem data' : getDateLabelFromKey(key)}: ${total}</span>`)
+        .map(([key, total]) => `<span class="fleetTag${key === 'SEM_DATA' ? ' isMuted' : ''}">${label} ${key === 'SEM_DATA' ? 'sem data' : getDateLabelFromKey(key)}: ${total}</span>`)
         .join('');
+    }
+
+    function getFleetPrevisaoBreakdownTags(rows = []) {
+      return getFleetDateBreakdownTags(rows, 'previsao', 'DT. PREVISÃO');
     }
 
     function getFleetDateDetailSections(rows = [], selectedTypes = ["programados", "contratados", "carregados"]) {
@@ -3202,36 +3350,28 @@
         `;
       }
 
-      const renderMiniRows = (lista = [], dataField) => {
+      const renderMiniRows = (lista = [], columns = []) => {
         if (!lista.length) return '<div class="fleetMiniEmpty">Nenhum registro para esta leitura.</div>';
+        const cols = Array.isArray(columns) && columns.length ? columns : [
+          { label: 'ID', value: row => row['ID'] || '-' },
+          { label: 'Cliente', value: row => getFleetClientValue(row) },
+          { label: 'Destino', value: row => row['DESTINOS'] || '-' },
+          { label: 'DT. PREVISÃO', value: row => formatarData(getFleetDateValue(row, 'previsao')) }
+        ];
         return `
           <div class="fleetMiniTableWrap">
             <table class="fleetMiniTable">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Cliente</th>
-                  <th>Destino</th>
-                  <th>DT. PREVISÃO</th>
-                  <th>${dataField}</th>
+                  ${cols.map(col => `<th>${col.label}</th>`).join('')}
                 </tr>
               </thead>
               <tbody>
-                ${lista.map(row => {
-                  const valorEvento = dataField === 'DT. PREVISÃO'
-                    ? getFleetDateValue(row, 'previsao')
-                    : dataField === 'DT. CONTRATAÇÃO'
-                      ? getFleetDateValue(row, 'contratacao')
-                      : getFleetDateValue(row, 'carregamento');
-                  return `
+                ${lista.map(row => `
                   <tr>
-                    <td>${row['ID'] || '-'}</td>
-                    <td>${getFleetClientValue(row)}</td>
-                    <td>${row['DESTINOS'] || '-'}</td>
-                    <td>${formatarData(getFleetDateValue(row, 'previsao'))}</td>
-                    <td>${formatarData(valorEvento)}</td>
+                    ${cols.map(col => `<td>${col.value(row)}</td>`).join('')}
                   </tr>
-                `;}).join('')}
+                `).join('')}
               </tbody>
             </table>
           </div>
@@ -3248,7 +3388,7 @@
         return `
           <div class="fleetPagePanel">
             <div class="fleetPagePanelTitle">Detalhamento do dia ${getDateLabelFromKey(keySelecionada)}</div>
-            <div class="fleetPagePanelSub">${usandoUltimosDiasAutomatico ? 'Exibindo automaticamente os últimos 10 dias com registros. ' : ''}Leitura do acontecido no dia, separando programação pela DT. PREVISÃO e os eventos de contratação e carregamento pela data em que ocorreram.</div>
+            <div class="fleetPagePanelSub">${usandoUltimosDiasAutomatico ? 'Exibindo automaticamente os últimos 10 dias com registros. ' : ''}Leitura do acontecido no dia, separando programação pela DT. PREVISÃO e os eventos de contratação e carregamento pela data em que ocorreram. No card de carregados, a separação interna considera a DT. CONTRATAÇÃO. As comparações de atraso e adiantamento consideram apenas a data, desconsiderando o horário.</div>
             <div class="fleetDateSectionGrid">
               <div class="fleetDateCard isProgramado">
                 <div class="fleetDateCardTitle">Programados para esta data</div>
@@ -3258,12 +3398,12 @@
               <div class="fleetDateCard isContratado">
                 <div class="fleetDateCardTitle">Contratados nesta data</div>
                 <div class="fleetDateCardValue">${contratados.length}</div>
-                <div class="fleetTagList">${getFleetPrevisaoBreakdownTags(contratados) || '<span class="fleetTag isMuted">Nenhum contratado nesta data</span>'}</div>
+                <div class="fleetTagList">${getFleetDateBreakdownTags(contratados, 'previsao', 'DT. PREVISÃO') || '<span class="fleetTag isMuted">Nenhum contratado nesta data</span>'}</div>
               </div>
               <div class="fleetDateCard isCarregado">
                 <div class="fleetDateCardTitle">Carregados nesta data</div>
                 <div class="fleetDateCardValue">${carregados.length}</div>
-                <div class="fleetTagList">${getFleetPrevisaoBreakdownTags(carregados) || '<span class="fleetTag isMuted">Nenhum carregado nesta data</span>'}</div>
+                <div class="fleetTagList">${getFleetDateBreakdownTags(carregados, 'contratacao', 'DT. CONTRATAÇÃO') || '<span class="fleetTag isMuted">Nenhum carregado nesta data</span>'}</div>
               </div>
               <div class="fleetDateCard isPendente">
                 <div class="fleetDateCardTitle">Pendentes de contratação</div>
@@ -3276,29 +3416,72 @@
                 <div class="fleetTagList"><span class="fleetTag isMuted">Contratados em ${getDateLabelFromKey(keySelecionada)} sem DT. CARREGAMENTO</span></div>
               </div>
             </div>
-            <div class="fleetDateTablesGrid">
-              <div class="fleetMiniPanel">
-                <div class="fleetMiniPanelTitle">Veículos programados nesta data</div>
-                ${renderMiniRows(programados, 'DT. PREVISÃO')}
-              </div>
-              <div class="fleetMiniPanel">
-                <div class="fleetMiniPanelTitle">Veículos contratados nesta data</div>
-                ${renderMiniRows(contratados, 'DT. CONTRATAÇÃO')}
-              </div>
-              <div class="fleetMiniPanel">
-                <div class="fleetMiniPanelTitle">Veículos carregados nesta data</div>
-                ${renderMiniRows(carregados, 'DT. CARREGAMENTO')}
-              </div>
-            </div>
           </div>
         `;
       }).join('');
     }
 
-    function renderResumoVeiculosCharts(overview, tiposSelecionados) {
-      const topCombo = [...overview.linhas]
-        .filter(item => item.programados > 0 || item.contratados > 0 || item.carregados > 0)
-        .sort((a, b) => String(a.key).localeCompare(String(b.key)));
+    function renderResumoVeiculosCharts(overview, tiposSelecionados, rowsFiltradas = [], selectedDateKeys = []) {
+      const keysFiltro = new Set((selectedDateKeys || []).filter(Boolean));
+      const usarFiltroData = keysFiltro.size > 0;
+
+      const mostrarProgramados = tiposSelecionados.includes("programados");
+      const mostrarContratados = tiposSelecionados.includes("contratados");
+      const mostrarCarregados = tiposSelecionados.includes("carregados");
+
+      const mapa = new Map();
+
+      (rowsFiltradas || []).forEach(row => {
+        const prev = getFleetDateValue(row, 'previsao');
+        const contr = getFleetDateValue(row, 'contratacao');
+        const carr = getFleetDateValue(row, 'carregamento');
+
+        const prevKey = getDateKeyOnly(prev);
+        const contrKey = getDateKeyOnly(contr);
+        const carrKey = getDateKeyOnly(carr);
+
+        const garantirItem = (key) => {
+          if (!key) return null;
+          if (usarFiltroData && !keysFiltro.has(key)) return null;
+          if (!mapa.has(key)) {
+            mapa.set(key, {
+              key,
+              programados: 0,
+              contratadosOk: 0,
+              contratadosAtraso: 0,
+              carregadosOk: 0,
+              carregadosAtraso: 0
+            });
+          }
+          return mapa.get(key);
+        };
+
+        if (mostrarProgramados) {
+          const itemPrev = garantirItem(prevKey);
+          if (itemPrev) itemPrev.programados += 1;
+        }
+
+        if (mostrarContratados) {
+          const itemContr = garantirItem(contrKey);
+          if (itemContr) {
+            const statusContr = getFleetComparisonStatus(prev, contr);
+            if (statusContr === 'atraso') itemContr.contratadosAtraso += 1;
+            else itemContr.contratadosOk += 1;
+          }
+        }
+
+        if (mostrarCarregados) {
+          const itemCarr = garantirItem(carrKey);
+          if (itemCarr) {
+            const statusCarr = getFleetComparisonStatus(contr, carr);
+            if (statusCarr === 'atraso') itemCarr.carregadosAtraso += 1;
+            else itemCarr.carregadosOk += 1;
+          }
+        }
+      });
+
+      const linhas = Array.from(mapa.values()).sort((a, b) => Number(a.key) - Number(b.key));
+      const labels = linhas.map(item => getDateLabelFromKey(item.key));
 
       const canvasCombo = document.getElementById("chartFleetResumoPaginaCombo");
       if (canvasCombo && window.Chart) {
@@ -3306,29 +3489,113 @@
         window._chartFleetResumoPaginaCombo = new Chart(canvasCombo.getContext("2d"), {
           type: "bar",
           data: {
-            labels: topCombo.length ? topCombo.map(item => getDateLabelFromKey(item.key)) : ["Sem dados"],
+            labels,
             datasets: [
-              { label: "Programados", data: topCombo.length ? topCombo.map(item => item.programados) : [0], hidden: !tiposSelecionados.includes("programados") },
-              { label: "Contratados", data: topCombo.length ? topCombo.map(item => item.contratados) : [0], hidden: !tiposSelecionados.includes("contratados") },
-              { label: "Carregados", data: topCombo.length ? topCombo.map(item => item.carregados) : [0], hidden: !tiposSelecionados.includes("carregados") }
+              {
+                label: "Programados",
+                data: linhas.map(item => item.programados),
+                backgroundColor: 'rgba(54, 162, 235, 0.55)',
+                borderColor: 'rgb(54, 162, 235)',
+                borderWidth: 1,
+                stack: 'stack-programados'
+              },
+              {
+                label: "Contratados adiantado / no prazo",
+                data: linhas.map(item => item.contratadosOk),
+                backgroundColor: 'rgba(54, 162, 235, 0.55)',
+                borderColor: 'rgb(54, 162, 235)',
+                borderWidth: 1,
+                stack: 'stack-contratados'
+              },
+              {
+                label: "Contratados em atraso",
+                data: linhas.map(item => item.contratadosAtraso),
+                backgroundColor: 'rgba(255, 99, 132, 0.55)',
+                borderColor: 'rgb(255, 99, 132)',
+                borderWidth: 1,
+                stack: 'stack-contratados'
+              },
+              {
+                label: "Carregados adiantado / no prazo",
+                data: linhas.map(item => item.carregadosOk),
+                backgroundColor: 'rgba(54, 162, 235, 0.55)',
+                borderColor: 'rgb(54, 162, 235)',
+                borderWidth: 1,
+                stack: 'stack-carregados'
+              },
+              {
+                label: "Carregados em atraso",
+                data: linhas.map(item => item.carregadosAtraso),
+                backgroundColor: 'rgba(255, 99, 132, 0.55)',
+                borderColor: 'rgb(255, 99, 132)',
+                borderWidth: 1,
+                stack: 'stack-carregados'
+              }
             ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout: {
+              padding: { top: 18 }
+            },
+            datasets: {
+              bar: {
+                categoryPercentage: 0.72,
+                barPercentage: 0.9
+              }
+            },
             plugins: {
-              legend: { position: "bottom" },
-              tooltip: { enabled: true },
+              legend: { display: false },
+              tooltip: {
+                enabled: true,
+                callbacks: {
+                  label: (context) => {
+                    const value = Number(context.raw || 0);
+                    if (!value) return null;
+                    return `${context.dataset.label}: ${_fmt(value)}`;
+                  },
+                  footer: (items) => {
+                    if (!items || !items.length) return '';
+                    const total = items.reduce((acc, item) => acc + Number(item.raw || 0), 0);
+                    return total ? `Total: ${_fmt(total)}` : '';
+                  }
+                }
+              },
               datalabels: {
                 anchor: "end",
                 align: "top",
-                formatter: (v) => v ? _fmt(v) : "",
-                font: { weight: "900", size: 10 }
+                offset: 4,
+                clamp: true,
+                clip: false,
+                formatter: (v, ctx) => {
+                  const value = Number(v || 0);
+                  if (!value) return "";
+                  const dataset = ctx?.dataset || {};
+                  const stack = dataset.stack || "";
+                  const dataIndex = ctx.dataIndex;
+                  const datasets = ctx?.chart?.data?.datasets || [];
+                  const sameStack = datasets.filter(ds => (ds.stack || "") === stack);
+                  const isLastVisibleInStack = sameStack.length && sameStack[sameStack.length - 1] === dataset;
+                  if (!isLastVisibleInStack) return "";
+                  const total = sameStack.reduce((acc, ds) => acc + Number((ds.data || [])[dataIndex] || 0), 0);
+                  return total ? _fmt(total) : "";
+                },
+                font: { weight: "900", size: 11 }
               }
             },
             scales: {
-              x: { ticks: { font: { size: 10 } }, grid: { display: false } },
-              y: { beginAtZero: true, ticks: { font: { size: 10 } } }
+              x: {
+                stacked: true,
+                offset: true,
+                ticks: { font: { size: 10 } },
+                grid: { display: false }
+              },
+              y: {
+                beginAtZero: true,
+                stacked: true,
+                ticks: { font: { size: 10 } }
+              }
             }
           },
           plugins: [ChartDataLabels]
@@ -3404,36 +3671,12 @@
       const resumoPorVeiculo = getFleetVehicleTypeSummary(rowsFiltradas, selectedDateKeys);
 
       const registrosTabela = rowsFiltradasOrdenadas.length
-        ? rowsFiltradasOrdenadas.map(row => {
-            const prev = getFleetDateValue(row, 'previsao');
-            const contr = getFleetDateValue(row, 'contratacao');
-            const carr = getFleetDateValue(row, 'carregamento');
-            const matchedKeys = selectedDateKeys.slice();
-            const matchedTiposBase = matchedKeys.length
-              ? Array.from(new Set(matchedKeys.flatMap(key => getFleetMatchedTypesForDate(row, key)))).map(getFleetTypeLabel).join(', ')
-              : ['programados','contratados','carregados'].filter(t => {
-                  if (t === 'programados') return !!getDateKeyOnly(prev);
-                  if (t === 'contratados') return !!getDateKeyOnly(contr);
-                  if (t === 'carregados') return !!getDateKeyOnly(carr);
-                  return false;
-                }).map(getFleetTypeLabel).join(', ');
-            const matchedPendencias = getSelectedFleetPendingTypes().filter(tipo => rowMatchesFleetPendingType(row, tipo, new Set(selectedDateKeys))).map(getFleetPendingLabel).join(', ');
-            const matchedTipos = [matchedTiposBase, matchedPendencias].filter(Boolean).join(' · ');
-            return `
+        ? rowsFiltradasOrdenadas.map(row => `
               <tr>
-                <td>${row['ID'] || '-'}</td>
-                <td>${row['REFERENCIAS'] || '-'}</td>
-                <td>${getFleetVehicleTypeValue(row)}</td>
-                <td>${getFleetClientValue(row)}</td>
-                <td>${row['DESTINOS'] || '-'}</td>
-                <td>${formatarData(prev)}</td>
-                <td>${formatarData(contr)}</td>
-                <td>${formatarData(carr)}</td>
-                <td>${matchedTipos || '-'}</td>
+                ${FLEET_RECORD_COLUMNS.map(col => `<td>${getFleetColumnDisplayValue(row, col.key) || '-'}</td>`).join('')}
               </tr>
-            `;
-        }).join('')
-        : `<tr><td colspan="9" style="text-align:center; color:#64748b;">Nenhum veículo encontrado com os filtros atuais.</td></tr>`;
+            `).join('')
+        : `<tr><td colspan="${FLEET_RECORD_COLUMNS.length}" style="text-align:center; color:#64748b;">Nenhum veículo encontrado com os filtros atuais.</td></tr>`;
 
       const resumoPorVeiculoTabela = resumoPorVeiculo.length
         ? resumoPorVeiculo.map(item => `
@@ -3476,31 +3719,11 @@
           'Total exibido': item.totalSelecionado
         })),
         rows: rowsFiltradasOrdenadas.map(row => {
-          const prev = getFleetDateValue(row, 'previsao');
-          const contr = getFleetDateValue(row, 'contratacao');
-          const carr = getFleetDateValue(row, 'carregamento');
-          const matchedKeys = selectedDateKeys.slice();
-          const matchedTiposBase = matchedKeys.length
-            ? Array.from(new Set(matchedKeys.flatMap(key => getFleetMatchedTypesForDate(row, key)))).map(getFleetTypeLabel).join(', ')
-            : ['programados','contratados','carregados'].filter(t => {
-                if (t === 'programados') return !!getDateKeyOnly(prev);
-                if (t === 'contratados') return !!getDateKeyOnly(contr);
-                if (t === 'carregados') return !!getDateKeyOnly(carr);
-                return false;
-              }).map(getFleetTypeLabel).join(', ');
-          const matchedPendencias = getSelectedFleetPendingTypes().filter(tipo => rowMatchesFleetPendingType(row, tipo, new Set(selectedDateKeys))).map(getFleetPendingLabel).join(', ');
-          const matchedTipos = [matchedTiposBase, matchedPendencias].filter(Boolean).join(' · ');
-          return {
-            'ID': row['ID'] || '',
-            'Referências': row['REFERENCIAS'] || '',
-            'Veículo': getFleetVehicleTypeValue(row),
-            'Cliente': getFleetClientValue(row) === '-' ? '' : getFleetClientValue(row),
-            'Destino': row['DESTINOS'] || '',
-            'DT. Previsão': formatarData(prev),
-            'DT. Contratação': formatarData(contr),
-            'DT. Carregamento': formatarData(carr),
-            'Ocorrência no filtro': matchedTipos || ''
-          };
+          const registro = {};
+          FLEET_RECORD_COLUMNS.forEach(col => {
+            registro[col.label] = getFleetColumnDisplayValue(row, col.key) || '';
+          });
+          return registro;
         })
       };
 
@@ -3508,9 +3731,23 @@
         ${kpis}
         <div class="fleetPagePanel" style="margin-bottom:14px;">
           <div class="fleetPageChartBox">
-            <div class="fleetPagePanelTitle">Programados x contratados x carregados</div>
-            <div class="fleetPagePanelSub">O gráfico acompanha somente a janela dos últimos 10 dias com registros ou as datas escolhidas dentro dessa janela.</div>
+            <div class="fleetPagePanelTitle">Programados x contratação x carregamento</div>
+            <div class="fleetPagePanelSub">O gráfico acompanha somente a janela dos últimos 10 dias com registros ou as datas escolhidas dentro dessa janela, separando contratação e carregamento entre adiantado/no prazo e atraso.</div>
             <div class="fleetPageChartCanvasWrap"><canvas id="chartFleetResumoPaginaCombo"></canvas></div>
+          </div>
+        </div>
+        <div class="fleetPagePanel fleetRecordsSection">
+          <div class="fleetPagePanelTitle">Registros de veículos</div>
+          <div class="fleetPagePanelSub">Clique no cabeçalho de qualquer coluna para ordenar os veículos listados na tabela, sem alterar a regra de cálculo da página.</div>
+          <div class="fleetPageTableWrap">
+            <table class="fleetPageTable">
+              <thead>
+                <tr>
+                  ${FLEET_RECORD_COLUMNS.map(col => getFleetTableHeaderHtml(col.label, col.key)).join('')}
+                </tr>
+              </thead>
+              <tbody>${registrosTabela}</tbody>
+            </table>
           </div>
         </div>
         <div class="fleetVehicleTypeSummaryGrid">
@@ -3552,47 +3789,15 @@
             <div class="fleetTagList" style="margin-top:10px;">
               <span class="fleetTag">Veículos listados: ${rowsFiltradasOrdenadas.length}</span>
               <span class="fleetTag">Tipos consolidados: ${resumoPorVeiculo.length}</span>
-              <span class="fleetTag">Ordenação atual: ${({
-                id: 'ID',
-                referencias: 'Referências',
-                veiculo: 'Veículo',
-                cliente: 'Cliente',
-                destino: 'Destino',
-                previsao: 'DT. Previsão',
-                contratacao: 'DT. Contratação',
-                carregamento: 'DT. Carregamento',
-                ocorrencia: 'Ocorrência'
-              })[fleetTableSortState.key] || fleetTableSortState.key} ${fleetTableSortState.direction === 'asc' ? '↑' : '↓'}</span>
+              <span class="fleetTag">Ordenação atual: ${(FLEET_RECORD_COLUMN_MAP[fleetTableSortState.key]?.label || fleetTableSortState.key)} ${fleetTableSortState.direction === 'asc' ? '↑' : '↓'}</span>
             </div>
           </div>
         </div>
         <div class="fleetDateDetailsWrap">${getFleetDateDetailSections(rowsFiltradas, tiposSelecionados)}</div>
-        <div class="fleetPagePanel fleetRecordsSection">
-          <div class="fleetPagePanelTitle">Registros de veículos</div>
-          <div class="fleetPagePanelSub">Clique no cabeçalho de qualquer coluna para ordenar os veículos listados na tabela, sem alterar a regra de cálculo da página.</div>
-          <div class="fleetPageTableWrap">
-            <table class="fleetPageTable">
-              <thead>
-                <tr>
-                  ${getFleetTableHeaderHtml('ID', 'id')}
-                  ${getFleetTableHeaderHtml('REFERÊNCIAS', 'referencias')}
-                  ${getFleetTableHeaderHtml('Veículo', 'veiculo')}
-                  ${getFleetTableHeaderHtml('Cliente', 'cliente')}
-                  ${getFleetTableHeaderHtml('Destino', 'destino')}
-                  ${getFleetTableHeaderHtml('DT. PREVISÃO', 'previsao')}
-                  ${getFleetTableHeaderHtml('DT. CONTRATAÇÃO', 'contratacao')}
-                  ${getFleetTableHeaderHtml('DT. CARREGAMENTO', 'carregamento')}
-                  ${getFleetTableHeaderHtml('Ocorrência no filtro', 'ocorrencia')}
-                </tr>
-              </thead>
-              <tbody>${registrosTabela}</tbody>
-            </table>
-          </div>
-        </div>
       `;
 
       bindFleetTableSortHandlers();
-      renderResumoVeiculosCharts(overview, tiposSelecionados);
+      renderResumoVeiculosCharts(overview, tiposSelecionados, rowsFiltradas, selectedDateKeys);
       } catch (err) {
         console.error('Erro ao renderizar Resumo de Veículos:', err);
         resumoEl.innerHTML = `
@@ -4352,6 +4557,17 @@
 
     function formatarData(v) {
       return formatDateBRLocal(v);
+    }
+
+    function formatarDataHora(v) {
+      const d = parseFleetDateTime(v);
+      if (!d) return "";
+      const day = d.getDate().toString().padStart(2, "0");
+      const month = (d.getMonth() + 1).toString().padStart(2, "0");
+      const year = d.getFullYear();
+      const hh = d.getHours().toString().padStart(2, "0");
+      const mm = d.getMinutes().toString().padStart(2, "0");
+      return `${day}/${month}/${year} ${hh}:${mm}`;
     }
 
     function getFieldValue(row, aliases = []) {
