@@ -1190,7 +1190,8 @@
 
     .fleetFilterBar {
       display: grid;
-      grid-template-columns: repeat(4, minmax(170px, 1fr)) minmax(220px, 1fr) minmax(220px, 1fr) 56px;
+      width: 100%;
+      grid-template-columns: repeat(6, minmax(0, 1fr)) 42px;
       gap: 8px;
       align-items: start;
       margin-top: 14px;
@@ -1237,6 +1238,20 @@
 
     .fleetMultiDropdown.open {
       display: block;
+    }
+
+    #btnDateFilterFleetPage {
+      width: 42px !important;
+      min-width: 42px !important;
+      max-width: 42px !important;
+      height: 38px !important;
+      padding: 0 !important;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      line-height: 1;
+      justify-self: start !important;
     }
 
     .fleetMultiHead {
@@ -1433,6 +1448,49 @@
       align-items: start;
     }
 
+    .fleetResponsavelSummaryGrid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+      align-items: stretch;
+    }
+
+    .fleetResponsavelSummaryGrid .fleetPagePanel {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fleetResponsavelSummaryGrid .fleetVehicleTypeSummaryTableWrap {
+      flex: 1;
+    }
+
+    .fleetResponsavelChartWrap {
+      height: 220px;
+      margin-bottom: 10px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 12px;
+      background: #fff;
+      padding: 8px;
+    }
+
+    .fleetResponsavelChartWrap canvas {
+      min-height: 200px !important;
+      height: 200px !important;
+    }
+
+    .fleetResponsavelFilterBox {
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .fleetResponsavelFilterBox .fleetMultiTrigger {
+      font-size: 11px;
+    }
+
     .fleetVehicleTypeSummaryTableWrap {
       max-height: 320px;
       overflow: auto;
@@ -1476,7 +1534,8 @@
     }
 
     @media (max-width: 1200px) {
-      .fleetVehicleTypeSummaryGrid {
+      .fleetVehicleTypeSummaryGrid,
+      .fleetResponsavelSummaryGrid {
         grid-template-columns: 1fr;
       }
     }
@@ -1682,13 +1741,13 @@
 
     @media (max-width: 1400px) {
       .fleetFilterBar {
-        grid-template-columns: repeat(4, minmax(170px, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr)) 42px;
       }
     }
 
     @media (max-width: 900px) {
       .fleetFilterBar {
-        grid-template-columns: repeat(2, minmax(180px, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr)) 42px;
       }
     }
 
@@ -1697,7 +1756,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
       .fleetFilterBar {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 42px;
       }
       .fleetDateSectionGrid {
         grid-template-columns: 1fr;
@@ -2641,7 +2700,7 @@
             ]
           },
           options: {
-            responsive: true,
+            responsive: false,
             maintainAspectRatio: false,
             plugins: {
               legend: { position: "bottom" },
@@ -2668,6 +2727,8 @@
     let calendarioResumoVeiculos = null;
     let fleetTipoSelecionados = new Set(["programados", "contratados", "carregados"]);
     let fleetPendenciaSelecionados = new Set();
+    let fleetLiderSelecionados = new Set();
+    let fleetResponsavelSelecionados = { lider: new Set(), conferente: new Set(), operador: new Set() };
     let fleetTableSortState = { key: 'previsao', direction: 'asc' };
 
     function getFleetVehicleTypeValue(row) {
@@ -2686,6 +2747,99 @@
         row['CLIENTE'] ||
         '-'
       ).trim() || '-';
+    }
+
+    function getFleetResponsibleValue(row, key) {
+      const valor = getFleetColumnRawValue(row, key);
+      return String(valor == null ? '' : valor).trim() || 'NÃO INFORMADO';
+    }
+
+    function getFleetResponsavelTypeColumns(summary = []) {
+      const orderMap = new Map(
+        getFleetVehicleTypeSummary().map((item, idx) => [String(item.veiculo || '').trim(), idx])
+      );
+      const tipos = [];
+      (summary || []).forEach(item => {
+        Object.keys(item?.tipos || {}).forEach(tipo => {
+          if (!tipos.includes(tipo)) tipos.push(tipo);
+        });
+      });
+      return tipos.sort((a, b) => {
+        const ia = orderMap.has(a) ? orderMap.get(a) : 9999;
+        const ib = orderMap.has(b) ? orderMap.get(b) : 9999;
+        if (ia !== ib) return ia - ib;
+        return String(a).localeCompare(String(b), 'pt-BR', { numeric: true, sensitivity: 'base' });
+      });
+    }
+
+    function getFleetSummaryTableRowsHtml(summary = [], tipoColunas = [], labelKey = 'Responsável', emptyText = 'Nenhum registro encontrado com os filtros atuais.') {
+      const colspan = 2 + Math.max(1, (tipoColunas || []).length);
+      return summary.length
+        ? summary.map(item => `
+            <tr>
+              <td><b>${item.nome}</b></td>
+              <td><b>${item.carregados || 0}</b></td>
+              ${(tipoColunas || []).map(tipo => `<td>${item.tipos?.[tipo] || 0}</td>`).join('')}
+            </tr>
+          `).join('')
+        : `<tr><td colspan="${colspan}" style="text-align:center; color:#64748b;">${emptyText}</td></tr>`;
+    }
+
+    function getFleetSummaryTableHeaderHtml(label, tipoColunas = []) {
+      return `
+        <tr>
+          <th>${label}</th>
+          <th>Total</th>
+          ${(tipoColunas || []).map(tipo => `<th>${tipo}</th>`).join('')}
+        </tr>
+      `;
+    }
+
+    function getFleetResumoPorResponsavel(rows = [], selectedDateKeys = [], fieldKey = 'lider') {
+      const keysFiltro = new Set((selectedDateKeys || []).filter(Boolean));
+      const usarFiltroData = keysFiltro.size > 0;
+      const responsaveisSelecionados = new Set(getFleetSelectedResponsaveis(fieldKey).map(v => normalizar(v)).filter(Boolean));
+      const usarFiltroResponsavel = responsaveisSelecionados.size > 0;
+      const mapa = new Map();
+
+      (rows || []).forEach(row => {
+        const nome = getFleetResponsibleValue(row, fieldKey);
+        const nomeNorm = normalizar(nome);
+        const carrKey = getFleetDateKey(row, 'carregamento');
+        const statusLinha = normalizar(getFieldValue(row, ['STATUS']) || row.status || '');
+
+        if (!carrKey) return;
+        if (usarFiltroData && !keysFiltro.has(carrKey)) return;
+
+        // Nestes 3 resumos, desconsidera somente linhas cujo STATUS seja "NÃO SE APLICA"
+        if (statusLinha === 'nao se aplica') return;
+
+        // Também não lista responsáveis explicitamente marcados como "NÃO SE APLICA" ou "NÃO INFORMADO"
+        if (!nome || nomeNorm === 'nao se aplica' || nomeNorm === 'nao informado') return;
+        if (usarFiltroResponsavel && !responsaveisSelecionados.has(nomeNorm)) return;
+
+        const tipoVeiculo = getFleetVehicleTypeSummaryGroupLabel(getFleetVehicleTypeValue(row));
+
+        if (!mapa.has(nome)) {
+          mapa.set(nome, {
+            nome,
+            total: 0,
+            carregados: 0,
+            tipos: {}
+          });
+        }
+
+        const item = mapa.get(nome);
+        item.total += 1;
+        item.carregados += 1;
+        item.tipos[tipoVeiculo] = (item.tipos[tipoVeiculo] || 0) + 1;
+      });
+
+      return Array.from(mapa.values()).sort((a, b) => {
+        if (b.carregados !== a.carregados) return b.carregados - a.carregados;
+        if (b.total !== a.total) return b.total - a.total;
+        return String(a.nome).localeCompare(String(b.nome), 'pt-BR', { numeric: true, sensitivity: 'base' });
+      });
     }
 
 
@@ -2731,6 +2885,10 @@
       if (key === 'veiculoSolicitado') return String(getFieldValue(row, col.aliases) || '').trim();
       if (key === 'veiculoContratado') return String(getFieldValue(row, col.aliases) || '').trim();
       return getFieldValue(row, col.aliases);
+    }
+
+    function getFleetRowStatusValue(row) {
+      return String(getFieldValue(row, ['STATUS']) || row?.status || row?.Status || '').trim();
     }
 
     function getFleetColumnDisplayValue(row, key) {
@@ -2967,9 +3125,15 @@
       const wsDados = XLSX.utils.json_to_sheet(report.rows);
       const wsResumo = XLSX.utils.json_to_sheet(report.summary);
       const wsResumoData = XLSX.utils.json_to_sheet(report.summaryByDate || []);
+      const wsResumoLider = XLSX.utils.json_to_sheet(report.summaryByLeader || []);
+      const wsResumoConferente = XLSX.utils.json_to_sheet(report.summaryByConferente || []);
+      const wsResumoOperador = XLSX.utils.json_to_sheet(report.summaryByOperador || []);
 
       XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo por veículo');
       XLSX.utils.book_append_sheet(wb, wsResumoData, 'Resumo por data');
+      XLSX.utils.book_append_sheet(wb, wsResumoLider, 'Resumo por líder');
+      XLSX.utils.book_append_sheet(wb, wsResumoConferente, 'Resumo por conferente');
+      XLSX.utils.book_append_sheet(wb, wsResumoOperador, 'Resumo por operador');
       XLSX.utils.book_append_sheet(wb, wsDados, 'Registros');
 
       const stamp = new Date();
@@ -2981,7 +3145,137 @@
       XLSX.writeFile(wb, `relatorio_resumo_veiculos_${yyyy}${mm}${dd}_${hh}${mi}.xlsx`);
     }
 
+
+    function getFleetSelectedLeaders() {
+      return Array.from(fleetLiderSelecionados || []);
+    }
+
+    function getFleetResponsibleOptionsForField(rows = [], fieldKey = 'lider') {
+      return Array.from(new Set((rows || [])
+        .filter(row => normalizar(getFleetRowStatusValue(row)) !== 'nao se aplica')
+        .map(row => getFleetResponsibleValue(row, fieldKey))
+        .filter(v => v && normalizar(v) !== 'nao se aplica' && normalizar(v) !== 'nao informado')))
+        .sort((a, b) => String(a).localeCompare(String(b), 'pt-BR', { numeric: true, sensitivity: 'base' }));
+    }
+
+    function getFleetSelectedResponsaveis(fieldKey = 'lider') {
+      return Array.from(fleetResponsavelSelecionados?.[fieldKey] || []);
+    }
+
+    function getFleetRowsForResponsavelCards(rows = [], excludeField = null) {
+      const filtros = {
+        lider: new Set(getFleetSelectedResponsaveis('lider').map(v => normalizar(v)).filter(Boolean)),
+        conferente: new Set(getFleetSelectedResponsaveis('conferente').map(v => normalizar(v)).filter(Boolean)),
+        operador: new Set(getFleetSelectedResponsaveis('operador').map(v => normalizar(v)).filter(Boolean))
+      };
+
+      return (rows || []).filter(row => {
+        return ['lider', 'conferente', 'operador'].every(fieldKey => {
+          if (excludeField && fieldKey === excludeField) return true;
+          const selecionados = filtros[fieldKey];
+          if (!selecionados || !selecionados.size) return true;
+          const nomeNorm = normalizar(getFleetResponsibleValue(row, fieldKey));
+          return !!nomeNorm && selecionados.has(nomeNorm);
+        });
+      });
+    }
+
+    function syncFleetResponsavelCardFilterUI(rows = [], fieldKey = 'lider') {
+      const config = {
+        lider: {
+          triggerTextId: 'fleetResumoLiderFilterTriggerText',
+          listId: 'fleetResumoLiderFilterList',
+          emptyText: 'Nenhum líder disponível.',
+          label: '👤 Líder'
+        },
+        conferente: {
+          triggerTextId: 'fleetResumoConferenteFilterTriggerText',
+          listId: 'fleetResumoConferenteFilterList',
+          emptyText: 'Nenhum conferente disponível.',
+          label: '🧾 Conferente'
+        },
+        operador: {
+          triggerTextId: 'fleetResumoOperadorFilterTriggerText',
+          listId: 'fleetResumoOperadorFilterList',
+          emptyText: 'Nenhum operador disponível.',
+          label: '⚙️ Operador'
+        }
+      }[fieldKey];
+      if (!config) return;
+
+      const rowsParaOpcoes = getFleetRowsForResponsavelCards(rows, fieldKey);
+      const opcoes = getFleetResponsibleOptionsForField(rowsParaOpcoes, fieldKey);
+      fleetResponsavelSelecionados[fieldKey] = new Set(Array.from(fleetResponsavelSelecionados[fieldKey] || []).filter(v => opcoes.includes(v)));
+
+      const list = document.getElementById(config.listId);
+      if (list) {
+        list.innerHTML = opcoes.length
+          ? opcoes.map(nome => {
+              const checked = fleetResponsavelSelecionados[fieldKey].has(nome) ? 'checked' : '';
+              const safeNome = String(nome).replace(/"/g, '&quot;');
+              return `<label class="fleetCheckItem"><input data-fleet-card-field="${fieldKey}" data-fleet-card-value="${safeNome}" type="checkbox" ${checked}> <span>${nome}</span></label>`;
+            }).join('')
+          : `<div class="fleetPageHint" style="padding:8px 2px;">${config.emptyText}</div>`;
+
+        list.querySelectorAll(`input[data-fleet-card-field="${fieldKey}"]`).forEach(input => {
+          input.addEventListener('change', () => {
+            const nome = input.dataset.fleetCardValue || '';
+            if (!nome) return;
+            if (input.checked) fleetResponsavelSelecionados[fieldKey].add(nome);
+            else fleetResponsavelSelecionados[fieldKey].delete(nome);
+            renderResumoVeiculosPage();
+          });
+        });
+      }
+
+      const triggerText = document.getElementById(config.triggerTextId);
+      if (triggerText) {
+        const selecionados = getFleetSelectedResponsaveis(fieldKey);
+        triggerText.textContent = !selecionados.length
+          ? `${config.label} (Todos)`
+          : `${config.label} (${selecionados.join(', ')})`;
+      }
+    }
+
+    function bindFleetResponsavelCardDropdowns() {
+      [
+        ['fleetResumoLiderFilterTrigger', 'fleetResumoLiderFilterDropdown'],
+        ['fleetResumoConferenteFilterTrigger', 'fleetResumoConferenteFilterDropdown'],
+        ['fleetResumoOperadorFilterTrigger', 'fleetResumoOperadorFilterDropdown']
+      ].forEach(([triggerId, dropdownId]) => {
+        const trigger = document.getElementById(triggerId);
+        const dropdown = document.getElementById(dropdownId);
+        if (!trigger || !dropdown || trigger.dataset.bound === '1') return;
+
+        trigger.dataset.bound = '1';
+        dropdown.dataset.bound = '1';
+
+        trigger.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const fleetDropdown = document.getElementById('fleetStatusFilterDropdown');
+          const fleetPendingDropdown = document.getElementById('fleetPendingFilterDropdown');
+          fleetDropdown?.classList.remove('open');
+          fleetPendingDropdown?.classList.remove('open');
+
+          [
+            'fleetResumoLiderFilterDropdown',
+            'fleetResumoConferenteFilterDropdown',
+            'fleetResumoOperadorFilterDropdown'
+          ].forEach(id => {
+            if (id !== dropdownId) document.getElementById(id)?.classList.remove('open');
+          });
+
+          dropdown.classList.toggle('open');
+        });
+
+        dropdown.addEventListener('click', (e) => e.stopPropagation());
+      });
+    }
+
     function getSelectedFleetStatusTypes() {
+
       const valores = Array.from(fleetTipoSelecionados || []);
       return valores.length ? valores : ["programados", "contratados", "carregados"];
     }
@@ -3421,7 +3715,7 @@
       }).join('');
     }
 
-    function renderResumoVeiculosCharts(overview, tiposSelecionados, rowsFiltradas = [], selectedDateKeys = []) {
+    function renderResumoVeiculosCharts(overview, tiposSelecionados, rowsFiltradas = [], selectedDateKeys = [], resumoResponsaveis = {}) {
       const keysFiltro = new Set((selectedDateKeys || []).filter(Boolean));
       const usarFiltroData = keysFiltro.size > 0;
 
@@ -3601,7 +3895,72 @@
           plugins: [ChartDataLabels]
         });
       }
+
+      renderFleetResponsavelChart("chartFleetResumoLider", resumoResponsaveis?.lider || [], "Resumo por líder");
+      renderFleetResponsavelChart("chartFleetResumoConferente", resumoResponsaveis?.conferente || [], "Resumo por conferente");
+      renderFleetResponsavelChart("chartFleetResumoOperador", resumoResponsaveis?.operador || [], "Resumo por operador");
     }
+
+    function renderFleetResponsavelChart(canvasId, serie = [], titulo = '') {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas || !window.Chart) return;
+
+      const dados = (serie || []);
+      const labels = dados.map(item => item.nome);
+      const chartKey = `_${canvasId}`;
+      _destroyChart(window[chartKey]);
+
+      const minWidth = Math.max(canvas.parentElement?.clientWidth || 0, labels.length * 80, 420);
+      canvas.style.width = `${minWidth}px`;
+      canvas.width = minWidth;
+
+      window[chartKey] = new Chart(canvas.getContext("2d"), {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Veículos carregados',
+              data: dados.map(item => item.carregados),
+              backgroundColor: 'rgba(255, 205, 86, 0.65)',
+              borderColor: 'rgb(255, 205, 86)',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 16 } },
+          plugins: {
+            legend: { display: false },
+            title: titulo ? { display: false, text: titulo } : { display: false },
+            tooltip: { enabled: true },
+            datalabels: {
+              anchor: "end",
+              align: "top",
+              offset: 2,
+              clamp: true,
+              clip: false,
+              formatter: (v) => Number(v || 0) ? _fmt(v) : "",
+              font: { weight: "900", size: 10 }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { font: { size: 10 }, autoSkip: false, maxRotation: 45, minRotation: 0 },
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { font: { size: 10 } }
+            }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
+    }
+
 
     function renderResumoVeiculosPage() {
       const resumoEl = document.getElementById("fleetResumoContent");
@@ -3616,6 +3975,10 @@
 
         const tiposSelecionados = getSelectedFleetStatusTypes();
         const rowsFiltradas = getFleetFilteredRows(rowsBaseResumo);
+        const rowsFiltradasResponsaveis = getFleetRowsForResponsavelCards(rowsFiltradas);
+        syncFleetResponsavelCardFilterUI(rowsFiltradas, 'lider');
+        syncFleetResponsavelCardFilterUI(rowsFiltradas, 'conferente');
+        syncFleetResponsavelCardFilterUI(rowsFiltradas, 'operador');
         const selectedDateKeys = getFleetEffectiveSelectedDateKeys(rowsBaseResumo);
         const datasSelecionadasValidas = Array.from(new Set((datasSelecionadasResumoVeiculos || []).map(d => getDateKeyOnly(d)).filter(Boolean))).filter(key => getFleetRecentRecordDateKeys(rowsBaseResumo, 10).includes(key)).sort((a, b) => Number(a) - Number(b));
         const pendenciasSelecionadas = getSelectedFleetPendingTypes();
@@ -3669,6 +4032,9 @@
 
       const rowsFiltradasOrdenadas = sortFleetRows(rowsFiltradas);
       const resumoPorVeiculo = getFleetVehicleTypeSummary(rowsFiltradas, selectedDateKeys);
+      const resumoPorLider = getFleetResumoPorResponsavel(rowsFiltradasResponsaveis, selectedDateKeys, 'lider');
+      const resumoPorConferente = getFleetResumoPorResponsavel(rowsFiltradasResponsaveis, selectedDateKeys, 'conferente');
+      const resumoPorOperador = getFleetResumoPorResponsavel(rowsFiltradasResponsaveis, selectedDateKeys, 'operador');
 
       const registrosTabela = rowsFiltradasOrdenadas.length
         ? rowsFiltradasOrdenadas.map(row => `
@@ -3691,6 +4057,14 @@
           `).join('')
         : `<tr><td colspan="6" style="text-align:center; color:#64748b;">Nenhum tipo de veículo encontrado com os filtros atuais.</td></tr>`;
 
+      const tipoColunasResponsaveis = getFleetResponsavelTypeColumns(resumoPorLider.concat(resumoPorConferente, resumoPorOperador));
+      const resumoPorLiderTabela = getFleetSummaryTableRowsHtml(resumoPorLider, tipoColunasResponsaveis, 'Líder', 'Nenhum líder encontrado com os filtros atuais.');
+      const resumoPorConferenteTabela = getFleetSummaryTableRowsHtml(resumoPorConferente, tipoColunasResponsaveis, 'Conferente', 'Nenhum conferente encontrado com os filtros atuais.');
+      const resumoPorOperadorTabela = getFleetSummaryTableRowsHtml(resumoPorOperador, tipoColunasResponsaveis, 'Operador', 'Nenhum operador encontrado com os filtros atuais.');
+      const resumoPorLiderHeader = getFleetSummaryTableHeaderHtml('Líder', tipoColunasResponsaveis);
+      const resumoPorConferenteHeader = getFleetSummaryTableHeaderHtml('Conferente', tipoColunasResponsaveis);
+      const resumoPorOperadorHeader = getFleetSummaryTableHeaderHtml('Operador', tipoColunasResponsaveis);
+
       window.currentFleetVehicleReport = {
         generatedAt: new Date().toLocaleString('pt-BR'),
         filtros: {
@@ -3698,6 +4072,9 @@
           placa: document.getElementById("fleetSearchPlacaInput")?.value || '',
           destinos: document.getElementById("fleetSearchDestinosInput")?.value || '',
           clientes: document.getElementById("fleetSearchClientesInput")?.value || '',
+          lider: getFleetSelectedResponsaveis('lider'),
+          conferente: getFleetSelectedResponsaveis('conferente'),
+          operador: getFleetSelectedResponsaveis('operador'),
           tipos: tiposSelecionados.map(getFleetTypeLabel),
           pendencias: pendenciasSelecionadas.map(getFleetPendingLabel),
           datas: selectedDateKeys.map(getDateLabelFromKey)
@@ -3710,6 +4087,21 @@
           'Carregados': item.carregados,
           'Pendentes de contratação': item.pendentesContratacao,
           'Pendentes de carregamento': item.pendentesCarregamento
+        })),
+        summaryByLeader: resumoPorLider.map(item => ({
+          'Líder': item.nome,
+          'Total': item.carregados,
+          ...Object.fromEntries(tipoColunasResponsaveis.map(tipo => [tipo, item.tipos?.[tipo] || 0]))
+        })),
+        summaryByConferente: resumoPorConferente.map(item => ({
+          'Conferente': item.nome,
+          'Total': item.carregados,
+          ...Object.fromEntries(tipoColunasResponsaveis.map(tipo => [tipo, item.tipos?.[tipo] || 0]))
+        })),
+        summaryByOperador: resumoPorOperador.map(item => ({
+          'Operador': item.nome,
+          'Total': item.carregados,
+          ...Object.fromEntries(tipoColunasResponsaveis.map(tipo => [tipo, item.tipos?.[tipo] || 0]))
         })),
         summaryByDate: overview.linhas.map(item => ({
           'Data': getDateLabelFromKey(item.key),
@@ -3793,11 +4185,84 @@
             </div>
           </div>
         </div>
+        <div class="fleetResponsavelSummaryGrid">
+          <div class="fleetPagePanel">
+            <div class="fleetPagePanelTitle">Resumo por líder</div>
+            <div class="fleetPagePanelSub">Veículos carregados por líder, separados por tipo de veículo, considerando exatamente a base filtrada atual.</div>
+            <div class="fleetResponsavelFilterBox">
+              <button class="fleetMultiTrigger" id="fleetResumoLiderFilterTrigger" type="button">
+                <span id="fleetResumoLiderFilterTriggerText">👤 Líder (Todos)</span>
+                <span>▾</span>
+              </button>
+              <div class="fleetMultiDropdown" id="fleetResumoLiderFilterDropdown">
+                <div class="fleetMultiHead">Selecione os líderes</div>
+                <div class="fleetMultiList" id="fleetResumoLiderFilterList"></div>
+              </div>
+            </div>
+            <div class="fleetResponsavelChartWrap"><canvas id="chartFleetResumoLider"></canvas></div>
+            <div class="fleetVehicleTypeSummaryTableWrap">
+              <table class="fleetVehicleTypeSummaryTable">
+                <thead>${resumoPorLiderHeader}</thead>
+                <tbody>${resumoPorLiderTabela}</tbody>
+              </table>
+            </div>
+          </div>
+          <div class="fleetPagePanel">
+            <div class="fleetPagePanelTitle">Resumo por conferente</div>
+            <div class="fleetPagePanelSub">Veículos carregados por conferente, separados por tipo de veículo, considerando exatamente a base filtrada atual.</div>
+            <div class="fleetResponsavelFilterBox">
+              <button class="fleetMultiTrigger" id="fleetResumoConferenteFilterTrigger" type="button">
+                <span id="fleetResumoConferenteFilterTriggerText">🧾 Conferente (Todos)</span>
+                <span>▾</span>
+              </button>
+              <div class="fleetMultiDropdown" id="fleetResumoConferenteFilterDropdown">
+                <div class="fleetMultiHead">Selecione os conferentes</div>
+                <div class="fleetMultiList" id="fleetResumoConferenteFilterList"></div>
+              </div>
+            </div>
+            <div class="fleetResponsavelChartWrap"><canvas id="chartFleetResumoConferente"></canvas></div>
+            <div class="fleetVehicleTypeSummaryTableWrap">
+              <table class="fleetVehicleTypeSummaryTable">
+                <thead>${resumoPorConferenteHeader}</thead>
+                <tbody>${resumoPorConferenteTabela}</tbody>
+              </table>
+            </div>
+          </div>
+          <div class="fleetPagePanel">
+            <div class="fleetPagePanelTitle">Resumo por operador</div>
+            <div class="fleetPagePanelSub">Veículos carregados por operador, separados por tipo de veículo, considerando exatamente a base filtrada atual.</div>
+            <div class="fleetResponsavelFilterBox">
+              <button class="fleetMultiTrigger" id="fleetResumoOperadorFilterTrigger" type="button">
+                <span id="fleetResumoOperadorFilterTriggerText">⚙️ Operador (Todos)</span>
+                <span>▾</span>
+              </button>
+              <div class="fleetMultiDropdown" id="fleetResumoOperadorFilterDropdown">
+                <div class="fleetMultiHead">Selecione os operadores</div>
+                <div class="fleetMultiList" id="fleetResumoOperadorFilterList"></div>
+              </div>
+            </div>
+            <div class="fleetResponsavelChartWrap"><canvas id="chartFleetResumoOperador"></canvas></div>
+            <div class="fleetVehicleTypeSummaryTableWrap">
+              <table class="fleetVehicleTypeSummaryTable">
+                <thead>${resumoPorOperadorHeader}</thead>
+                <tbody>${resumoPorOperadorTabela}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>
         <div class="fleetDateDetailsWrap">${getFleetDateDetailSections(rowsFiltradas, tiposSelecionados)}</div>
       `;
 
+      syncFleetResponsavelCardFilterUI(rowsFiltradas, 'lider');
+      syncFleetResponsavelCardFilterUI(rowsFiltradas, 'conferente');
+      syncFleetResponsavelCardFilterUI(rowsFiltradas, 'operador');
       bindFleetTableSortHandlers();
-      renderResumoVeiculosCharts(overview, tiposSelecionados, rowsFiltradas, selectedDateKeys);
+      bindFleetResponsavelCardDropdowns();
+      renderResumoVeiculosCharts(overview, tiposSelecionados, rowsFiltradasResponsaveis, selectedDateKeys, {
+        lider: resumoPorLider,
+        conferente: resumoPorConferente,
+        operador: resumoPorOperador
+      });
       } catch (err) {
         console.error('Erro ao renderizar Resumo de Veículos:', err);
         resumoEl.innerHTML = `
@@ -10043,10 +10508,17 @@ return null;
       const fleetTrigger = document.getElementById('fleetStatusFilterTrigger');
       const fleetPendingDropdown = document.getElementById('fleetPendingFilterDropdown');
       const fleetPendingTrigger = document.getElementById('fleetPendingFilterTrigger');
+      const fleetCardDropdownIds = [
+        'fleetResumoLiderFilterDropdown',
+        'fleetResumoConferenteFilterDropdown',
+        'fleetResumoOperadorFilterDropdown'
+      ];
+      const closeFleetCardDropdowns = () => fleetCardDropdownIds.forEach(id => document.getElementById(id)?.classList.remove('open'));
 
       fleetTrigger?.addEventListener('click', (e) => {
         e.stopPropagation();
         fleetPendingDropdown?.classList.remove('open');
+        closeFleetCardDropdowns();
         fleetDropdown?.classList.toggle('open');
       });
       fleetDropdown?.addEventListener('click', (e) => e.stopPropagation());
@@ -10054,9 +10526,12 @@ return null;
       fleetPendingTrigger?.addEventListener('click', (e) => {
         e.stopPropagation();
         fleetDropdown?.classList.remove('open');
+        closeFleetCardDropdowns();
         fleetPendingDropdown?.classList.toggle('open');
       });
       fleetPendingDropdown?.addEventListener('click', (e) => e.stopPropagation());
+
+      bindFleetResponsavelCardDropdowns();
 
       document.querySelectorAll('#fleetStatusFilterDropdown input[data-fleet-type]').forEach(input => {
         input.addEventListener('change', () => {
@@ -10086,6 +10561,7 @@ return null;
       document.addEventListener('click', () => {
         fleetDropdown?.classList.remove('open');
         fleetPendingDropdown?.classList.remove('open');
+        closeFleetCardDropdowns();
       });
 
       document.getElementById('btnFleetEmitirRelatorio')?.addEventListener('click', exportarRelatorioResumoVeiculos);
@@ -10338,7 +10814,7 @@ return null;
             </div>
           </div>
         </div>
-        <button class="btn secondary" id="btnDateFilterFleetPage" title="Selecionar datas do resumo de veículos" type="button">📅</button>
+        <button class="btn secondary" id="btnDateFilterFleetPage" style="width:42px; min-width:42px; max-width:42px; padding:0;" title="Selecionar datas do resumo de veículos" type="button">📅</button>
         <input id="dateFilterFleetPage" style="display:none;" type="text">
       </div>
       <div class="fleetPageHint">Toda a visualização considera somente os últimos 10 dias com registros, com filtro de data aplicado sobre DT. PREVISÃO, DT. CONTRATAÇÃO e DT. CARREGAMENTO. <span id="fleetDateFilterHint">Últimos 10 dias com registros</span>.</div>
