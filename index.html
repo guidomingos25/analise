@@ -1540,6 +1540,151 @@
       }
     }
 
+
+
+    .routePanel {
+      margin-top: 12px;
+      background: rgba(248,250,252,0.96);
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      border-radius: 16px;
+      box-shadow: var(--shadowSoft);
+      padding: 14px;
+    }
+
+    .routePanelHeader {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+
+    .routePanelTitle {
+      font-size:12px;
+      font-weight:900;
+      color:#111827;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+      margin:0;
+    }
+
+    .routePanelSub {
+      font-size:12px;
+      color:#64748b;
+      margin:4px 0 0 0;
+    }
+
+    .routePanelGrid {
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap:10px;
+      margin-bottom:12px;
+    }
+
+    .routeStat {
+      background:#fff;
+      border:1px solid rgba(15,23,42,0.08);
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .routeStatLabel {
+      font-size:11px;
+      font-weight:800;
+      color:#64748b;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      margin-bottom:6px;
+    }
+
+    .routeStatValue {
+      font-size:24px;
+      font-weight:900;
+      color:#111827;
+      line-height:1;
+    }
+
+    .routeVocativoCard {
+      background:#fff;
+      border:1px solid rgba(15,23,42,0.08);
+      border-radius:14px;
+      padding:12px;
+      margin-top:10px;
+    }
+
+    .routeVocativoHeader {
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom:8px;
+    }
+
+    .routeVocativoTitle {
+      font-size:13px;
+      font-weight:900;
+      color:#111827;
+      margin:0;
+    }
+
+    .routeVocativoMeta {
+      font-size:12px;
+      color:#64748b;
+      margin:0;
+    }
+
+    .routeTableWrap {
+      overflow:auto;
+      border:1px solid rgba(15,23,42,0.08);
+      border-radius:12px;
+    }
+
+    .routeTable {
+      width:100%;
+      min-width:980px;
+      border-collapse:collapse;
+      font-size:11px;
+      background:#fff;
+    }
+
+    .routeTable th,
+    .routeTable td {
+      padding:8px 10px;
+      border:1px solid #e5e7eb;
+      white-space:nowrap;
+      text-align:left;
+      vertical-align:top;
+    }
+
+    .routeTable th {
+      background:#eff6ff;
+      color:#1e3a8a;
+      position:sticky;
+      top:0;
+      z-index:1;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      font-size:10px;
+    }
+
+    .routeTag {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:5px 8px;
+      border-radius:999px;
+      background:#eff6ff;
+      color:#1d4ed8;
+      border:1px solid #bfdbfe;
+      font-size:11px;
+      font-weight:800;
+    }
+
+    .routeMuted {
+      color:#64748b;
+    }
     .fleetEmptyState {
       padding: 28px 18px;
       border: 1px dashed #cbd5e1;
@@ -1858,6 +2003,60 @@
       vocativos: [],
       clientes: [],
       notas: []
+    };
+
+
+    const ORS_API_KEY = "5b3ce3597851110001cf62489c210549016b487db0ad9707f9a53bcb";
+    const ORS_BASE_URL = "https://api.openrouteservice.org";
+    const FILIAIS_ORS = [
+      { cidade: "Maceió", uf: "AL" },
+      { cidade: "Manaus", uf: "AM" },
+      { cidade: "Açailândia", uf: "MA" },
+      { cidade: "Ananindeua", uf: "PA" },
+      { cidade: "Aparecida de Goiânia", uf: "GO" },
+      { cidade: "Araquari", uf: "SC" },
+      { cidade: "Camaçari", uf: "BA" },
+      { cidade: "Canoas", uf: "RS" },
+      { cidade: "Contagem", uf: "MG" },
+      { cidade: "Corumbá", uf: "MS" },
+      { cidade: "Curitiba", uf: "PR" },
+      { cidade: "Dourados", uf: "MS" },
+      { cidade: "Cabo de Santo Agostinho", uf: "PE" },
+      { cidade: "Parauapebas", uf: "PA" },
+      { cidade: "Piracicaba", uf: "SP" },
+      { cidade: "Ribeirão Preto", uf: "SP" },
+      { cidade: "Rio de Janeiro", uf: "RJ" },
+      { cidade: "São Luís", uf: "MA" },
+      { cidade: "São Paulo", uf: "SP" },
+      { cidade: "Três Lagoas", uf: "MS" },
+      { cidade: "Várzea Grande", uf: "MT" },
+      { cidade: "Serra", uf: "ES" },
+      { cidade: "Sinop", uf: "MT" },
+      { cidade: "Primavera do Leste", uf: "MT" }
+    ].map((f, index) => ({
+      id: `filial_${index + 1}`,
+      cidade: f.cidade,
+      uf: (f.uf || "").toUpperCase(),
+      nome: `${f.cidade} - ${String(f.uf || "").toUpperCase()}`
+    }));
+
+    const CAPITAIS_UF = {
+      AC: "Rio Branco - AC", AL: "Maceió - AL", AP: "Macapá - AP", AM: "Manaus - AM", BA: "Salvador - BA",
+      CE: "Fortaleza - CE", DF: "Brasília - DF", ES: "Vitória - ES", GO: "Goiânia - GO", MA: "São Luís - MA",
+      MT: "Cuiabá - MT", MS: "Campo Grande - MS", MG: "Belo Horizonte - MG", PA: "Belém - PA", PB: "João Pessoa - PB",
+      PR: "Curitiba - PR", PE: "Recife - PE", PI: "Teresina - PI", RJ: "Rio de Janeiro - RJ", RN: "Natal - RN",
+      RS: "Porto Alegre - RS", RO: "Porto Velho - RO", RR: "Boa Vista - RR", SC: "Florianópolis - SC", SP: "São Paulo - SP",
+      SE: "Aracaju - SE", TO: "Palmas - TO"
+    };
+
+    window.__orsRouteState = window.__orsRouteState || {
+      geocodeCache: new Map(),
+      matrixCache: new Map(),
+      directionsCache: new Map(),
+      branchCoordsPromise: null,
+      stateChoiceCache: new Map(),
+      lastRenderSignature: "",
+      lastResults: null
     };
 
 
@@ -4881,6 +5080,7 @@
       dateFilter.disabled = false;
 
       document.getElementById("btnAlmoxPendentes").disabled = false;
+      document.getElementById("btnCalcularFilialMaisProxima") && (document.getElementById("btnCalcularFilialMaisProxima").disabled = false);
 
 
     }
@@ -6164,6 +6364,7 @@ return null;
     async function listarAlmoxPendentes(renderSeq = ++sequenciaRenderAnalise) {
       const viewportState = capturarEstadoViewportAnalise();
       abrirPaginaAnalise();
+      limparResultadoRotas();
 
       const listaElLoading = document.getElementById("almoxList");
       if (listaElLoading && !viewportState.tinhaListaRenderizada) {
@@ -7784,6 +7985,8 @@ return null;
 
     btnExportarCSV.onclick = exportarExcel;
 
+    btnLimpar.addEventListener("click", limparResultadoRotas);
+
     dateFilter.onchange = aplicarFiltrosEBusca;
 
     document.getElementById("btnAlmoxPendentes").onclick = agendarListarAlmoxPendentes;
@@ -7865,6 +8068,515 @@ return null;
       return `${y}-${m}-${day}`;
     }
 
+
+
+    function renderRouteSuggestionsPlaceholder(html = "") {
+      const el = document.getElementById("routeSuggestions");
+      if (!el) return;
+      el.innerHTML = html;
+    }
+
+    function limparResultadoRotas() {
+      const el = document.getElementById("routeSuggestions");
+      if (el) el.innerHTML = "";
+      if (window.__orsRouteState) {
+        window.__orsRouteState.lastRenderSignature = "";
+        window.__orsRouteState.lastResults = null;
+      }
+    }
+
+    function formatKmBR(meters) {
+      const km = Number(meters || 0) / 1000;
+      return `${km.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
+    }
+
+    function formatDurationBR(seconds) {
+      const totalMin = Math.round(Number(seconds || 0) / 60);
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      if (h <= 0) return `${m} min`;
+      if (m === 0) return `${h}h`;
+      return `${h}h ${m}min`;
+    }
+
+    function getRouteAssinaturaContexto() {
+      const ctx = getContextoFiltrosPopup();
+      return buildPerfCacheKey([
+        "rotas",
+        JSON.stringify(ctx.modosDataLimite || []),
+        JSON.stringify(ctx.modosCriticidade || []),
+        JSON.stringify(ctx.modosMigracao || []),
+        JSON.stringify(ctx.modosEntradaNF || []),
+        JSON.stringify(ctx.modosObservacao || []),
+        JSON.stringify(ctx.filtroVeiculo || []),
+        ctx.termoDestino || "",
+        ctx.termoUFDestino || "",
+        ctx.termoNota || "",
+        ctx.termoOEF || "",
+        Array.from(ctx.clientesSelecionadosNorm || []).sort().join(","),
+        (datasSelecionadasPopup || []).map(d => d?.toISOString?.().slice(0, 10) || "").join(","),
+        filtroPrazoConsolidacaoAtivo || ""
+      ]);
+    }
+
+    async function getGeocodeORS(local) {
+      const estado = window.__orsRouteState;
+      const key = normalizar(local || "");
+      if (!key) return null;
+      if (estado.geocodeCache.has(key)) return estado.geocodeCache.get(key);
+
+      const url = `${ORS_BASE_URL}/geocode/search?api_key=${encodeURIComponent(ORS_API_KEY)}&text=${encodeURIComponent(local)}&size=1&boundary.country=BR&layers=locality`;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`Falha ao geocodificar ${local}: ${resp.status}`);
+      const json = await resp.json();
+      const feat = json?.features?.[0];
+      const coords = Array.isArray(feat?.geometry?.coordinates) ? feat.geometry.coordinates : null;
+      const result = coords && coords.length >= 2 ? { lon: Number(coords[0]), lat: Number(coords[1]), label: feat?.properties?.label || local } : null;
+      estado.geocodeCache.set(key, result);
+      return result;
+    }
+
+    async function getGeocodeDestinoComFallback(destino, uf) {
+      const principal = await getGeocodeORS(`${destino} - ${uf}, Brasil`);
+      if (principal) return { ...principal, origem: "cidade" };
+      const capital = CAPITAIS_UF[(uf || "").toUpperCase()];
+      if (!capital) return null;
+      const fallback = await getGeocodeORS(`${capital}, Brasil`);
+      return fallback ? { ...fallback, origem: "capital" } : null;
+    }
+
+    async function garantirCoordenadasFiliais() {
+      const estado = window.__orsRouteState;
+      if (estado.branchCoordsPromise) return estado.branchCoordsPromise;
+      estado.branchCoordsPromise = (async () => {
+        const itens = [];
+        for (const filial of FILIAIS_ORS) {
+          const geo = await getGeocodeORS(`${filial.cidade} - ${filial.uf}, Brasil`);
+          if (geo) itens.push({ ...filial, ...geo });
+        }
+        return itens;
+      })();
+      return estado.branchCoordsPromise;
+    }
+
+    async function postORSMatrix(locations) {
+      const estado = window.__orsRouteState;
+      const key = JSON.stringify(locations.map(([lon, lat]) => [Number(lon).toFixed(6), Number(lat).toFixed(6)]));
+      if (estado.matrixCache.has(key)) return estado.matrixCache.get(key);
+      const resp = await fetch(`${ORS_BASE_URL}/v2/matrix/driving-car`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": ORS_API_KEY
+        },
+        body: JSON.stringify({
+          locations,
+          metrics: ["distance", "duration"]
+        })
+      });
+      if (!resp.ok) throw new Error(`Falha ao consultar matriz ORS: ${resp.status}`);
+      const json = await resp.json();
+      estado.matrixCache.set(key, json);
+      return json;
+    }
+
+    async function getORSDirectionsResumo(origem, destino) {
+      const estado = window.__orsRouteState;
+      const key = JSON.stringify([
+        [Number(origem.lon).toFixed(6), Number(origem.lat).toFixed(6)],
+        [Number(destino.lon).toFixed(6), Number(destino.lat).toFixed(6)]
+      ]);
+      if (estado.directionsCache.has(key)) return estado.directionsCache.get(key);
+      const resp = await fetch(`${ORS_BASE_URL}/v2/directions/driving-car/json`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": ORS_API_KEY
+        },
+        body: JSON.stringify({
+          coordinates: [
+            [origem.lon, origem.lat],
+            [destino.lon, destino.lat]
+          ]
+        })
+      });
+      if (!resp.ok) throw new Error(`Falha ao consultar rota ORS: ${resp.status}`);
+      const json = await resp.json();
+      const resumo = json?.routes?.[0]?.summary || null;
+      estado.directionsCache.set(key, resumo);
+      return resumo;
+    }
+
+    async function determinarUFBaseMaisProxima(ufDestino, capitaisFiliaisCoords) {
+      const uf = String(ufDestino || "").toUpperCase();
+      if (!uf) return null;
+      const ufsFiliais = [...new Set(FILIAIS_ORS.map(f => f.uf).filter(Boolean))];
+      if (ufsFiliais.includes(uf)) return uf;
+
+      const estado = window.__orsRouteState;
+      if (estado.stateChoiceCache.has(uf)) return estado.stateChoiceCache.get(uf);
+
+      const capitalDestinoNome = CAPITAIS_UF[uf];
+      if (!capitalDestinoNome) return null;
+      const capitalDestino = await getGeocodeORS(`${capitalDestinoNome}, Brasil`);
+      if (!capitalDestino) return null;
+
+      const locations = [[capitalDestino.lon, capitalDestino.lat], ...capitaisFiliaisCoords.map(c => [c.lon, c.lat])];
+      const matrix = await postORSMatrix(locations);
+      const distances = matrix?.distances?.[0] || [];
+      let bestUf = null;
+      let bestDistance = Infinity;
+      capitaisFiliaisCoords.forEach((item, idx) => {
+        const dist = Number(distances[idx + 1]);
+        if (Number.isFinite(dist) && dist < bestDistance) {
+          bestDistance = dist;
+          bestUf = item.uf;
+        }
+      });
+      estado.stateChoiceCache.set(uf, bestUf);
+      return bestUf;
+    }
+
+    async function coletarVocativosFiltradosParaRotas() {
+      const cacheAnalise = await prepararCacheAnaliseProgramacao();
+      const ctx = getContextoFiltrosPopup();
+      const vocativos = [];
+
+      Object.entries(cacheAnalise.almoxPendBase || {}).forEach(([almox, info]) => {
+        const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), cacheAnalise.almoxUltimoVeiculo?.[almox] || []);
+        if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctx.filtroVeiculo, ctx.hoje)) return;
+
+        const notas = (info?.notas || []).filter(n => notaPassaContexto(n, ctx));
+        if (!notas.length) return;
+
+        const mapaDestinos = new Map();
+        notas.forEach(n => {
+          const destino = String(n.destino || "").trim();
+          const uf = String(n.uf || "").trim().toUpperCase();
+          if (!destino || !uf) return;
+          const key = `${normalizar(destino)}||${uf}`;
+          if (!mapaDestinos.has(key)) {
+            mapaDestinos.set(key, {
+              destino,
+              uf,
+              totalNotas: 0,
+              notas: [],
+              clientes: new Set()
+            });
+          }
+          const item = mapaDestinos.get(key);
+          item.totalNotas += 1;
+          item.notas.push(String(n.nota || "").trim());
+          if (n.cliente) item.clientes.add(String(n.cliente).trim());
+        });
+
+        const destinos = Array.from(mapaDestinos.values()).map(item => ({
+          destino: item.destino,
+          uf: item.uf,
+          totalNotas: item.totalNotas,
+          notasPreview: item.notas.filter(Boolean).slice(0, 5),
+          clientesPreview: Array.from(item.clientes).filter(Boolean).slice(0, 3)
+        }));
+
+        if (!destinos.length) return;
+
+        vocativos.push({
+          vocativo: almox,
+          vocativoNorm: normalizar(almox),
+          totalNotasFiltradas: notas.length,
+          totalDestinos: destinos.length,
+          destinos
+        });
+      });
+
+      vocativos.sort((a, b) => a.vocativo.localeCompare(b.vocativo, "pt-BR"));
+      return vocativos;
+    }
+
+    async function calcularMelhorFilialPorDestino(destinoItem, filiaisCoords, capitaisFiliaisCoords) {
+      const ufBase = await determinarUFBaseMaisProxima(destinoItem.uf, capitaisFiliaisCoords);
+      if (!ufBase) {
+        return {
+          ...destinoItem,
+          erro: "UF base não localizada para cálculo."
+        };
+      }
+
+      const destinoGeo = await getGeocodeDestinoComFallback(destinoItem.destino, destinoItem.uf);
+      if (!destinoGeo) {
+        return {
+          ...destinoItem,
+          ufBase,
+          erro: "Destino não geocodificado no ORS."
+        };
+      }
+
+      const candidatas = filiaisCoords.filter(f => f.uf === ufBase);
+      if (!candidatas.length) {
+        return {
+          ...destinoItem,
+          ufBase,
+          erro: "Nenhuma filial encontrada para a UF base calculada."
+        };
+      }
+
+      let melhor = candidatas[0];
+      let distance = null;
+      let duration = null;
+
+      if (candidatas.length === 1) {
+        const resumo = await getORSDirectionsResumo(candidatas[0], destinoGeo);
+        distance = resumo?.distance ?? null;
+        duration = resumo?.duration ?? null;
+      } else {
+        const locations = [[destinoGeo.lon, destinoGeo.lat], ...candidatas.map(f => [f.lon, f.lat])];
+        const matrix = await postORSMatrix(locations);
+        const distances = matrix?.distances?.[0] || [];
+        const durations = matrix?.durations?.[0] || [];
+        let bestIdx = 0;
+        let bestDistance = Infinity;
+        candidatas.forEach((f, idx) => {
+          const dist = Number(distances[idx + 1]);
+          if (Number.isFinite(dist) && dist < bestDistance) {
+            bestDistance = dist;
+            bestIdx = idx;
+          }
+        });
+        melhor = candidatas[bestIdx] || candidatas[0];
+        distance = Number.isFinite(Number(distances[bestIdx + 1])) ? Number(distances[bestIdx + 1]) : null;
+        duration = Number.isFinite(Number(durations[bestIdx + 1])) ? Number(durations[bestIdx + 1]) : null;
+      }
+
+      return {
+        ...destinoItem,
+        ufBase,
+        destinoGeoOrigem: destinoGeo.origem,
+        filial: melhor.nome,
+        filialCidade: melhor.cidade,
+        filialUF: melhor.uf,
+        distancia: distance,
+        duracao: duration,
+        criterioEstado: melhor.uf === destinoItem.uf ? "Mesmo estado do destino" : `UF mais próxima calculada: ${ufBase}`
+      };
+    }
+
+    function renderizarResultadoFiliaisMaisProximas(vocativos, assinatura) {
+      const el = document.getElementById("routeSuggestions");
+      if (!el) return;
+
+      const totalDestinos = vocativos.reduce((acc, v) => acc + (v.resultados?.length || 0), 0);
+      const totalComRota = vocativos.reduce((acc, v) => acc + (v.resultados?.filter(r => !r.erro).length || 0), 0);
+      const mapaFiliais = new Map();
+      const semFilial = [];
+
+      vocativos.forEach(v => {
+        (v.resultados || []).forEach(r => {
+          if (r.erro || !r.filial) {
+            semFilial.push({ vocativo: v.vocativo, ...r });
+            return;
+          }
+          const chave = `${r.filial}||${r.filialUF || ""}`;
+          if (!mapaFiliais.has(chave)) {
+            mapaFiliais.set(chave, {
+              filial: r.filial,
+              filialUF: r.filialUF || "",
+              filialCidade: r.filialCidade || r.filial || "",
+              itens: [],
+              vocativosSet: new Set(),
+              totalNotas: 0,
+              distanciaTotal: 0,
+              distanciasValidas: 0,
+              rotasCapital: 0
+            });
+          }
+          const grupo = mapaFiliais.get(chave);
+          grupo.itens.push({ vocativo: v.vocativo, totalNotasFiltradasVocativo: v.totalNotasFiltradas, ...r });
+          grupo.vocativosSet.add(v.vocativo);
+          grupo.totalNotas += Number(r.totalNotas || 0);
+          if (Number.isFinite(Number(r.distancia))) {
+            grupo.distanciaTotal += Number(r.distancia);
+            grupo.distanciasValidas += 1;
+          }
+          if (r.destinoGeoOrigem === "capital") grupo.rotasCapital += 1;
+        });
+      });
+
+      const gruposFiliais = Array.from(mapaFiliais.values()).sort((a, b) => {
+        if (b.vocativosSet.size !== a.vocativosSet.size) return b.vocativosSet.size - a.vocativosSet.size;
+        if (b.totalNotas !== a.totalNotas) return b.totalNotas - a.totalNotas;
+        return String(a.filial).localeCompare(String(b.filial), 'pt-BR');
+      });
+
+      const cards = gruposFiliais.map(g => {
+        const vocativosLista = Array.from(g.vocativosSet).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR'));
+        const mediaKm = g.distanciasValidas ? (g.distanciaTotal / g.distanciasValidas) : null;
+        const rows = g.itens
+          .slice()
+          .sort((a, b) => {
+            const da = Number.isFinite(Number(a.distancia)) ? Number(a.distancia) : Infinity;
+            const db = Number.isFinite(Number(b.distancia)) ? Number(b.distancia) : Infinity;
+            if (da !== db) return da - db;
+            return String(a.vocativo).localeCompare(String(b.vocativo), 'pt-BR');
+          })
+          .map(r => `
+            <tr>
+              <td>${r.vocativo || ""}</td>
+              <td>${r.destino || ""}</td>
+              <td>${r.uf || ""}</td>
+              <td>${r.totalNotas || 0}</td>
+              <td>${r.criterioEstado || '<span class="routeMuted">-</span>'}</td>
+              <td>${r.distancia != null ? formatKmBR(r.distancia) : '<span class="routeMuted">-</span>'}</td>
+              <td>${r.duracao != null ? formatDurationBR(r.duracao) : '<span class="routeMuted">-</span>'}</td>
+              <td>${r.clientesPreview?.length ? r.clientesPreview.join(", ") : '<span class="routeMuted">-</span>'}</td>
+              <td>${r.notasPreview?.length ? r.notasPreview.join(", ") : '<span class="routeMuted">-</span>'}</td>
+              <td>${r.destinoGeoOrigem === "capital" ? '<span class="routeTag">Aproximação pela capital</span>' : '<span class="routeTag">Rota calculada</span>'}</td>
+            </tr>
+          `).join("");
+
+        return `
+          <div class="routeVocativoCard">
+            <div class="routeVocativoHeader">
+              <div>
+                <p class="routeVocativoTitle">🏭 ${g.filial}${g.filialUF ? ` - ${g.filialUF}` : ""}</p>
+                <p class="routeVocativoMeta">${vocativosLista.length} vocativo(s) • ${g.itens.length} destino(s) vinculado(s) • ${g.totalNotas} nota(s)</p>
+              </div>
+              <span class="routeTag">${mediaKm != null ? `Média ${formatKmBR(mediaKm)}` : `${g.itens.length} rota(s)`}</span>
+            </div>
+            <div style="margin:8px 0 10px 0; display:flex; flex-wrap:wrap; gap:6px;">
+              ${vocativosLista.map(voc => `<span class="routeTag">${voc}</span>`).join("") || '<span class="routeMuted">Sem vocativos</span>'}
+            </div>
+            <div class="routeTableWrap">
+              <table class="routeTable">
+                <thead>
+                  <tr>
+                    <th>Vocativo</th>
+                    <th>Destino</th>
+                    <th>UF</th>
+                    <th>Notas</th>
+                    <th>Critério UF</th>
+                    <th>Distância</th>
+                    <th>Tempo</th>
+                    <th>Clientes</th>
+                    <th>Notas exemplo</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const cardSemFilial = semFilial.length ? `
+        <div class="routeVocativoCard" style="border:1px solid #fecaca; background:#fff7f7;">
+          <div class="routeVocativoHeader">
+            <div>
+              <p class="routeVocativoTitle">⚠️ Destinos sem cálculo concluído</p>
+              <p class="routeVocativoMeta">${semFilial.length} destino(s) com erro ou sem filial sugerida.</p>
+            </div>
+            <span class="routeTag">Revisar</span>
+          </div>
+          <div class="routeTableWrap">
+            <table class="routeTable">
+              <thead>
+                <tr>
+                  <th>Vocativo</th>
+                  <th>Destino</th>
+                  <th>UF</th>
+                  <th>Motivo</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${semFilial.map(r => `
+                  <tr>
+                    <td>${r.vocativo || ""}</td>
+                    <td>${r.destino || ""}</td>
+                    <td>${r.uf || ""}</td>
+                    <td><span style="color:#b91c1c; font-weight:800;">${r.erro || 'Sem filial sugerida'}</span></td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ` : "";
+
+      el.innerHTML = `
+        <div class="routePanel" data-route-signature="${assinatura}">
+          <div class="routePanelHeader">
+            <div>
+              <p class="routePanelTitle">🗺️ Agrupamento por filial mais próxima</p>
+              <p class="routePanelSub">Cálculo sob demanda usando ORS, agrupando todos os vocativos filtrados pela filial sugerida mais próxima.</p>
+            </div>
+            <span class="routeTag">Base atual: ${vocativos.length} vocativo(s)</span>
+          </div>
+          <div class="routePanelGrid">
+            <div class="routeStat"><div class="routeStatLabel">Vocativos analisados</div><div class="routeStatValue">${vocativos.length}</div></div>
+            <div class="routeStat"><div class="routeStatLabel">Destinos distintos</div><div class="routeStatValue">${totalDestinos}</div></div>
+            <div class="routeStat"><div class="routeStatLabel">Filiais sugeridas</div><div class="routeStatValue">${gruposFiliais.length}</div></div>
+            <div class="routeStat"><div class="routeStatLabel">Rotas válidas</div><div class="routeStatValue">${totalComRota}</div></div>
+          </div>
+          ${cards || '<div class="fleetEmptyState">Nenhum destino elegível encontrado nos filtros atuais.</div>'}
+          ${cardSemFilial}
+        </div>
+      `;
+    }
+
+    async function calcularFiliaisMaisProximasVisiveis() {
+      const btn = document.getElementById("btnCalcularFilialMaisProxima");
+      const assinatura = getRouteAssinaturaContexto();
+      const estado = window.__orsRouteState;
+
+      if (estado.lastRenderSignature === assinatura && Array.isArray(estado.lastResults)) {
+        renderizarResultadoFiliaisMaisProximas(estado.lastResults, assinatura);
+        return;
+      }
+
+      lockButton(btn, true, "🗺️ Calculando...");
+      renderRouteSuggestionsPlaceholder('<div class="routePanel"><div class="status">Calculando filiais mais próximas para os vocativos filtrados...</div></div>');
+
+      try {
+        const vocativos = await coletarVocativosFiltradosParaRotas();
+        if (!vocativos.length) {
+          renderRouteSuggestionsPlaceholder('<div class="fleetEmptyState">Nenhum vocativo filtrado com destino/UF disponível para cálculo.</div>');
+          return;
+        }
+
+        const filiaisCoords = await garantirCoordenadasFiliais();
+        const ufsFiliais = [...new Set(filiaisCoords.map(f => f.uf))];
+        const capitaisFiliaisCoords = [];
+        for (const uf of ufsFiliais) {
+          const nomeCapital = CAPITAIS_UF[uf];
+          if (!nomeCapital) continue;
+          const geo = await getGeocodeORS(`${nomeCapital}, Brasil`);
+          if (geo) capitaisFiliaisCoords.push({ uf, ...geo });
+        }
+
+        for (const vocativo of vocativos) {
+          const resultados = [];
+          for (const destino of vocativo.destinos) {
+            const resultado = await calcularMelhorFilialPorDestino(destino, filiaisCoords, capitaisFiliaisCoords);
+            resultados.push({ ...resultado, clientesPreview: destino.clientesPreview, notasPreview: destino.notasPreview });
+          }
+          resultados.sort((a, b) => {
+            const da = Number.isFinite(Number(a.distancia)) ? Number(a.distancia) : Infinity;
+            const db = Number.isFinite(Number(b.distancia)) ? Number(b.distancia) : Infinity;
+            return da - db;
+          });
+          vocativo.resultados = resultados;
+        }
+
+        estado.lastRenderSignature = assinatura;
+        estado.lastResults = vocativos;
+        renderizarResultadoFiliaisMaisProximas(vocativos, assinatura);
+      } catch (err) {
+        console.error("Erro ao calcular filiais mais próximas:", err);
+        renderRouteSuggestionsPlaceholder(`<div class="card" style="margin-top:12px; border:1px solid #fecaca; background:#fef2f2; color:#991b1b;">❌ Erro ao calcular filiais mais próximas: ${String(err && err.message ? err.message : err)}</div>`);
+      } finally {
+        lockButton(btn, false);
+      }
+    }
     async function salvarObservacoes() {
       if (savingAll) return;
       savingAll = true;
@@ -10594,6 +11306,9 @@ return null;
           <button class="btn secondary" id="btnRelatorioExcelSimplificado" type="button">
             🧾 Excel Simplificado
           </button>
+          <button class="btn secondary" disabled id="btnCalcularFilialMaisProxima" type="button">
+            🗺️ Filial mais próxima
+          </button>
           <button class="btn" id="btnSalvarTudo" type="button">
             💾 Salvar tudo
           </button>
@@ -10765,6 +11480,7 @@ return null;
         </div>
       </div>
       <div id="resumoAnalise" style="margin-top:10px; width:100%;"></div>
+      <div id="routeSuggestions" style="margin-top:10px; width:100%;"></div>
       <div id="almoxList" style="margin-top:10px; font-size:13px;"></div>
     </div>
   </div>
@@ -10822,6 +11538,16 @@ return null;
       <div id="fleetResumoContent" style="margin-top:14px;"></div>
     </div>
   </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const btnFilialMaisProxima = document.getElementById("btnCalcularFilialMaisProxima");
+      if (btnFilialMaisProxima && !btnFilialMaisProxima.dataset.listenerAttached) {
+        btnFilialMaisProxima.addEventListener("click", calcularFiliaisMaisProximasVisiveis);
+        btnFilialMaisProxima.dataset.listenerAttached = "true";
+      }
+    });
+  </script>
 
 </body>
 
