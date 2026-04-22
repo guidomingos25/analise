@@ -771,7 +771,34 @@
     }
 
     .filtersRowBottom {
-      grid-template-columns: minmax(150px, 1fr) repeat(5, minmax(165px, 1fr)) minmax(165px, 1fr) 56px;
+      grid-template-columns: minmax(150px, 1fr) repeat(6, minmax(165px, 1fr)) minmax(165px, 1fr) 56px;
+    }
+
+    .filtersToggleCard {
+      min-height: 38px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      display: flex;
+      align-items: center;
+    }
+
+    .filtersToggleCard label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+      user-select: none;
+    }
+
+    .filtersToggleCard input[type="checkbox"] {
+      margin: 0;
+      accent-color: #ea580c;
     }
 
     .filtersRow>* {
@@ -2400,239 +2427,107 @@
 
 
     const JANELAS_ALMOX = {
-      "NEX-JUIZFORA-MG": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
-      "VALE-MARIANA-MG": { carregamento: ['ter'], entrega: ['qui'] },
-      "CARIACICA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "SAL-PARAUAPE-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "084-VITORIA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "0BC-B-COCAIS-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "1AVBS-GRAJAU-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "SUZ-INOCENCIAMS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "1SUZ-TLAGOAS-MS": { carregamento: ['qui', 'sáb'], entrega: ['dom', 'qua'] },
-      "2AVBS-GRAJAU-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "2SUZ-ARACRUZ-ES": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
-      "2SUZ-IMPERAT-MA": { carregamento: ['sex', 'ter'], entrega: ['qui', 'seg'] },
-      "2SUZ-RIBAS-MS": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
-      "SUZ-RIBAS-MS": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
-      "3B-VALE-VITORIA-ES": { carregamento: ['sex', 'sáb'], entrega: ['qua', 'seg'] },
-      "ACO GRAVATA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "ACO-ACAILAND-MA": { carregamento: ['sex', 'ter'], entrega: ['qui', 'seg'] },
-      "ACO-BACORDA-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "ACO-BRASILDM-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "ACO-GRAJAU-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "ACO-PETROLIN-PE": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "ACO-URBANO SANTOSMA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "ACO-VALENCADOPIAUI-PI": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "ALB-BARCARENA-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "ALU-ANANINDEUA-PA": { carregamento: ['qua', 'qui', 'seg', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "ALU-BARCARE-PA": { carregamento: ['qua', 'qui', 'seg', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "ALU-BARCARENA-PA": { carregamento: ['qua', 'qui', 'seg', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "ANG-BARALTO-GO": { carregamento: ['qui', 'sex', 'sáb'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "ANGLO-CMD-MG": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
-      "ANGLO-NIQUE-GO": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "ANGLO-SAG-MG": { carregamento: ['sáb'], entrega: ['ter'] },
-      "ANGLO-SJB-RJ": { carregamento: ['seg'], entrega: ['qua'] },
-      "AVBSI-ACAILA-MA": { carregamento: ['sex', 'ter'], entrega: ['qui', 'seg'] },
-      "AVBSI-BARRA-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "AVBSI-BURITI-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "AVBSI-ELES-PI": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "AVBSI-SAOFRA-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "AVBSI-URBANO-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "BIO-COLOMBIA-SP": { carregamento: ['qua', 'seg', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
-      "BIO-LA-PRATA-MG": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'seg'] },
-      "BIO-LAGOADAPRATA-MG": { carregamento: ['seg', 'sex'], entrega: ['qui', 'seg'] },
-      "BIO-LEME-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "BIO-RIOBRI-MS-1": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "BIO-SERTAOZI-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "BRA-01-TRIUN-RS": { carregamento: ['qui', 'seg', 'sex'], entrega: ['seg', 'sex', 'ter'] },
-      "BRA-07-TRIUN-RS": { carregamento: ['qui', 'seg', 'sex'], entrega: ['seg', 'sex', 'ter'] },
-      "BRA-07-TRIUNFO-RS": { carregamento: ['qui', 'seg', 'sex'], entrega: ['seg', 'sex', 'ter'] },
-      "BRA-CAMACA-BA01": { carregamento: ['qua', 'sex', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
-      "BRA-CAMACA-BA03": { carregamento: ['qua', 'sex', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
-      "BRA-CAMACA-BA04": { carregamento: ['qua', 'sex', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
-      "BRA-CAMACA-BA07": { carregamento: ['qua', 'sex', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
-      "BRA-CAMACA-BA11": { carregamento: ['qua', 'sex', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
-      "BRA-CANDEI-BA": { carregamento: ['qua', 'qui', 'sex', 'sáb'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "BRA-CUBATA-SP": { carregamento: ['seg', 'qua'], entrega: ['qui', 'ter'] },
-      "BRA-DCAXIRJ": { carregamento: ['qua', 'seg', 'sáb', 'ter', 'qui', 'sex'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "BRA-MACEIO-AL02": { carregamento: ['qui', 'ter'], entrega: ['qua', 'seg'] },
-      "BRA-MAUA-SP23": { carregamento: ['seg', 'qua'], entrega: ['qui', 'ter'] },
-      "BRA-MAUA-SP25": { carregamento: ['sab', 'ter', 'qui'], entrega: ['qua', 'sex', 'seg'] },
-      "BRA-MDEODO-AL03": { carregamento: ['qua', 'sex'], entrega: ['qui', 'ter'] },
-      "BRA-PAULIN-SP08": { carregamento: ['seg', 'qua'], entrega: ['qui', 'ter'] },
-      "BRA-PAULINIA-SP": { carregamento: ['seg', 'qua'], entrega: ['qui', 'ter'] },
-      "BRA-S-ANDR-SP20": { carregamento: ['seg', 'qua'], entrega: ['qui', 'ter'] },
-      "BRA-S-ANDR-SP22": { carregamento: ['qui', 'ter', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
-      "BRA-TRIUNFO-RS": { carregamento: ['qui', 'seg', 'sex'], entrega: ['seg', 'sex', 'ter'] },
-      "BRS-MACEIOAL": { carregamento: ['qui', 'ter'], entrega: ['qua', 'seg'] },
-      "CSN-ALHANDRA-PB": { carregamento: ['sex'], entrega: ['qui', 'seg'] },
-      "CSN-ARCOS-MG": { carregamento: ['seg'], entrega: ['qua'] },
-      "CSN-BARROSO-MG": { carregamento: ['sex'], entrega: ['qua', 'seg', 'ter'] },
-      "CSN-BARUERI-SP": { carregamento: ['seg'], entrega: ['qui', 'ter'] },
-      "CSN-CAAPORA-PB": { carregamento: ['sex'], entrega: ['qui', 'seg'] },
-      "CSN-CANDEIAS-BA": { carregamento: ['sáb'], entrega: ['qui', 'seg'] },
-      "CSN-CANTAGAL-RJ": { carregamento: ['sex'], entrega: ['qua', 'seg', 'ter'] },
-      "CSN-COCAL-GO-GO": { carregamento: ['sex'], entrega: ['qua', 'seg', 'ter'] },
-      "CSN-Congonhas-MG": { carregamento: ['sex'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "CSN-GUARUJA-SP": { carregamento: ['sáb'], entrega: ['qui', 'ter'] },
-      "CSN-MAIRIPOR-SP": { carregamento: ['sáb'], entrega: ['qui', 'ter'] },
-      "CSN-MCLAROS-MG": { carregamento: ['sex'], entrega: ['qua', 'seg', 'sex'] },
-      "CSN-S-ANDRE-SP": { carregamento: ['sáb'], entrega: ['qui', 'ter'] },
-      "CSN-OURICURI-PE": { carregamento: ['sex'], entrega: ['qui', 'seg'] },
-      "CSN-PEDROLEO-MG": { carregamento: ['sex'], entrega: ['qua', 'seg', 'ter'] },
-      "CSN-PLEOPOLD-MG": { carregamento: ['sex'], entrega: ['qua', 'seg', 'ter'] },
-      "CSN-RIODEJANEIRO-RJ": { carregamento: ['sáb'], entrega: ['qua', 'seg', 'ter'] },
-      "CSN-RJANEIRO-RJ": { carregamento: ['sáb'], entrega: ['qua', 'seg', 'ter'] },
-      "CSN-SEERA-ES": { carregamento: ['sex'], entrega: ['qua', 'seg', 'ter'] },
-      "CSN-SOROCABA-SP": { carregamento: ['sáb'], entrega: ['qui', 'ter'] },
-      "CSN-STOANDRE-SP": { carregamento: ['sáb'], entrega: ['qui', 'ter'] },
-      "CSN-SVICENTE-SP": { carregamento: ['seg'], entrega: ['ter'] },
-      "CSN1-VOLTRED-RJ": { carregamento: ['sáb'], entrega: ['seg', 'sex'] },
-      "ELI-ALHANDRA-PB": { carregamento: ['sex'], entrega: ['qua', 'ter', 'seg'] },
-      "FER-ALAGOINHAS-BA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "FER-ALAGOINHASBA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "FER-ARAGUARIMG": { carregamento: ['sáb'], entrega: ['ter'] },
-      "FER-BH-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "FER-CARIACIC-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "FER-DIVINOPOLIS-MG": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'seg', 'ter'] },
-      "FER-IMPERATRIZ-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "FER-IMPERATRIZMA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "FER-IPATINGAMG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "FER-PAULINIA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg'] },
-      "FER-PAULINIASP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg'] },
-      "FER-RPRETO-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "FER-SAO LUIS-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "FERR-PAULINIA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg'] },
-      "FERROV-GUARA-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "JOAO-NEIVA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "KIN-CACHALTA-GO": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "KIN-CACU-GO": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "KIN-PARACATU-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "MIN-OURILANDIADONORTE-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "MIN-PARAGOMI-PA": { carregamento: ['qui', 'seg'], entrega: ['qui', 'seg'] },
-      "MIN-PARAGOMINAS-PA": { carregamento: ['qui', 'seg'], entrega: ['qui', 'seg'] },
-      "MRN BELEM PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "MRN-SANTAREM-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "NL-SANTAREM-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "NOU-INOCENCIA-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "NOU-RIBASDORIOPARDO-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "NOU-TRES LAGOASMS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "NOURY JUNDI SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "NOURY-EUNAP-BA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "NOURY-IMPER-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "NOURY-ITUP-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "NOURY-JACAR-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "NOURY-T LAG1-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "NOURYON-RJ-RJ": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "NVA-LIMA-OMT-MG": { carregamento: ['sex', 'sáb', 'ter'], entrega: ['qua', 'seg', 'sex'] },
-      "NVA-LIMA-OVG-MG": { carregamento: ['seg', 'sex', 'sáb'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "OLE-CAMACARI-BA": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'ter'] },
-      "OURO-PRETO-B1MG": { carregamento: ['sex', 'sáb'], entrega: ['qua', 'seg', 'ter'] },
-      "OXI SUZANO SP": { carregamento: ['seg', 'sáb'], entrega: ['qua', 'seg'] },
-      "OXI-CAMACARI-BA": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'ter'] },
-      "OXI-CAMACARIBA": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'ter'] },
-      "OXI-MAUA-SP": { carregamento: ['sáb'], entrega: ['seg'] },
-      "OXI-TRIUNFORS": { carregamento: ['sex'], entrega: ['ter'] },
-      "OXITE-TRIUNF-RS": { carregamento: ['sex'], entrega: ['ter'] },
-      "OXITEN-TREME-SP": { carregamento: ['qui', 'ter'], entrega: ['qua', 'sex'] },
+      "ANGLO-S.A. DO GRAMA-MG": { carregamento: ['sáb'], entrega: ['ter'] },
+      "ANGLO-SAO JOAO D-RJ": { carregamento: ['seg'], entrega: ['qua'] },
+      "AVB-ACAILANDIA-MA": { carregamento: ['seg', 'qua', 'qui'], entrega: ['seg', 'qua', 'qui'] },
+      "BASF-GUARATINGU-SP": { carregamento: ['qua'], entrega: ['qui'] },
+      "BRASKEM-CUBATAO-SP": { carregamento: ['seg', 'qua'], entrega: ['ter', 'qui'] },
+      "BRASKEM-DUQUE DE C-RJ": { carregamento: ['seg', 'qua'], entrega: ['qua', 'sex'] },
+      "BRASKEM-MAUA-23-SP": { carregamento: ['seg', 'qua'], entrega: ['ter', 'qui'] },
+      "BRASKEM-MAUA-25-SP": { carregamento: ['ter', 'qui'], entrega: ['qua', 'sex'] },
+      "BRASKEM-PAULINIA-08-SP": { carregamento: ['qua', 'sáb'], entrega: ['seg', 'qui'] },
+      "BRASKEM-SANTO ANDR-20-SP": { carregamento: ['seg', 'qua'], entrega: ['ter', 'qui'] },
+      "BRASKEM-SANTO ANDR-22-SP": { carregamento: ['ter', 'qui', 'sáb'], entrega: ['seg', 'qua', 'sex'] },
+      "BRASKEM-TRIUNFO-01-RS": { carregamento: ['qua', 'sáb'], entrega: ['seg', 'sex'] },
+      "BRASKEM-TRIUNFO-04-RS": { carregamento: ['qua', 'sáb'], entrega: ['seg', 'sex'] },
+      "BRASKEM-TRIUNFO-07-RS": { carregamento: ['qua', 'sáb'], entrega: ['seg', 'sex'] },
+      "CAS-CURRAISNOVOS-RN": { carregamento: ['ter', 'qui'], entrega: ['ter'] },
+      "CSN -ARCOS-MG": { carregamento: ['seg'], entrega: ['qua', 'qui'] },
+      "CSN -BARRA MANS-RJ": { carregamento: ['sex'], entrega: ['seg'] },
+      "CSN -BARROSO-MG": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua'] },
+      "CSN -BARUERI-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
+      "CSN -CAAPORA-PB": { carregamento: ['sex'], entrega: ['qui', 'sex'] },
+      "CSN -CAJAMAR-SP": { carregamento: ['seg'], entrega: ['ter', 'qua'] },
+      "CSN -CANTAGALO-RJ": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua'] },
+      "CSN -COCALZINHO-GO": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua'] },
+      "CSN -CONGONHAS-MG": { carregamento: ['sex'], entrega: ['ter', 'qui'] },
+      "CSN -GUARUJA-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
+      "CSN -MAIRIPORA-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
+      "CSN -MONTES CLA-MG": { carregamento: ['sex'], entrega: ['seg', 'qua', 'sex'] },
+      "CSN -OURICURI-PE": { carregamento: ['sex'], entrega: ['seg', 'qui'] },
+      "CSN -PEDRO LEOP-MG": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua'] },
+      "CSN -PITIMBU-PB": { carregamento: ['sex'], entrega: ['seg', 'qua'] },
+      "CSN -RIO DE JAN-RJ": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua'] },
+      "CSN -SANTO ANDR-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
+      "CSN -SAO VICENT-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
+      "CSN -SERRA-ES": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua'] },
+      "CSN -SOROCABA-01-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
+      "CSN -SOROCABA-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
+      "CSN -VOLTA REDO-01-RJ": { carregamento: ['sex'], entrega: ['seg', 'sex'] },
+      "CSN-ALHANDRA-PB": { carregamento: ['sex'], entrega: ['seg', 'qua'] },
+      "CSN-CANDEIAS-BA": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua', 'qui'] },
+      "CSN-S.J.DOS CAMPOS-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
+      "MINERACAO-PARAGOMINA-PA": { carregamento: ['seg', 'qui'], entrega: ['seg', 'qui'] },
+      "NEXA-JUIZ DE FORA-MG": { carregamento: ['ter', 'sáb'], entrega: ['ter', 'qui'] },
+      "NOVELIS-PINDAMONHA-SP": { carregamento: ['seg', 'ter', 'qua', 'qui', 'sáb'], entrega: ['seg', 'ter', 'qua', 'qui', 'sex'] },
+      "OWENS-SAO PAULO-SP": { carregamento: ['qua', 'sáb'], entrega: ['seg', 'qui'] },
       "OXITENO-MAUA-SP": { carregamento: ['sáb'], entrega: ['seg'] },
-      "RAI GUARIBA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI JAU SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-02-CARAP-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "RAI-ANDRADIN-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-ARACATUB-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-ARARAQUA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-B-BONITA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-BE-ABREU-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-BOCAINA-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "RAI-BROTAS-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-BTABREU-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-CARAPO-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "RAI-ELIAS-FA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-GUARIBA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-IBATE-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-IGARAPAVASP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-IPAUSSU-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "RAI-JATAI-GO": { carregamento: ['seg', 'sex', 'sáb'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-MARACAI-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-MIRANDO-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-MORRO AGUDOSP": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'ter'] },
-      "RAI-PAR-PAUL-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-PIRACICA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-PIRACICABA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-RAFARD-SP": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "RAI-RIOBRILHANTE-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "RAI-TARUMA-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI-VALPARAI-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "RAI01-CARAPO-MS": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "RAIZE-ARARAQ-SP": { carregamento: ['seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'ter'] },
-      "S-GONCALO AMARA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "SAL-CANAA DOS CARAJASPA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "SAL-MARABAPA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "SUZ- BELEM-PA-2": { carregamento: ['qua', 'seg', 'sex'], entrega: ['qua', 'seg', 'sex'] },
-      "SUZ- LIMEIRA-SP": { carregamento: ['qua', 'seg', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
-      "SUZ-ACAILAN-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "SUZ-ARACRUZ-ES": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
-      "SUZ-C-ITAPEM-ES": { carregamento: ['sex', 'sáb'], entrega: ['qua', 'seg'] },
-      "SUZ-IMPERATRIZ-MA": { carregamento: ['sex', 'ter'], entrega: ['qui', 'seg'] },
-      "SUZ-IMPERATRIZMA": { carregamento: ['sex', 'ter'], entrega: ['qui', 'seg'] },
-      "SUZ-JACAREI-SP": { carregamento: ['seg', 'qua', 'sab'], entrega: ['ter', 'qui', 'dom'] },
-      "SUZ-LIMEIRA-SP": { carregamento: ['qua', 'seg', 'sáb'], entrega: ['qua', 'seg', 'sex'] },
-      "SUZ-MARACAN-CE": { carregamento: ['qua'], entrega: ['qua'] },
-      "SUZ-MOGICRUZ-SP": { carregamento: ['seg'], entrega: ['ter'] },
-      "SUZ-MUCURI-BA": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'seg'] },
-      "SUZ-RIBRIOPA-MS": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
-      "SUZ-SAOPAULO-SP": { carregamento: ['qua', 'seg', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "SUZ-SMARCAN-SP": { carregamento: ['seg'], entrega: ['qua'] },
-      "SUZ-SUZANO-SP": { carregamento: ['qui', 'sáb', 'ter'], entrega: ['qui', 'sáb', 'ter'] },
-      "SUZ-T FREITAS": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'seg'] },
-      "SUZ-TAUBATE-SP": { carregamento: ['sáb'], entrega: ['seg'] },
-      "SUZ-TFREITAS-BA": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'seg'] },
-      "SUZ-TLAGOAS-MS": { carregamento: ['sáb', 'ter'], entrega: ['sex', 'ter'] },
-      "SUZ-VIVEIRO-BA": { carregamento: ['qui', 'sáb'], entrega: ['qui', 'seg'] },
-      "SUZAN-BELEM-PA": { carregamento: ['qua', 'seg', 'sex'], entrega: ['qua', 'seg', 'sex'] },
-      "VAL-BRUMADI-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VAL-CANAADOSCARAJAS-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VAL-MANGARATIBA-RJ": { carregamento: ['ter'], entrega: ['qui'] },
-      "VAL-MANGARATIBARJ": { carregamento: ['ter'], entrega: ['qui'] },
-      "VAL-COLATINA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VAL-MARABA-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VAL-PARAUAPEBAS-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VAL-RIO-DE-J-RJ": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VAL-SERRAES": { carregamento: ['sex', 'sáb', 'ter'], entrega: ['qua', 'seg', 'sex'] },
-      "VALE-ACAILANDIA-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VALE-CAPANEMA-MG": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
-      "VALE-CATAS-MG": { carregamento: ['sáb', 'ter'], entrega: ['qua', 'sex'] },
-      "VALE-CONGO-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VALE-CURIONOPOLIS-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VALE-GOVALAD-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VALE-ITABIRA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VALE-ITABIRITO-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VALE-ITAGUAI-RJ": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VALE-MARIANA-G": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VALE-NOVAERA-MG": { carregamento: ['seg', 'sáb'], entrega: ['qui', 'ter'] },
-      "VALE-PARAUAP-PA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VALE-RIO-PIRACICABA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VALE-SANTA-LUZIA-MG": { carregamento: ['ter'], entrega: ['qui'] },
-      "VALE-SAO-LUIS-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VALE-SGONCA-MG": { carregamento: ['ter'], entrega: ['qui'] },
-      "VALE-TIMBOPEBA-MG": { carregamento: ['sex'], entrega: ['seg'] },
-      "VITORIA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VLI B-COQUE -SE": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VLI-CARIACIC-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VLI-DIVINOPOLIS-MG": { carregamento: ['sáb', 'ter'], entrega: ['qui', 'seg', 'ter'] },
-      "VLI-IBIA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VLI-LAVRAS-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VLI-OURO-PRE-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VLI-PIRAPO-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VLI-S.G.AMAR-CE": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VLI-SANTOS-SP": { carregamento: ['seg', 'sáb'], entrega: ['qua', 'seg'] },
-      "VLI-SAOLUIS-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VLI-SERRA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VLI-STALUZIA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VLI-UBERABA-MG": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VLI-VITORIA-ES": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
-      "VN-PINDARE-MA": { carregamento: ['qua', 'qui', 'seg', 'sex', 'sáb', 'ter'], entrega: ['qua', 'qui', 'seg', 'sex', 'ter'] },
+      "OXITENO-SUZANO-SP": { carregamento: ['ter', 'sáb'], entrega: ['seg', 'qua'] },
+      "OXITENO-TREMEMBE-SP": { carregamento: ['ter', 'qui'], entrega: ['qua', 'sex'] },
+      "OXITENO-TRIUNFO-RS": { carregamento: ['seg', 'sex'], entrega: ['ter', 'qui'] },
+      "PRADA RESENDE -RJ": { carregamento: ['seg'], entrega: ['qua'] },
+      "PRADA-SAO PAULO-SP": { carregamento: ['ter'], entrega: ['qua'] },
+      "PRADA-UBERLANDIA-MG": { carregamento: ['seg'], entrega: ['qua'] },
+      "RAIZEN-ANDRADINA-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-ARACATUBA-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-ARARAQUARA-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-BARRA BONI-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-BARUERI-SP": { carregamento: ['ter', 'qui'], entrega: ['qua', 'sex'] },
+      "RAIZEN-BENTO DE A-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-BETIM-MG": { carregamento: ['qua', 'sex'], entrega: ['seg', 'sex'] },
+      "RAIZEN-BOCAINA-SP": { carregamento: ['qua', 'sex'], entrega: ['seg', 'sex'] },
+      "RAIZEN-BROTAS-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-CAARAPO-AGRIC-MS": { carregamento: ['seg', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-CAARAPO-INDUS-MS": { carregamento: ['seg', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-ELIAS FAUS-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-GUARIBA-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-IGARAPAVA-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-IPAUSSU-SP": { carregamento: ['qua', 'sáb'], entrega: ['ter', 'sex'] },
+      "RAIZEN-JATAI-GO": { carregamento: ['seg', 'ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-JAU-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-LAGOA DA P-MG": { carregamento: ['ter', 'sex'], entrega: ['seg', 'sex'] },
+      "RAIZEN-LEME-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-MARACAI-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-MIRANDOPOL-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-MORRO AGUD-INVERN-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-MORRO AGUD-SUCURI-SP": { carregamento: ['ter', 'sáb'], entrega: ['ter', 'qui'] },
+      "RAIZEN-PARAGUACU -SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-PIRACICABA-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-RAFARD-SP": { carregamento: ['qua', 'sáb'], entrega: ['ter', 'sex'] },
+      "RAIZEN-SAO PAULO-SP": { carregamento: ['qua', 'sáb'], entrega: ['seg', 'qui'] },
+      "RAIZEN-TARUMA-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "RAIZEN-VALPARAISO-SP": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "SUZANO-TRES LAGOA-FLORES-MS": { carregamento: ['ter', 'sex'], entrega: ['ter', 'sex'] },
+      "SUZANO-ARACRUZ-FABRICA-ES": { carregamento: ['seg', 'sex'], entrega: ['ter', 'qui'] },
+      "SUZANO-ARACRUZ-FLOREST-ES": { carregamento: ['seg', 'sex'], entrega: ['ter', 'qui'] },
+      "SUZANO-CACHOEIRO -ES": { carregamento: ['seg', 'sex'], entrega: ['seg', 'qua'] },
+      "SUZANO-IMPERATRIZ-FABR-MA": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "SUZANO-IMPERATRIZ-FLOR-MA": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
+      "SUZANO-JACAREI-SP": { carregamento: ['ter', 'qui', 'sáb'], entrega: ['dom', 'ter', 'qui'] },
+      "SUZANO-LIMEIRA-SP": { carregamento: ['ter', 'qui', 'sáb'], entrega: ['seg', 'qua', 'sex'] },
+      "SUZANO-MOGI DAS C-SP": { carregamento: ['seg', 'qua'], entrega: ['ter', 'qui'] },
+      "SUZANO-MUCURI-CMM-BA": { carregamento: ['seg', 'qui'], entrega: ['seg', 'qui'] },
+      "SUZANO-MUCURI-FABRICA-BA": { carregamento: ['seg', 'qui'], entrega: ['seg', 'qui'] },
+      "SUZANO-MUCURI-VIVEIRO-BA": { carregamento: ['seg', 'qui'], entrega: ['ter', 'sex'] },
+      "SUZANO-RIBAS DO R-FABR-MS": { carregamento: ['seg', 'sex'], entrega: ['ter', 'qui'] },
+      "SUZANO-RIBAS DO R-FLOR-MS": { carregamento: ['seg', 'sex'], entrega: ['ter', 'qui'] },
+      "SUZANO-SAO MIGUEL-SP": { carregamento: ['ter'], entrega: ['qua'] },
+      "SUZANO-SUZANO-CDR-SP": { carregamento: ['ter', 'qui', 'sáb'], entrega: ['seg', 'qua', 'sex'] },
+      "SUZANO-SUZANO-SP": { carregamento: ['ter', 'qui', 'sáb'], entrega: ['ter', 'qui', 'sáb'] },
+      "SUZANO-TEIXEIRA D-BA": { carregamento: ['seg', 'qui'], entrega: ['ter', 'sex'] },
+      "SUZANO-TRES LAGOA-FABRIC-MS": { carregamento: ['seg', 'qui'], entrega: ['dom', 'qua'] },
+      "VLI-PAULINIA-SP": { carregamento: ['ter', 'qua', 'sex'], entrega: ['seg', 'qua', 'qui'] },
+      "VLI-SANTOS-SP": { carregamento: ['ter', 'sáb'], entrega: ['seg', 'qua'] },
     };
 
     const fileData = document.getElementById("fileData");
@@ -5348,6 +5243,18 @@
       return janelaArray.map(d => d.toLowerCase()).includes(dia);
     }
 
+
+    function getAmanhaLocal() {
+      const amanha = new Date();
+      amanha.setHours(0, 0, 0, 0);
+      amanha.setDate(amanha.getDate() + 1);
+      return amanha;
+    }
+
+    function isJanelaCarregamentoAmanha(janela) {
+      return !!(janela?.carregamento?.length && dataCoincideComJanela(getAmanhaLocal(), janela.carregamento));
+    }
+
     function calcularProximaDataJanela(dataBase, diasJanela) {
 
       if (!diasJanela || !diasJanela.length) return null;
@@ -6441,6 +6348,7 @@ return null;
       const termoUFDestino = normalizar(document.getElementById("searchUFDestinoPopup")?.value || "");
       const termoNota = normalizar(document.getElementById("searchNotaPopup")?.value || "");
       const termoOEF = normalizar(document.getElementById("searchOefPopup")?.value || "");
+      const filtroJanelaAmanhaAtivo = !!document.getElementById("filterJanelaAmanhaPopup")?.checked;
 
       const cacheAnalise = await prepararCacheAnaliseProgramacao();
       const almoxTotalPVD = cacheAnalise.almoxTotalPVD;
@@ -6702,12 +6610,19 @@ return null;
           : "Não cadastrado";
 
 
+        const alertaJanelaAmanha = isJanelaCarregamentoAmanha(janela);
+
+        if (filtroJanelaAmanhaAtivo && !alertaJanelaAmanha) {
+          return;
+        }
+
         const janelaHTML = `
       <div style="
         padding:12px;
         border-radius:10px;
-        background:#ffffff;
-        border:1px solid #cbd5e1;
+        background:${alertaJanelaAmanha ? 'linear-gradient(180deg, #fff7ed 0%, #ffffff 100%)' : '#ffffff'};
+        border:1px solid ${alertaJanelaAmanha ? '#fb923c' : '#cbd5e1'};
+        box-shadow:${alertaJanelaAmanha ? '0 10px 24px rgba(249, 115, 22, 0.14)' : 'none'};
         font-size:12px;
         height:100%;                
         display:flex;
@@ -6715,13 +6630,28 @@ return null;
         justify-content:space-between;  
       ">
 
-        <div style="font-weight:900; margin-bottom:8px;">
-          🗓️ Janelas
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
+          <div style="font-weight:900;">
+            🗓️ Janelas
+          </div>
+          ${alertaJanelaAmanha ? `
+            <div style="
+              padding:4px 8px;
+              border-radius:999px;
+              background:#ffedd5;
+              border:1px solid #fdba74;
+              color:#c2410c;
+              font-size:10px;
+              font-weight:900;
+              letter-spacing:.02em;
+              white-space:nowrap;
+            ">⚠️ Carrega amanhã</div>
+          ` : ''}
         </div>
 
         <div>
           <b>Carregamento: </b>
-          <span style="color:#166534; font-weight:800;">
+          <span style="color:${alertaJanelaAmanha ? '#c2410c' : '#166534'}; font-weight:800;">
             ${janelaCarreg}
           </span>
         </div>
@@ -7930,7 +7860,8 @@ return null;
           destino: document.getElementById("searchDestinoPopup")?.value || "",
           ufDestino: document.getElementById("searchUFDestinoPopup")?.value || "",
           nota: document.getElementById("searchNotaPopup")?.value || "",
-          numeroOEF: document.getElementById("searchOefPopup")?.value || ""
+          numeroOEF: document.getElementById("searchOefPopup")?.value || "",
+          janelaCarregamentoAmanha: document.getElementById("filterJanelaAmanhaPopup")?.checked ? "Sim" : "Não"
         },
         stats: { ...stats },
         vocativos: reportVocativosOrdenado,
@@ -7962,6 +7893,10 @@ return null;
       const filtroPopup = document.getElementById("filterVeiculoPopup");
       if (filtroPopup) {
         filtroPopup.onchange = () => agendarListarAlmoxPendentes();
+      }
+      const filtroJanelaAmanhaPopup = document.getElementById("filterJanelaAmanhaPopup");
+      if (filtroJanelaAmanhaPopup) {
+        filtroJanelaAmanhaPopup.onchange = () => agendarListarAlmoxPendentes();
       }
       bindMultiFilterEvents();
       } catch (err) {
@@ -11531,6 +11466,12 @@ return null;
           <select id="filtroObservacaoPopup" multiple="" size="8" style="display:none;">
             <option value="all">📝 Observação (Todos)</option>
           </select>
+        </div>
+        <div class="filtersToggleCard">
+          <label for="filterJanelaAmanhaPopup">
+            <input id="filterJanelaAmanhaPopup" type="checkbox" />
+            <span>⚠️ Janelas de amanhã</span>
+          </label>
         </div>
         <button class="btn secondary" id="btnDateFilterPopup" title="Selecionar datas da análise" type="button">
           📅
