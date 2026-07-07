@@ -2325,6 +2325,210 @@
       background: #ffffff;
     }
 
+
+    .painelProgCard {
+      cursor: pointer;
+      position: relative;
+      transition: transform .08s ease, box-shadow .12s ease, outline-color .12s ease;
+    }
+
+    .painelProgCard:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(2, 6, 23, 0.14);
+    }
+
+    .painelProgCard.isSelected {
+      outline: 3px solid #2563eb;
+      outline-offset: 2px;
+    }
+
+    .painelProgCard.isSelected::after {
+      content: "Selecionado";
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #1e3a8a;
+      border: 1px solid #2563eb;
+      font-size: 9px;
+      font-weight: 1000;
+      pointer-events: none;
+    }
+
+    .painelProgPopupResumo {
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      width: min(360px, calc(100vw - 24px));
+      max-height: min(62vh, 500px);
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+      z-index: 250;
+      background: #ffffff;
+      border: 1px solid rgba(15, 23, 42, 0.14);
+      border-radius: 14px;
+      box-shadow: 0 16px 34px rgba(2, 6, 23, 0.20);
+      color: #0f172a;
+    }
+
+    .painelProgPopupResumo.open {
+      display: flex;
+    }
+
+    .painelProgPopupHeader {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #eff6ff;
+    }
+
+    .painelProgPopupTitle {
+      font-size: 11px;
+      font-weight: 1000;
+      color: #111827;
+      text-transform: uppercase;
+      letter-spacing: .035em;
+      line-height: 1.15;
+    }
+
+    .painelProgPopupSub {
+      margin-top: 2px;
+      font-size: 9px;
+      font-weight: 700;
+      color: #475569;
+      line-height: 1.15;
+    }
+
+    .painelProgPopupClose {
+      width: 22px;
+      height: 22px;
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #0f172a;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      font-weight: 900;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .painelProgPopupBody {
+      padding: 8px 10px 10px;
+      overflow: auto;
+    }
+
+    .painelProgPopupPeso {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 7px 8px;
+      font-size: 10px;
+      font-weight: 900;
+      color: #111827;
+      margin-bottom: 7px;
+    }
+
+    .painelProgPopupAlert {
+      background: #fff7ed;
+      border: 1px solid #fb923c;
+      color: #9a3412;
+      border-radius: 10px;
+      padding: 7px 8px;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 7px;
+    }
+
+    .painelProgPopupSection {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #ffffff;
+      margin-top: 7px;
+    }
+
+    .painelProgPopupSectionHead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 9px;
+      font-weight: 1000;
+      color: #111827;
+      text-transform: uppercase;
+      letter-spacing: .035em;
+    }
+
+    .painelProgPopupTextBox {
+      padding: 7px 8px;
+      font-size: 10px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.25;
+      word-break: break-word;
+      white-space: pre-wrap;
+      background: #ffffff;
+      max-height: 86px;
+      overflow: auto;
+    }
+
+    .painelProgPopupCopyBtn {
+      border: 1px solid #93c5fd;
+      background: #dbeafe;
+      color: #1e3a8a;
+      border-radius: 7px;
+      padding: 3px 6px;
+      font-size: 8.5px;
+      font-weight: 1000;
+      cursor: pointer;
+      white-space: nowrap;
+      line-height: 1.15;
+    }
+
+    .painelProgPopupCopyBtn:hover {
+      background: #bfdbfe;
+    }
+
+    .painelProgPopupItemList {
+      max-height: 135px;
+      overflow: auto;
+      background: #ffffff;
+    }
+
+    .painelProgPopupItem {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border-top: 1px solid #f1f5f9;
+      font-size: 10px;
+      color: #0f172a;
+      line-height: 1.15;
+    }
+
+    .painelProgPopupItem:first-child {
+      border-top: none;
+    }
+
+    .painelProgPopupItem span {
+      overflow-wrap: anywhere;
+      font-weight: 750;
+    }
+
+
     .painelProgCard.isProgramado {
       background: linear-gradient(180deg, #dcfce7 0%, #ffffff 42%);
       border-color: #22c55e;
@@ -2719,6 +2923,10 @@
     let painelProgStatusSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.status.map(o => o.value));
     let painelProgEntradaSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.entrada.map(o => o.value));
     let painelProgCriticidadeSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.criticidade.map(o => o.value));
+    let painelProgDadosAtuais = [];
+    let painelProgDadosAtuaisPorKey = new Map();
+    let painelProgCardsSelecionados = new Set();
+    window.__painelProgCopyStore = [];
 
 
     window.currentAnaliseReport = {
@@ -8773,6 +8981,7 @@ return null;
     }
 
     function voltarPainelProgramacaoPrincipal() {
+      fecharPopupPainelProgramacao();
       const paginaPainelProgramacao = document.getElementById("paginaPainelProgramacao");
       if (paginaPainelProgramacao) paginaPainelProgramacao.style.display = "none";
       document.getElementById("paginaPrincipal").style.display = "block";
@@ -9077,14 +9286,30 @@ return null;
             clienteNome,
             clienteNorm,
             totalRegistros: 0,
-            pesoTotal: 0
+            pesoTotal: 0,
+            bps: new Set(),
+            alertasMercadoriaCount: 0,
+            alertasPesoCount: 0
           };
         }
 
-        mapa[almox][clienteNorm].totalRegistros++;
+        const totalCliente = mapa[almox][clienteNorm];
+        totalCliente.totalRegistros++;
 
         const peso = parsePesoPVD(r["Peso"]);
-        if (peso) mapa[almox][clienteNorm].pesoTotal += peso;
+        if (peso) totalCliente.pesoTotal += peso;
+
+        const bpDestino = String(getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino"]) || "").trim();
+        if (bpDestino) totalCliente.bps.add(bpDestino);
+
+        const mercadoriaNorm = normalizar(getFieldValue(r, ["Mercadoria", "MERCADORIA"]) || "");
+        if (mercadoriaNorm.includes("TUBO") || mercadoriaNorm.includes("CHAPA")) {
+          totalCliente.alertasMercadoriaCount++;
+        }
+
+        if (peso > 2500) {
+          totalCliente.alertasPesoCount++;
+        }
       });
       return mapa;
     }
@@ -9102,6 +9327,9 @@ return null;
       const clientes = new Set();
       const destinos = new Set();
       const ufs = new Set();
+      const bpsNotas = new Set();
+      let alertasMercadoriaNotas = 0;
+      let alertasPesoNotas = 0;
       const clienteForcado = String(opcoesPainel?.cliente || "").trim();
       const clienteSnapshot = String(opcoesPainel?.clienteSnapshot || "").trim();
 
@@ -9115,6 +9343,18 @@ return null;
 
         const peso = parsePesoPVD(n.peso);
         if (peso) pesoFiltrado += peso;
+
+        const bpDestinoNota = String(n.bpDestino || "").trim();
+        if (bpDestinoNota) bpsNotas.add(bpDestinoNota);
+
+        const mercadoriaNormNota = normalizar(n.mercadoria || "");
+        if (mercadoriaNormNota.includes("TUBO") || mercadoriaNormNota.includes("CHAPA")) {
+          alertasMercadoriaNotas++;
+        }
+
+        if (peso > 2500) {
+          alertasPesoNotas++;
+        }
 
         const dtLim = toDateOnly(n.dtLim);
         if (dtLim) {
@@ -9138,6 +9378,13 @@ return null;
       });
 
       const totalPVD = opcoesPainel?.totalPVD || almoxTotalPVD?.[almox] || {};
+      const bpDestinos = Array.from(
+        totalPVD?.bps instanceof Set
+          ? totalPVD.bps
+          : (Array.isArray(totalPVD?.bps) ? new Set(totalPVD.bps) : bpsNotas)
+      ).filter(Boolean).sort((a, b) => String(a).localeCompare(String(b), "pt-BR"));
+      const qtdAlertaMercadoria = Number(totalPVD?.alertasMercadoriaCount ?? alertasMercadoriaNotas ?? 0);
+      const qtdAlertaPeso = Number(totalPVD?.alertasPesoCount ?? alertasPesoNotas ?? 0);
       const status = getStatusVocativo(almox, veiculos, hoje);
       const vocNorm = normalizar(almox);
       const ultimoVeiculo = Array.isArray(veiculos) && veiculos.length ? veiculos[0] : null;
@@ -9180,6 +9427,11 @@ return null;
         temNaoProgramado: status.temNaoProgramado,
         temCarregadoHoje: status.temCarregadoHoje === true,
         temCarregadoOntem: status.temCarregadoOntem === true,
+        bpDestinos,
+        qtdAlertaMercadoria,
+        qtdAlertaPeso,
+        temAlertaMercadoria: qtdAlertaMercadoria > 0,
+        temAlertaPeso: qtdAlertaPeso > 0,
         pesoTotalPVD: Number(totalPVD.pesoTotal ?? pesoFiltrado ?? 0),
         totalNotasPVD: Number(totalPVD.totalRegistros ?? notas.length ?? 0),
         notasD1: qtdD1,
@@ -9269,7 +9521,7 @@ return null;
         const clienteResumoSnapshot = clientesSnapshot.length ? clientesSnapshot.join(" / ") : PAINEL_PROG_SEM_CLIENTE;
 
         gruposCliente.forEach(grupo => {
-          linhas.push(calcularIndicadoresPainelProgramacao(
+          const itemPainel = calcularIndicadoresPainelProgramacao(
             almox,
             { notas: grupo.notas },
             veiculos,
@@ -9281,7 +9533,9 @@ return null;
               clienteSnapshot: clienteResumoSnapshot,
               totalPVD: totaisClienteVocativo[grupo.clienteNorm]
             }
-          ));
+          );
+          itemPainel.cardKey = `${itemPainel.vocNorm}||${itemPainel.clienteNorm || grupo.clienteNorm || ""}`;
+          linhas.push(itemPainel);
         });
       });
 
@@ -9415,11 +9669,17 @@ return null;
     function renderResumoPainelProgramacao(dados) {
       const resumoEl = document.getElementById("painelProgramacaoResumo");
       if (!resumoEl) return;
-      const total = dados.length;
-      const programados = dados.filter(i => i.temProgramado).length;
-      const naoProgramados = dados.filter(i => i.temNaoProgramado).length;
-      const carregadosHoje = dados.filter(i => i.temCarregadoHoje).length;
-      const carregadosOntem = dados.filter(i => i.temCarregadoOntem).length;
+      const contarVocativosDistintos = (filtroFn) => new Set(
+        (dados || [])
+          .filter(filtroFn)
+          .map(i => i.vocNorm || normalizar(i.vocativo || ""))
+          .filter(Boolean)
+      ).size;
+      const total = contarVocativosDistintos(() => true);
+      const programados = contarVocativosDistintos(i => i.temProgramado);
+      const naoProgramados = contarVocativosDistintos(i => i.temNaoProgramado);
+      const carregadosHoje = contarVocativosDistintos(i => i.temCarregadoHoje);
+      const carregadosOntem = contarVocativosDistintos(i => i.temCarregadoOntem);
       const notas = dados.reduce((acc, i) => acc + Number(i.totalNotasPVD || 0), 0);
       const peso = dados.reduce((acc, i) => acc + Number(i.pesoTotalPVD || 0), 0);
 
@@ -9439,6 +9699,203 @@ return null;
           <div class="painelProgKpiValue">${getTextoPainelProgramacao(value)}</div>
         </div>
       `).join("");
+    }
+
+
+    function atualizarDadosAtuaisPainelProgramacao(dados) {
+      painelProgDadosAtuais = Array.isArray(dados) ? dados : [];
+      painelProgDadosAtuaisPorKey = new Map();
+      painelProgDadosAtuais.forEach(item => {
+        const chave = String(item.cardKey || "").trim();
+        if (chave) painelProgDadosAtuaisPorKey.set(chave, item);
+      });
+
+      const chavesDisponiveis = new Set(painelProgDadosAtuaisPorKey.keys());
+      painelProgCardsSelecionados = new Set(
+        Array.from(painelProgCardsSelecionados).filter(chave => chavesDisponiveis.has(chave))
+      );
+    }
+
+    function getPainelProgPopupEl() {
+      let el = document.getElementById("painelProgPopupResumo");
+      if (!el) {
+        el = document.createElement("div");
+        el.id = "painelProgPopupResumo";
+        el.className = "painelProgPopupResumo";
+        document.body.appendChild(el);
+      }
+      return el;
+    }
+
+    function atualizarSelecaoVisualPainelProgramacao() {
+      document.querySelectorAll(".painelProgCard[data-painel-prog-key]").forEach(card => {
+        const chave = card.getAttribute("data-painel-prog-key") || "";
+        card.classList.toggle("isSelected", painelProgCardsSelecionados.has(chave));
+      });
+    }
+
+    function fecharPopupPainelProgramacao(ev) {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      painelProgCardsSelecionados.clear();
+      atualizarSelecaoVisualPainelProgramacao();
+      const popup = getPainelProgPopupEl();
+      popup.classList.remove("open");
+      popup.innerHTML = "";
+    }
+
+    function onClickPainelProgCard(cardEl, ev) {
+      if (ev) {
+        const alvoInterativo = ev.target && ev.target.closest && ev.target.closest("button, input, select, textarea, a, .painelProgMultiFilterBox");
+        if (alvoInterativo) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+      }
+
+      const chave = String(cardEl?.getAttribute?.("data-painel-prog-key") || "").trim();
+      if (!chave) return;
+
+      if (painelProgCardsSelecionados.has(chave)) painelProgCardsSelecionados.delete(chave);
+      else painelProgCardsSelecionados.add(chave);
+
+      atualizarSelecaoVisualPainelProgramacao();
+      renderPopupPainelProgramacao();
+    }
+
+    function copiarTextoPainelProgramacao(texto, ev) {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      const conteudo = String(texto || "");
+      if (!conteudo) return;
+
+      const marcarCopiado = () => {
+        const btn = ev?.currentTarget || ev?.target;
+        if (!btn) return;
+        const textoOriginal = btn.textContent;
+        btn.textContent = "Copiado!";
+        setTimeout(() => { btn.textContent = textoOriginal; }, 900);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(conteudo).then(marcarCopiado).catch(() => {
+          const area = document.createElement("textarea");
+          area.value = conteudo;
+          area.style.position = "fixed";
+          area.style.opacity = "0";
+          document.body.appendChild(area);
+          area.select();
+          document.execCommand("copy");
+          document.body.removeChild(area);
+          marcarCopiado();
+        });
+      } else {
+        const area = document.createElement("textarea");
+        area.value = conteudo;
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand("copy");
+        document.body.removeChild(area);
+        marcarCopiado();
+      }
+    }
+
+    function copiarTextoPainelProgramacaoPorIndice(indice, ev) {
+      const texto = (window.__painelProgCopyStore || [])[Number(indice)] || "";
+      copiarTextoPainelProgramacao(texto, ev);
+    }
+
+    function renderPopupPainelProgramacao() {
+      const popup = getPainelProgPopupEl();
+      const selecionados = Array.from(painelProgCardsSelecionados)
+        .map(chave => painelProgDadosAtuaisPorKey.get(chave))
+        .filter(Boolean);
+
+      if (!selecionados.length) {
+        popup.classList.remove("open");
+        popup.innerHTML = "";
+        return;
+      }
+
+      const pesoTotal = selecionados.reduce((acc, item) => acc + Number(item.pesoTotalPVD || 0), 0);
+      const vocativos = Array.from(new Set(
+        selecionados.map(item => String(item.vocativo || "").trim()).filter(Boolean)
+      )).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      const vocativosTexto = vocativos.join(" / ");
+      const bps = Array.from(new Set(
+        selecionados.flatMap(item => Array.isArray(item.bpDestinos) ? item.bpDestinos : []).map(bp => String(bp || "").trim()).filter(Boolean)
+      )).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      const qtdAlertaMercadoria = selecionados.reduce((acc, item) => acc + Number(item.qtdAlertaMercadoria || 0), 0);
+      const qtdAlertaPeso = selecionados.reduce((acc, item) => acc + Number(item.qtdAlertaPeso || 0), 0);
+
+      const textosCopia = [];
+      const addCopy = (texto) => {
+        textosCopia.push(String(texto || ""));
+        return textosCopia.length - 1;
+      };
+
+      const idxVocativos = addCopy(vocativosTexto);
+
+      const alertaHtml = (qtdAlertaMercadoria || qtdAlertaPeso) ? `
+        <div class="painelProgPopupAlert">
+          ⚠ Atenção:<br>
+          ${qtdAlertaMercadoria ? `• ${formatarNumeroPainelProgramacao(qtdAlertaMercadoria, 0)} registro(s) com Mercadoria contendo TUBO ou CHAPA.<br>` : ""}
+          ${qtdAlertaPeso ? `• ${formatarNumeroPainelProgramacao(qtdAlertaPeso, 0)} registro(s) com Peso acima de 2.500 kg.` : ""}
+        </div>
+      ` : "";
+
+      const vocativosItensHtml = vocativos.map(vocativo => {
+        const idx = addCopy(vocativo);
+        return `
+          <div class="painelProgPopupItem">
+            <span>${getTextoPainelProgramacao(vocativo)}</span>
+            <button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idx}, event)">Copiar</button>
+          </div>
+        `;
+      }).join("");
+
+      const bpsItensHtml = bps.length
+        ? bps.map(bp => {
+            const idx = addCopy(bp);
+            return `
+              <div class="painelProgPopupItem">
+                <span>${getTextoPainelProgramacao(bp)}</span>
+                <button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idx}, event)">Copiar</button>
+              </div>
+            `;
+          }).join("")
+        : `<div class="painelProgPopupTextBox" style="color:#64748b;font-weight:700;">Nenhuma BP Destino encontrada para o(s) card(s) selecionado(s).</div>`;
+
+      window.__painelProgCopyStore = textosCopia;
+      popup.innerHTML = `
+        <div class="painelProgPopupHeader">
+          <div>
+            <div class="painelProgPopupTitle">Resumo do(s) card(s)</div>
+            <div class="painelProgPopupSub">${formatarNumeroPainelProgramacao(vocativos.length, 0)} vocativo(s) selecionado(s)</div>
+          </div>
+          <button class="painelProgPopupClose" type="button" onclick="fecharPopupPainelProgramacao(event)" title="Fechar">×</button>
+        </div>
+        <div class="painelProgPopupBody">
+          <div class="painelProgPopupPeso">⚖ Peso total selecionado: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(pesoTotal, 2))}</div>
+          ${alertaHtml}
+
+          <div class="painelProgPopupSection">
+            <div class="painelProgPopupSectionHead">
+              <span>Vocativos</span>
+              <button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idxVocativos}, event)">Copiar lista</button>
+            </div>
+            <div class="painelProgPopupTextBox">${getTextoPainelProgramacao(vocativosTexto || "-")}</div>
+            <div class="painelProgPopupItemList">${vocativosItensHtml}</div>
+          </div>
+
+          <div class="painelProgPopupSection">
+            <div class="painelProgPopupSectionHead">
+              <span>BPs Destino</span>
+            </div>
+            <div class="painelProgPopupItemList">${bpsItensHtml}</div>
+          </div>
+        </div>
+      `;
+      popup.classList.add("open");
     }
 
     function renderUltimoVeiculoPainelProgramacao(veiculo) {
@@ -9469,9 +9926,10 @@ return null;
       const idTitle = item.idVinculado
         ? `ID vinculado: ${getTextoPainelProgramacao(item.idVinculado)}. Clique para alterar ou limpar o vínculo.`
         : "Clique para vincular um ID ao vocativo.";
+      const classeSelecionado = painelProgCardsSelecionados.has(item.cardKey) ? " isSelected" : "";
 
       return `
-        <div class="painelProgCard ${classeStatus}">
+        <div class="painelProgCard ${classeStatus}${classeSelecionado}" data-painel-prog-key="${getTextoPainelProgramacao(item.cardKey || "")}" onclick="onClickPainelProgCard(this, event)">
           <div class="painelProgCardTop">
             <div class="painelProgVocativo" title="${getTextoPainelProgramacao(item.vocativo)}">🏭 ${getTextoPainelProgramacao(item.vocativo)}</div>
           </div>
@@ -9545,6 +10003,8 @@ return null;
       const cardsEl = document.getElementById("painelProgramacaoCards");
       if (!cardsEl) return;
       if (!dados.length) {
+        painelProgCardsSelecionados.clear();
+        renderPopupPainelProgramacao();
         cardsEl.innerHTML = `<div class="painelProgEmptyState">Nenhum vocativo encontrado para os filtros selecionados.</div>`;
         return;
       }
@@ -9595,11 +10055,15 @@ return null;
         const dados = await montarDadosPainelProgramacaoRapido();
         sincronizarFiltrosDinamicosPainelProgramacao(dados);
         const filtrados = filtrarDadosPainelProgramacao(dados);
+        atualizarDadosAtuaisPainelProgramacao(filtrados);
         if (baseEl) {
-          baseEl.textContent = `Base exibida: ${filtrados.length} de ${dados.length} card(s) | Organização: ${getPainelProgNomeAgrupamento()}`;
+          const vocativosFiltrados = new Set(filtrados.map(i => i.vocNorm).filter(Boolean)).size;
+          const vocativosBase = new Set(dados.map(i => i.vocNorm).filter(Boolean)).size;
+          baseEl.textContent = `Base exibida: ${vocativosFiltrados} de ${vocativosBase} vocativo(s) | ${filtrados.length} card(s) | Organização: ${getPainelProgNomeAgrupamento()}`;
         }
         renderResumoPainelProgramacao(filtrados);
         renderCardsPainelProgramacao(filtrados);
+        renderPopupPainelProgramacao();
         if (rolarTopo) window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (err) {
         console.error("Erro ao renderizar Painel de Programação:", err);
