@@ -2088,7 +2088,7 @@
 
     .painelProgFilterBar {
       display: grid;
-      grid-template-columns: minmax(210px, 1.25fr) repeat(6, minmax(130px, 1fr));
+      grid-template-columns: minmax(210px, 1.25fr) minmax(160px, .85fr) repeat(6, minmax(130px, 1fr));
       gap: 8px;
       align-items: center;
       margin-top: 12px;
@@ -2308,20 +2308,20 @@
 
     .painelProgCardsGrid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(292px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+      gap: 8px;
       align-items: stretch;
     }
 
     .painelProgCard {
-      border-radius: 16px;
-      padding: 12px;
-      min-height: 330px;
+      border-radius: 13px;
+      padding: 9px;
+      min-height: 238px;
       box-shadow: var(--shadowSoft);
       border: 1px solid rgba(15, 23, 42, 0.10);
       display: flex;
       flex-direction: column;
-      gap: 9px;
+      gap: 6px;
       background: #ffffff;
     }
 
@@ -2336,17 +2336,24 @@
     }
 
     .painelProgCardTop {
+      display: block;
+      min-width: 0;
+    }
+
+    .painelProgStatusRow {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       gap: 8px;
+      min-height: 25px;
+      margin-top: 4px;
     }
 
     .painelProgVocativo {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 1000;
       color: #0f172a;
-      line-height: 1.25;
+      line-height: 1.18;
       word-break: break-word;
     }
 
@@ -2354,9 +2361,9 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 5px 8px;
+      padding: 4px 7px;
       border-radius: 999px;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 1000;
       white-space: nowrap;
       border: 1px solid transparent;
@@ -2381,38 +2388,39 @@
     }
 
     .painelProgLine {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       color: #334155;
-      line-height: 1.35;
+      line-height: 1.22;
     }
 
     .painelProgMetrics {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 6px;
+      gap: 4px;
     }
 
     .painelProgMetricBox {
       background: rgba(255, 255, 255, 0.86);
       border: 1px solid rgba(15, 23, 42, 0.08);
-      border-radius: 10px;
-      padding: 7px 8px;
-      font-size: 11px;
+      border-radius: 9px;
+      padding: 5px 6px;
+      font-size: 10px;
       font-weight: 800;
       color: #334155;
-      min-height: 34px;
+      min-height: 28px;
+      line-height: 1.15;
     }
 
     .painelProgVehicleBox {
       margin-top: auto;
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 9px;
-      font-size: 11px;
+      border-radius: 10px;
+      padding: 6px 7px;
+      font-size: 10px;
       color: #334155;
-      line-height: 1.45;
+      line-height: 1.25;
     }
 
     .painelProgEmptyState {
@@ -2505,7 +2513,7 @@
         <div>
           <h2>🧭 PAINEL DE PROGRAMAÇÃO</h2>
           <div class="painelProgHint" id="painelProgramacaoBaseInfo">Base exibida: 0 card(s)</div>
-          <div class="painelProgHint">Visualização rápida em cards, usando a mesma regra de PROGRAMADO / NÃO PROGRAMADO da página Análise Programação.</div>
+          <div class="painelProgHint">Visualização rápida em cards, usando a mesma regra da página Análise Programação. Padrão: todos juntos em ordem alfabética por vocativo.</div>
         </div>
         <div class="painelProgActions">
           <button class="btn secondary" type="button" onclick="renderPainelProgramacaoRapido(false)">🔄 Atualizar</button>
@@ -2515,6 +2523,13 @@
 
       <div class="painelProgFilterBar">
         <input class="filtersCompactInput" id="painelProgSearchInput" placeholder="🔎 Filtrar por vocativo, cliente, destino, UF ou ID..." type="text" />
+
+        <select class="filtersCompactInput" id="painelProgAgrupamentoSelect" title="Organização dos cards">
+          <option value="nenhum">A-Z Vocativo</option>
+          <option value="cliente">Agrupar por Cliente</option>
+          <option value="destino">Agrupar por Destino</option>
+          <option value="uf">Agrupar por UF</option>
+        </select>
 
         <div class="painelProgMultiFilterBox" id="painelProgClienteFilterBox">
           <button class="painelProgMultiTrigger" id="painelProgClienteTrigger" type="button" onclick="togglePainelProgMultiDropdown('cliente', event)">
@@ -6667,8 +6682,8 @@
 
         almoxTotalPVD[almox].totalRegistros++;
 
-        const peso = parseFloat((r["Peso"] || "0").toString().replace(",", "."));
-        if (!isNaN(peso)) {
+        const peso = parsePesoPVD(r["Peso"]);
+        if (peso) {
           almoxTotalPVD[almox].pesoTotal += peso;
         }
 
@@ -8018,8 +8033,8 @@ return null;
           const clienteAgg = reportClientesMap[clienteNome];
           clienteAgg.vocativosSet.add(almox);
           clienteAgg.totalNotas++;
-          const pesoNum = parseFloat(String(n.peso || "0").replace(",", "."));
-          if (!isNaN(pesoNum)) clienteAgg.pesoTotal += pesoNum;
+          const pesoNum = parsePesoPVD(n.peso);
+          if (pesoNum) clienteAgg.pesoTotal += pesoNum;
 
           if (dentroRegra) clienteAgg.entradaEmAtraso++;
           else clienteAgg.entradaNoPrazo++;
@@ -8721,6 +8736,9 @@ return null;
       const inputBusca = document.getElementById("painelProgSearchInput");
       if (inputBusca) inputBusca.addEventListener("input", debounce(() => renderPainelProgramacaoRapido(false), 120));
 
+      const selectAgrupamento = document.getElementById("painelProgAgrupamentoSelect");
+      if (selectAgrupamento) selectAgrupamento.addEventListener("change", () => renderPainelProgramacaoRapido(false));
+
       document.addEventListener("click", (ev) => {
         if (!isPainelProgramacaoVisivel()) return;
         if (ev.target && ev.target.closest && ev.target.closest(".painelProgMultiFilterBox")) return;
@@ -8949,6 +8967,43 @@ return null;
       });
     }
 
+    function parsePesoPVD(valor) {
+      if (valor == null || valor === "") return 0;
+      if (typeof valor === "number") return Number.isFinite(valor) ? valor : 0;
+
+      let texto = String(valor).trim();
+      if (!texto) return 0;
+
+      texto = texto.replace(/[^0-9,.-]/g, "");
+      if (!texto || texto === "-" || texto === "," || texto === ".") return 0;
+
+      const temVirgula = texto.includes(",");
+      const temPonto = texto.includes(".");
+
+      if (temVirgula && temPonto) {
+        const ultimaVirgula = texto.lastIndexOf(",");
+        const ultimoPonto = texto.lastIndexOf(".");
+        texto = ultimaVirgula > ultimoPonto
+          ? texto.replace(/\./g, "").replace(",", ".")
+          : texto.replace(/,/g, "");
+      } else if (temVirgula) {
+        texto = texto.replace(/\./g, "").replace(",", ".");
+      } else if (temPonto) {
+        const partes = texto.split(".");
+        const pareceMilhar =
+          partes.length > 2
+            ? partes.slice(1).every(p => p.length === 3)
+            : (partes.length === 2 && partes[1].length === 3 && partes[0].length <= 3);
+
+        if (pareceMilhar) {
+          texto = texto.replace(/\./g, "");
+        }
+      }
+
+      const numero = Number(texto);
+      return Number.isFinite(numero) ? numero : 0;
+    }
+
     function getIdVinculadoPainelProgramacao(vocNorm) {
       return String(
         (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm))
@@ -8978,8 +9033,8 @@ return null;
 
         mapa[almox][clienteNorm].totalRegistros++;
 
-        const peso = parseFloat(String(r["Peso"] || "0").replace(".", "").replace(",", "."));
-        if (!isNaN(peso)) mapa[almox][clienteNorm].pesoTotal += peso;
+        const peso = parsePesoPVD(r["Peso"]);
+        if (peso) mapa[almox][clienteNorm].pesoTotal += peso;
       });
       return mapa;
     }
@@ -9008,8 +9063,8 @@ return null;
         const uf = String(n.uf || "").trim().toUpperCase();
         if (uf) ufs.add(uf);
 
-        const peso = parseFloat(String(n.peso || "0").replace(".", "").replace(",", "."));
-        if (!isNaN(peso)) pesoFiltrado += peso;
+        const peso = parsePesoPVD(n.peso);
+        if (peso) pesoFiltrado += peso;
 
         const dtLim = toDateOnly(n.dtLim);
         if (dtLim) {
@@ -9349,7 +9404,7 @@ return null;
       const statusBadge = item.temProgramado
         ? `<span class="painelProgBadge green">🟢 PROGRAMADO</span>`
         : `<span class="painelProgBadge red">🔴 NÃO PROGRAMADO</span>`;
-      const carregadoBadge = item.temCarregadoHoje ? `<span class="painelProgBadge blue">🔵 CARREGADO HOJE</span>` : "";
+      const carregadoBadge = item.temCarregadoHoje ? `<span class="painelProgBadge blue">🔵 CARREGADO HOJE</span>` : `<span></span>`;
       const idLabel = item.idVinculado ? `🔗 ID: ${getTextoPainelProgramacao(item.idVinculado)}` : "🔗 VINCULAR ID";
       const idTitle = item.idVinculado
         ? `ID vinculado: ${getTextoPainelProgramacao(item.idVinculado)}. Clique para alterar ou limpar o vínculo.`
@@ -9358,11 +9413,11 @@ return null;
       return `
         <div class="painelProgCard ${classeStatus}">
           <div class="painelProgCardTop">
-            <div class="painelProgVocativo">🏭 ${getTextoPainelProgramacao(item.vocativo)}</div>
-            <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;">
-              ${carregadoBadge}
-              ${statusBadge}
-            </div>
+            <div class="painelProgVocativo" title="${getTextoPainelProgramacao(item.vocativo)}">🏭 ${getTextoPainelProgramacao(item.vocativo)}</div>
+          </div>
+          <div class="painelProgStatusRow">
+            <div>${carregadoBadge}</div>
+            <div>${statusBadge}</div>
           </div>
 
           <div class="painelProgLine">👥 Cliente: ${getTextoPainelProgramacao(item.clienteResumo)}</div>
@@ -9386,12 +9441,44 @@ return null;
             class="btn secondary"
             type="button"
             data-vincular-id-vocativo="${getTextoPainelProgramacao(item.vocNorm)}"
-            style="padding:7px 10px; font-weight:900; margin-top:2px;"
+            style="padding:6px 10px; font-weight:900; margin-top:1px;"
             title="${idTitle}"
             onclick="onVincularIdClick(this.getAttribute('data-vincular-id-vocativo'), event)"
           >${idLabel}</button>
         </div>
       `;
+    }
+
+    function getPainelProgAgrupamentoAtual() {
+      return String(document.getElementById("painelProgAgrupamentoSelect")?.value || "nenhum");
+    }
+
+    function getPainelProgNomeAgrupamento(valor = getPainelProgAgrupamentoAtual()) {
+      if (valor === "cliente") return "Cliente";
+      if (valor === "destino") return "Destino";
+      if (valor === "uf") return "UF";
+      return "A-Z Vocativo";
+    }
+
+    function ordenarPainelProgPorVocativo(lista) {
+      return [...(lista || [])].sort((a, b) =>
+        String(a.vocativo || "").localeCompare(String(b.vocativo || ""), "pt-BR")
+      );
+    }
+
+    function getGrupoPainelProgramacao(item, modo) {
+      if (modo === "cliente") {
+        return { icon: "👥", label: String(item.clienteResumo || PAINEL_PROG_SEM_CLIENTE).trim() || PAINEL_PROG_SEM_CLIENTE };
+      }
+      if (modo === "destino") {
+        const destino = (Array.isArray(item.destinos) && item.destinos.length) ? item.destinos.join(" / ") : "SEM DESTINO";
+        return { icon: "📍", label: destino };
+      }
+      if (modo === "uf") {
+        const uf = (Array.isArray(item.ufs) && item.ufs.length) ? item.ufs.join(" / ") : "SEM UF";
+        return { icon: "🗺️", label: uf };
+      }
+      return { icon: "🏭", label: "VOCATIVOS" };
     }
 
     function renderCardsPainelProgramacao(dados) {
@@ -9402,23 +9489,36 @@ return null;
         return;
       }
 
+      const modoAgrupamento = getPainelProgAgrupamentoAtual();
+      const ordenados = ordenarPainelProgPorVocativo(dados);
+
+      if (modoAgrupamento === "nenhum") {
+        cardsEl.innerHTML = `
+          <div class="painelProgCardsGrid">
+            ${ordenados.map(renderCardPainelProgramacao).join("")}
+          </div>
+        `;
+        return;
+      }
+
       const grupos = new Map();
-      dados.forEach(item => {
-        const chave = String(item.clienteResumo || PAINEL_PROG_SEM_CLIENTE).trim() || PAINEL_PROG_SEM_CLIENTE;
-        if (!grupos.has(chave)) grupos.set(chave, []);
-        grupos.get(chave).push(item);
+      ordenados.forEach(item => {
+        const grupo = getGrupoPainelProgramacao(item, modoAgrupamento);
+        const chave = normalizar(grupo.label) || grupo.label;
+        if (!grupos.has(chave)) grupos.set(chave, { ...grupo, itens: [] });
+        grupos.get(chave).itens.push(item);
       });
 
-      const html = Array.from(grupos.entries())
-        .sort((a, b) => a[0].localeCompare(b[0], "pt-BR"))
-        .map(([cliente, itens]) => `
+      const html = Array.from(grupos.values())
+        .sort((a, b) => String(a.label || "").localeCompare(String(b.label || ""), "pt-BR"))
+        .map(grupo => `
           <div class="painelProgClienteGrupo">
             <div class="painelProgClienteHeader">
-              <div class="painelProgClienteTitle">👥 ${getTextoPainelProgramacao(cliente)}</div>
-              <div class="painelProgHint">${itens.length} card(s) | ${new Set(itens.map(i => i.vocNorm)).size} vocativo(s)</div>
+              <div class="painelProgClienteTitle">${grupo.icon} ${getTextoPainelProgramacao(grupo.label)}</div>
+              <div class="painelProgHint">${grupo.itens.length} card(s) | ${new Set(grupo.itens.map(i => i.vocNorm)).size} vocativo(s)</div>
             </div>
             <div class="painelProgCardsGrid">
-              ${itens.map(renderCardPainelProgramacao).join("")}
+              ${grupo.itens.map(renderCardPainelProgramacao).join("")}
             </div>
           </div>
         `).join("");
@@ -9436,7 +9536,7 @@ return null;
         sincronizarFiltrosDinamicosPainelProgramacao(dados);
         const filtrados = filtrarDadosPainelProgramacao(dados);
         if (baseEl) {
-          baseEl.textContent = `Base exibida: ${filtrados.length} de ${dados.length} card(s) por cliente PVD`;
+          baseEl.textContent = `Base exibida: ${filtrados.length} de ${dados.length} card(s) | Organização: ${getPainelProgNomeAgrupamento()}`;
         }
         renderResumoPainelProgramacao(filtrados);
         renderCardsPainelProgramacao(filtrados);
