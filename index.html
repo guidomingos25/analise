@@ -2048,6 +2048,401 @@
       }
     }
 
+  
+
+    /* Página Painel de Programação rápida */
+    #paginaPainelProgramacao .card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(15, 23, 42, 0.10);
+    }
+
+    #paginaPainelProgramacao h2 {
+      font-size: 16px !important;
+      font-weight: 900 !important;
+      letter-spacing: .02em;
+      margin: 0;
+    }
+
+    .painelProgTopbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .painelProgActions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .painelProgHint {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .painelProgFilterBar {
+      display: grid;
+      grid-template-columns: minmax(210px, 1.25fr) repeat(6, minmax(130px, 1fr));
+      gap: 8px;
+      align-items: center;
+      margin-top: 12px;
+      margin-bottom: 14px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .painelProgFilterBar > * {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .painelProgMultiFilterBox {
+      position: relative;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .painelProgMultiTrigger {
+      width: 100%;
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      color: #0f172a;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: none;
+    }
+
+    .painelProgMultiTrigger span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .painelProgMultiArrow {
+      color: #64748b;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .painelProgMultiDropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      width: 100%;
+      min-width: 270px;
+      max-height: 370px;
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(2, 6, 23, 0.16);
+      z-index: 80;
+      display: none;
+    }
+
+    .painelProgMultiDropdown.open {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .painelProgMultiHead {
+      padding: 10px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #f8fafc;
+    }
+
+    .painelProgMultiTitle {
+      font-size: 12px;
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .painelProgMultiSearch {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      color: #0f172a;
+      font-size: 12px;
+      outline: none;
+      margin-bottom: 8px;
+    }
+
+    .painelProgMultiSearch:focus {
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+    }
+
+    .painelProgMultiActionsMini {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .painelProgMiniActionBtn {
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #334155;
+      border-radius: 9px;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .painelProgMiniActionBtn:hover {
+      background: #e0f2fe;
+      border-color: #93c5fd;
+    }
+
+    .painelProgMultiList {
+      max-height: 275px;
+      overflow: auto;
+      padding: 8px 10px;
+    }
+
+    .painelProgCheckItem {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 2px;
+      font-size: 12px;
+      color: #0f172a;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .painelProgCheckItem:last-child {
+      border-bottom: none;
+    }
+
+    .painelProgCheckItem input {
+      margin: 0;
+      accent-color: #2563eb;
+    }
+
+    .painelProgMultiEmpty {
+      padding: 14px;
+      text-align: center;
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    .painelProgKpiGrid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .painelProgKpi {
+      background: #ffffff;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 14px;
+      padding: 10px;
+      min-height: 78px;
+      box-shadow: var(--shadowSoft);
+    }
+
+    .painelProgKpiLabel {
+      font-size: 10px;
+      font-weight: 900;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .painelProgKpiValue {
+      font-size: 22px;
+      font-weight: 1000;
+      color: #111827;
+      line-height: 1;
+    }
+
+    .painelProgClienteGrupo {
+      margin-bottom: 18px;
+    }
+
+    .painelProgClienteHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      border-radius: 14px;
+      box-shadow: var(--shadowSoft);
+      margin-bottom: 10px;
+    }
+
+    .painelProgClienteTitle {
+      font-size: 13px;
+      font-weight: 1000;
+      color: #111827;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .painelProgCardsGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(292px, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .painelProgCard {
+      border-radius: 16px;
+      padding: 12px;
+      min-height: 330px;
+      box-shadow: var(--shadowSoft);
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      background: #ffffff;
+    }
+
+    .painelProgCard.isProgramado {
+      background: linear-gradient(180deg, #dcfce7 0%, #ffffff 42%);
+      border-color: #22c55e;
+    }
+
+    .painelProgCard.isNaoProgramado {
+      background: linear-gradient(180deg, #fee2e2 0%, #ffffff 42%);
+      border-color: #ef4444;
+    }
+
+    .painelProgCardTop {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .painelProgVocativo {
+      font-size: 13px;
+      font-weight: 1000;
+      color: #0f172a;
+      line-height: 1.25;
+      word-break: break-word;
+    }
+
+    .painelProgBadge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 1000;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+
+    .painelProgBadge.green {
+      background: #bbf7d0;
+      color: #14532d;
+      border-color: #22c55e;
+    }
+
+    .painelProgBadge.red {
+      background: #fecaca;
+      color: #7f1d1d;
+      border-color: #ef4444;
+    }
+
+    .painelProgBadge.blue {
+      background: #dbeafe;
+      color: #1e3a8a;
+      border-color: #2563eb;
+    }
+
+    .painelProgLine {
+      font-size: 12px;
+      font-weight: 700;
+      color: #334155;
+      line-height: 1.35;
+    }
+
+    .painelProgMetrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .painelProgMetricBox {
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 10px;
+      padding: 7px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #334155;
+      min-height: 34px;
+    }
+
+    .painelProgVehicleBox {
+      margin-top: auto;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 9px;
+      font-size: 11px;
+      color: #334155;
+      line-height: 1.45;
+    }
+
+    .painelProgEmptyState {
+      padding: 26px 18px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+      text-align: center;
+      color: #64748b;
+      background: rgba(255,255,255,0.8);
+    }
+
+    @media (max-width: 1200px) {
+      .painelProgFilterBar {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+      }
+      .painelProgKpiGrid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .painelProgFilterBar,
+      .painelProgKpiGrid {
+        grid-template-columns: 1fr;
+      }
+      .painelProgCardsGrid {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 
@@ -2078,6 +2473,9 @@
           <button class="btn secondary" disabled="" id="btnAlmoxPendentes">
             📌 Análise Programação
           </button>
+          <button class="btn secondary" disabled="" id="btnPainelProgramacaoRapido">
+            🧭 Painel de Programação
+          </button>
         </div>
         <div class="left" style="flex:1; justify-content:flex-end; gap:10px;">
           <button class="btn secondary" disabled="" id="btnDateFilter" title="Selecionar datas">
@@ -2100,6 +2498,132 @@
       <div class="results" id="results"></div>
     </div>
   </div>
+
+  <div class="container" id="paginaPainelProgramacao" style="display:none;">
+    <div class="card" style="margin-top:20px;">
+      <div class="painelProgTopbar">
+        <div>
+          <h2>🧭 PAINEL DE PROGRAMAÇÃO</h2>
+          <div class="painelProgHint" id="painelProgramacaoBaseInfo">Base exibida: 0 card(s)</div>
+          <div class="painelProgHint">Visualização rápida em cards, usando a mesma regra de PROGRAMADO / NÃO PROGRAMADO da página Análise Programação.</div>
+        </div>
+        <div class="painelProgActions">
+          <button class="btn secondary" type="button" onclick="renderPainelProgramacaoRapido(false)">🔄 Atualizar</button>
+          <button class="btn secondary" type="button" onclick="voltarPainelProgramacaoPrincipal()">⬅ Voltar</button>
+        </div>
+      </div>
+
+      <div class="painelProgFilterBar">
+        <input class="filtersCompactInput" id="painelProgSearchInput" placeholder="🔎 Filtrar por vocativo, cliente, destino, UF ou ID..." type="text" />
+
+        <div class="painelProgMultiFilterBox" id="painelProgClienteFilterBox">
+          <button class="painelProgMultiTrigger" id="painelProgClienteTrigger" type="button" onclick="togglePainelProgMultiDropdown('cliente', event)">
+            <span>Todos os clientes</span><span class="painelProgMultiArrow">▾</span>
+          </button>
+          <div class="painelProgMultiDropdown" id="painelProgClienteDropdown">
+            <div class="painelProgMultiHead">
+              <div class="painelProgMultiTitle">Cliente PVD</div>
+              <input class="painelProgMultiSearch" id="painelProgClienteSearch" placeholder="Pesquisar cliente..." type="text" oninput="onInputPainelProgFiltroSearch('cliente', this.value, event)" onclick="event.stopPropagation()" />
+              <div class="painelProgMultiActionsMini">
+                <button class="painelProgMiniActionBtn" type="button" onclick="selecionarTodosPainelProgFiltro('cliente', event)">Selecionar todos</button>
+                <button class="painelProgMiniActionBtn" type="button" onclick="limparPainelProgFiltro('cliente', event)">Limpar</button>
+              </div>
+            </div>
+            <div class="painelProgMultiList" id="painelProgClienteList"></div>
+          </div>
+        </div>
+
+        <div class="painelProgMultiFilterBox" id="painelProgDestinoFilterBox">
+          <button class="painelProgMultiTrigger" id="painelProgDestinoTrigger" type="button" onclick="togglePainelProgMultiDropdown('destino', event)">
+            <span>Todos os destinos</span><span class="painelProgMultiArrow">▾</span>
+          </button>
+          <div class="painelProgMultiDropdown" id="painelProgDestinoDropdown">
+            <div class="painelProgMultiHead">
+              <div class="painelProgMultiTitle">Destino PVD</div>
+              <input class="painelProgMultiSearch" id="painelProgDestinoSearch" placeholder="Pesquisar destino..." type="text" oninput="onInputPainelProgFiltroSearch('destino', this.value, event)" onclick="event.stopPropagation()" />
+              <div class="painelProgMultiActionsMini">
+                <button class="painelProgMiniActionBtn" type="button" onclick="selecionarTodosPainelProgFiltro('destino', event)">Selecionar todos</button>
+                <button class="painelProgMiniActionBtn" type="button" onclick="limparPainelProgFiltro('destino', event)">Limpar</button>
+              </div>
+            </div>
+            <div class="painelProgMultiList" id="painelProgDestinoList"></div>
+          </div>
+        </div>
+
+        <div class="painelProgMultiFilterBox" id="painelProgUfFilterBox">
+          <button class="painelProgMultiTrigger" id="painelProgUfTrigger" type="button" onclick="togglePainelProgMultiDropdown('uf', event)">
+            <span>Todas as UFs</span><span class="painelProgMultiArrow">▾</span>
+          </button>
+          <div class="painelProgMultiDropdown" id="painelProgUfDropdown">
+            <div class="painelProgMultiHead">
+              <div class="painelProgMultiTitle">UF Destino PVD</div>
+              <input class="painelProgMultiSearch" id="painelProgUfSearch" placeholder="Pesquisar UF..." type="text" oninput="onInputPainelProgFiltroSearch('uf', this.value, event)" onclick="event.stopPropagation()" />
+              <div class="painelProgMultiActionsMini">
+                <button class="painelProgMiniActionBtn" type="button" onclick="selecionarTodosPainelProgFiltro('uf', event)">Selecionar todos</button>
+                <button class="painelProgMiniActionBtn" type="button" onclick="limparPainelProgFiltro('uf', event)">Limpar</button>
+              </div>
+            </div>
+            <div class="painelProgMultiList" id="painelProgUfList"></div>
+          </div>
+        </div>
+
+        <div class="painelProgMultiFilterBox" id="painelProgStatusFilterBox">
+          <button class="painelProgMultiTrigger" id="painelProgStatusTrigger" type="button" onclick="togglePainelProgMultiDropdown('status', event)">
+            <span>Todos os status</span><span class="painelProgMultiArrow">▾</span>
+          </button>
+          <div class="painelProgMultiDropdown" id="painelProgStatusDropdown">
+            <div class="painelProgMultiHead">
+              <div class="painelProgMultiTitle">Status</div>
+              <input class="painelProgMultiSearch" id="painelProgStatusSearch" placeholder="Pesquisar status..." type="text" oninput="onInputPainelProgFiltroSearch('status', this.value, event)" onclick="event.stopPropagation()" />
+              <div class="painelProgMultiActionsMini">
+                <button class="painelProgMiniActionBtn" type="button" onclick="selecionarTodosPainelProgFiltro('status', event)">Selecionar todos</button>
+                <button class="painelProgMiniActionBtn" type="button" onclick="limparPainelProgFiltro('status', event)">Limpar</button>
+              </div>
+            </div>
+            <div class="painelProgMultiList" id="painelProgStatusList"></div>
+          </div>
+        </div>
+
+        <div class="painelProgMultiFilterBox" id="painelProgEntradaFilterBox">
+          <button class="painelProgMultiTrigger" id="painelProgEntradaTrigger" type="button" onclick="togglePainelProgMultiDropdown('entrada', event)">
+            <span>Entrada NF: Todos</span><span class="painelProgMultiArrow">▾</span>
+          </button>
+          <div class="painelProgMultiDropdown" id="painelProgEntradaDropdown">
+            <div class="painelProgMultiHead">
+              <div class="painelProgMultiTitle">Entrada NF</div>
+              <input class="painelProgMultiSearch" id="painelProgEntradaSearch" placeholder="Pesquisar entrada NF..." type="text" oninput="onInputPainelProgFiltroSearch('entrada', this.value, event)" onclick="event.stopPropagation()" />
+              <div class="painelProgMultiActionsMini">
+                <button class="painelProgMiniActionBtn" type="button" onclick="selecionarTodosPainelProgFiltro('entrada', event)">Selecionar todos</button>
+                <button class="painelProgMiniActionBtn" type="button" onclick="limparPainelProgFiltro('entrada', event)">Limpar</button>
+              </div>
+            </div>
+            <div class="painelProgMultiList" id="painelProgEntradaList"></div>
+          </div>
+        </div>
+
+        <div class="painelProgMultiFilterBox" id="painelProgCriticidadeFilterBox">
+          <button class="painelProgMultiTrigger" id="painelProgCriticidadeTrigger" type="button" onclick="togglePainelProgMultiDropdown('criticidade', event)">
+            <span>Criticidade: Todos</span><span class="painelProgMultiArrow">▾</span>
+          </button>
+          <div class="painelProgMultiDropdown" id="painelProgCriticidadeDropdown">
+            <div class="painelProgMultiHead">
+              <div class="painelProgMultiTitle">Criticidade</div>
+              <input class="painelProgMultiSearch" id="painelProgCriticidadeSearch" placeholder="Pesquisar criticidade..." type="text" oninput="onInputPainelProgFiltroSearch('criticidade', this.value, event)" onclick="event.stopPropagation()" />
+              <div class="painelProgMultiActionsMini">
+                <button class="painelProgMiniActionBtn" type="button" onclick="selecionarTodosPainelProgFiltro('criticidade', event)">Selecionar todos</button>
+                <button class="painelProgMiniActionBtn" type="button" onclick="limparPainelProgFiltro('criticidade', event)">Limpar</button>
+              </div>
+            </div>
+            <div class="painelProgMultiList" id="painelProgCriticidadeList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="painelProgramacaoResumo" class="painelProgKpiGrid"></div>
+      <div id="painelProgramacaoCards"></div>
+    </div>
+  </div>
+
   <script>
     let dataRows = [];
     let detalhadoRows = [];
@@ -2134,6 +2658,37 @@
     let datasSelecionadasPopup = [];
     let calendarioPopup = null;
     let filtroPrazoConsolidacaoAtivo = null;
+    let painelProgramacaoEventosLigados = false;
+    const PAINEL_PROG_SEM_CLIENTE = "SEM CLIENTE";
+    const PAINEL_PROG_STATIC_FILTERS = {
+      status: [
+        { value: "programado", label: "🟢 Programado" },
+        { value: "naoProgramado", label: "🔴 Não programado" },
+        { value: "carregadoHoje", label: "🔵 Carregado hoje" }
+      ],
+      entrada: [
+        { value: "atraso", label: "Entrada em atraso" },
+        { value: "prazo", label: "Entrada no prazo" }
+      ],
+      criticidade: [
+        { value: "vencidas", label: "🔴 Vencidas" },
+        { value: "d0", label: "🔵 D0" },
+        { value: "d1", label: "🟢 D-1" },
+        { value: "dge2", label: "🟢 >= D-2" }
+      ]
+    };
+    let painelProgClientesDisponiveis = [];
+    let painelProgClientesSelecionados = new Set();
+    let painelProgClientesFiltroInicializado = false;
+    let painelProgDestinosDisponiveis = [];
+    let painelProgDestinosSelecionados = new Set();
+    let painelProgDestinosFiltroInicializado = false;
+    let painelProgUfsDisponiveis = [];
+    let painelProgUfsSelecionados = new Set();
+    let painelProgUfsFiltroInicializado = false;
+    let painelProgStatusSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.status.map(o => o.value));
+    let painelProgEntradaSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.entrada.map(o => o.value));
+    let painelProgCriticidadeSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.criticidade.map(o => o.value));
 
 
     window.currentAnaliseReport = {
@@ -4527,6 +5082,8 @@
     function abrirPaginaResumoVeiculos() {
       document.getElementById("paginaPrincipal").style.display = "none";
       document.getElementById("paginaAnalise").style.display = "none";
+      const paginaPainelProgramacao = document.getElementById("paginaPainelProgramacao");
+      if (paginaPainelProgramacao) paginaPainelProgramacao.style.display = "none";
       document.getElementById("paginaResumoVeiculos").style.display = "block";
       syncFleetTypeFilterUI((dataRows || []).filter(isValidFleetResumoRow));
       renderResumoVeiculosPage();
@@ -4535,6 +5092,8 @@
 
     function voltarParaAnaliseProgramacao() {
       document.getElementById("paginaResumoVeiculos").style.display = "none";
+      const paginaPainelProgramacao = document.getElementById("paginaPainelProgramacao");
+      if (paginaPainelProgramacao) paginaPainelProgramacao.style.display = "none";
       document.getElementById("paginaPrincipal").style.display = "none";
       document.getElementById("paginaAnalise").style.display = "block";
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -5131,6 +5690,7 @@
       dateFilter.disabled = false;
 
       document.getElementById("btnAlmoxPendentes").disabled = false;
+      document.getElementById("btnPainelProgramacaoRapido") && (document.getElementById("btnPainelProgramacaoRapido").disabled = false);
       document.getElementById("btnCalcularFilialMaisProxima") && (document.getElementById("btnCalcularFilialMaisProxima").disabled = false);
 
 
@@ -8111,12 +8671,787 @@ return null;
 
     function abrirPaginaAnalise() {
       document.getElementById("paginaPrincipal").style.display = "none";
+      const paginaPainelProgramacao = document.getElementById("paginaPainelProgramacao");
+      if (paginaPainelProgramacao) paginaPainelProgramacao.style.display = "none";
       document.getElementById("paginaAnalise").style.display = "block";
     }
 
     function voltarPaginaPrincipal() {
       document.getElementById("paginaAnalise").style.display = "none";
+      const paginaResumoVeiculos = document.getElementById("paginaResumoVeiculos");
+      if (paginaResumoVeiculos) paginaResumoVeiculos.style.display = "none";
+      const paginaPainelProgramacao = document.getElementById("paginaPainelProgramacao");
+      if (paginaPainelProgramacao) paginaPainelProgramacao.style.display = "none";
       document.getElementById("paginaPrincipal").style.display = "block";
+    }
+
+
+    function isPainelProgramacaoVisivel() {
+      const pagina = document.getElementById("paginaPainelProgramacao");
+      return !!pagina && pagina.style.display !== "none";
+    }
+
+    async function abrirPainelProgramacaoRapido() {
+      if (!dataRows.length || !detalhadoRows.length) {
+        alert("Carregue e processe as planilhas antes de abrir o Painel de Programação.");
+        return;
+      }
+      document.getElementById("paginaPrincipal").style.display = "none";
+      const paginaAnalise = document.getElementById("paginaAnalise");
+      if (paginaAnalise) paginaAnalise.style.display = "none";
+      const paginaResumoVeiculos = document.getElementById("paginaResumoVeiculos");
+      if (paginaResumoVeiculos) paginaResumoVeiculos.style.display = "none";
+      document.getElementById("paginaPainelProgramacao").style.display = "block";
+      inicializarEventosPainelProgramacaoRapido();
+      await renderPainelProgramacaoRapido(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function voltarPainelProgramacaoPrincipal() {
+      const paginaPainelProgramacao = document.getElementById("paginaPainelProgramacao");
+      if (paginaPainelProgramacao) paginaPainelProgramacao.style.display = "none";
+      document.getElementById("paginaPrincipal").style.display = "block";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function inicializarEventosPainelProgramacaoRapido() {
+      if (painelProgramacaoEventosLigados) return;
+      painelProgramacaoEventosLigados = true;
+
+      const inputBusca = document.getElementById("painelProgSearchInput");
+      if (inputBusca) inputBusca.addEventListener("input", debounce(() => renderPainelProgramacaoRapido(false), 120));
+
+      document.addEventListener("click", (ev) => {
+        if (!isPainelProgramacaoVisivel()) return;
+        if (ev.target && ev.target.closest && ev.target.closest(".painelProgMultiFilterBox")) return;
+        fecharPainelProgMultiDropdowns();
+      });
+
+      renderPainelProgMultiFiltros();
+    }
+
+    function getPainelProgFiltroConfig(tipo) {
+      if (tipo === "cliente") {
+        return {
+          triggerId: "painelProgClienteTrigger",
+          dropdownId: "painelProgClienteDropdown",
+          listId: "painelProgClienteList",
+          searchId: "painelProgClienteSearch",
+          tituloTodos: "Todos os clientes",
+          tituloNenhum: "Nenhum cliente"
+        };
+      }
+      if (tipo === "destino") {
+        return {
+          triggerId: "painelProgDestinoTrigger",
+          dropdownId: "painelProgDestinoDropdown",
+          listId: "painelProgDestinoList",
+          searchId: "painelProgDestinoSearch",
+          tituloTodos: "Todos os destinos",
+          tituloNenhum: "Nenhum destino"
+        };
+      }
+      if (tipo === "uf") {
+        return {
+          triggerId: "painelProgUfTrigger",
+          dropdownId: "painelProgUfDropdown",
+          listId: "painelProgUfList",
+          searchId: "painelProgUfSearch",
+          tituloTodos: "Todas as UFs",
+          tituloNenhum: "Nenhuma UF"
+        };
+      }
+      if (tipo === "status") {
+        return {
+          triggerId: "painelProgStatusTrigger",
+          dropdownId: "painelProgStatusDropdown",
+          listId: "painelProgStatusList",
+          searchId: "painelProgStatusSearch",
+          tituloTodos: "Todos os status",
+          tituloNenhum: "Nenhum status"
+        };
+      }
+      if (tipo === "entrada") {
+        return {
+          triggerId: "painelProgEntradaTrigger",
+          dropdownId: "painelProgEntradaDropdown",
+          listId: "painelProgEntradaList",
+          searchId: "painelProgEntradaSearch",
+          tituloTodos: "Entrada NF: Todos",
+          tituloNenhum: "Entrada NF: Nenhum"
+        };
+      }
+      return {
+        triggerId: "painelProgCriticidadeTrigger",
+        dropdownId: "painelProgCriticidadeDropdown",
+        listId: "painelProgCriticidadeList",
+        searchId: "painelProgCriticidadeSearch",
+        tituloTodos: "Criticidade: Todos",
+        tituloNenhum: "Criticidade: Nenhum"
+      };
+    }
+
+    function getPainelProgOpcoesFiltro(tipo) {
+      if (tipo === "cliente") return painelProgClientesDisponiveis || [];
+      if (tipo === "destino") return painelProgDestinosDisponiveis || [];
+      if (tipo === "uf") return painelProgUfsDisponiveis || [];
+      return PAINEL_PROG_STATIC_FILTERS[tipo] || [];
+    }
+
+    function getPainelProgSetFiltro(tipo) {
+      if (tipo === "cliente") return painelProgClientesSelecionados;
+      if (tipo === "destino") return painelProgDestinosSelecionados;
+      if (tipo === "uf") return painelProgUfsSelecionados;
+      if (tipo === "status") return painelProgStatusSelecionados;
+      if (tipo === "entrada") return painelProgEntradaSelecionados;
+      return painelProgCriticidadeSelecionados;
+    }
+
+    function setPainelProgSetFiltro(tipo, novoSet) {
+      if (tipo === "cliente") painelProgClientesSelecionados = novoSet;
+      else if (tipo === "destino") painelProgDestinosSelecionados = novoSet;
+      else if (tipo === "uf") painelProgUfsSelecionados = novoSet;
+      else if (tipo === "status") painelProgStatusSelecionados = novoSet;
+      else if (tipo === "entrada") painelProgEntradaSelecionados = novoSet;
+      else painelProgCriticidadeSelecionados = novoSet;
+    }
+
+    function fecharPainelProgMultiDropdowns(excetoTipo = "") {
+      ["cliente", "destino", "uf", "status", "entrada", "criticidade"].forEach(tipo => {
+        if (tipo === excetoTipo) return;
+        const cfg = getPainelProgFiltroConfig(tipo);
+        const dropdown = document.getElementById(cfg.dropdownId);
+        if (dropdown) dropdown.classList.remove("open");
+      });
+    }
+
+    function togglePainelProgMultiDropdown(tipo, ev) {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      const cfg = getPainelProgFiltroConfig(tipo);
+      const dropdown = document.getElementById(cfg.dropdownId);
+      if (!dropdown) return;
+      const vaiAbrir = !dropdown.classList.contains("open");
+      fecharPainelProgMultiDropdowns(tipo);
+      dropdown.classList.toggle("open", vaiAbrir);
+      renderPainelProgMultiFiltro(tipo);
+    }
+
+    function onInputPainelProgFiltroSearch(tipo, valor, ev) {
+      if (ev) ev.stopPropagation();
+      renderPainelProgMultiFiltro(tipo);
+    }
+
+    function getPainelProgFiltroSearchTerm(tipo) {
+      const cfg = getPainelProgFiltroConfig(tipo);
+      return normalizar(document.getElementById(cfg.searchId)?.value || "");
+    }
+
+    function selecionarTodosPainelProgFiltro(tipo, ev) {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      const opcoes = getPainelProgOpcoesFiltro(tipo);
+      setPainelProgSetFiltro(tipo, new Set(opcoes.map(o => o.value)));
+      renderPainelProgMultiFiltro(tipo);
+      renderPainelProgramacaoRapido(false);
+    }
+
+    function limparPainelProgFiltro(tipo, ev) {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      setPainelProgSetFiltro(tipo, new Set());
+      renderPainelProgMultiFiltro(tipo);
+      renderPainelProgramacaoRapido(false);
+    }
+
+    function onChangePainelProgMultiFiltro(tipo, valor, marcado, ev) {
+      if (ev) ev.stopPropagation();
+      const setAtual = new Set(getPainelProgSetFiltro(tipo));
+      if (marcado) setAtual.add(valor);
+      else setAtual.delete(valor);
+      setPainelProgSetFiltro(tipo, setAtual);
+      renderPainelProgMultiFiltro(tipo);
+      renderPainelProgramacaoRapido(false);
+    }
+
+    function renderPainelProgMultiFiltros() {
+      ["cliente", "destino", "uf", "status", "entrada", "criticidade"].forEach(renderPainelProgMultiFiltro);
+    }
+
+    function renderPainelProgMultiFiltro(tipo) {
+      const cfg = getPainelProgFiltroConfig(tipo);
+      const opcoes = getPainelProgOpcoesFiltro(tipo);
+      const selecionados = getPainelProgSetFiltro(tipo);
+      const trigger = document.getElementById(cfg.triggerId);
+      const list = document.getElementById(cfg.listId);
+
+      if (trigger) {
+        let label = cfg.tituloTodos;
+        if (!opcoes.length) {
+          label = cfg.tituloNenhum;
+        } else if (selecionados.size === 0) {
+          label = cfg.tituloNenhum;
+        } else if (selecionados.size < opcoes.length) {
+          const nomes = opcoes
+            .filter(o => selecionados.has(o.value))
+            .map(o => o.label);
+          label = nomes.length <= 2 ? nomes.join(" | ") : `${nomes.length} selecionados`;
+        }
+        trigger.innerHTML = `<span>${getTextoPainelProgramacao(label)}</span><span class="painelProgMultiArrow">▾</span>`;
+      }
+
+      if (!list) return;
+      if (!opcoes.length) {
+        list.innerHTML = `<div class="painelProgMultiEmpty">Nenhuma opção disponível.</div>`;
+        return;
+      }
+
+      const termoFiltroLista = getPainelProgFiltroSearchTerm(tipo);
+      const opcoesVisiveis = termoFiltroLista
+        ? opcoes.filter(op => normalizar(op.label || op.value || "").includes(termoFiltroLista))
+        : opcoes;
+
+      if (!opcoesVisiveis.length) {
+        list.innerHTML = `<div class="painelProgMultiEmpty">Nenhuma opção encontrada na pesquisa.</div>`;
+        return;
+      }
+
+      list.innerHTML = opcoesVisiveis.map(op => `
+        <label class="painelProgCheckItem">
+          <input
+            type="checkbox"
+            data-painel-prog-filter="${tipo}"
+            data-painel-prog-value="${getTextoPainelProgramacao(op.value)}"
+            ${selecionados.has(op.value) ? "checked" : ""}
+          />
+          <span>${getTextoPainelProgramacao(op.label)}</span>
+        </label>
+      `).join("");
+
+      list.querySelectorAll('input[data-painel-prog-filter]').forEach(input => {
+        input.addEventListener("change", (ev) => {
+          onChangePainelProgMultiFiltro(
+            input.getAttribute("data-painel-prog-filter") || tipo,
+            input.getAttribute("data-painel-prog-value") || "",
+            input.checked,
+            ev
+          );
+        });
+      });
+    }
+
+    function getTextoPainelProgramacao(valor) {
+      return escapeHtmlAttr(String(valor ?? ""));
+    }
+
+    function formatarNumeroPainelProgramacao(valor, casas = 0) {
+      const n = Number(valor || 0);
+      return n.toLocaleString("pt-BR", {
+        minimumFractionDigits: casas,
+        maximumFractionDigits: casas
+      });
+    }
+
+    function getIdVinculadoPainelProgramacao(vocNorm) {
+      return String(
+        (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm))
+          ? window.idDrafts[vocNorm]
+          : ((window.vinculosManuaisTempoReal?.[vocNorm]?.id || "") || (window.idHojeServidor?.[vocNorm] || ""))
+      ).trim();
+    }
+
+    function montarTotaisPVDPorVocativoClientePainelProgramacao() {
+      const mapa = {};
+      (detalhadoRows || []).forEach(r => {
+        const almox = normalizar(r["Almoxarifado"] || "");
+        if (!almox) return;
+
+        const clienteNome = String(r["Cliente"] || "").trim() || PAINEL_PROG_SEM_CLIENTE;
+        const clienteNorm = normalizar(clienteNome) || normalizar(PAINEL_PROG_SEM_CLIENTE);
+
+        if (!mapa[almox]) mapa[almox] = {};
+        if (!mapa[almox][clienteNorm]) {
+          mapa[almox][clienteNorm] = {
+            clienteNome,
+            clienteNorm,
+            totalRegistros: 0,
+            pesoTotal: 0
+          };
+        }
+
+        mapa[almox][clienteNorm].totalRegistros++;
+
+        const peso = parseFloat(String(r["Peso"] || "0").replace(".", "").replace(",", "."));
+        if (!isNaN(peso)) mapa[almox][clienteNorm].pesoTotal += peso;
+      });
+      return mapa;
+    }
+
+    function calcularIndicadoresPainelProgramacao(almox, info, veiculos, hoje, amanha, almoxTotalPVD, opcoesPainel = {}) {
+      const notas = Array.isArray(info?.notas) ? info.notas : [];
+      let qtdD1 = 0;
+      let entradaAtraso = 0;
+      let entradaPrazo = 0;
+      let vencidas = 0;
+      let d0 = 0;
+      let d1 = 0;
+      let dge2 = 0;
+      let pesoFiltrado = 0;
+      const clientes = new Set();
+      const destinos = new Set();
+      const ufs = new Set();
+      const clienteForcado = String(opcoesPainel?.cliente || "").trim();
+      const clienteSnapshot = String(opcoesPainel?.clienteSnapshot || "").trim();
+
+      notas.forEach(n => {
+        const cliente = String(n.cliente || "").trim() || PAINEL_PROG_SEM_CLIENTE;
+        if (cliente) clientes.add(cliente);
+        const destino = String(n.destino || "").trim();
+        if (destino) destinos.add(destino);
+        const uf = String(n.uf || "").trim().toUpperCase();
+        if (uf) ufs.add(uf);
+
+        const peso = parseFloat(String(n.peso || "0").replace(".", "").replace(",", "."));
+        if (!isNaN(peso)) pesoFiltrado += peso;
+
+        const dtLim = toDateOnly(n.dtLim);
+        if (dtLim) {
+          if (dtLim.getTime() <= amanha.getTime()) qtdD1++;
+          const diasParaLimite = Math.round((dtLim.getTime() - hoje.getTime()) / 86400000);
+          if (diasParaLimite < 0) vencidas++;
+          else if (diasParaLimite === 0) d0++;
+          else if (diasParaLimite === 1) d1++;
+          else if (diasParaLimite >= 2) dge2++;
+        }
+
+        const dtCheck = parsePossibleDate(n.checkin);
+        const dtEntrada = parsePossibleDate(n.entrada);
+        let dentroRegra = false;
+        if (dtLim) {
+          if (dtCheck && dtCheck >= dtLim) dentroRegra = true;
+          if (dtEntrada && dtEntrada >= dtLim) dentroRegra = true;
+        }
+        if (dentroRegra) entradaAtraso++;
+        else entradaPrazo++;
+      });
+
+      const totalPVD = opcoesPainel?.totalPVD || almoxTotalPVD?.[almox] || {};
+      const status = getStatusVocativo(almox, veiculos, hoje);
+      const vocNorm = normalizar(almox);
+      const ultimoVeiculo = Array.isArray(veiculos) && veiculos.length ? veiculos[0] : null;
+      const clienteLista = clienteForcado
+        ? [clienteForcado]
+        : Array.from(clientes).filter(Boolean).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      const clienteResumo = clienteLista.length ? clienteLista.join(" / ") : PAINEL_PROG_SEM_CLIENTE;
+      const clienteNorm = normalizar(clienteResumo) || normalizar(PAINEL_PROG_SEM_CLIENTE);
+      const statusVeiculo = status.temProgramado ? "PROGRAMADO" : "NAO PROGRAMADO";
+
+      snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
+      snapshotVocativos[vocNorm] = {
+        ...snapshotVocativos[vocNorm],
+        Vocativo: almox,
+        Cliente: clienteSnapshot || snapshotVocativos[vocNorm].Cliente || clienteResumo,
+        StatusVeiculo: statusVeiculo,
+        TemCarregadoHoje: status.temCarregadoHoje === true,
+        Total_notas: qtdD1,
+        EntradaEmAtraso: entradaAtraso,
+        Atrasadas: vencidas,
+        Vencendo_hoje: d0,
+        Vencendo_amanhã: d1
+      };
+
+      return {
+        vocativo: almox,
+        vocNorm,
+        clienteResumo,
+        clienteNorm,
+        clienteSnapshot: clienteSnapshot || clienteResumo,
+        clientes: clienteLista,
+        clientesNorm: [clienteNorm],
+        destinos: Array.from(destinos).filter(Boolean).sort((a, b) => a.localeCompare(b, "pt-BR")),
+        destinosNorm: Array.from(destinos).map(d => normalizar(d)),
+        ufs: Array.from(ufs).filter(Boolean).sort((a, b) => a.localeCompare(b, "pt-BR")),
+        ufsNorm: Array.from(ufs).map(u => normalizar(u)),
+        statusVeiculo,
+        temProgramado: status.temProgramado,
+        temNaoProgramado: status.temNaoProgramado,
+        temCarregadoHoje: status.temCarregadoHoje === true,
+        pesoTotalPVD: Number(totalPVD.pesoTotal ?? pesoFiltrado ?? 0),
+        totalNotasPVD: Number(totalPVD.totalRegistros ?? notas.length ?? 0),
+        notasD1: qtdD1,
+        entradaAtraso,
+        entradaPrazo,
+        vencidas,
+        d0,
+        d1,
+        dge2,
+        ultimoVeiculo,
+        idVinculado: getIdVinculadoPainelProgramacao(vocNorm),
+        searchBlob: normalizar([
+          almox,
+          clienteResumo,
+          clienteSnapshot,
+          Array.from(destinos).join(" "),
+          Array.from(ufs).join(" "),
+          ultimoVeiculo?.id || "",
+          ultimoVeiculo?.destinos || "",
+          ultimoVeiculo?.refs || ""
+        ].join(" "))
+      };
+    }
+
+    async function montarDadosPainelProgramacaoRapido() {
+      await Promise.all([
+        carregarObsEStatusHojeCache(false),
+        carregarIdsHistoricosVinculados(false),
+        carregarStatusNotasBanco(false)
+      ]);
+      const cache = await prepararCacheAnaliseProgramacao();
+      const totaisPorVocativoCliente = montarTotaisPVDPorVocativoClientePainelProgramacao();
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      const amanha = new Date(hoje);
+      amanha.setDate(hoje.getDate() + 1);
+
+      const linhas = [];
+
+      Object.entries(cache.almoxPendBase || {}).forEach(([almox, info]) => {
+        const vocNorm = normalizar(almox);
+        const veiculos = filtrarVeiculosAtivosVocativo(vocNorm, cache.almoxUltimoVeiculo?.[almox] || []);
+        const notasBase = Array.isArray(info?.notas) ? info.notas : [];
+        const gruposCliente = new Map();
+        const totaisClienteVocativo = totaisPorVocativoCliente[almox] || {};
+
+        Object.values(totaisClienteVocativo).forEach(totalCliente => {
+          const clienteNome = String(totalCliente.clienteNome || "").trim() || PAINEL_PROG_SEM_CLIENTE;
+          const clienteNorm = normalizar(clienteNome) || normalizar(PAINEL_PROG_SEM_CLIENTE);
+          if (!gruposCliente.has(clienteNorm)) {
+            gruposCliente.set(clienteNorm, {
+              clienteNome,
+              clienteNorm,
+              notas: []
+            });
+          }
+        });
+
+        notasBase.forEach(n => {
+          const clienteNome = String(n.cliente || "").trim() || PAINEL_PROG_SEM_CLIENTE;
+          const clienteNorm = normalizar(clienteNome) || normalizar(PAINEL_PROG_SEM_CLIENTE);
+          if (!gruposCliente.has(clienteNorm)) {
+            gruposCliente.set(clienteNorm, {
+              clienteNome,
+              clienteNorm,
+              notas: []
+            });
+          }
+          gruposCliente.get(clienteNorm).notas.push(n);
+        });
+
+        if (!gruposCliente.size) {
+          const clienteNorm = normalizar(PAINEL_PROG_SEM_CLIENTE);
+          gruposCliente.set(clienteNorm, {
+            clienteNome: PAINEL_PROG_SEM_CLIENTE,
+            clienteNorm,
+            notas: []
+          });
+        }
+
+        const clientesSnapshot = Array.from(gruposCliente.values())
+          .map(g => g.clienteNome)
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b, "pt-BR"));
+        const clienteResumoSnapshot = clientesSnapshot.length ? clientesSnapshot.join(" / ") : PAINEL_PROG_SEM_CLIENTE;
+
+        gruposCliente.forEach(grupo => {
+          linhas.push(calcularIndicadoresPainelProgramacao(
+            almox,
+            { notas: grupo.notas },
+            veiculos,
+            hoje,
+            amanha,
+            cache.almoxTotalPVD || {},
+            {
+              cliente: grupo.clienteNome,
+              clienteSnapshot: clienteResumoSnapshot,
+              totalPVD: totaisClienteVocativo[grupo.clienteNorm]
+            }
+          ));
+        });
+      });
+
+      return linhas.sort((a, b) => {
+        const cmpCliente = String(a.clienteResumo || "").localeCompare(String(b.clienteResumo || ""), "pt-BR");
+        if (cmpCliente !== 0) return cmpCliente;
+        return String(a.vocativo || "").localeCompare(String(b.vocativo || ""), "pt-BR");
+      });
+    }
+
+    function sincronizarOpcoesDinamicasPainelProgramacao(tipo, opcoesNovas, inicializadoAtual) {
+      const opcoesAnteriores = getPainelProgOpcoesFiltro(tipo) || [];
+      const selecionadosAnteriores = new Set(getPainelProgSetFiltro(tipo) || []);
+      const estavaTudoSelecionado = inicializadoAtual
+        && opcoesAnteriores.length > 0
+        && selecionadosAnteriores.size === opcoesAnteriores.length;
+
+      const valoresAtuais = new Set((opcoesNovas || []).map(o => o.value));
+
+      if (tipo === "cliente") painelProgClientesDisponiveis = opcoesNovas || [];
+      else if (tipo === "destino") painelProgDestinosDisponiveis = opcoesNovas || [];
+      else if (tipo === "uf") painelProgUfsDisponiveis = opcoesNovas || [];
+
+      if (!inicializadoAtual || estavaTudoSelecionado) {
+        setPainelProgSetFiltro(tipo, new Set(valoresAtuais));
+      } else {
+        setPainelProgSetFiltro(tipo, new Set(
+          Array.from(selecionadosAnteriores).filter(v => valoresAtuais.has(v))
+        ));
+      }
+
+      if (tipo === "cliente") painelProgClientesFiltroInicializado = true;
+      else if (tipo === "destino") painelProgDestinosFiltroInicializado = true;
+      else if (tipo === "uf") painelProgUfsFiltroInicializado = true;
+
+      renderPainelProgMultiFiltro(tipo);
+    }
+
+    function sincronizarFiltrosDinamicosPainelProgramacao(dados) {
+      const clientes = new Map();
+      const destinos = new Map();
+      const ufs = new Map();
+
+      (dados || []).forEach(item => {
+        const cliente = String(item.clienteResumo || "").trim() || PAINEL_PROG_SEM_CLIENTE;
+        const clienteNorm = normalizar(cliente) || normalizar(PAINEL_PROG_SEM_CLIENTE);
+        if (clienteNorm && !clientes.has(clienteNorm)) clientes.set(clienteNorm, cliente);
+
+        (item.destinos || []).forEach(destino => {
+          const label = String(destino || "").trim();
+          const norm = normalizar(label);
+          if (norm && !destinos.has(norm)) destinos.set(norm, label);
+        });
+
+        (item.ufs || []).forEach(uf => {
+          const label = String(uf || "").trim().toUpperCase();
+          const norm = normalizar(label);
+          if (norm && !ufs.has(norm)) ufs.set(norm, label);
+        });
+      });
+
+      const montarOpcoes = (mapa) => Array.from(mapa.entries())
+        .sort((a, b) => a[1].localeCompare(b[1], "pt-BR"))
+        .map(([value, label]) => ({ value, label }));
+
+      sincronizarOpcoesDinamicasPainelProgramacao("cliente", montarOpcoes(clientes), painelProgClientesFiltroInicializado);
+      sincronizarOpcoesDinamicasPainelProgramacao("destino", montarOpcoes(destinos), painelProgDestinosFiltroInicializado);
+      sincronizarOpcoesDinamicasPainelProgramacao("uf", montarOpcoes(ufs), painelProgUfsFiltroInicializado);
+    }
+
+    function filtroPainelProgramacaoPermite(tipo, item) {
+      const opcoes = getPainelProgOpcoesFiltro(tipo);
+      const selecionados = getPainelProgSetFiltro(tipo);
+      if (!opcoes.length) return true;
+      if (selecionados.size === 0) return false;
+      if (selecionados.size >= opcoes.length) return true;
+
+      if (tipo === "cliente") {
+        return selecionados.has(item.clienteNorm);
+      }
+
+      if (tipo === "destino") {
+        const destinosItem = Array.isArray(item.destinosNorm) ? item.destinosNorm : [];
+        return destinosItem.some(v => selecionados.has(v));
+      }
+
+      if (tipo === "uf") {
+        const ufsItem = Array.isArray(item.ufsNorm) ? item.ufsNorm : [];
+        return ufsItem.some(v => selecionados.has(v));
+      }
+
+      if (tipo === "status") {
+        return (
+          (selecionados.has("programado") && item.temProgramado) ||
+          (selecionados.has("naoProgramado") && item.temNaoProgramado) ||
+          (selecionados.has("carregadoHoje") && item.temCarregadoHoje)
+        );
+      }
+
+      if (tipo === "entrada") {
+        return (
+          (selecionados.has("atraso") && Number(item.entradaAtraso || 0) > 0) ||
+          (selecionados.has("prazo") && Number(item.entradaPrazo || 0) > 0)
+        );
+      }
+
+      return (
+        (selecionados.has("vencidas") && Number(item.vencidas || 0) > 0) ||
+        (selecionados.has("d0") && Number(item.d0 || 0) > 0) ||
+        (selecionados.has("d1") && Number(item.d1 || 0) > 0) ||
+        (selecionados.has("dge2") && Number(item.dge2 || 0) > 0)
+      );
+    }
+
+    function filtrarDadosPainelProgramacao(dados) {
+      const termo = normalizar(document.getElementById("painelProgSearchInput")?.value || "");
+
+      return (dados || []).filter(item => {
+        if (termo && !item.searchBlob.includes(termo)) return false;
+        if (!filtroPainelProgramacaoPermite("cliente", item)) return false;
+        if (!filtroPainelProgramacaoPermite("destino", item)) return false;
+        if (!filtroPainelProgramacaoPermite("uf", item)) return false;
+        if (!filtroPainelProgramacaoPermite("status", item)) return false;
+        if (!filtroPainelProgramacaoPermite("entrada", item)) return false;
+        if (!filtroPainelProgramacaoPermite("criticidade", item)) return false;
+        return true;
+      });
+    }
+
+    function renderResumoPainelProgramacao(dados) {
+      const resumoEl = document.getElementById("painelProgramacaoResumo");
+      if (!resumoEl) return;
+      const total = dados.length;
+      const programados = dados.filter(i => i.temProgramado).length;
+      const naoProgramados = dados.filter(i => i.temNaoProgramado).length;
+      const carregadosHoje = dados.filter(i => i.temCarregadoHoje).length;
+      const notas = dados.reduce((acc, i) => acc + Number(i.totalNotasPVD || 0), 0);
+      const peso = dados.reduce((acc, i) => acc + Number(i.pesoTotalPVD || 0), 0);
+
+      const kpis = [
+        ["Cards", formatarNumeroPainelProgramacao(total, 0)],
+        ["Programados", formatarNumeroPainelProgramacao(programados, 0)],
+        ["Não programados", formatarNumeroPainelProgramacao(naoProgramados, 0)],
+        ["Carregados hoje", formatarNumeroPainelProgramacao(carregadosHoje, 0)],
+        ["Notas PVD", formatarNumeroPainelProgramacao(notas, 0)],
+        ["Peso PVD", formatarNumeroPainelProgramacao(peso, 2)]
+      ];
+
+      resumoEl.innerHTML = kpis.map(([label, value]) => `
+        <div class="painelProgKpi">
+          <div class="painelProgKpiLabel">${getTextoPainelProgramacao(label)}</div>
+          <div class="painelProgKpiValue">${getTextoPainelProgramacao(value)}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderUltimoVeiculoPainelProgramacao(veiculo) {
+      if (!veiculo) return `<div class="painelProgVehicleBox"><b>🚛 Último veículo</b><br>Nenhum veículo localizado.</div>`;
+      return `
+        <div class="painelProgVehicleBox">
+          <b>🚛 Último veículo</b><br>
+          • ID ${getTextoPainelProgramacao(veiculo.id || "-")}<br>
+          Prog: ${getTextoPainelProgramacao(formatDateBRLocal(veiculo.dtPrev) || "-")}<br>
+          Carreg: ${getTextoPainelProgramacao(formatDateBRLocal(veiculo.dtCarreg) || "-")}<br>
+          Destinos: ${getTextoPainelProgramacao(veiculo.destinos || "-")}<br>
+          Entrega: ${getTextoPainelProgramacao(formatDateBRLocal(veiculo.dtEntrega) || "-")}<br>
+          Veículo Solicitado: ${getTextoPainelProgramacao(veiculo.veiculoSolicitado || "-")}
+        </div>
+      `;
+    }
+
+    function renderCardPainelProgramacao(item) {
+      const classeStatus = item.temProgramado ? "isProgramado" : "isNaoProgramado";
+      const statusBadge = item.temProgramado
+        ? `<span class="painelProgBadge green">🟢 PROGRAMADO</span>`
+        : `<span class="painelProgBadge red">🔴 NÃO PROGRAMADO</span>`;
+      const carregadoBadge = item.temCarregadoHoje ? `<span class="painelProgBadge blue">🔵 CARREGADO HOJE</span>` : "";
+      const idLabel = item.idVinculado ? `🔗 ID: ${getTextoPainelProgramacao(item.idVinculado)}` : "🔗 VINCULAR ID";
+      const idTitle = item.idVinculado
+        ? `ID vinculado: ${getTextoPainelProgramacao(item.idVinculado)}. Clique para alterar ou limpar o vínculo.`
+        : "Clique para vincular um ID ao vocativo.";
+
+      return `
+        <div class="painelProgCard ${classeStatus}">
+          <div class="painelProgCardTop">
+            <div class="painelProgVocativo">🏭 ${getTextoPainelProgramacao(item.vocativo)}</div>
+            <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;">
+              ${carregadoBadge}
+              ${statusBadge}
+            </div>
+          </div>
+
+          <div class="painelProgLine">👥 Cliente: ${getTextoPainelProgramacao(item.clienteResumo)}</div>
+          <div class="painelProgLine">⚖ Peso Total PVD: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.pesoTotalPVD, 2))}</div>
+          <div class="painelProgLine">📄 Total Notas PVD: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.totalNotasPVD, 0))}</div>
+          <div class="painelProgLine">📦 Notas &lt;= D-1: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.notasD1, 0))}</div>
+
+          <div class="painelProgMetrics">
+            <div class="painelProgMetricBox" style="color:#991b1b;">Entrada em Atraso: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.entradaAtraso, 0))}</div>
+            <div class="painelProgMetricBox" style="color:#14532d;">Entrada No Prazo: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.entradaPrazo, 0))}</div>
+            <div class="painelProgMetricBox" style="color:#dc2626;">🔴 Vencidas: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.vencidas, 0))}</div>
+            <div class="painelProgMetricBox" style="color:#2563eb;">🔵 D0: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.d0, 0))}</div>
+            <div class="painelProgMetricBox" style="color:#16a34a;">🟢 D-1: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.d1, 0))}</div>
+            <div class="painelProgMetricBox" style="color:#15803d;">🟢 &gt;= D-2: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.dge2, 0))}</div>
+          </div>
+
+          ${renderUltimoVeiculoPainelProgramacao(item.ultimoVeiculo)}
+
+          <input type="hidden" data-id-vocativo="${getTextoPainelProgramacao(item.vocNorm)}" value="${getTextoPainelProgramacao(item.idVinculado)}" />
+          <button
+            class="btn secondary"
+            type="button"
+            data-vincular-id-vocativo="${getTextoPainelProgramacao(item.vocNorm)}"
+            style="padding:7px 10px; font-weight:900; margin-top:2px;"
+            title="${idTitle}"
+            onclick="onVincularIdClick(this.getAttribute('data-vincular-id-vocativo'), event)"
+          >${idLabel}</button>
+        </div>
+      `;
+    }
+
+    function renderCardsPainelProgramacao(dados) {
+      const cardsEl = document.getElementById("painelProgramacaoCards");
+      if (!cardsEl) return;
+      if (!dados.length) {
+        cardsEl.innerHTML = `<div class="painelProgEmptyState">Nenhum vocativo encontrado para os filtros selecionados.</div>`;
+        return;
+      }
+
+      const grupos = new Map();
+      dados.forEach(item => {
+        const chave = String(item.clienteResumo || PAINEL_PROG_SEM_CLIENTE).trim() || PAINEL_PROG_SEM_CLIENTE;
+        if (!grupos.has(chave)) grupos.set(chave, []);
+        grupos.get(chave).push(item);
+      });
+
+      const html = Array.from(grupos.entries())
+        .sort((a, b) => a[0].localeCompare(b[0], "pt-BR"))
+        .map(([cliente, itens]) => `
+          <div class="painelProgClienteGrupo">
+            <div class="painelProgClienteHeader">
+              <div class="painelProgClienteTitle">👥 ${getTextoPainelProgramacao(cliente)}</div>
+              <div class="painelProgHint">${itens.length} card(s) | ${new Set(itens.map(i => i.vocNorm)).size} vocativo(s)</div>
+            </div>
+            <div class="painelProgCardsGrid">
+              ${itens.map(renderCardPainelProgramacao).join("")}
+            </div>
+          </div>
+        `).join("");
+
+      cardsEl.innerHTML = html;
+    }
+
+    async function renderPainelProgramacaoRapido(rolarTopo = false) {
+      const cardsEl = document.getElementById("painelProgramacaoCards");
+      const baseEl = document.getElementById("painelProgramacaoBaseInfo");
+      if (cardsEl) cardsEl.innerHTML = `<div class="painelProgEmptyState">Carregando painel de programação...</div>`;
+
+      try {
+        const dados = await montarDadosPainelProgramacaoRapido();
+        sincronizarFiltrosDinamicosPainelProgramacao(dados);
+        const filtrados = filtrarDadosPainelProgramacao(dados);
+        if (baseEl) {
+          baseEl.textContent = `Base exibida: ${filtrados.length} de ${dados.length} card(s) por cliente PVD`;
+        }
+        renderResumoPainelProgramacao(filtrados);
+        renderCardsPainelProgramacao(filtrados);
+        if (rolarTopo) window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (err) {
+        console.error("Erro ao renderizar Painel de Programação:", err);
+        if (cardsEl) {
+          cardsEl.innerHTML = `
+            <div class="painelProgEmptyState" style="border-color:#fecaca;color:#991b1b;background:#fef2f2;">
+              Não foi possível montar o Painel de Programação.<br>
+              <span style="font-size:11px;">${getTextoPainelProgramacao(err && err.message ? err.message : err)}</span>
+            </div>
+          `;
+        }
+      }
     }
 
     function formatDateTimeBRLocal(v) {
@@ -8157,6 +9492,7 @@ return null;
     dateFilter.onchange = aplicarFiltrosEBusca;
 
     document.getElementById("btnAlmoxPendentes").onclick = agendarListarAlmoxPendentes;
+    document.getElementById("btnPainelProgramacaoRapido")?.addEventListener("click", abrirPainelProgramacaoRapido);
     document.getElementById("btnResumoVeiculosPage")?.addEventListener("click", abrirPaginaResumoVeiculos);
 
     chkMostrarAtrasados.onchange = () => {
@@ -8997,7 +10333,17 @@ return null;
     }
 
     function getVincularIdButton(vocNorm) {
-      return document.querySelector(`button[data-vincular-id-vocativo="${vocNorm}"]`);
+      const botoes = Array.from(document.querySelectorAll(`button[data-vincular-id-vocativo="${vocNorm}"]`));
+      if (!botoes.length) return null;
+      const visivel = botoes.find(btn => {
+        let el = btn;
+        while (el && el !== document.body) {
+          if (el.style && el.style.display === "none") return false;
+          el = el.parentElement;
+        }
+        return true;
+      });
+      return visivel || botoes[0];
     }
 
     function getIdInput(vocNorm) {
@@ -9362,6 +10708,10 @@ return null;
       window.__analisePerf.opcoesCacheKey = "";
       window.__analisePerf.clientesCacheKey = "";
       if (options.skipRender === true) return Promise.resolve();
+      if (isPainelProgramacaoVisivel()) {
+        window.__analiseProgramacaoCache = null;
+        return renderPainelProgramacaoRapido(false);
+      }
       return agendarListarAlmoxPendentes();
     }
 
