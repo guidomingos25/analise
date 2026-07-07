@@ -2249,7 +2249,7 @@
 
     .painelProgKpiGrid {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 10px;
       margin-bottom: 14px;
     }
@@ -2385,6 +2385,20 @@
       background: #dbeafe;
       color: #1e3a8a;
       border-color: #2563eb;
+    }
+
+    .painelProgBadge.orange {
+      background: #ffedd5;
+      color: #9a3412;
+      border-color: #f97316;
+    }
+
+    .painelProgStatusLeft {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+      min-width: 0;
     }
 
     .painelProgLine {
@@ -2679,7 +2693,8 @@
       status: [
         { value: "programado", label: "🟢 Programado" },
         { value: "naoProgramado", label: "🔴 Não programado" },
-        { value: "carregadoHoje", label: "🔵 Carregado hoje" }
+        { value: "carregadoHoje", label: "🔵 Carregado hoje" },
+        { value: "carregadoOntem", label: "🟠 Carregado ontem" }
       ],
       entrada: [
         { value: "atraso", label: "Entrada em atraso" },
@@ -3092,7 +3107,8 @@
         const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
         if (badgeDiv) {
           const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
-          badgeDiv.innerHTML = renderStatusBadge(st, temCarregadoHoje);
+          const temCarregadoOntem = (snapshotVocativos[vocNorm].TemCarregadoOntem === true);
+          badgeDiv.innerHTML = renderStatusBadge(st, temCarregadoHoje, temCarregadoOntem);
         }
       });
     }
@@ -6058,6 +6074,7 @@
 
       ${criarCard("🚛 STATUS PROGRAMAÇÃO", [
         { label: "🔵 Carregados Hoje", valor: stats.carregadosHoje, cor: "#2563eb" },
+        { label: "🟠 Carregados Ontem", valor: stats.carregadosOntem, cor: "#f97316" },
         { label: "🟢 Programados", valor: stats.programados, cor: "#16a34a" },
         { label: "🔴 Não Programados", valor: stats.semVeiculo, cor: "#dc2626" }
       ], "chartKpiStatus")}
@@ -7178,7 +7195,7 @@ return null;
             opt.selected = true;
           });
 
-          filtroVeiculo = ["carregado", "programado", "sem"];
+          filtroVeiculo = ["carregado", "carregadoOntem", "programado", "sem"];
 
         } else {
           filtroVeiculo = selecionados;
@@ -7273,6 +7290,7 @@ return null;
         totalAtraso: 0,
         totalPrazo: 0,
         carregadosHoje: 0,
+        carregadosOntem: 0,
         programados: 0,
         semVeiculo: 0,
 
@@ -7570,8 +7588,11 @@ return null;
 
 
         let temCarregadoHoje = false;
+        let temCarregadoOntem = false;
         let temSemCarregamento = false;
         let temComCarregamento = false;
+        const ontem = new Date(hoje);
+        ontem.setDate(hoje.getDate() - 1);
 
         if (veiculos.length) {
 
@@ -7586,6 +7607,10 @@ return null;
 
               if (dtCarreg.getTime() === hoje.getTime()) {
                 temCarregadoHoje = true;
+              }
+
+              if (dtCarreg.getTime() === ontem.getTime()) {
+                temCarregadoOntem = true;
               }
 
               temComCarregamento = true;
@@ -7643,6 +7668,10 @@ return null;
             mostrar = true;
           }
 
+          if (filtroVeiculo.includes("carregadoOntem") && temCarregadoOntem) {
+            mostrar = true;
+          }
+
           if (filtroVeiculo.includes("programado") && temProgramado) {
             mostrar = true;
           }
@@ -7680,6 +7709,7 @@ return null;
         }
 
         if (temCarregadoHoje) stats.carregadosHoje++;
+        if (temCarregadoOntem) stats.carregadosOntem++;
         if (temProgramado) stats.programados++;
         if (temNaoProgramado) stats.semVeiculo++;
 
@@ -7701,6 +7731,23 @@ return null;
       margin-right:6px;
     ">
       🔵 CARREGADO HOJE
+    </span>
+  `;
+        }
+
+        if (temCarregadoOntem) {
+          statusVeiculoBadge += `
+    <span style="
+      background:#ffedd5;
+      color:#9a3412;
+      border:2px solid #f97316;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      margin-right:6px;
+    ">
+      🟠 CARREGADO ONTEM
     </span>
   `;
         }
@@ -7984,6 +8031,7 @@ return null;
             Vocativo: almox,
             StatusVeiculo: temProgramado ? "PROGRAMADO" : "NAO PROGRAMADO",
             CarregadoHoje: temCarregadoHoje ? "SIM" : "NAO",
+            CarregadoOntem: temCarregadoOntem ? "SIM" : "NAO",
             Nota: n.nota || "",
             NumeroOEF: n.numeroOEF || "",
             StatusBanco: n.statusBanco || "",
@@ -8215,6 +8263,7 @@ return null;
           Cliente: clienteResumo,
           StatusVeiculo: statusVeiculo,
           TemCarregadoHoje: temCarregadoHoje === true,
+          TemCarregadoOntem: temCarregadoOntem === true,
           Total_notas: info.qtd || 0,
           EntradaEmAtraso: qtdDentroRegra || 0,
           Atrasadas: dMaisVoc || 0,
@@ -8234,6 +8283,7 @@ return null;
           Cliente: clienteResumo || "",
           StatusVeiculo: statusVeiculo,
           CarregadoHoje: temCarregadoHoje ? "SIM" : "NAO",
+          CarregadoOntem: temCarregadoOntem ? "SIM" : "NAO",
           TotalNotasPVD: almoxTotalPVD[almox]?.totalRegistros || 0,
           PesoTotalPVD: Number(almoxTotalPVD[almox]?.pesoTotal || 0).toLocaleString("pt-BR", {
             minimumFractionDigits: 2,
@@ -9105,6 +9155,7 @@ return null;
         Cliente: clienteSnapshot || snapshotVocativos[vocNorm].Cliente || clienteResumo,
         StatusVeiculo: statusVeiculo,
         TemCarregadoHoje: status.temCarregadoHoje === true,
+        TemCarregadoOntem: status.temCarregadoOntem === true,
         Total_notas: qtdD1,
         EntradaEmAtraso: entradaAtraso,
         Atrasadas: vencidas,
@@ -9128,6 +9179,7 @@ return null;
         temProgramado: status.temProgramado,
         temNaoProgramado: status.temNaoProgramado,
         temCarregadoHoje: status.temCarregadoHoje === true,
+        temCarregadoOntem: status.temCarregadoOntem === true,
         pesoTotalPVD: Number(totalPVD.pesoTotal ?? pesoFiltrado ?? 0),
         totalNotasPVD: Number(totalPVD.totalRegistros ?? notas.length ?? 0),
         notasD1: qtdD1,
@@ -9145,6 +9197,8 @@ return null;
           clienteSnapshot,
           Array.from(destinos).join(" "),
           Array.from(ufs).join(" "),
+          status.temCarregadoHoje ? "carregado hoje" : "",
+          status.temCarregadoOntem ? "carregado ontem" : "",
           ultimoVeiculo?.id || "",
           ultimoVeiculo?.destinos || "",
           ultimoVeiculo?.refs || ""
@@ -9323,7 +9377,8 @@ return null;
         return (
           (selecionados.has("programado") && item.temProgramado) ||
           (selecionados.has("naoProgramado") && item.temNaoProgramado) ||
-          (selecionados.has("carregadoHoje") && item.temCarregadoHoje)
+          (selecionados.has("carregadoHoje") && item.temCarregadoHoje) ||
+          (selecionados.has("carregadoOntem") && item.temCarregadoOntem)
         );
       }
 
@@ -9364,6 +9419,7 @@ return null;
       const programados = dados.filter(i => i.temProgramado).length;
       const naoProgramados = dados.filter(i => i.temNaoProgramado).length;
       const carregadosHoje = dados.filter(i => i.temCarregadoHoje).length;
+      const carregadosOntem = dados.filter(i => i.temCarregadoOntem).length;
       const notas = dados.reduce((acc, i) => acc + Number(i.totalNotasPVD || 0), 0);
       const peso = dados.reduce((acc, i) => acc + Number(i.pesoTotalPVD || 0), 0);
 
@@ -9372,6 +9428,7 @@ return null;
         ["Programados", formatarNumeroPainelProgramacao(programados, 0)],
         ["Não programados", formatarNumeroPainelProgramacao(naoProgramados, 0)],
         ["Carregados hoje", formatarNumeroPainelProgramacao(carregadosHoje, 0)],
+        ["Carregados ontem", formatarNumeroPainelProgramacao(carregadosOntem, 0)],
         ["Notas PVD", formatarNumeroPainelProgramacao(notas, 0)],
         ["Peso PVD", formatarNumeroPainelProgramacao(peso, 2)]
       ];
@@ -9404,7 +9461,10 @@ return null;
       const statusBadge = item.temProgramado
         ? `<span class="painelProgBadge green">🟢 PROGRAMADO</span>`
         : `<span class="painelProgBadge red">🔴 NÃO PROGRAMADO</span>`;
-      const carregadoBadge = item.temCarregadoHoje ? `<span class="painelProgBadge blue">🔵 CARREGADO HOJE</span>` : `<span></span>`;
+      const carregadoBadges = [
+        item.temCarregadoHoje ? `<span class="painelProgBadge blue">🔵 CARREGADO HOJE</span>` : "",
+        item.temCarregadoOntem ? `<span class="painelProgBadge orange">🟠 CARREGADO ONTEM</span>` : ""
+      ].filter(Boolean).join("");
       const idLabel = item.idVinculado ? `🔗 ID: ${getTextoPainelProgramacao(item.idVinculado)}` : "🔗 VINCULAR ID";
       const idTitle = item.idVinculado
         ? `ID vinculado: ${getTextoPainelProgramacao(item.idVinculado)}. Clique para alterar ou limpar o vínculo.`
@@ -9416,7 +9476,7 @@ return null;
             <div class="painelProgVocativo" title="${getTextoPainelProgramacao(item.vocativo)}">🏭 ${getTextoPainelProgramacao(item.vocativo)}</div>
           </div>
           <div class="painelProgStatusRow">
-            <div>${carregadoBadge}</div>
+            <div class="painelProgStatusLeft">${carregadoBadges || ""}</div>
             <div>${statusBadge}</div>
           </div>
 
@@ -10262,6 +10322,7 @@ return null;
 
       let statusAtual = "NAO PROGRAMADO";
       let temCarregadoHojeAtual = false;
+      let temCarregadoOntemAtual = false;
 
       const fallbackStatus = hasStatusOverride
         ? ((overrides.status === "PROGRAMADO") ? "PROGRAMADO" : "NAO PROGRAMADO")
@@ -10275,9 +10336,11 @@ return null;
       const visualAtual = obterStatusVisualVocativo(vocNorm, fallbackStatus);
       statusAtual = visualAtual.status;
       temCarregadoHojeAtual = visualAtual.temCarregadoHoje === true;
+      temCarregadoOntemAtual = visualAtual.temCarregadoOntem === true;
 
       snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
       snapshotVocativos[vocNorm].TemCarregadoHoje = temCarregadoHojeAtual === true;
+      snapshotVocativos[vocNorm].TemCarregadoOntem = temCarregadoOntemAtual === true;
 
       return {
         DataRef: hojeISO(),
@@ -10464,13 +10527,15 @@ return null;
         const visual = getStatusVocativo(almoxReal, veiculos, hoje);
         return {
           status: visual.temProgramado ? "PROGRAMADO" : "NAO PROGRAMADO",
-          temCarregadoHoje: visual.temCarregadoHoje === true
+          temCarregadoHoje: visual.temCarregadoHoje === true,
+          temCarregadoOntem: visual.temCarregadoOntem === true
         };
       }
 
       return {
         status: fallbackStatus === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO",
-        temCarregadoHoje: false
+        temCarregadoHoje: false,
+        temCarregadoOntem: false
       };
     }
 
@@ -10488,6 +10553,7 @@ return null;
           status: "NAO PROGRAMADO",
           id: "",
           temCarregadoHoje: false,
+          temCarregadoOntem: false,
           veiculo: null
         };
       }
@@ -10496,13 +10562,17 @@ return null;
       const dtCarreg = parsePossibleDate(veiculo["DT. CARREGAMENTO"]);
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
+      const ontem = new Date(hoje);
+      ontem.setDate(hoje.getDate() - 1);
       const dtCarregOnly = dtCarreg ? new Date(dtCarreg.getFullYear(), dtCarreg.getMonth(), dtCarreg.getDate()) : null;
       const temCarregadoHoje = !!(dtCarregOnly && isSameDateOnly(dtCarregOnly, hoje));
+      const temCarregadoOntem = !!(dtCarregOnly && isSameDateOnly(dtCarregOnly, ontem));
 
       return {
         status: dtCarreg ? "NAO PROGRAMADO" : "PROGRAMADO",
         id: idCanonico,
         temCarregadoHoje,
+        temCarregadoOntem,
         veiculo
       };
     }
@@ -10732,7 +10802,7 @@ return null;
       });
     }
 
-    function renderStatusBadge(status, temCarregadoHoje) {
+    function renderStatusBadge(status, temCarregadoHoje, temCarregadoOntem = false) {
 
       let html = "";
 
@@ -10742,6 +10812,15 @@ return null;
         background:#dbeafe; color:#1e3a8a; border:2px solid #2563eb;
         padding:6px 12px; border-radius:999px; font-size:12px; font-weight:900; margin-right:6px;
       ">🔵 CARREGADO HOJE</span>
+    `;
+      }
+
+      if (temCarregadoOntem) {
+        html += `
+      <span style="
+        background:#ffedd5; color:#9a3412; border:2px solid #f97316;
+        padding:6px 12px; border-radius:999px; font-size:12px; font-weight:900; margin-right:6px;
+      ">🟠 CARREGADO ONTEM</span>
     `;
       }
 
@@ -10779,11 +10858,13 @@ return null;
       const visual = obterStatusVisualVocativo(vocNorm, status === "PROGRAMADO" ? "PROGRAMADO" : "NAO PROGRAMADO");
       const statusFinal = visual.status;
       const temCarregadoHoje = visual.temCarregadoHoje === true;
+      const temCarregadoOntem = visual.temCarregadoOntem === true;
 
       window.statusDrafts[vocNorm] = statusFinal;
       window.idDrafts[vocNorm] = idFinal;
       snapshotVocativos[vocNorm].StatusVeiculo = statusFinal;
       snapshotVocativos[vocNorm].TemCarregadoHoje = temCarregadoHoje;
+      snapshotVocativos[vocNorm].TemCarregadoOntem = temCarregadoOntem;
 
       const sel = getStatusSelect(vocNorm);
       if (sel) sel.value = statusFinal;
@@ -10801,7 +10882,7 @@ return null;
 
       const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
       if (badgeDiv) {
-        badgeDiv.innerHTML = renderStatusBadge(statusFinal, temCarregadoHoje);
+        badgeDiv.innerHTML = renderStatusBadge(statusFinal, temCarregadoHoje, temCarregadoOntem);
       }
 
       toggleIdField(vocNorm, statusFinal);
@@ -10998,6 +11079,7 @@ return null;
         snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
         snapshotVocativos[vocNorm].StatusVeiculo = statusFinal;
         snapshotVocativos[vocNorm].TemCarregadoHoje = visualStatus.temCarregadoHoje === true;
+        snapshotVocativos[vocNorm].TemCarregadoOntem = visualStatus.temCarregadoOntem === true;
         toggleIdField(vocNorm, statusFinal);
 
         const btnVincular = getVincularIdButton(vocNorm);
@@ -11011,7 +11093,8 @@ return null;
         const badgeDiv = document.getElementById(`statusBadge-${vocNorm}`);
         if (badgeDiv) {
           const temCarregadoHoje = (snapshotVocativos[vocNorm].TemCarregadoHoje === true);
-          badgeDiv.innerHTML = renderStatusBadge(statusFinal, temCarregadoHoje);
+          const temCarregadoOntem = (snapshotVocativos[vocNorm].TemCarregadoOntem === true);
+          badgeDiv.innerHTML = renderStatusBadge(statusFinal, temCarregadoHoje, temCarregadoOntem);
         }
       });
     }
@@ -11900,34 +11983,18 @@ return null;
       Object.entries(almoxPend || {}).forEach(([almox, info]) => {
         const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), almoxUltimoVeiculo[almox] || []);
 
-        let temCarregadoHoje = false;
-        let temSemCarregamento = false;
-        let temComCarregamento = false;
-
-        if (veiculos.length) {
-          veiculos.forEach(v => {
-            const dtCarreg = parsePossibleDate(v.dtCarreg);
-            if (dtCarreg) {
-              dtCarreg.setHours(0, 0, 0, 0);
-              if (dtCarreg.getTime() === hoje.getTime()) temCarregadoHoje = true;
-              temComCarregamento = true;
-            } else {
-              temSemCarregamento = true;
-            }
-          });
-        }
-
-        let temProgramado = false;
-        let temNaoProgramado = false;
-        if (temSemCarregamento) temProgramado = true;
-        else if (temComCarregamento) temNaoProgramado = true;
-        else if (veiculos.length === 0) temNaoProgramado = true;
+        const statusVocativoFiltro = getStatusVocativo(almox, veiculos, hoje);
+        const temCarregadoHoje = statusVocativoFiltro.temCarregadoHoje === true;
+        const temCarregadoOntem = statusVocativoFiltro.temCarregadoOntem === true;
+        const temProgramado = statusVocativoFiltro.temProgramado === true;
+        const temNaoProgramado = statusVocativoFiltro.temNaoProgramado === true;
 
         const vocNormAtual = normalizar(almox);
 
         if (filtroVeiculo.length > 0) {
           let mostrar = false;
           if (filtroVeiculo.includes("carregado") && temCarregadoHoje) mostrar = true;
+          if (filtroVeiculo.includes("carregadoOntem") && temCarregadoOntem) mostrar = true;
           if (filtroVeiculo.includes("programado") && temProgramado) mostrar = true;
           if (filtroVeiculo.includes("sem") && temNaoProgramado) mostrar = true;
           if (!mostrar) return;
@@ -11970,7 +12037,7 @@ return null;
       const selecionados = Array.from(selectVeiculo.selectedOptions).map(o => o.value);
 
       if (selecionados.includes("all")) {
-        return ["carregado", "programado", "sem"];
+        return ["carregado", "carregadoOntem", "programado", "sem"];
       }
 
       return selecionados;
@@ -12003,8 +12070,11 @@ return null;
 
     function getStatusVocativo(almox, veiculos, hoje) {
       let temCarregadoHoje = false;
+      let temCarregadoOntem = false;
       let temSemCarregamento = false;
       let temComCarregamento = false;
+      const ontem = new Date(hoje);
+      ontem.setDate(hoje.getDate() - 1);
 
       if (Array.isArray(veiculos) && veiculos.length) {
         veiculos.forEach(v => {
@@ -12015,6 +12085,10 @@ return null;
 
             if (dtCarreg.getTime() === hoje.getTime()) {
               temCarregadoHoje = true;
+            }
+
+            if (dtCarreg.getTime() === ontem.getTime()) {
+              temCarregadoOntem = true;
             }
 
             temComCarregamento = true;
@@ -12029,6 +12103,7 @@ return null;
 
       return {
         temCarregadoHoje,
+        temCarregadoOntem,
         temProgramado,
         temNaoProgramado
       };
@@ -12104,6 +12179,7 @@ return null;
       let mostrar = false;
 
       if (filtroVeiculo.includes("carregado") && st.temCarregadoHoje) mostrar = true;
+      if (filtroVeiculo.includes("carregadoOntem") && st.temCarregadoOntem) mostrar = true;
       if (filtroVeiculo.includes("programado") && st.temProgramado) mostrar = true;
       if (filtroVeiculo.includes("sem") && st.temNaoProgramado) mostrar = true;
 
@@ -12143,7 +12219,7 @@ return null;
         clientes: new Set()
       };
 
-      const veiculoOpcoes = ["carregado", "programado", "sem"];
+      const veiculoOpcoes = ["carregado", "carregadoOntem", "programado", "sem"];
       const dataLimiteOpcoes = [
         "ateAmanha",
         "entradaNF_Atraso6",
@@ -12951,9 +13027,10 @@ return null;
           <input class="filtersCompactInput" id="searchOefPopup" placeholder="🔢 Filtrar por Número OEF..." type="text" />
         </div>
         <div class="filtersRow filtersRowBottom">
-        <select id="filterVeiculoPopup" multiple="" size="4" class="filtersCompactInput">
+        <select id="filterVeiculoPopup" multiple="" size="5" class="filtersCompactInput">
           <option value="all">✅ Selecionar Todos</option>
           <option value="carregado">🔵 Carregados Hoje</option>
+          <option value="carregadoOntem">🟠 Carregados Ontem</option>
           <option value="programado">🟢 Programados</option>
           <option value="sem">🔴 Não Programados</option>
         </select>
