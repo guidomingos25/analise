@@ -2777,7 +2777,9 @@
       padding: 4px 5px;
       display: grid;
       gap: 2px;
-      margin-top: 1px;
+      margin-top: 2px;
+      margin-bottom: 2px;
+      flex: 0 0 auto;
     }
 
     .painelProgJanelaLine {
@@ -10340,10 +10342,12 @@ return null;
     function fecharPopupPainelProgramacao(ev) {
       if (ev) { ev.preventDefault(); ev.stopPropagation(); }
       painelProgCardsSelecionados.clear();
-      atualizarSelecaoVisualPainelProgramacao();
+      painelProgCardsDatasAbertas.clear();
+      painelProgAlturaCardsDatas.clear();
       const popup = getPainelProgPopupEl();
       popup.classList.remove("open");
       popup.innerHTML = "";
+      renderCardsPainelProgramacao(painelProgDadosAtuais);
     }
 
     function onClickPainelProgCard(cardEl, ev) {
@@ -10626,6 +10630,8 @@ return null;
       const estiloAltura = alturaFixa > 0
         ? ` style="height:${alturaFixa}px;min-height:${alturaFixa}px;overflow:hidden;"`
         : "";
+      const janelaCarregamentoCardTexto = normalizar(item.janelaCarregamentoTexto) === "NAO CADASTRADO" ? "" : (item.janelaCarregamentoTexto || "");
+      const janelaEntregaCardTexto = normalizar(item.janelaEntregaTexto) === "NAO CADASTRADO" ? "" : (item.janelaEntregaTexto || "");
 
       return `
         <div class="painelProgCard ${classeStatus}${classeSelecionado}" data-painel-prog-key="${getTextoPainelProgramacao(item.cardKey || "")}" onclick="onClickPainelProgCard(this, event)"${estiloAltura}>
@@ -10638,10 +10644,6 @@ return null;
           </div>
 
           <div class="painelProgLine">EMBARQUE: ${getTextoPainelProgramacao(item.temProgramado ? (item.tipoEmbarque || "-") : "-")}</div>
-          <div class="painelProgJanelaBox">
-            <div class="painelProgJanelaLine"><b>🗓️ Carga:</b> ${getTextoPainelProgramacao(item.janelaCarregamentoTexto || "Não cadastrado")}</div>
-            <div class="painelProgJanelaLine"><b>🚚 Entrega:</b> ${getTextoPainelProgramacao(item.janelaEntregaTexto || "Não cadastrado")}</div>
-          </div>
           <div class="painelProgLine">⚖ Peso Total PVD: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.pesoTotalPVD, 2))}</div>
           <div class="painelProgLine">📄 Total Notas PVD: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.totalNotasPVD, 0))}</div>
           <div class="painelProgLine">📦 Notas &lt;= D-1: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.notasD1, 0))}</div>
@@ -10659,6 +10661,11 @@ return null;
 
               ${renderUltimoVeiculoPainelProgramacao(item.ultimoVeiculo)}
             `}
+          </div>
+
+          <div class="painelProgJanelaBox">
+            <div class="painelProgJanelaLine"><b>Carga:</b> ${getTextoPainelProgramacao(janelaCarregamentoCardTexto)}</div>
+            <div class="painelProgJanelaLine"><b>Entrega:</b> ${getTextoPainelProgramacao(janelaEntregaCardTexto)}</div>
           </div>
 
           <input type="hidden" data-id-vocativo="${getTextoPainelProgramacao(item.vocNorm)}" value="${getTextoPainelProgramacao(item.idVinculado)}" />
