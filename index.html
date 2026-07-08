@@ -2678,6 +2678,213 @@
       border-color: #ef4444;
     }
 
+    .painelProgCard.isExpresso {
+      background: linear-gradient(135deg, #fb923c 0%, #fdba74 24%, #fff7ed 58%, #ffffff 100%) !important;
+      border-color: #ea580c !important;
+      box-shadow:
+        0 0 0 2px rgba(234, 88, 12, 0.55),
+        0 16px 34px rgba(194, 65, 12, 0.34) !important;
+    }
+
+    .painelProgCard.isExpresso:hover {
+      box-shadow:
+        0 0 0 3px rgba(234, 88, 12, 0.70),
+        0 18px 38px rgba(194, 65, 12, 0.42) !important;
+    }
+
+    .painelProgSeloExpresso {
+      position: absolute;
+      top: -11px;
+      right: -12px;
+      z-index: 8;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      min-height: 38px;
+      padding: 4px 7px 3px;
+      border-radius: 13px;
+      background: linear-gradient(180deg, #c2410c 0%, #ea580c 100%);
+      color: #ffffff;
+      border: 2px solid #ffffff;
+      box-shadow: 0 8px 18px rgba(124, 45, 18, 0.45);
+      transform: rotate(4deg);
+      pointer-events: auto;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .painelProgSeloExpresso strong {
+      font-size: 17px;
+      font-weight: 1000;
+      letter-spacing: .02em;
+      line-height: .95;
+    }
+
+    .painelProgSeloExpresso small {
+      margin-top: 2px;
+      font-size: 6.3px;
+      font-weight: 1000;
+      letter-spacing: .04em;
+      line-height: 1;
+    }
+
+    .painelProgCard.isExpresso {
+      overflow: visible;
+    }
+
+    .painelProgExpressoTooltip {
+      display: none !important;
+    }
+
+    .painelProgExpressoTooltipGlobal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 305px;
+      max-width: min(305px, calc(100vw - 18px));
+      max-height: min(360px, calc(100vh - 18px));
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: none;
+      z-index: 2147483647;
+      padding: 8px;
+      border-radius: 12px;
+      border: 2px solid #ea580c;
+      background: #fff7ed;
+      color: #111827;
+      box-shadow:
+        0 18px 46px rgba(15, 23, 42, 0.34),
+        0 0 0 3px rgba(234, 88, 12, 0.14);
+      pointer-events: auto;
+      text-align: left;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #fb923c #ffedd5;
+    }
+
+    .painelProgExpressoTooltipGlobal::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .painelProgExpressoTooltipGlobal::-webkit-scrollbar-track {
+      background: #ffedd5;
+      border-radius: 999px;
+    }
+
+    .painelProgExpressoTooltipGlobal::-webkit-scrollbar-thumb {
+      background: #fb923c;
+      border-radius: 999px;
+      border: 2px solid #ffedd5;
+    }
+
+    .painelProgExpressoTooltipGlobal.open {
+      display: block;
+    }
+
+    .painelProgExpressoTooltipTitle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(234, 88, 12, 0.30);
+      font-size: 9.5px;
+      font-weight: 1000;
+      color: #9a3412;
+      text-transform: uppercase;
+      letter-spacing: .035em;
+      line-height: 1.12;
+    }
+
+    .painelProgExpressoTooltipCount {
+      flex-shrink: 0;
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: #ea580c;
+      color: #ffffff;
+      font-size: 8.5px;
+      font-weight: 1000;
+      line-height: 1;
+    }
+
+    .painelProgExpressoRegistros {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .painelProgExpressoRegistro {
+      background: #ffffff;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .painelProgExpressoRegistroHead {
+      padding: 5px 7px;
+      background: #ffedd5;
+      color: #7c2d12;
+      font-size: 8.8px;
+      font-weight: 1000;
+      text-transform: uppercase;
+      letter-spacing: .035em;
+      border-bottom: 1px solid #fed7aa;
+    }
+
+    .painelProgExpressoCampo {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: 6px;
+      padding: 5px 7px;
+      border-bottom: 1px solid #ffedd5;
+      font-size: 9.6px;
+      line-height: 1.2;
+    }
+
+    .painelProgExpressoCampo:last-child {
+      border-bottom: none;
+    }
+
+    .painelProgExpressoCampoLabel {
+      color: #9a3412;
+      font-weight: 1000;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+      font-size: 8px;
+    }
+
+    .painelProgExpressoCampoValor {
+      color: #0f172a;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      white-space: normal;
+    }
+
+    .painelProgExpressoTooltipEmpty {
+      padding: 8px;
+      border-radius: 9px;
+      background: #ffffff;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      font-size: 9px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .painelProgExpressoTooltipGlobal {
+        width: min(305px, calc(100vw - 18px));
+      }
+
+      .painelProgExpressoCampo {
+        grid-template-columns: 84px minmax(0, 1fr);
+      }
+    }
+
     .painelProgCardTop {
       display: block;
       min-width: 0;
@@ -7395,6 +7602,7 @@
           endWms: getFieldValue(r, ["End. WMS", "END. WMS", "End WMS", "END WMS"]) || "",
           volumes: getFieldValue(r, ["Volumes", "VOLUMES"]) || "",
           mercadoria: getFieldValue(r, ["Mercadoria", "MERCADORIA"]) || "",
+          prioridade: getFieldValue(r, ["Prioridade", "PRIORIDADE", "prioridade"]) || "",
           checkin: r["Data de Check in"],
           entrada: r["Data de Entrada da Nota"],
           finalEntrega: r["Dt Final Entrega"],
@@ -9795,12 +10003,30 @@ return null;
             bps: new Set(),
             onus: new Set(),
             alertasMercadoriaCount: 0,
-            alertasPesoCount: 0
+            alertasPesoCount: 0,
+            expressoCount: 0,
+            expressoDetalhes: []
           };
         }
 
         const totalCliente = mapa[almox][clienteNorm];
         totalCliente.totalRegistros++;
+
+        const prioridadeNorm = normalizar(getFieldValue(r, ["Prioridade", "PRIORIDADE", "prioridade"]) || "");
+        if (prioridadeNorm === "EXPRESSO") {
+          totalCliente.expressoCount++;
+          totalCliente.expressoDetalhes.push({
+            nota: getFieldValue(r, ["Nota", "NOTA", "nota"]) || "",
+            numeroOEF: getFieldValue(r, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF", "numeroOEF"]) || "",
+            peso: getFieldValue(r, ["Peso", "PESO", "peso"]) || "",
+            volumes: getFieldValue(r, ["Volumes", "VOLUMES", "volumes"]) || "",
+            fornecedor: getFieldValue(r, ["Fornecedor", "FORNECEDOR", "fornecedor"]) || "",
+            dtLimiteEmbarque: getFieldValue(r, ["Dt Limite Embarque", "DT LIMITE EMBARQUE", "Dt. Limite Embarque"]) || "",
+            dtFinalEntrega: getFieldValue(r, ["Dt Final Entrega", "DT FINAL ENTREGA", "Dt. Final Entrega"]) || "",
+            bpDestino: getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino", "bpDestino"]) || "",
+            onu: getFieldValue(r, ["ONU", "Onu", "onu"]) || ""
+          });
+        }
 
         const peso = parsePesoPVD(r["Peso"]);
         if (peso) totalCliente.pesoTotal += peso;
@@ -9880,6 +10106,8 @@ return null;
       const onusNotas = new Set();
       let alertasMercadoriaNotas = 0;
       let alertasPesoNotas = 0;
+      let expressoNotas = 0;
+      const expressoDetalhesNotas = [];
       const clienteForcado = String(opcoesPainel?.cliente || "").trim();
       const clienteSnapshot = String(opcoesPainel?.clienteSnapshot || "").trim();
 
@@ -9902,6 +10130,22 @@ return null;
         const mercadoriaNormNota = normalizar(n.mercadoria || "");
         if (mercadoriaNormNota.includes("TUBO") || mercadoriaNormNota.includes("CHAPA")) {
           alertasMercadoriaNotas++;
+        }
+
+        const prioridadeNormNota = normalizar(n.prioridade || "");
+        if (prioridadeNormNota === "EXPRESSO") {
+          expressoNotas++;
+          expressoDetalhesNotas.push({
+            nota: n.nota || "",
+            numeroOEF: n.numeroOEF || "",
+            peso: n.peso || "",
+            volumes: n.volumes || "",
+            fornecedor: n.fornecedor || "",
+            dtLimiteEmbarque: n.dtLim || "",
+            dtFinalEntrega: n.finalEntrega || "",
+            bpDestino: n.bpDestino || "",
+            onu: n.onu || ""
+          });
         }
 
         if (peso > 2500) {
@@ -9942,6 +10186,10 @@ return null;
       ).filter(Boolean).sort((a, b) => String(a).localeCompare(String(b), "pt-BR"));
       const qtdAlertaMercadoria = Number(totalPVD?.alertasMercadoriaCount ?? alertasMercadoriaNotas ?? 0);
       const qtdAlertaPeso = Number(totalPVD?.alertasPesoCount ?? alertasPesoNotas ?? 0);
+      const qtdExpresso = Number(totalPVD?.expressoCount ?? expressoNotas ?? 0);
+      const expressoDetalhes = Array.isArray(totalPVD?.expressoDetalhes)
+        ? totalPVD.expressoDetalhes
+        : expressoDetalhesNotas;
       const status = getStatusVocativo(almox, veiculos, hoje);
       const tipoEmbarque = getTipoEmbarqueVocativo(almox, veiculos);
       const vocNorm = normalizar(almox);
@@ -10004,8 +10252,11 @@ return null;
         temMopp: onuNumeros.length > 0,
         qtdAlertaMercadoria,
         qtdAlertaPeso,
+        qtdExpresso,
+        expressoDetalhes,
         temAlertaMercadoria: qtdAlertaMercadoria > 0,
         temAlertaPeso: qtdAlertaPeso > 0,
+        temExpresso: qtdExpresso > 0,
         pesoTotalPVD: Number(totalPVD.pesoTotal ?? pesoFiltrado ?? 0),
         totalNotasPVD: Number(totalPVD.totalRegistros ?? notas.length ?? 0),
         notasD1: qtdD1,
@@ -10027,6 +10278,7 @@ return null;
           janelaEntregaTexto,
           status.temCarregadoHoje ? "carregado hoje" : "",
           status.temCarregadoOntem ? "carregado ontem" : "",
+          qtdExpresso > 0 ? "EXPRESSO EX" : "",
           ultimoVeiculo?.id || "",
           ultimoVeiculo?.destinos || "",
           ultimoVeiculo?.refs || ""
@@ -10610,8 +10862,162 @@ return null;
       `;
     }
 
+    let painelProgExpressoTooltipCloseTimer = null;
+    let painelProgExpressoTooltipMouseOver = false;
+
+    function cancelarFechamentoTooltipExpressoPainelProgramacao() {
+      if (painelProgExpressoTooltipCloseTimer) {
+        clearTimeout(painelProgExpressoTooltipCloseTimer);
+        painelProgExpressoTooltipCloseTimer = null;
+      }
+    }
+
+    function agendarFechamentoTooltipExpressoPainelProgramacao() {
+      cancelarFechamentoTooltipExpressoPainelProgramacao();
+      painelProgExpressoTooltipCloseTimer = setTimeout(() => {
+        if (!painelProgExpressoTooltipMouseOver) {
+          fecharTooltipExpressoPainelProgramacao();
+        }
+      }, 220);
+    }
+
+    function formatarDataTooltipExpressoPainelProgramacao(valor) {
+      if (valor === null || valor === undefined || valor === "") return "";
+      const dt = parsePossibleDate(valor);
+      if (dt) return formatDateBRLocal(dt) || String(valor || "").trim();
+      return String(valor || "").trim();
+    }
+
+    function getOrCreateTooltipExpressoGlobalPainelProgramacao() {
+      let tooltip = document.getElementById("painelProgExpressoTooltipGlobal");
+      if (!tooltip) {
+        tooltip = document.createElement("div");
+        tooltip.id = "painelProgExpressoTooltipGlobal";
+        tooltip.className = "painelProgExpressoTooltipGlobal";
+        tooltip.addEventListener("mouseenter", () => {
+          painelProgExpressoTooltipMouseOver = true;
+          cancelarFechamentoTooltipExpressoPainelProgramacao();
+        });
+        tooltip.addEventListener("mouseleave", () => {
+          painelProgExpressoTooltipMouseOver = false;
+          fecharTooltipExpressoPainelProgramacao();
+        });
+        document.body.appendChild(tooltip);
+      }
+      return tooltip;
+    }
+
+    function posicionarTooltipExpressoPainelProgramacao(ev, cardEl = null) {
+      const tooltip = document.getElementById("painelProgExpressoTooltipGlobal");
+      if (!tooltip || !tooltip.classList.contains("open")) return;
+
+      const margem = 12;
+      const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      const cardRect = cardEl?.getBoundingClientRect ? cardEl.getBoundingClientRect() : null;
+      const baseX = Number.isFinite(ev?.clientX) ? ev.clientX : (cardRect ? cardRect.right : margem);
+      const baseY = Number.isFinite(ev?.clientY) ? ev.clientY : (cardRect ? cardRect.top : margem);
+
+      let x = baseX + 18;
+      let y = baseY + 14;
+
+      tooltip.style.left = "0px";
+      tooltip.style.top = "0px";
+      const rect = tooltip.getBoundingClientRect();
+      const largura = rect.width || 360;
+      const altura = rect.height || 260;
+
+      if (x + largura + margem > vw) x = baseX - largura - 18;
+      if (x < margem) x = margem;
+      if (y + altura + margem > vh) y = vh - altura - margem;
+      if (y < margem) y = margem;
+
+      tooltip.style.left = `${Math.round(x)}px`;
+      tooltip.style.top = `${Math.round(y)}px`;
+    }
+
+    function abrirTooltipExpressoPainelProgramacao(cardEl, ev) {
+      const origem = cardEl?.querySelector ? cardEl.querySelector(".painelProgExpressoTooltip") : null;
+      if (!origem) {
+        fecharTooltipExpressoPainelProgramacao();
+        return;
+      }
+      cancelarFechamentoTooltipExpressoPainelProgramacao();
+      painelProgExpressoTooltipMouseOver = false;
+      const tooltip = getOrCreateTooltipExpressoGlobalPainelProgramacao();
+      tooltip.innerHTML = origem.innerHTML;
+      tooltip.scrollTop = 0;
+      tooltip.classList.add("open");
+      posicionarTooltipExpressoPainelProgramacao(ev, cardEl);
+    }
+
+    function fecharTooltipExpressoPainelProgramacao() {
+      cancelarFechamentoTooltipExpressoPainelProgramacao();
+      painelProgExpressoTooltipMouseOver = false;
+      const tooltip = document.getElementById("painelProgExpressoTooltipGlobal");
+      if (!tooltip) return;
+      tooltip.classList.remove("open");
+      tooltip.innerHTML = "";
+    }
+
+    function renderTooltipExpressoPainelProgramacao(item) {
+      const detalhes = (Array.isArray(item?.expressoDetalhes) ? item.expressoDetalhes : [])
+        .filter(Boolean);
+      const total = Number(item?.qtdExpresso || detalhes.length || 0);
+      const tituloVocativo = getTextoPainelProgramacao(item?.vocativo || "");
+
+      const renderCampo = (label, valor) => `
+        <div class="painelProgExpressoCampo">
+          <div class="painelProgExpressoCampoLabel">${getTextoPainelProgramacao(label)}</div>
+          <div class="painelProgExpressoCampoValor">${getTextoPainelProgramacao(valor || "")}</div>
+        </div>
+      `;
+
+      if (!detalhes.length) {
+        return `
+          <div class="painelProgExpressoTooltip">
+            <div class="painelProgExpressoTooltipTitle">
+              <span>Registro EXPRESSO ${tituloVocativo ? `- ${tituloVocativo}` : ""}</span>
+              <span class="painelProgExpressoTooltipCount">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(total, 0))}</span>
+            </div>
+            <div class="painelProgExpressoTooltipEmpty">Nenhum detalhe localizado para o registro EXPRESSO.</div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="painelProgExpressoTooltip">
+          <div class="painelProgExpressoTooltipTitle">
+            <span>Somente registro(s) EXPRESSO ${tituloVocativo ? `- ${tituloVocativo}` : ""}</span>
+            <span class="painelProgExpressoTooltipCount">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(detalhes.length, 0))}</span>
+          </div>
+          <div class="painelProgExpressoRegistros">
+            ${detalhes.map((linha, idx) => `
+              <div class="painelProgExpressoRegistro">
+                <div class="painelProgExpressoRegistroHead">EXPRESSO ${detalhes.length > 1 ? `${idx + 1}/${detalhes.length}` : ""}</div>
+                ${renderCampo("Nota", linha.nota || "")}
+                ${renderCampo("Numero OEF", linha.numeroOEF || "")}
+                ${renderCampo("Peso", linha.peso || "")}
+                ${renderCampo("Volumes", linha.volumes || "")}
+                ${renderCampo("Fornecedor", linha.fornecedor || "")}
+                ${renderCampo("Dt Limite Embarque", formatarDataTooltipExpressoPainelProgramacao(linha.dtLimiteEmbarque))}
+                ${renderCampo("Dt Final Entrega", formatarDataTooltipExpressoPainelProgramacao(linha.dtFinalEntrega))}
+                ${renderCampo("BP Destino", linha.bpDestino || "")}
+                ${renderCampo("ONU", linha.onu || "")}
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
     function renderCardPainelProgramacao(item) {
       const classeStatus = item.temProgramado ? "isProgramado" : "isNaoProgramado";
+      const classeExpresso = item.temExpresso ? " isExpresso" : "";
+      const seloExpresso = item.temExpresso
+        ? `<span class="painelProgSeloExpresso" title="Prioridade Expresso no PVD"><strong>EX</strong><small>EXPRESSO</small></span>`
+        : "";
+      const tooltipExpresso = item.temExpresso ? renderTooltipExpressoPainelProgramacao(item) : "";
       const statusBadge = item.temProgramado
         ? `<span class="painelProgBadge green">🟢 PROGRAMADO</span>`
         : `<span class="painelProgBadge red">🔴 NÃO PROGRAMADO</span>`;
@@ -10634,7 +11040,9 @@ return null;
       const janelaEntregaCardTexto = normalizar(item.janelaEntregaTexto) === "NAO CADASTRADO" ? "" : (item.janelaEntregaTexto || "");
 
       return `
-        <div class="painelProgCard ${classeStatus}${classeSelecionado}" data-painel-prog-key="${getTextoPainelProgramacao(item.cardKey || "")}" onclick="onClickPainelProgCard(this, event)"${estiloAltura}>
+        <div class="painelProgCard ${classeStatus}${classeExpresso}${classeSelecionado}" data-painel-prog-key="${getTextoPainelProgramacao(item.cardKey || "")}" onmouseenter="abrirTooltipExpressoPainelProgramacao(this, event)" onmousemove="posicionarTooltipExpressoPainelProgramacao(event, this)" onmouseleave="agendarFechamentoTooltipExpressoPainelProgramacao()" onclick="onClickPainelProgCard(this, event)"${estiloAltura}>
+          ${seloExpresso}
+          ${tooltipExpresso}
           <div class="painelProgCardTop">
             <div class="painelProgVocativo" title="${getTextoPainelProgramacao(item.vocativo)}">🏭 ${getTextoPainelProgramacao(item.vocativo)}</div>
           </div>
