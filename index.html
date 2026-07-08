@@ -2088,7 +2088,7 @@
 
     .painelProgFilterBar {
       display: grid;
-      grid-template-columns: minmax(210px, 1.25fr) minmax(160px, .85fr) repeat(6, minmax(130px, 1fr));
+      grid-template-columns: minmax(210px, 1.25fr) minmax(160px, .85fr) repeat(7, minmax(130px, 1fr));
       gap: 8px;
       align-items: center;
       margin-top: 12px;
@@ -2336,7 +2336,7 @@
     .painelProgCard {
       border-radius: 11px;
       padding: 7px;
-      min-height: 196px;
+      min-height: 216px;
       box-shadow: var(--shadowSoft);
       border: 1px solid rgba(15, 23, 42, 0.10);
       display: flex;
@@ -2770,6 +2770,28 @@
       line-height: 1.12;
     }
 
+    .painelProgJanelaBox {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 4px 5px;
+      display: grid;
+      gap: 2px;
+      margin-top: 1px;
+    }
+
+    .painelProgJanelaLine {
+      font-size: 8.6px;
+      font-weight: 800;
+      color: #334155;
+      line-height: 1.12;
+    }
+
+    .painelProgJanelaLine b {
+      color: #0f172a;
+      font-weight: 1000;
+    }
+
     .painelProgMetrics {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -2993,7 +3015,7 @@
           <div class="painelProgHint">Visualização rápida em cards, usando a mesma regra da página Análise Programação. Padrão: todos juntos em ordem alfabética por vocativo.</div>
         </div>
         <div class="painelProgActions">
-          <button class="btn secondary" type="button" onclick="renderPainelProgramacaoRapido(false)">🔄 Atualizar</button>
+          <button class="btn secondary" type="button" onclick="renderPainelProgramacaoRapido(false, true)">🔄 Atualizar</button>
           <button class="btn secondary" type="button" onclick="voltarPainelProgramacaoPrincipal()">⬅ Voltar</button>
         </div>
       </div>
@@ -3056,6 +3078,23 @@
               </div>
             </div>
             <div class="painelProgMultiList" id="painelProgUfList"></div>
+          </div>
+        </div>
+
+        <div class="painelProgMultiFilterBox" id="painelProgJanelaCargaFilterBox">
+          <button class="painelProgMultiTrigger" id="painelProgJanelaCargaTrigger" type="button" onclick="togglePainelProgMultiDropdown('janelaCarga', event)">
+            <span>Janelas carga: Todos</span><span class="painelProgMultiArrow">▾</span>
+          </button>
+          <div class="painelProgMultiDropdown" id="painelProgJanelaCargaDropdown">
+            <div class="painelProgMultiHead">
+              <div class="painelProgMultiTitle">Dia da janela de carregamento</div>
+              <input class="painelProgMultiSearch" id="painelProgJanelaCargaSearch" placeholder="Pesquisar dia..." type="text" oninput="onInputPainelProgFiltroSearch('janelaCarga', this.value, event)" onclick="event.stopPropagation()" />
+              <div class="painelProgMultiActionsMini">
+                <button class="painelProgMiniActionBtn" type="button" onclick="selecionarTodosPainelProgFiltro('janelaCarga', event)">Selecionar todos</button>
+                <button class="painelProgMiniActionBtn" type="button" onclick="limparPainelProgFiltro('janelaCarga', event)">Limpar</button>
+              </div>
+            </div>
+            <div class="painelProgMultiList" id="painelProgJanelaCargaList"></div>
           </div>
         </div>
 
@@ -3182,6 +3221,9 @@
     let painelProgUfsDisponiveis = [];
     let painelProgUfsSelecionados = new Set();
     let painelProgUfsFiltroInicializado = false;
+    let painelProgJanelaCargaDisponiveis = [];
+    let painelProgJanelaCargaSelecionados = new Set();
+    let painelProgJanelaCargaFiltroInicializado = false;
     let painelProgStatusSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.status.map(o => o.value));
     let painelProgEntradaSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.entrada.map(o => o.value));
     let painelProgCriticidadeSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.criticidade.map(o => o.value));
@@ -3596,106 +3638,7 @@
 
 
 
-    const JANELAS_ALMOX = {
-      "ANGLO-S.A. DO GRAMA-MG": { carregamento: ['sáb'], entrega: ['ter'] },
-      "ANGLO-SAO JOAO D-RJ": { carregamento: ['seg'], entrega: ['qua'] },
-      "AVB-ACAILANDIA-MA": { carregamento: ['seg', 'qua', 'qui'], entrega: ['seg', 'qua', 'qui'] },
-      "BASF-GUARATINGU-SP": { carregamento: ['qua'], entrega: ['qui'] },
-      "BRASKEM-CUBATAO-SP": { carregamento: ['seg', 'qua'], entrega: ['ter', 'qui'] },
-      "BRASKEM-DUQUE DE C-RJ": { carregamento: ['seg', 'qua'], entrega: ['qua', 'sex'] },
-      "BRASKEM-MAUA-23-SP": { carregamento: ['seg', 'qua'], entrega: ['ter', 'qui'] },
-      "BRASKEM-MAUA-25-SP": { carregamento: ['ter', 'qui'], entrega: ['qua', 'sex'] },
-      "BRASKEM-PAULINIA-08-SP": { carregamento: ['qua', 'sáb'], entrega: ['seg', 'qui'] },
-      "BRASKEM-SANTO ANDR-20-SP": { carregamento: ['seg', 'qua'], entrega: ['ter', 'qui'] },
-      "BRASKEM-SANTO ANDR-22-SP": { carregamento: ['ter', 'qui', 'sáb'], entrega: ['seg', 'qua', 'sex'] },
-      "BRASKEM-TRIUNFO-01-RS": { carregamento: ['qua', 'sáb'], entrega: ['seg', 'sex'] },
-      "BRASKEM-TRIUNFO-04-RS": { carregamento: ['qua', 'sáb'], entrega: ['seg', 'sex'] },
-      "BRASKEM-TRIUNFO-07-RS": { carregamento: ['qua', 'sáb'], entrega: ['seg', 'sex'] },
-      "CAS-CURRAISNOVOS-RN": { carregamento: ['ter', 'qui'], entrega: ['ter'] },
-      "CSN -ARCOS-MG": { carregamento: ['seg'], entrega: ['qua', 'qui'] },
-      "CSN -BARRA MANS-RJ": { carregamento: ['sex'], entrega: ['seg'] },
-      "CSN -BARROSO-MG": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua'] },
-      "CSN -BARUERI-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
-      "CSN -CAAPORA-PB": { carregamento: ['sex'], entrega: ['qui', 'sex'] },
-      "CSN -CAJAMAR-SP": { carregamento: ['seg'], entrega: ['ter', 'qua'] },
-      "CSN -CANTAGALO-RJ": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua'] },
-      "CSN -COCALZINHO-GO": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua'] },
-      "CSN -CONGONHAS-MG": { carregamento: ['sex'], entrega: ['ter', 'qui'] },
-      "CSN -GUARUJA-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
-      "CSN -MAIRIPORA-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
-      "CSN -MONTES CLA-MG": { carregamento: ['sex'], entrega: ['seg', 'qua', 'sex'] },
-      "CSN -OURICURI-PE": { carregamento: ['sex'], entrega: ['seg', 'qui'] },
-      "CSN -PEDRO LEOP-MG": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua'] },
-      "CSN -PITIMBU-PB": { carregamento: ['sex'], entrega: ['seg', 'qua'] },
-      "CSN -RIO DE JAN-RJ": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua'] },
-      "CSN -SANTO ANDR-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
-      "CSN -SAO VICENT-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
-      "CSN -SERRA-ES": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua'] },
-      "CSN -SOROCABA-01-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
-      "CSN -SOROCABA-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
-      "CSN -VOLTA REDO-01-RJ": { carregamento: ['sex'], entrega: ['seg', 'sex'] },
-      "CSN-ALHANDRA-PB": { carregamento: ['sex'], entrega: ['seg', 'qua'] },
-      "CSN-CANDEIAS-BA": { carregamento: ['sex'], entrega: ['seg', 'ter', 'qua', 'qui'] },
-      "CSN-S.J.DOS CAMPOS-SP": { carregamento: ['seg'], entrega: ['ter', 'qui'] },
-      "MINERACAO-PARAGOMINA-PA": { carregamento: ['seg', 'qui'], entrega: ['seg', 'qui'] },
-      "NEXA-JUIZ DE FORA-MG": { carregamento: ['ter', 'sáb'], entrega: ['ter', 'qui'] },
-      "NOVELIS-PINDAMONHA-SP": { carregamento: ['seg', 'ter', 'qua', 'qui', 'sáb'], entrega: ['seg', 'ter', 'qua', 'qui', 'sex'] },
-      "OWENS-SAO PAULO-SP": { carregamento: ['qua', 'sáb'], entrega: ['seg', 'qui'] },
-      "OXITENO-MAUA-SP": { carregamento: ['sáb'], entrega: ['seg'] },
-      "OXITENO-SUZANO-SP": { carregamento: ['ter', 'sáb'], entrega: ['seg', 'qua'] },
-      "OXITENO-TREMEMBE-SP": { carregamento: ['ter', 'qui'], entrega: ['qua', 'sex'] },
-      "OXITENO-TRIUNFO-RS": { carregamento: ['seg', 'sex'], entrega: ['ter', 'qui'] },
-      "PRADA RESENDE -RJ": { carregamento: ['seg'], entrega: ['qua'] },
-      "PRADA-SAO PAULO-SP": { carregamento: ['seg'], entrega: ['qua'] },
-      "RAIZEN-ANDRADINA-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-ARACATUBA-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-ARARAQUARA-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-BARRA BONI-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-BENTO DE A-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-BOCAINA-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-BROTAS-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-CAARAPO-AGRIC-MS": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'qua', 'sex'] },
-      "RAIZEN-CAARAPO-INDUS-MS": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'qua', 'sex'] },
-      "RAIZEN-ELIAS FAUS-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-GUARIBA-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-IGARAPAVA-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-IPAUSSU-SP": { carregamento: ['qua', 'sáb'], entrega: ['ter', 'sex'] },
-      "RAIZEN-JATAI-GO": { carregamento: ['seg', 'ter', 'sex'], entrega: ['seg', 'qui'] },
-      "RAIZEN-JAU-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-LAGOA DA P-MG": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'qua', 'sex'] },
-      "RAIZEN-LEME-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-MARACAI-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-MIRANDOPOL-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-MORRO AGUD-INVERN-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-MORRO AGUD-SUCURI-SP": { carregamento: ['ter', 'sáb'], entrega: ['ter', 'qui'] },
-      "RAIZEN-PARAGUACU -SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-PIRACICABA-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-RAFARD-SP": { carregamento: ['qua', 'sáb'], entrega: ['ter', 'sex'] },
-      "RAIZEN-SAO PAULO-SP": { carregamento: ['qua', 'sáb'], entrega: ['seg', 'qui'] },
-      "RAIZEN-TARUMA-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "RAIZEN-VALPARAISO-SP": { carregamento: ['seg', 'qua', 'sex'], entrega: ['seg', 'ter', 'qui'] },
-      "SUZANO-TRES LAGOA-FLORES-MS": { carregamento: ['ter', 'sex'], entrega: ['ter', 'sex'] },
-      "SUZANO-ARACRUZ-FABRICA-ES": { carregamento: ['seg', 'sex'], entrega: ['ter', 'qui'] },
-      "SUZANO-ARACRUZ-FLOREST-ES": { carregamento: ['seg', 'sex'], entrega: ['ter', 'qui'] },
-      "SUZANO-CACHOEIRO -ES": { carregamento: ['seg', 'sex'], entrega: ['seg', 'qua'] },
-      "SUZANO-IMPERATRIZ-FABR-MA": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
-      "SUZANO-IMPERATRIZ-FLOR-MA": { carregamento: ['ter', 'sex'], entrega: ['seg', 'qui'] },
-      "SUZANO-JACAREI-SP": { carregamento: ['ter', 'qui', 'sáb'], entrega: ['dom', 'ter', 'qui'] },
-      "SUZANO-LIMEIRA-SP": { carregamento: ['ter', 'qui', 'sáb'], entrega: ['seg', 'qua', 'sex'] },
-      "SUZANO-MOGI DAS C-SP": { carregamento: ['seg', 'qua'], entrega: ['ter', 'qui'] },
-      "SUZANO-MUCURI-CMM-BA": { carregamento: ['seg', 'qui'], entrega: ['seg', 'qui'] },
-      "SUZANO-MUCURI-FABRICA-BA": { carregamento: ['seg', 'qui'], entrega: ['seg', 'qui'] },
-      "SUZANO-MUCURI-VIVEIRO-BA": { carregamento: ['seg', 'qui'], entrega: ['ter', 'sex'] },
-      "SUZANO-RIBAS DO R-FABR-MS": { carregamento: ['seg', 'sex'], entrega: ['ter', 'qui'] },
-      "SUZANO-RIBAS DO R-FLOR-MS": { carregamento: ['seg', 'sex'], entrega: ['ter', 'qui'] },
-      "SUZANO-SAO MIGUEL-SP": { carregamento: ['ter'], entrega: ['qua'] },
-      "SUZANO-SUZANO-CDR-SP": { carregamento: ['ter', 'qui', 'sáb'], entrega: ['seg', 'qua', 'sex'] },
-      "SUZANO-SUZANO-SP": { carregamento: ['ter', 'qui', 'sáb'], entrega: ['ter', 'qui', 'sáb'] },
-      "SUZANO-TEIXEIRA D-BA": { carregamento: ['seg', 'qui'], entrega: ['ter', 'sex'] },
-      "SUZANO-TRES LAGOA-FABRIC-MS": { carregamento: ['seg', 'sex'], entrega: ['dom', 'qua'] },
-      "VLI-PAULINIA-SP": { carregamento: ['ter', 'qua', 'sex'], entrega: ['seg', 'qua', 'qui'] },
-      "VLI-SANTOS-SP": { carregamento: ['ter', 'sáb'], entrega: ['seg', 'qua'] },
-    };
+    const JANELAS_ALMOX = {};
 
     const fileData = document.getElementById("fileData");
     const fileDetalhado = document.getElementById("fileDetalhado");
@@ -5728,8 +5671,254 @@
       return (txt || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
     }
 
+    const GOOGLE_SHEET_JANELAS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkREcLQFJhAsxEq3WRVxHtYw46zSe3sDVJcQWOreQzFs6-u6PWF-cI8ndRTkQUFXfurUkkog0-NrZq/pubhtml";
+    const DIAS_SEMANA_JANELA_ORDEM = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"];
+    const DIAS_SEMANA_JANELA_LABEL = {
+      "seg": "SEG",
+      "ter": "TER",
+      "qua": "QUA",
+      "qui": "QUI",
+      "sex": "SEX",
+      "sáb": "SÁB",
+      "dom": "DOM"
+    };
+    const DIAS_SEMANA_JANELA_OPCOES = DIAS_SEMANA_JANELA_ORDEM.map(dia => ({
+      value: dia,
+      label: DIAS_SEMANA_JANELA_LABEL[dia] || dia.toUpperCase()
+    }));
+    window.__janelasGoogleState = window.__janelasGoogleState || {
+      mapa: {},
+      carregado: false,
+      carregando: null,
+      erro: "",
+      atualizadoEm: "",
+      totalLinhas: 0
+    };
+
+    function normalizarDiaSemanaJanela(valor) {
+      const s = normalizar(valor || "");
+      if (!s) return "";
+      if (["SEG", "SEGUNDA", "SEGUNDA FEIRA", "SEGUNDA-FEIRA"].includes(s)) return "seg";
+      if (["TER", "TERCA", "TERÇA", "TERCA FEIRA", "TERÇA FEIRA", "TERCA-FEIRA", "TERÇA-FEIRA"].includes(s)) return "ter";
+      if (["QUA", "QUARTA", "QUARTA FEIRA", "QUARTA-FEIRA"].includes(s)) return "qua";
+      if (["QUI", "QUINTA", "QUINTA FEIRA", "QUINTA-FEIRA"].includes(s)) return "qui";
+      if (["SEX", "SEXTA", "SEXTA FEIRA", "SEXTA-FEIRA"].includes(s)) return "sex";
+      if (["SAB", "SÁB", "SABADO", "SÁBADO"].includes(s)) return "sáb";
+      if (["DOM", "DOMINGO"].includes(s)) return "dom";
+      return "";
+    }
+
+    function getLabelDiaSemanaJanela(dia) {
+      const norm = normalizarDiaSemanaJanela(dia);
+      return DIAS_SEMANA_JANELA_LABEL[norm] || String(dia || "").toUpperCase();
+    }
+
+    function ordenarDiasSemanaJanela(dias) {
+      const unicos = Array.from(new Set((dias || []).map(normalizarDiaSemanaJanela).filter(Boolean)));
+      return unicos.sort((a, b) => DIAS_SEMANA_JANELA_ORDEM.indexOf(a) - DIAS_SEMANA_JANELA_ORDEM.indexOf(b));
+    }
+
+    function formatarDiasSemanaJanela(dias) {
+      const ordenados = ordenarDiasSemanaJanela(dias);
+      return ordenados.length ? ordenados.map(getLabelDiaSemanaJanela).join(" / ") : "Não cadastrado";
+    }
+
+    function adicionarDiasTextoJanela(setDias, valor) {
+      String(valor || "")
+        .split(/[\/|,;]+|\s+E\s+|\s+OU\s+/i)
+        .map(v => normalizarDiaSemanaJanela(v))
+        .filter(Boolean)
+        .forEach(dia => setDias.add(dia));
+    }
+
+    function marcadorCelulaJanela(valor, letra) {
+      const s = normalizar(valor || "").replace(/[^A-Z]/g, "");
+      return s === letra || s.includes(letra);
+    }
+
+    function parseCSVJanelasGoogle(csvText) {
+      const rows = [];
+      let row = [];
+      let cur = "";
+      let inQuotes = false;
+      const txt = String(csvText || "").replace(/^\uFEFF/, "");
+      for (let i = 0; i < txt.length; i++) {
+        const ch = txt[i];
+        const next = txt[i + 1];
+        if (ch === '"') {
+          if (inQuotes && next === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === ',' && !inQuotes) {
+          row.push(cur);
+          cur = "";
+        } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+          if (ch === '\r' && next === '\n') i++;
+          row.push(cur);
+          if (row.some(c => String(c || "").trim() !== "")) rows.push(row);
+          row = [];
+          cur = "";
+        } else {
+          cur += ch;
+        }
+      }
+      row.push(cur);
+      if (row.some(c => String(c || "").trim() !== "")) rows.push(row);
+      return rows;
+    }
+
+    function parseHtmlJanelasGoogle(htmlText) {
+      const doc = new DOMParser().parseFromString(String(htmlText || ""), "text/html");
+      const tables = Array.from(doc.querySelectorAll("table"));
+      for (const table of tables) {
+        const rows = Array.from(table.querySelectorAll("tr")).map(tr =>
+          Array.from(tr.querySelectorAll("th,td")).map(td => String(td.textContent || "").trim())
+        ).filter(r => r.some(c => c));
+        if (rows.some(r => r.map(normalizar).includes("ALMOX DESTINO"))) return rows;
+      }
+      return [];
+    }
+
+    function getGoogleSheetJanelasUrls() {
+      const semQuery = String(GOOGLE_SHEET_JANELAS_URL || "").split("?")[0];
+      const csvUrl = semQuery.replace(/\/pubhtml\/?$/i, "/pub?output=csv");
+      return [csvUrl, GOOGLE_SHEET_JANELAS_URL];
+    }
+
+    function matrizParaJanelasAlmox(matriz) {
+      const rows = Array.isArray(matriz) ? matriz : [];
+      const headerIdx = rows.findIndex(r => (r || []).some(c => normalizar(c) === "ALMOX DESTINO"));
+      if (headerIdx < 0) return { mapa: {}, totalLinhas: 0 };
+
+      const headers = rows[headerIdx].map(h => String(h || "").trim());
+      const headersNorm = headers.map(normalizar);
+      const idxAlmox = headersNorm.findIndex(h => h === "ALMOX DESTINO" || (h.includes("ALMOX") && h.includes("DESTINO")));
+      const idxUf = headersNorm.findIndex(h => h === "UF");
+      const idxCliente = headersNorm.findIndex(h => h === "CLIENTE");
+      const idxObs = headersNorm.findIndex(h => h === "OBS");
+      const idxTpEmbarque = headersNorm.findIndex(h => h === "TP_EMBARQUE" || h === "TP EMBARQUE" || h.includes("TP") && h.includes("EMBARQUE"));
+      const idxDiaSemana = headersNorm.findIndex(h => h === "DIA DA SEMANA" || h.includes("DIA") && h.includes("SEMANA"));
+      if (idxAlmox < 0) return { mapa: {}, totalLinhas: 0 };
+
+      const diaCols = headers
+        .map((h, idx) => ({ idx, dia: normalizarDiaSemanaJanela(h) }))
+        .filter(col => col.dia && (idxTpEmbarque < 0 || col.idx > idxTpEmbarque) && (idxDiaSemana < 0 || col.idx < idxDiaSemana));
+      const metade = diaCols.length >= 14 ? Math.floor(diaCols.length / 2) : -1;
+      const mapa = {};
+      let totalLinhas = 0;
+
+      rows.slice(headerIdx + 1).forEach(row => {
+        const almox = String(row[idxAlmox] || "").trim();
+        const vocNorm = normalizar(almox);
+        if (!vocNorm) return;
+
+        const carga = new Set();
+        const entrega = new Set();
+        if (idxDiaSemana >= 0) adicionarDiasTextoJanela(carga, row[idxDiaSemana]);
+
+        diaCols.forEach((col, pos) => {
+          const val = row[col.idx];
+          if (marcadorCelulaJanela(val, "C")) carga.add(col.dia);
+          if (marcadorCelulaJanela(val, "E")) entrega.add(col.dia);
+          if (metade > 0 && String(val || "").trim()) {
+            if (pos < metade && marcadorCelulaJanela(val, "C")) carga.add(col.dia);
+            if (pos >= metade && marcadorCelulaJanela(val, "E")) entrega.add(col.dia);
+          }
+        });
+
+        const cargaArr = ordenarDiasSemanaJanela(Array.from(carga));
+        const entregaArr = ordenarDiasSemanaJanela(Array.from(entrega));
+        if (!cargaArr.length && !entregaArr.length) return;
+
+        if (!mapa[vocNorm]) {
+          mapa[vocNorm] = {
+            vocativo: almox,
+            vocNorm,
+            carregamento: [],
+            entrega: [],
+            linhas: [],
+            cliente: idxCliente >= 0 ? String(row[idxCliente] || "").trim() : "",
+            uf: idxUf >= 0 ? String(row[idxUf] || "").trim() : "",
+            obs: idxObs >= 0 ? String(row[idxObs] || "").trim() : "",
+            tpEmbarque: idxTpEmbarque >= 0 ? String(row[idxTpEmbarque] || "").trim() : "",
+            origem: "google"
+          };
+        }
+
+        const item = mapa[vocNorm];
+        cargaArr.forEach(d => { if (!item.carregamento.includes(d)) item.carregamento.push(d); });
+        entregaArr.forEach(d => { if (!item.entrega.includes(d)) item.entrega.push(d); });
+        item.carregamento = ordenarDiasSemanaJanela(item.carregamento);
+        item.entrega = ordenarDiasSemanaJanela(item.entrega);
+        item.linhas.push({
+          carregamento: cargaArr,
+          entrega: entregaArr,
+          diaSemana: idxDiaSemana >= 0 ? String(row[idxDiaSemana] || "").trim() : "",
+          obs: idxObs >= 0 ? String(row[idxObs] || "").trim() : "",
+          tpEmbarque: idxTpEmbarque >= 0 ? String(row[idxTpEmbarque] || "").trim() : ""
+        });
+        totalLinhas++;
+      });
+
+      return { mapa, totalLinhas };
+    }
+
+    async function carregarJanelasGoogle(forcarAtualizacao = false) {
+      const state = window.__janelasGoogleState;
+      if (state.carregado && !forcarAtualizacao) return state.mapa || {};
+      if (state.carregando && !forcarAtualizacao) return state.carregando;
+
+      state.erro = "";
+      state.carregando = (async () => {
+        let ultimoErro = null;
+        for (const baseUrl of getGoogleSheetJanelasUrls()) {
+          try {
+            const separador = baseUrl.includes("?") ? "&" : "?";
+            const resp = await fetch(`${baseUrl}${separador}t=${Date.now()}`, { cache: "no-store" });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const texto = await resp.text();
+            const matriz = /<\s*html|<\s*table/i.test(texto)
+              ? parseHtmlJanelasGoogle(texto)
+              : parseCSVJanelasGoogle(texto);
+            const { mapa, totalLinhas } = matrizParaJanelasAlmox(matriz);
+            if (!Object.keys(mapa).length) throw new Error("Nenhuma janela válida encontrada na planilha publicada.");
+            state.mapa = mapa;
+            state.totalLinhas = totalLinhas;
+            state.carregado = true;
+            state.atualizadoEm = new Date().toLocaleString("pt-BR");
+            return state.mapa;
+          } catch (err) {
+            ultimoErro = err;
+          }
+        }
+        state.mapa = {};
+        state.carregado = true;
+        state.totalLinhas = 0;
+        state.erro = ultimoErro?.message || String(ultimoErro || "Erro desconhecido ao carregar janelas.");
+        console.warn("Não foi possível carregar janelas da planilha Google:", state.erro);
+        return state.mapa;
+      })();
+
+      try {
+        return await state.carregando;
+      } finally {
+        state.carregando = null;
+      }
+    }
+
+    function getResumoStatusJanelasGoogle() {
+      const state = window.__janelasGoogleState || {};
+      if (state.erro) return `janelas: erro na planilha (${state.erro})`;
+      if (state.carregado) return `janelas: ${Object.keys(state.mapa || {}).length} vocativo(s) da planilha`;
+      return "janelas: não carregadas";
+    }
+
     function buscarJanelaAlmox(almoxNorm) {
-      return JANELAS_ALMOX[almoxNorm] || null;
+      const chave = normalizar(almoxNorm || "");
+      return (window.__janelasGoogleState?.mapa || {})[chave] || null;
     }
 
 
@@ -6410,8 +6599,8 @@
     function dataCoincideComJanela(data, janelaArray) {
       if (!data || !janelaArray || !janelaArray.length) return false;
 
-      const dia = getDiaSemanaAbrev(data);
-      return janelaArray.map(d => d.toLowerCase()).includes(dia);
+      const dia = normalizarDiaSemanaJanela(getDiaSemanaAbrev(data));
+      return janelaArray.map(normalizarDiaSemanaJanela).includes(dia);
     }
 
 
@@ -6446,9 +6635,9 @@
         const tentativa = new Date(base);
         tentativa.setDate(base.getDate() + i);
 
-        const diaAbrev = dias[tentativa.getDay()];
+        const diaAbrev = normalizarDiaSemanaJanela(dias[tentativa.getDay()]);
 
-        if (diasJanela.map(d => d.toLowerCase()).includes(diaAbrev)) {
+        if (diasJanela.map(normalizarDiaSemanaJanela).includes(diaAbrev)) {
           return tentativa;
         }
       }
@@ -7571,7 +7760,8 @@ return null;
         const [{ obs: obsHoje, status: statusHoje }, idsHistoricos] = await Promise.all([
           carregarObsEStatusHojeCache(false),
           carregarIdsHistoricosVinculados(false),
-          carregarStatusNotasBanco(false)
+          carregarStatusNotasBanco(false),
+          carregarJanelasGoogle(false)
         ]).then(([obsStatus, idsHistoricos]) => [obsStatus, idsHistoricos]);
 
       const hoje = new Date();
@@ -7845,13 +8035,9 @@ return null;
 
         const janela = buscarJanelaAlmox(almox);
 
-        const janelaEntrega = janela?.entrega?.length
-          ? ordenarDiasSemana(janela.entrega).join(" / ")
-          : "Não cadastrado";
+        const janelaEntrega = formatarDiasSemanaJanela(janela?.entrega || []);
 
-        const janelaCarreg = janela?.carregamento?.length
-          ? ordenarDiasSemana(janela.carregamento).join(" / ")
-          : "Não cadastrado";
+        const janelaCarreg = formatarDiasSemanaJanela(janela?.carregamento || []);
 
 
         const alertaJanelaAmanha = isJanelaCarregamentoAmanha(janela);
@@ -9272,6 +9458,10 @@ return null;
       renderPainelProgMultiFiltros();
     }
 
+    function getPainelProgTiposFiltro() {
+      return ["cliente", "destino", "uf", "janelaCarga", "status", "entrada", "criticidade"];
+    }
+
     function getPainelProgFiltroConfig(tipo) {
       if (tipo === "cliente") {
         return {
@@ -9301,6 +9491,16 @@ return null;
           searchId: "painelProgUfSearch",
           tituloTodos: "Todas as UFs",
           tituloNenhum: "Nenhuma UF"
+        };
+      }
+      if (tipo === "janelaCarga") {
+        return {
+          triggerId: "painelProgJanelaCargaTrigger",
+          dropdownId: "painelProgJanelaCargaDropdown",
+          listId: "painelProgJanelaCargaList",
+          searchId: "painelProgJanelaCargaSearch",
+          tituloTodos: "Janelas carga: Todos",
+          tituloNenhum: "Janelas carga: Nenhum"
         };
       }
       if (tipo === "status") {
@@ -9337,6 +9537,7 @@ return null;
       if (tipo === "cliente") return painelProgClientesDisponiveis || [];
       if (tipo === "destino") return painelProgDestinosDisponiveis || [];
       if (tipo === "uf") return painelProgUfsDisponiveis || [];
+      if (tipo === "janelaCarga") return painelProgJanelaCargaDisponiveis || [];
       return PAINEL_PROG_STATIC_FILTERS[tipo] || [];
     }
 
@@ -9344,6 +9545,7 @@ return null;
       if (tipo === "cliente") return painelProgClientesSelecionados;
       if (tipo === "destino") return painelProgDestinosSelecionados;
       if (tipo === "uf") return painelProgUfsSelecionados;
+      if (tipo === "janelaCarga") return painelProgJanelaCargaSelecionados;
       if (tipo === "status") return painelProgStatusSelecionados;
       if (tipo === "entrada") return painelProgEntradaSelecionados;
       return painelProgCriticidadeSelecionados;
@@ -9353,13 +9555,14 @@ return null;
       if (tipo === "cliente") painelProgClientesSelecionados = novoSet;
       else if (tipo === "destino") painelProgDestinosSelecionados = novoSet;
       else if (tipo === "uf") painelProgUfsSelecionados = novoSet;
+      else if (tipo === "janelaCarga") painelProgJanelaCargaSelecionados = novoSet;
       else if (tipo === "status") painelProgStatusSelecionados = novoSet;
       else if (tipo === "entrada") painelProgEntradaSelecionados = novoSet;
       else painelProgCriticidadeSelecionados = novoSet;
     }
 
     function fecharPainelProgMultiDropdowns(excetoTipo = "") {
-      ["cliente", "destino", "uf", "status", "entrada", "criticidade"].forEach(tipo => {
+      getPainelProgTiposFiltro().forEach(tipo => {
         if (tipo === excetoTipo) return;
         const cfg = getPainelProgFiltroConfig(tipo);
         const dropdown = document.getElementById(cfg.dropdownId);
@@ -9414,7 +9617,7 @@ return null;
     }
 
     function renderPainelProgMultiFiltros() {
-      ["cliente", "destino", "uf", "status", "entrada", "criticidade"].forEach(renderPainelProgMultiFiltro);
+      getPainelProgTiposFiltro().forEach(renderPainelProgMultiFiltro);
     }
 
     function renderPainelProgMultiFiltro(tipo) {
@@ -9748,6 +9951,11 @@ return null;
       const clienteNorm = normalizar(clienteResumo) || normalizar(PAINEL_PROG_SEM_CLIENTE);
       const statusVeiculo = status.temProgramado ? "PROGRAMADO" : "NAO PROGRAMADO";
       const datasEntregaResumo = montarResumoDatasEntregaPainelProgramacao(notas);
+      const janela = buscarJanelaAlmox(vocNorm);
+      const janelaCarregamentoDias = ordenarDiasSemanaJanela(janela?.carregamento || []);
+      const janelaEntregaDias = ordenarDiasSemanaJanela(janela?.entrega || []);
+      const janelaCarregamentoTexto = formatarDiasSemanaJanela(janelaCarregamentoDias);
+      const janelaEntregaTexto = formatarDiasSemanaJanela(janelaEntregaDias);
 
       snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
       snapshotVocativos[vocNorm] = {
@@ -9779,6 +9987,12 @@ return null;
         statusVeiculo,
         tipoEmbarque,
         datasEntregaResumo,
+        janela,
+        janelaCarregamentoDias,
+        janelaEntregaDias,
+        janelaCarregamentoTexto,
+        janelaEntregaTexto,
+        janelaCarregamentoNorm: janelaCarregamentoDias.map(normalizarDiaSemanaJanela).filter(Boolean),
         temProgramado: status.temProgramado,
         temNaoProgramado: status.temNaoProgramado,
         temCarregadoHoje: status.temCarregadoHoje === true,
@@ -9807,6 +10021,8 @@ return null;
           clienteSnapshot,
           Array.from(destinos).join(" "),
           Array.from(ufs).join(" "),
+          janelaCarregamentoTexto,
+          janelaEntregaTexto,
           status.temCarregadoHoje ? "carregado hoje" : "",
           status.temCarregadoOntem ? "carregado ontem" : "",
           ultimoVeiculo?.id || "",
@@ -9816,11 +10032,12 @@ return null;
       };
     }
 
-    async function montarDadosPainelProgramacaoRapido() {
+    async function montarDadosPainelProgramacaoRapido(recarregarJanelas = false) {
       await Promise.all([
         carregarObsEStatusHojeCache(false),
         carregarIdsHistoricosVinculados(false),
-        carregarStatusNotasBanco(false)
+        carregarStatusNotasBanco(false),
+        carregarJanelasGoogle(recarregarJanelas)
       ]);
       const cache = await prepararCacheAnaliseProgramacao();
       const totaisPorVocativoCliente = montarTotaisPVDPorVocativoClientePainelProgramacao();
@@ -9916,6 +10133,7 @@ return null;
       if (tipo === "cliente") painelProgClientesDisponiveis = opcoesNovas || [];
       else if (tipo === "destino") painelProgDestinosDisponiveis = opcoesNovas || [];
       else if (tipo === "uf") painelProgUfsDisponiveis = opcoesNovas || [];
+      else if (tipo === "janelaCarga") painelProgJanelaCargaDisponiveis = opcoesNovas || [];
 
       if (!inicializadoAtual || estavaTudoSelecionado) {
         setPainelProgSetFiltro(tipo, new Set(valoresAtuais));
@@ -9928,6 +10146,7 @@ return null;
       if (tipo === "cliente") painelProgClientesFiltroInicializado = true;
       else if (tipo === "destino") painelProgDestinosFiltroInicializado = true;
       else if (tipo === "uf") painelProgUfsFiltroInicializado = true;
+      else if (tipo === "janelaCarga") painelProgJanelaCargaFiltroInicializado = true;
 
       renderPainelProgMultiFiltro(tipo);
     }
@@ -9936,6 +10155,7 @@ return null;
       const clientes = new Map();
       const destinos = new Map();
       const ufs = new Map();
+      const diasJanelaCarga = new Map();
 
       (dados || []).forEach(item => {
         const cliente = String(item.clienteResumo || "").trim() || PAINEL_PROG_SEM_CLIENTE;
@@ -9953,15 +10173,26 @@ return null;
           const norm = normalizar(label);
           if (norm && !ufs.has(norm)) ufs.set(norm, label);
         });
+
+        (item.janelaCarregamentoDias || []).forEach(dia => {
+          const value = normalizarDiaSemanaJanela(dia);
+          const label = getLabelDiaSemanaJanela(value);
+          if (value && !diasJanelaCarga.has(value)) diasJanelaCarga.set(value, label);
+        });
       });
 
       const montarOpcoes = (mapa) => Array.from(mapa.entries())
         .sort((a, b) => a[1].localeCompare(b[1], "pt-BR"))
         .map(([value, label]) => ({ value, label }));
 
+      const montarOpcoesDias = (mapa) => Array.from(mapa.entries())
+        .sort((a, b) => DIAS_SEMANA_JANELA_ORDEM.indexOf(a[0]) - DIAS_SEMANA_JANELA_ORDEM.indexOf(b[0]))
+        .map(([value, label]) => ({ value, label }));
+
       sincronizarOpcoesDinamicasPainelProgramacao("cliente", montarOpcoes(clientes), painelProgClientesFiltroInicializado);
       sincronizarOpcoesDinamicasPainelProgramacao("destino", montarOpcoes(destinos), painelProgDestinosFiltroInicializado);
       sincronizarOpcoesDinamicasPainelProgramacao("uf", montarOpcoes(ufs), painelProgUfsFiltroInicializado);
+      sincronizarOpcoesDinamicasPainelProgramacao("janelaCarga", montarOpcoesDias(diasJanelaCarga), painelProgJanelaCargaFiltroInicializado);
     }
 
     function filtroPainelProgramacaoPermite(tipo, item) {
@@ -9983,6 +10214,11 @@ return null;
       if (tipo === "uf") {
         const ufsItem = Array.isArray(item.ufsNorm) ? item.ufsNorm : [];
         return ufsItem.some(v => selecionados.has(v));
+      }
+
+      if (tipo === "janelaCarga") {
+        const diasItem = Array.isArray(item.janelaCarregamentoNorm) ? item.janelaCarregamentoNorm : [];
+        return diasItem.some(v => selecionados.has(v));
       }
 
       if (tipo === "status") {
@@ -10017,6 +10253,7 @@ return null;
         if (!filtroPainelProgramacaoPermite("cliente", item)) return false;
         if (!filtroPainelProgramacaoPermite("destino", item)) return false;
         if (!filtroPainelProgramacaoPermite("uf", item)) return false;
+        if (!filtroPainelProgramacaoPermite("janelaCarga", item)) return false;
         if (!filtroPainelProgramacaoPermite("status", item)) return false;
         if (!filtroPainelProgramacaoPermite("entrada", item)) return false;
         if (!filtroPainelProgramacaoPermite("criticidade", item)) return false;
@@ -10401,6 +10638,10 @@ return null;
           </div>
 
           <div class="painelProgLine">EMBARQUE: ${getTextoPainelProgramacao(item.temProgramado ? (item.tipoEmbarque || "-") : "-")}</div>
+          <div class="painelProgJanelaBox">
+            <div class="painelProgJanelaLine"><b>🗓️ Carga:</b> ${getTextoPainelProgramacao(item.janelaCarregamentoTexto || "Não cadastrado")}</div>
+            <div class="painelProgJanelaLine"><b>🚚 Entrega:</b> ${getTextoPainelProgramacao(item.janelaEntregaTexto || "Não cadastrado")}</div>
+          </div>
           <div class="painelProgLine">⚖ Peso Total PVD: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.pesoTotalPVD, 2))}</div>
           <div class="painelProgLine">📄 Total Notas PVD: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.totalNotasPVD, 0))}</div>
           <div class="painelProgLine">📦 Notas &lt;= D-1: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.notasD1, 0))}</div>
@@ -10512,20 +10753,20 @@ return null;
       cardsEl.innerHTML = html;
     }
 
-    async function renderPainelProgramacaoRapido(rolarTopo = false) {
+    async function renderPainelProgramacaoRapido(rolarTopo = false, recarregarJanelas = false) {
       const cardsEl = document.getElementById("painelProgramacaoCards");
       const baseEl = document.getElementById("painelProgramacaoBaseInfo");
       if (cardsEl) cardsEl.innerHTML = `<div class="painelProgEmptyState">Carregando painel de programação...</div>`;
 
       try {
-        const dados = await montarDadosPainelProgramacaoRapido();
+        const dados = await montarDadosPainelProgramacaoRapido(recarregarJanelas);
         sincronizarFiltrosDinamicosPainelProgramacao(dados);
         const filtrados = filtrarDadosPainelProgramacao(dados);
         atualizarDadosAtuaisPainelProgramacao(filtrados);
         if (baseEl) {
           const vocativosFiltrados = new Set(filtrados.map(i => i.vocNorm).filter(Boolean)).size;
           const vocativosBase = new Set(dados.map(i => i.vocNorm).filter(Boolean)).size;
-          baseEl.textContent = `Base exibida: ${vocativosFiltrados} de ${vocativosBase} vocativo(s) | ${filtrados.length} card(s) | Organização: ${getPainelProgNomeAgrupamento()}`;
+          baseEl.textContent = `Base exibida: ${vocativosFiltrados} de ${vocativosBase} vocativo(s) | ${filtrados.length} card(s) | Organização: ${getPainelProgNomeAgrupamento()} | ${getResumoStatusJanelasGoogle()}`;
         }
         renderResumoPainelProgramacao(filtrados);
         renderCardsPainelProgramacao(filtrados);
