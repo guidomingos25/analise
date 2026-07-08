@@ -2799,6 +2799,91 @@
       line-height: 1.12;
     }
 
+    .painelProgCardDynamicBody {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1 1 auto;
+      overflow: hidden;
+    }
+
+    .painelProgCardDynamicBody.isDatasEntrega {
+      margin-top: 1px;
+    }
+
+    .painelProgDatasEntregaBox {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 4px 5px;
+      font-size: 8.3px;
+      color: #334155;
+      line-height: 1.12;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      flex: 1 1 auto;
+      overflow: hidden;
+    }
+
+    .painelProgDatasEntregaTitle {
+      font-size: 8.4px;
+      font-weight: 1000;
+      color: #0f172a;
+      margin-bottom: 4px;
+      flex: 0 0 auto;
+    }
+
+    .painelProgDatasEntregaList {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .painelProgDataEntregaRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 7px;
+      background: #f8fafc;
+      padding: 3px 5px;
+      font-size: 8.4px;
+      font-weight: 800;
+      color: #334155;
+    }
+
+    .painelProgDataEntregaRow span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .painelProgDataEntregaRow b {
+      flex: 0 0 auto;
+      color: #1e40af;
+      font-size: 8.7px;
+      font-weight: 1000;
+    }
+
+    .painelProgDatasEntregaEmpty {
+      padding: 8px 4px;
+      text-align: center;
+      color: #64748b;
+      font-size: 8.5px;
+      font-weight: 800;
+    }
+
+    .painelProgCard > .btn.secondary {
+      flex: 0 0 auto;
+    }
+
     .painelProgEmptyState {
       padding: 26px 18px;
       border: 1px dashed #cbd5e1;
@@ -3103,6 +3188,8 @@
     let painelProgDadosAtuais = [];
     let painelProgDadosAtuaisPorKey = new Map();
     let painelProgCardsSelecionados = new Set();
+    let painelProgCardsDatasAbertas = new Set();
+    let painelProgAlturaCardsDatas = new Map();
     window.__painelProgCopyStore = [];
 
 
@@ -9530,6 +9617,47 @@ return null;
       return mapa;
     }
 
+    function montarResumoDatasEntregaPainelProgramacao(notas) {
+      const mapaDatas = new Map();
+
+      (Array.isArray(notas) ? notas : []).forEach(nota => {
+        const valor = nota?.finalEntrega;
+        const bruto = String(valor ?? "").trim();
+        const dt = parsePossibleDate(valor);
+        let label = "";
+        let ordem = Number.MAX_SAFE_INTEGER;
+
+        if (dt) {
+          const dataOnly = new Date(dt);
+          dataOnly.setHours(0, 0, 0, 0);
+          label = formatDateBRLocal(dataOnly) || bruto || "Sem data";
+          ordem = dataOnly.getTime();
+        } else {
+          label = bruto || "Sem data";
+        }
+
+        const chave = normalizar(label) || label;
+        if (!mapaDatas.has(chave)) {
+          mapaDatas.set(chave, {
+            data: label,
+            qtd: 0,
+            ordem
+          });
+        }
+
+        const item = mapaDatas.get(chave);
+        item.qtd += 1;
+        item.ordem = Math.min(Number(item.ordem ?? Number.MAX_SAFE_INTEGER), ordem);
+      });
+
+      return Array.from(mapaDatas.values()).sort((a, b) => {
+        const ordemA = Number(a.ordem ?? Number.MAX_SAFE_INTEGER);
+        const ordemB = Number(b.ordem ?? Number.MAX_SAFE_INTEGER);
+        if (ordemA !== ordemB) return ordemA - ordemB;
+        return String(a.data || "").localeCompare(String(b.data || ""), "pt-BR");
+      });
+    }
+
     function calcularIndicadoresPainelProgramacao(almox, info, veiculos, hoje, amanha, almoxTotalPVD, opcoesPainel = {}) {
       const notas = Array.isArray(info?.notas) ? info.notas : [];
       let qtdD1 = 0;
@@ -9619,6 +9747,7 @@ return null;
       const clienteResumo = clienteLista.length ? clienteLista.join(" / ") : PAINEL_PROG_SEM_CLIENTE;
       const clienteNorm = normalizar(clienteResumo) || normalizar(PAINEL_PROG_SEM_CLIENTE);
       const statusVeiculo = status.temProgramado ? "PROGRAMADO" : "NAO PROGRAMADO";
+      const datasEntregaResumo = montarResumoDatasEntregaPainelProgramacao(notas);
 
       snapshotVocativos[vocNorm] = snapshotVocativos[vocNorm] || {};
       snapshotVocativos[vocNorm] = {
@@ -9649,6 +9778,7 @@ return null;
         ufsNorm: Array.from(ufs).map(u => normalizar(u)),
         statusVeiculo,
         tipoEmbarque,
+        datasEntregaResumo,
         temProgramado: status.temProgramado,
         temNaoProgramado: status.temNaoProgramado,
         temCarregadoHoje: status.temCarregadoHoje === true,
@@ -9942,6 +10072,12 @@ return null;
       painelProgCardsSelecionados = new Set(
         Array.from(painelProgCardsSelecionados).filter(chave => chavesDisponiveis.has(chave))
       );
+      painelProgCardsDatasAbertas = new Set(
+        Array.from(painelProgCardsDatasAbertas).filter(chave => chavesDisponiveis.has(chave))
+      );
+      Array.from(painelProgAlturaCardsDatas.keys()).forEach(chave => {
+        if (!chavesDisponiveis.has(chave)) painelProgAlturaCardsDatas.delete(chave);
+      });
     }
 
     function getPainelProgPopupEl() {
@@ -9987,7 +10123,16 @@ return null;
       if (painelProgCardsSelecionados.has(chave)) painelProgCardsSelecionados.delete(chave);
       else painelProgCardsSelecionados.add(chave);
 
-      atualizarSelecaoVisualPainelProgramacao();
+      if (painelProgCardsDatasAbertas.has(chave)) {
+        painelProgCardsDatasAbertas.delete(chave);
+        painelProgAlturaCardsDatas.delete(chave);
+      } else {
+        const alturaAtual = Number(cardEl?.offsetHeight || 0);
+        if (alturaAtual > 0) painelProgAlturaCardsDatas.set(chave, alturaAtual);
+        painelProgCardsDatasAbertas.add(chave);
+      }
+
+      renderCardsPainelProgramacao(painelProgDadosAtuais);
       renderPopupPainelProgramacao();
     }
 
@@ -10196,6 +10341,34 @@ return null;
       `;
     }
 
+    function renderDatasEntregaCardPainelProgramacao(item) {
+      const resumo = Array.isArray(item?.datasEntregaResumo) ? item.datasEntregaResumo : [];
+      const totalDatas = resumo.reduce((acc, linha) => acc + Number(linha.qtd || 0), 0);
+
+      if (!resumo.length) {
+        return `
+          <div class="painelProgDatasEntregaBox">
+            <div class="painelProgDatasEntregaTitle">📅 Dt Final Entrega</div>
+            <div class="painelProgDatasEntregaEmpty">Nenhuma data localizada.</div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="painelProgDatasEntregaBox">
+          <div class="painelProgDatasEntregaTitle">📅 Dt Final Entrega: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(totalDatas, 0))} registro(s)</div>
+          <div class="painelProgDatasEntregaList">
+            ${resumo.map(linha => `
+              <div class="painelProgDataEntregaRow" title="${getTextoPainelProgramacao(linha.data || "-")}: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(linha.qtd, 0))} registro(s)">
+                <span>${getTextoPainelProgramacao(linha.data || "-")}</span>
+                <b>${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(linha.qtd, 0))}</b>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
     function renderCardPainelProgramacao(item) {
       const classeStatus = item.temProgramado ? "isProgramado" : "isNaoProgramado";
       const statusBadge = item.temProgramado
@@ -10209,10 +10382,16 @@ return null;
       const idTitle = item.idVinculado
         ? `ID vinculado: ${getTextoPainelProgramacao(item.idVinculado)}. Clique para alterar ou limpar o vínculo.`
         : "Clique para vincular um ID ao vocativo.";
+      const chaveCard = String(item.cardKey || "").trim();
+      const datasAbertas = painelProgCardsDatasAbertas.has(chaveCard);
       const classeSelecionado = painelProgCardsSelecionados.has(item.cardKey) ? " isSelected" : "";
+      const alturaFixa = datasAbertas ? Number(painelProgAlturaCardsDatas.get(chaveCard) || 0) : 0;
+      const estiloAltura = alturaFixa > 0
+        ? ` style="height:${alturaFixa}px;min-height:${alturaFixa}px;overflow:hidden;"`
+        : "";
 
       return `
-        <div class="painelProgCard ${classeStatus}${classeSelecionado}" data-painel-prog-key="${getTextoPainelProgramacao(item.cardKey || "")}" onclick="onClickPainelProgCard(this, event)">
+        <div class="painelProgCard ${classeStatus}${classeSelecionado}" data-painel-prog-key="${getTextoPainelProgramacao(item.cardKey || "")}" onclick="onClickPainelProgCard(this, event)"${estiloAltura}>
           <div class="painelProgCardTop">
             <div class="painelProgVocativo" title="${getTextoPainelProgramacao(item.vocativo)}">🏭 ${getTextoPainelProgramacao(item.vocativo)}</div>
           </div>
@@ -10226,16 +10405,20 @@ return null;
           <div class="painelProgLine">📄 Total Notas PVD: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.totalNotasPVD, 0))}</div>
           <div class="painelProgLine">📦 Notas &lt;= D-1: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.notasD1, 0))}</div>
 
-          <div class="painelProgMetrics">
-            <div class="painelProgMetricBox" style="color:#991b1b;">Entrada em Atraso: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.entradaAtraso, 0))}</div>
-            <div class="painelProgMetricBox" style="color:#14532d;">Entrada No Prazo: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.entradaPrazo, 0))}</div>
-            <div class="painelProgMetricBox" style="color:#dc2626;">🔴 Vencidas: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.vencidas, 0))}</div>
-            <div class="painelProgMetricBox" style="color:#2563eb;">🔵 D0: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.d0, 0))}</div>
-            <div class="painelProgMetricBox" style="color:#16a34a;">🟢 D-1: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.d1, 0))}</div>
-            <div class="painelProgMetricBox" style="color:#15803d;">🟢 &gt;= D-2: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.dge2, 0))}</div>
-          </div>
+          <div class="painelProgCardDynamicBody${datasAbertas ? " isDatasEntrega" : ""}">
+            ${datasAbertas ? renderDatasEntregaCardPainelProgramacao(item) : `
+              <div class="painelProgMetrics">
+                <div class="painelProgMetricBox" style="color:#991b1b;">Entrada em Atraso: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.entradaAtraso, 0))}</div>
+                <div class="painelProgMetricBox" style="color:#14532d;">Entrada No Prazo: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.entradaPrazo, 0))}</div>
+                <div class="painelProgMetricBox" style="color:#dc2626;">🔴 Vencidas: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.vencidas, 0))}</div>
+                <div class="painelProgMetricBox" style="color:#2563eb;">🔵 D0: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.d0, 0))}</div>
+                <div class="painelProgMetricBox" style="color:#16a34a;">🟢 D-1: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.d1, 0))}</div>
+                <div class="painelProgMetricBox" style="color:#15803d;">🟢 &gt;= D-2: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.dge2, 0))}</div>
+              </div>
 
-          ${renderUltimoVeiculoPainelProgramacao(item.ultimoVeiculo)}
+              ${renderUltimoVeiculoPainelProgramacao(item.ultimoVeiculo)}
+            `}
+          </div>
 
           <input type="hidden" data-id-vocativo="${getTextoPainelProgramacao(item.vocNorm)}" value="${getTextoPainelProgramacao(item.idVinculado)}" />
           <button
