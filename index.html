@@ -9985,7 +9985,7 @@ return null;
     }
 
     function criarAlertasMercadoriaPainelProgramacao() {
-      return { tubo: 0, chapa: 0, cantoneira: 0, barra: 0 };
+      return { tubo: 0, chapa: 0, cantoneira: 0, viga: 0, barra: 0 };
     }
 
     function somarAlertasMercadoriaPainelProgramacao(destino, origem) {
@@ -9994,13 +9994,14 @@ return null;
       base.tubo += Number(adicao.tubo || 0);
       base.chapa += Number(adicao.chapa || 0);
       base.cantoneira += Number(adicao.cantoneira || 0);
+      base.viga += Number(adicao.viga || 0);
       base.barra += Number(adicao.barra || 0);
       return base;
     }
 
     function totalAlertasMercadoriaPainelProgramacao(alertas) {
       const a = alertas || {};
-      return Number(a.tubo || 0) + Number(a.chapa || 0) + Number(a.cantoneira || 0) + Number(a.barra || 0);
+      return Number(a.tubo || 0) + Number(a.chapa || 0) + Number(a.cantoneira || 0) + Number(a.viga || 0) + Number(a.barra || 0);
     }
 
     function clonarAlertasMercadoriaPainelProgramacao(alertas) {
@@ -10030,6 +10031,7 @@ return null;
       if (contemTermoExatoMercadoriaPainelProgramacao(texto, "TUBO")) alertas.tubo = 1;
       if (contemTermoExatoMercadoriaPainelProgramacao(texto, "CHAPA")) alertas.chapa = 1;
       if (contemTermoExatoMercadoriaPainelProgramacao(texto, "CANTONEIRA")) alertas.cantoneira = 1;
+      if (contemTermoExatoMercadoriaPainelProgramacao(texto, "VIGA")) alertas.viga = 1;
       if (
         contemTermoExatoMercadoriaPainelProgramacao(texto, "BARRA RED") ||
         contemTermoExatoMercadoriaPainelProgramacao(texto, "BARRA REDONDA") ||
@@ -10046,6 +10048,7 @@ return null;
         { chave: "tubo", label: "TUBO", qtd: Number(a.tubo || 0) },
         { chave: "chapa", label: "CHAPA", qtd: Number(a.chapa || 0) },
         { chave: "cantoneira", label: "CANTONEIRA", qtd: Number(a.cantoneira || 0) },
+        { chave: "viga", label: "VIGA", qtd: Number(a.viga || 0) },
         { chave: "barra", label: "BARRA", qtd: Number(a.barra || 0) }
       ].filter(item => item.qtd > 0);
     }
