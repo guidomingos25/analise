@@ -12436,12 +12436,15 @@ return null;
       cache.almoxUltimoVeiculo[almoxReal] = veiculosBase;
     }
 
-    function solicitarIdVinculo(vocNorm, idInicial = "") {
+    function solicitarIdVinculo(vocNorm, idInicial = "", textoDestino = "") {
       let tentativa = String(idInicial || "").trim();
+      const destino = String(textoDestino || "").trim() || `ao vocativo ${vocNorm}`;
 
       while (true) {
         const valor = window.prompt(
-          `Informe o ID do veículo para vincular ao vocativo ${vocNorm}.\n\nDeixe em branco e confirme para desvincular o ID atual.`,
+          `Informe o ID do veículo para vincular ${destino}.
+
+Deixe em branco e confirme para desvincular o ID atual.`,
           tentativa
         );
         if (valor === null) return null;
@@ -12459,6 +12462,45 @@ return null;
 
         return calculo.id;
       }
+    }
+
+    function getIdAtualVinculadoPainelProgramacao(vocNorm) {
+      const chave = normalizar(vocNorm);
+      if (!chave) return "";
+
+      return String(
+        (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, chave))
+          ? window.idDrafts[chave]
+          : ((window.vinculosManuaisTempoReal?.[chave]?.id || "") || (window.idHojeServidor?.[chave] || "") || (getIdInput(chave)?.value || ""))
+      ).trim();
+    }
+
+    function getStatusAnteriorVinculoPainelProgramacao(vocNorm) {
+      const chave = normalizar(vocNorm);
+      if (!chave) return "NAO PROGRAMADO";
+
+      return (window.statusDrafts && Object.prototype.hasOwnProperty.call(window.statusDrafts, chave))
+        ? window.statusDrafts[chave]
+        : (window.statusHojeServidor?.[chave] || snapshotVocativos?.[chave]?.StatusVeiculo || "NAO PROGRAMADO");
+    }
+
+    function getVocativosSelecionadosParaVinculoPainelProgramacao(vocNormAtual) {
+      const vocativos = [];
+      const vistos = new Set();
+      const adicionar = (valor) => {
+        const voc = normalizar(valor);
+        if (!voc || vistos.has(voc)) return;
+        vistos.add(voc);
+        vocativos.push(voc);
+      };
+
+      Array.from(painelProgCardsSelecionados || [])
+        .map(chave => painelProgDadosAtuaisPorKey.get(chave))
+        .filter(Boolean)
+        .forEach(item => adicionar(item.vocNorm || item.vocativo || ""));
+
+      if (!vocativos.length) adicionar(vocNormAtual);
+      return vocativos;
     }
 
     function toggleIdField(vocNorm, status) {
@@ -12707,45 +12749,61 @@ return null;
     async function onVincularIdClick(vocNorm, ev) {
       if (ev) { ev.preventDefault(); ev.stopPropagation(); }
 
-      const idAtual = String(
-        (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm))
-          ? window.idDrafts[vocNorm]
-          : ((window.vinculosManuaisTempoReal?.[vocNorm]?.id || "") || (window.idHojeServidor?.[vocNorm] || "") || (getIdInput(vocNorm)?.value || ""))
-      ).trim();
+      const vocAtual = normalizar(vocNorm);
+      const vocativosDestino = getVocativosSelecionadosParaVinculoPainelProgramacao(vocAtual);
+      if (!vocativosDestino.length) return;
 
-      if (idAtual) {
-        const acao = await escolherAcaoIdVinculado(vocNorm, idAtual);
+      const aplicarEmLote = vocativosDestino.length > 1;
+      const idAtual = aplicarEmLote ? "" : getIdAtualVinculadoPainelProgramacao(vocAtual);
+
+      if (!aplicarEmLote && idAtual) {
+        const acao = await escolherAcaoIdVinculado(vocAtual, idAtual);
         if (acao === "cancelar") return;
         if (acao === "desvincular") {
-          await onDesvincularIdClick(vocNorm, ev);
+          await onDesvincularIdClick(vocAtual, ev);
           return;
         }
       }
 
-      const statusAnterior = (window.statusDrafts && Object.prototype.hasOwnProperty.call(window.statusDrafts, vocNorm))
-        ? window.statusDrafts[vocNorm]
-        : (window.statusHojeServidor?.[vocNorm] || snapshotVocativos?.[vocNorm]?.StatusVeiculo || "NAO PROGRAMADO");
+      const textoDestino = aplicarEmLote
+        ? `a todos os ${vocativosDestino.length} cards selecionados`
+        : `ao vocativo ${vocAtual}`;
 
-      const idConfirmado = solicitarIdVinculo(vocNorm, idAtual);
+      const idConfirmado = solicitarIdVinculo(vocAtual, idAtual, textoDestino);
       if (idConfirmado === null) {
         return;
       }
 
-      registrarIdsRemovidosTempoReal(vocNorm, statusAnterior, idConfirmado || "", idAtual);
-      ajustarIdsHistoricosLocaisVocativo(vocNorm, idConfirmado || "", idAtual);
+      for (const vocDestino of vocativosDestino) {
+        const idAnterior = getIdAtualVinculadoPainelProgramacao(vocDestino);
+        const statusAnterior = getStatusAnteriorVinculoPainelProgramacao(vocDestino);
 
-      await aplicarEstadoVocativoNaUI(vocNorm, statusAnterior, idConfirmado || "");
-      const statusVisualAtual = window.statusDrafts?.[vocNorm] || snapshotVocativos?.[vocNorm]?.StatusVeiculo || statusAnterior;
+        registrarIdsRemovidosTempoReal(vocDestino, statusAnterior, idConfirmado || "", idAnterior);
+        ajustarIdsHistoricosLocaisVocativo(vocDestino, idConfirmado || "", idAnterior);
 
-      const seq = (versaoMudancaVocativo.get(vocNorm) || 0) + 1;
-      versaoMudancaVocativo.set(vocNorm, seq);
+        await aplicarEstadoVocativoNaUI(vocDestino, statusAnterior, idConfirmado || "", { skipRender: true });
+        const statusVisualAtual = window.statusDrafts?.[vocDestino] || snapshotVocativos?.[vocDestino]?.StatusVeiculo || statusAnterior;
 
-      await enfileirarSalvarVocativo(vocNorm, {
-        seq,
-        status: statusVisualAtual,
-        id: idConfirmado || "",
-        silent: false
-      });
+        const seq = (versaoMudancaVocativo.get(vocDestino) || 0) + 1;
+        versaoMudancaVocativo.set(vocDestino, seq);
+
+        await enfileirarSalvarVocativo(vocDestino, {
+          seq,
+          status: statusVisualAtual,
+          id: idConfirmado || "",
+          silent: false
+        });
+      }
+
+      window.__analisePerf.opcoesCacheKey = "";
+      window.__analisePerf.clientesCacheKey = "";
+      window.__analiseProgramacaoCache = null;
+
+      if (isPainelProgramacaoVisivel()) {
+        await renderPainelProgramacaoRapido(false);
+      } else {
+        await agendarListarAlmoxPendentes();
+      }
     }
 
     function aplicarStatusNoDOM(mapaStatus) {
