@@ -2839,6 +2839,11 @@
       text-transform: uppercase;
     }
 
+    .painelProgConsultaTable th[data-sortable-painel-prog="1"] {
+      cursor: pointer;
+      user-select: none;
+    }
+
     .painelProgConsultaTable tbody tr:nth-child(even) {
       background: #f8fafc;
     }
@@ -11464,6 +11469,140 @@ return null;
       return String(valor ?? "").trim();
     }
 
+    function parseNumeroOrdenacaoConsultaPainelProgramacao(valor) {
+      if (valor === null || valor === undefined || valor === "") return null;
+      if (typeof valor === "number") return Number.isFinite(valor) ? valor : null;
+      const original = String(valor ?? "").trim();
+      if (!original) return null;
+
+      let texto = original
+        .replace(/\s/g, "")
+        .replace(/%$/, "")
+        .replace(/[^0-9,.-]/g, "");
+
+      if (!texto || !/[0-9]/.test(texto)) return null;
+
+      const temVirgula = texto.includes(",");
+      const temPonto = texto.includes(".");
+      if (temVirgula && temPonto) {
+        if (texto.lastIndexOf(",") > texto.lastIndexOf(".")) {
+          texto = texto.replace(/\./g, "").replace(",", ".");
+        } else {
+          texto = texto.replace(/,/g, "");
+        }
+      } else if (temVirgula) {
+        texto = texto.replace(/\./g, "").replace(",", ".");
+      } else {
+        const pontos = (texto.match(/\./g) || []).length;
+        if (pontos > 1) texto = texto.replace(/\./g, "");
+      }
+
+      const numero = Number(texto);
+      return Number.isFinite(numero) ? numero : null;
+    }
+
+    function getTipoOrdenacaoConsultaPainelProgramacao(coluna, registros) {
+      if (isColunaDataConsultaPainelProgramacao(coluna)) return "date";
+
+      const valores = (Array.isArray(registros) ? registros : [])
+        .map(reg => {
+          const raw = reg?._raw || reg || {};
+          return raw[coluna];
+        })
+        .filter(valor => valor !== null && valor !== undefined && String(valor).trim() !== "");
+
+      if (!valores.length) return "text";
+
+      const todosNumericos = valores.every(valor => parseNumeroOrdenacaoConsultaPainelProgramacao(valor) !== null);
+      return todosNumericos ? "number" : "text";
+    }
+
+    function getValorOrdenacaoConsultaPainelProgramacao(coluna, valor, tipo) {
+      if (valor === null || valor === undefined || valor === "") {
+        return { valor: "", vazio: true };
+      }
+
+      if (tipo === "date") {
+        const dt = parsePossibleDate(valor);
+        if (dt && !Number.isNaN(dt.getTime())) {
+          return { valor: String(dt.getTime()), vazio: false };
+        }
+      }
+
+      if (tipo === "number") {
+        const numero = parseNumeroOrdenacaoConsultaPainelProgramacao(valor);
+        if (numero !== null) {
+          return { valor: String(numero), vazio: false };
+        }
+      }
+
+      return {
+        valor: normalizar(String(valor ?? "").trim()),
+        vazio: String(valor ?? "").trim() === ""
+      };
+    }
+
+    function ordenarTabelaConsultaPainelProgramacao(th) {
+      if (!th) return;
+
+      const tabela = th.closest("table");
+      const tbody = tabela?.querySelector("tbody");
+      if (!tabela || !tbody) return;
+
+      const indiceColuna = Number(th.getAttribute("data-col-index"));
+      if (!Number.isInteger(indiceColuna) || indiceColuna < 0) return;
+
+      const direcaoAtual = th.getAttribute("data-sort-dir") === "asc" ? "asc" : "";
+      const novaDirecao = direcaoAtual === "asc" ? "desc" : "asc";
+      const tipo = th.getAttribute("data-sort-type") || "text";
+
+      tabela.querySelectorAll('thead th[data-sortable-painel-prog="1"]').forEach(header => {
+        header.removeAttribute("data-sort-dir");
+        header.setAttribute("aria-sort", "none");
+      });
+
+      th.setAttribute("data-sort-dir", novaDirecao);
+      th.setAttribute("aria-sort", novaDirecao === "asc" ? "ascending" : "descending");
+
+      const linhas = Array.from(tbody.querySelectorAll("tr")).map((row, indiceOriginal) => ({
+        row,
+        indiceOriginal
+      }));
+
+      linhas.sort((a, b) => {
+        const celA = a.row.cells[indiceColuna];
+        const celB = b.row.cells[indiceColuna];
+
+        const vazioA = celA?.getAttribute("data-sort-empty") === "1";
+        const vazioB = celB?.getAttribute("data-sort-empty") === "1";
+
+        if (vazioA && !vazioB) return 1;
+        if (!vazioA && vazioB) return -1;
+        if (vazioA && vazioB) return a.indiceOriginal - b.indiceOriginal;
+
+        let valorA = celA?.getAttribute("data-sort-value") ?? "";
+        let valorB = celB?.getAttribute("data-sort-value") ?? "";
+        let comparacao = 0;
+
+        if (tipo === "date" || tipo === "number") {
+          const numA = Number(valorA);
+          const numB = Number(valorB);
+          if (Number.isFinite(numA) && Number.isFinite(numB)) {
+            comparacao = numA - numB;
+          } else {
+            comparacao = String(valorA).localeCompare(String(valorB), "pt-BR", { numeric: true, sensitivity: "base" });
+          }
+        } else {
+          comparacao = String(valorA).localeCompare(String(valorB), "pt-BR", { numeric: true, sensitivity: "base" });
+        }
+
+        if (comparacao === 0) return a.indiceOriginal - b.indiceOriginal;
+        return novaDirecao === "asc" ? comparacao : -comparacao;
+      });
+
+      linhas.forEach(({ row }) => tbody.appendChild(row));
+    }
+
     function getColunasRelatorioVocativoPainelProgramacao(registros) {
       const colsBase = Array.isArray(detalhadoCols) && detalhadoCols.length ? detalhadoCols : [];
       if (colsBase.length) return colsBase;
@@ -11504,12 +11643,29 @@ return null;
         return;
       }
 
-      const thead = colunas.map(c => `<th title="${getTextoPainelProgramacao(c)}">${getTextoPainelProgramacao(c)}</th>`).join("");
+      const tiposOrdenacao = colunas.map(c => getTipoOrdenacaoConsultaPainelProgramacao(c, registros));
+      const thead = colunas.map((c, idx) => `
+        <th
+          title="${getTextoPainelProgramacao(c)}"
+          data-sortable-painel-prog="1"
+          data-col-index="${idx}"
+          data-sort-type="${getTextoPainelProgramacao(tiposOrdenacao[idx] || "text")}"
+          aria-sort="none"
+          onclick="ordenarTabelaConsultaPainelProgramacao(this)"
+        >${getTextoPainelProgramacao(c)}</th>
+      `).join("");
+
       const tbody = registros.map(reg => {
         const raw = reg?._raw || reg || {};
-        return `<tr>${colunas.map(c => {
-          const valor = formatarValorConsultaPainelProgramacao(c, raw[c]);
-          return `<td title="${getTextoPainelProgramacao(valor)}">${getTextoPainelProgramacao(valor)}</td>`;
+        return `<tr>${colunas.map((c, idx) => {
+          const valorOriginal = raw[c];
+          const valor = formatarValorConsultaPainelProgramacao(c, valorOriginal);
+          const ordenacao = getValorOrdenacaoConsultaPainelProgramacao(c, valorOriginal, tiposOrdenacao[idx]);
+          return `<td
+            title="${getTextoPainelProgramacao(valor)}"
+            data-sort-value="${getTextoPainelProgramacao(ordenacao.valor)}"
+            data-sort-empty="${ordenacao.vazio ? "1" : "0"}"
+          >${getTextoPainelProgramacao(valor)}</td>`;
         }).join("")}</tr>`;
       }).join("");
 
