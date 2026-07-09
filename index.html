@@ -2668,6 +2668,260 @@
     }
 
 
+
+
+    .painelProgActionRow {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+      margin-top: 1px;
+      flex-wrap: nowrap;
+    }
+
+    .painelProgActionRow .painelProgIdBtn {
+      flex: 1 1 auto;
+      min-width: 0;
+      height: 26px;
+      padding: 4px 6px !important;
+      font-weight: 900;
+      font-size: 8.5px;
+      line-height: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      box-shadow: none;
+    }
+
+    .painelProgConsultaBtn {
+      width: 26px !important;
+      min-width: 26px !important;
+      max-width: 26px !important;
+      height: 26px !important;
+      padding: 0 !important;
+      border-radius: 7px !important;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px !important;
+      line-height: 1 !important;
+      flex: 0 0 26px;
+      box-shadow: none !important;
+    }
+
+    .painelProgConsultaBtn:hover,
+    .painelProgActionRow .painelProgIdBtn:hover {
+      transform: none;
+      box-shadow: none;
+      background: #eff6ff;
+      border-color: #93c5fd;
+    }
+
+    .painelProgConsultaOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.58);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2147483646;
+      padding: 18px;
+    }
+
+    .painelProgConsultaModal {
+      width: min(1180px, 94vw);
+      max-height: min(86vh, 820px);
+      background: #ffffff;
+      border: 1px solid rgba(15, 23, 42, 0.14);
+      border-radius: 18px;
+      box-shadow: 0 24px 70px rgba(2, 6, 23, 0.34);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      color: #0f172a;
+    }
+
+    .painelProgConsultaModal.isVeiculos {
+      width: min(760px, 94vw);
+    }
+
+    .painelProgConsultaHeader {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      background: #eff6ff;
+      border-bottom: 1px solid #dbeafe;
+    }
+
+    .painelProgConsultaTitle {
+      font-size: 14px;
+      font-weight: 1000;
+      color: #111827;
+      text-transform: uppercase;
+      letter-spacing: .035em;
+      line-height: 1.2;
+    }
+
+    .painelProgConsultaSub {
+      margin-top: 3px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+      line-height: 1.25;
+    }
+
+    .painelProgConsultaClose {
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #0f172a;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      font-weight: 900;
+      padding: 0;
+    }
+
+    .painelProgConsultaClose:hover {
+      background: #fee2e2;
+      border-color: #fecaca;
+      color: #991b1b;
+    }
+
+    .painelProgConsultaBody {
+      padding: 12px 14px 14px;
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .painelProgConsultaTableWrap {
+      max-height: calc(86vh - 130px);
+      overflow: auto;
+      border: 1px solid #d1d5db;
+      border-radius: 14px;
+      background: #ffffff;
+    }
+
+    .painelProgConsultaTable {
+      width: 100%;
+      min-width: 1400px;
+      border-collapse: collapse;
+      table-layout: auto;
+      font-size: 10px;
+      background: #ffffff;
+    }
+
+    .painelProgConsultaTable th,
+    .painelProgConsultaTable td {
+      padding: 7px 8px;
+      border: 1px solid #e5e7eb;
+      white-space: nowrap;
+      line-height: 1.2;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: top;
+    }
+
+    .painelProgConsultaTable th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #e5e7eb;
+      color: #111827;
+      font-size: 9.5px;
+      font-weight: 1000;
+      text-transform: uppercase;
+    }
+
+    .painelProgConsultaTable tbody tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    .painelProgConsultaTable tbody tr:hover {
+      background: #dbeafe;
+    }
+
+    .painelProgConsultaEmpty {
+      padding: 28px 18px;
+      text-align: center;
+      color: #64748b;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .painelProgConsultaVehicleList {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .painelProgConsultaVehicleCard {
+      border: 1px solid #dbeafe;
+      border-radius: 14px;
+      background: #ffffff;
+      overflow: hidden;
+      box-shadow: 0 8px 18px rgba(2, 6, 23, 0.08);
+    }
+
+    .painelProgConsultaVehicleHead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 12px;
+      font-weight: 1000;
+      color: #111827;
+    }
+
+    .painelProgConsultaVehicleGrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0;
+      padding: 2px 10px 10px;
+    }
+
+    .painelProgConsultaVehicleCampo {
+      padding: 8px 4px 7px;
+      border-bottom: 1px solid #f1f5f9;
+      min-width: 0;
+    }
+
+    .painelProgConsultaVehicleLabel {
+      font-size: 9px;
+      font-weight: 1000;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 3px;
+    }
+
+    .painelProgConsultaVehicleValor {
+      font-size: 11px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.25;
+      word-break: break-word;
+      white-space: normal;
+    }
+
+    @media (max-width: 720px) {
+      .painelProgConsultaVehicleGrid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .painelProgCard.isProgramado {
       background: linear-gradient(180deg, #dcfce7 0%, #ffffff 42%);
       border-color: #22c55e;
@@ -7545,6 +7799,7 @@
       }
 
       const almoxTotalPVD = {};
+      const almoxRegistrosPVD = {};
       const almoxPendBase = {};
       const dataRowsByIdNorm = new Map();
       const statusNotasBanco = await carregarStatusNotasBanco(false);
@@ -7557,6 +7812,9 @@
       detalhadoRows.forEach(r => {
         const almox = normalizar(r["Almoxarifado"]);
         if (!almox) return;
+
+        if (!almoxRegistrosPVD[almox]) almoxRegistrosPVD[almox] = [];
+        almoxRegistrosPVD[almox].push({ ...r });
 
         if (!almoxTotalPVD[almox]) {
           almoxTotalPVD[almox] = {
@@ -7612,7 +7870,8 @@
             const dtMaior = maiorDataEntradaOuCheckin(dtCheck, dtEntrada);
             if (!dtLimite || !dtMaior) return null;
             return Math.round((dtLimite.getTime() - dtMaior.getTime()) / 86400000);
-          })()
+          })(),
+          _raw: { ...r }
         };
 
         notaObj._clienteNorm = normalizar(notaObj.cliente || "");
@@ -7694,6 +7953,13 @@
           refs: row["REFERENCIAS"] || "",
           prioridadesSolicitacao: row["PRIORIDADES SOLICITACAO"] || "",
           modalidade: getFieldValue(row, ["MODALIDADE", "Modalidade"]) || "",
+          veiculoContratado: getFieldValue(row, ["VEICULO CONTRATADO", "VEÍCULO CONTRATADO", "Veiculo Contratado", "Veículo Contratado"]) || "",
+          quimico: getFieldValue(row, ["QUIMICO", "QUÍMICO", "Quimico", "Químico"]) || "",
+          obsCarregamento: getFieldValue(row, ["OBS. CARREGAMENTO", "OBS CARREGAMENTO", "Obs. Carregamento"]) || "",
+          lider: getFieldValue(row, ["LIDER", "Líder", "Lider"]) || "",
+          conferente: getFieldValue(row, ["CONFERENTE", "Conferente"]) || "",
+          operador: getFieldValue(row, ["OPERADOR", "Operador"]) || "",
+          programador: getFieldValue(row, ["PROGRAMADOR/CONTRATANTE", "Programador/Contratante"]) || "",
           _idVinculadoManual: true
         };
       }
@@ -7726,7 +7992,14 @@
             id: row["ID"] || "",
             refs: row["REFERENCIAS"] || "",
             prioridadesSolicitacao: row["PRIORIDADES SOLICITACAO"] || "",
-            modalidade: getFieldValue(row, ["MODALIDADE", "Modalidade"]) || ""
+            modalidade: getFieldValue(row, ["MODALIDADE", "Modalidade"]) || "",
+          veiculoContratado: getFieldValue(row, ["VEICULO CONTRATADO", "VEÍCULO CONTRATADO", "Veiculo Contratado", "Veículo Contratado"]) || "",
+          quimico: getFieldValue(row, ["QUIMICO", "QUÍMICO", "Quimico", "Químico"]) || "",
+          obsCarregamento: getFieldValue(row, ["OBS. CARREGAMENTO", "OBS CARREGAMENTO", "Obs. Carregamento"]) || "",
+          lider: getFieldValue(row, ["LIDER", "Líder", "Lider"]) || "",
+          conferente: getFieldValue(row, ["CONFERENTE", "Conferente"]) || "",
+          operador: getFieldValue(row, ["OPERADOR", "Operador"]) || "",
+          programador: getFieldValue(row, ["PROGRAMADOR/CONTRATANTE", "Programador/Contratante"]) || ""
           });
         });
       });
@@ -7790,6 +8063,7 @@
       window.__analiseProgramacaoCache = {
         signature,
         almoxTotalPVD,
+        almoxRegistrosPVD,
         almoxPendBase,
         almoxUltimoVeiculo,
         clientesUnicos,
@@ -10356,6 +10630,10 @@ return null;
         d1,
         dge2,
         ultimoVeiculo,
+        ultimosVeiculos: Array.isArray(veiculos) ? veiculos.slice(0, 3) : [],
+        registrosRelatorioPVD: Array.isArray(opcoesPainel?.registrosRelatorioPVD)
+          ? opcoesPainel.registrosRelatorioPVD
+          : notas.map(n => n?._raw || n),
         idVinculado: getIdVinculadoPainelProgramacao(vocNorm),
         searchBlob: normalizar([
           almox,
@@ -10451,7 +10729,8 @@ return null;
             {
               cliente: grupo.clienteNome,
               clienteSnapshot: clienteResumoSnapshot,
-              totalPVD: totaisClienteVocativo[grupo.clienteNorm]
+              totalPVD: totaisClienteVocativo[grupo.clienteNorm],
+              registrosRelatorioPVD: cache.almoxRegistrosPVD?.[almox] || notasBase.map(n => n?._raw || n)
             }
           );
           itemPainel.cardKey = `${itemPainel.vocNorm}||${itemPainel.clienteNorm || grupo.clienteNorm || ""}`;
@@ -11118,6 +11397,216 @@ return null;
       `;
     }
 
+
+    function fecharPopupConsultaPainelProgramacao() {
+      const overlay = document.getElementById("painelProgConsultaOverlay");
+      if (!overlay) return;
+      if (overlay._painelProgEscHandler) {
+        document.removeEventListener("keydown", overlay._painelProgEscHandler);
+      }
+      overlay.remove();
+    }
+
+    function abrirPopupConsultaPainelProgramacao(titulo, subtitulo, corpoHtml, tipo = "relatorio") {
+      fecharPopupConsultaPainelProgramacao();
+
+      const overlay = document.createElement("div");
+      overlay.id = "painelProgConsultaOverlay";
+      overlay.className = "painelProgConsultaOverlay";
+
+      const classeTipo = tipo === "veiculos" ? " isVeiculos" : "";
+      overlay.innerHTML = `
+        <div class="painelProgConsultaModal${classeTipo}" role="dialog" aria-modal="true">
+          <div class="painelProgConsultaHeader">
+            <div>
+              <div class="painelProgConsultaTitle">${getTextoPainelProgramacao(titulo || "Consulta")}</div>
+              <div class="painelProgConsultaSub">${getTextoPainelProgramacao(subtitulo || "")}</div>
+            </div>
+            <button type="button" class="painelProgConsultaClose" title="Fechar" onclick="fecharPopupConsultaPainelProgramacao()">×</button>
+          </div>
+          <div class="painelProgConsultaBody">${corpoHtml || ""}</div>
+        </div>
+      `;
+
+      overlay.addEventListener("click", (ev) => {
+        if (ev.target === overlay) fecharPopupConsultaPainelProgramacao();
+      });
+
+      overlay._painelProgEscHandler = (ev) => {
+        if (ev.key === "Escape") fecharPopupConsultaPainelProgramacao();
+      };
+      document.addEventListener("keydown", overlay._painelProgEscHandler);
+
+      document.body.appendChild(overlay);
+    }
+
+    function getItemPainelProgramacaoPorCardKey(cardKey) {
+      const chave = String(cardKey || "").trim();
+      if (!chave) return null;
+      return painelProgDadosAtuaisPorKey.get(chave) || null;
+    }
+
+    function isColunaDataConsultaPainelProgramacao(coluna) {
+      const colNorm = normalizar(coluna || "");
+      return /(^|[^A-Z])(DATA|DT|PREVISAO|PREVISÃO|CARREGAMENTO|ENTREGA|CHECK|CHECKIN|CHECK IN)([^A-Z]|$)/.test(colNorm);
+    }
+
+    function formatarValorConsultaPainelProgramacao(coluna, valor) {
+      if (valor === null || valor === undefined) return "";
+      const isData = isColunaDataConsultaPainelProgramacao(coluna);
+      if (isData) {
+        const dt = parsePossibleDate(valor);
+        if (dt) return formatDateBRLocal(dt) || String(valor ?? "").trim();
+      }
+      if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
+        return formatDateBRLocal(valor) || String(valor ?? "").trim();
+      }
+      return String(valor ?? "").trim();
+    }
+
+    function getColunasRelatorioVocativoPainelProgramacao(registros) {
+      const colsBase = Array.isArray(detalhadoCols) && detalhadoCols.length ? detalhadoCols : [];
+      if (colsBase.length) return colsBase;
+
+      const cols = [];
+      const vistos = new Set();
+      (Array.isArray(registros) ? registros : []).forEach(reg => {
+        const raw = reg?._raw || reg || {};
+        Object.keys(raw).forEach(c => {
+          if (!c || c.startsWith("_")) return;
+          if (vistos.has(c)) return;
+          vistos.add(c);
+          cols.push(c);
+        });
+      });
+      return cols;
+    }
+
+    function abrirRelatorioVocativoPainelProgramacao(cardKey, ev) {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      const item = getItemPainelProgramacaoPorCardKey(cardKey);
+      if (!item) {
+        alert("Não foi possível localizar os dados deste card para abrir o relatório.");
+        return;
+      }
+
+      const registros = Array.isArray(item.registrosRelatorioPVD) ? item.registrosRelatorioPVD : [];
+      const colunas = getColunasRelatorioVocativoPainelProgramacao(registros);
+      const vocativo = item.vocativo || item.vocNorm || "";
+
+      if (!registros.length || !colunas.length) {
+        abrirPopupConsultaPainelProgramacao(
+          `🧾 Relatório do vocativo ${vocativo}`,
+          "Nenhum registro PVD localizado para este vocativo.",
+          `<div class="painelProgConsultaEmpty">Nenhum registro localizado para exibir.</div>`,
+          "relatorio"
+        );
+        return;
+      }
+
+      const thead = colunas.map(c => `<th title="${getTextoPainelProgramacao(c)}">${getTextoPainelProgramacao(c)}</th>`).join("");
+      const tbody = registros.map(reg => {
+        const raw = reg?._raw || reg || {};
+        return `<tr>${colunas.map(c => {
+          const valor = formatarValorConsultaPainelProgramacao(c, raw[c]);
+          return `<td title="${getTextoPainelProgramacao(valor)}">${getTextoPainelProgramacao(valor)}</td>`;
+        }).join("")}</tr>`;
+      }).join("");
+
+      abrirPopupConsultaPainelProgramacao(
+        `🧾 Relatório do vocativo ${vocativo}`,
+        `${registros.length} registro(s) PVD | ${colunas.length} coluna(s) do relatório`,
+        `<div class="painelProgConsultaTableWrap">
+          <table class="painelProgConsultaTable">
+            <thead><tr>${thead}</tr></thead>
+            <tbody>${tbody}</tbody>
+          </table>
+        </div>`,
+        "relatorio"
+      );
+    }
+
+    function formatarCampoVeiculoConsultaPainelProgramacao(valor, coluna = "") {
+      if (valor === null || valor === undefined || valor === "") return "-";
+      if (isColunaDataConsultaPainelProgramacao(coluna)) {
+        const dt = parsePossibleDate(valor);
+        if (dt) return formatDateBRLocal(dt) || String(valor || "").trim();
+      }
+      return String(valor || "").trim() || "-";
+    }
+
+    function renderCampoVeiculoConsultaPainelProgramacao(label, valor) {
+      return `
+        <div class="painelProgConsultaVehicleCampo">
+          <div class="painelProgConsultaVehicleLabel">${getTextoPainelProgramacao(label)}</div>
+          <div class="painelProgConsultaVehicleValor">${getTextoPainelProgramacao(valor)}</div>
+        </div>
+      `;
+    }
+
+    function abrirUltimosVeiculosPainelProgramacao(cardKey, ev) {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      const item = getItemPainelProgramacaoPorCardKey(cardKey);
+      if (!item) {
+        alert("Não foi possível localizar os veículos deste card.");
+        return;
+      }
+
+      const veiculos = (Array.isArray(item.ultimosVeiculos) && item.ultimosVeiculos.length)
+        ? item.ultimosVeiculos.slice(0, 3)
+        : (item.ultimoVeiculo ? [item.ultimoVeiculo] : []);
+      const vocativo = item.vocativo || item.vocNorm || "";
+
+      if (!veiculos.length) {
+        abrirPopupConsultaPainelProgramacao(
+          `🚚 Últimos veículos - ${vocativo}`,
+          "Nenhum veículo programado localizado para este vocativo.",
+          `<div class="painelProgConsultaEmpty">Nenhum veículo localizado.</div>`,
+          "veiculos"
+        );
+        return;
+      }
+
+      const html = `
+        <div class="painelProgConsultaVehicleList">
+          ${veiculos.map((v, idx) => {
+            const id = formatarCampoVeiculoConsultaPainelProgramacao(v?.id || "-");
+            return `
+              <div class="painelProgConsultaVehicleCard">
+                <div class="painelProgConsultaVehicleHead">
+                  <span>🚚 Veículo ${idx + 1}</span>
+                  <span>ID ${getTextoPainelProgramacao(id)}</span>
+                </div>
+                <div class="painelProgConsultaVehicleGrid">
+                  ${renderCampoVeiculoConsultaPainelProgramacao("DT. PREVISÃO", formatarCampoVeiculoConsultaPainelProgramacao(v?.dtPrev, "DT. PREVISÃO"))}
+                  ${renderCampoVeiculoConsultaPainelProgramacao("DT. CARREGAMENTO", formatarCampoVeiculoConsultaPainelProgramacao(v?.dtCarreg, "DT. CARREGAMENTO"))}
+                  ${renderCampoVeiculoConsultaPainelProgramacao("DT. ENTREGA", formatarCampoVeiculoConsultaPainelProgramacao(v?.dtEntrega, "DT. ENTREGA"))}
+                  ${renderCampoVeiculoConsultaPainelProgramacao("MODALIDADE", formatarCampoVeiculoConsultaPainelProgramacao(v?.modalidade))}
+                  ${renderCampoVeiculoConsultaPainelProgramacao("DESTINOS", formatarCampoVeiculoConsultaPainelProgramacao(v?.destinos))}
+                  ${renderCampoVeiculoConsultaPainelProgramacao("REFERÊNCIAS", formatarCampoVeiculoConsultaPainelProgramacao(v?.refs))}
+                  ${renderCampoVeiculoConsultaPainelProgramacao("VEÍCULO SOLICITADO", formatarCampoVeiculoConsultaPainelProgramacao(v?.veiculoSolicitado))}
+                  ${renderCampoVeiculoConsultaPainelProgramacao("VEÍCULO CONTRATADO", formatarCampoVeiculoConsultaPainelProgramacao(v?.veiculoContratado))}
+                  ${renderCampoVeiculoConsultaPainelProgramacao("QUÍMICO", formatarCampoVeiculoConsultaPainelProgramacao(v?.quimico))}
+                  ${renderCampoVeiculoConsultaPainelProgramacao("PROGRAMADOR/CONTRATANTE", formatarCampoVeiculoConsultaPainelProgramacao(v?.programador))}
+                  ${renderCampoVeiculoConsultaPainelProgramacao("LÍDER", formatarCampoVeiculoConsultaPainelProgramacao(v?.lider))}
+                  ${renderCampoVeiculoConsultaPainelProgramacao("CONFERENTE", formatarCampoVeiculoConsultaPainelProgramacao(v?.conferente))}
+                  ${renderCampoVeiculoConsultaPainelProgramacao("OPERADOR", formatarCampoVeiculoConsultaPainelProgramacao(v?.operador))}
+                  ${renderCampoVeiculoConsultaPainelProgramacao("OBS. CARREGAMENTO", formatarCampoVeiculoConsultaPainelProgramacao(v?.obsCarregamento))}
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+
+      abrirPopupConsultaPainelProgramacao(
+        `🚚 Últimos 3 veículos - ${vocativo}`,
+        `${veiculos.length} veículo(s) programado(s) localizado(s), ordenados pela DT. PREVISÃO mais recente`,
+        html,
+        "veiculos"
+      );
+    }
+
     function renderCardPainelProgramacao(item) {
       const classeStatus = item.temProgramado ? "isProgramado" : "isNaoProgramado";
       const classeExpresso = item.temExpresso ? " isExpresso" : "";
@@ -11137,6 +11626,7 @@ return null;
         ? `ID vinculado: ${getTextoPainelProgramacao(item.idVinculado)}. Clique para alterar ou limpar o vínculo.`
         : "Clique para vincular um ID ao vocativo.";
       const chaveCard = String(item.cardKey || "").trim();
+      const cardKeyAttr = getTextoPainelProgramacao(chaveCard);
       const datasAbertas = painelProgCardsDatasAbertas.has(chaveCard);
       const classeSelecionado = painelProgCardsSelecionados.has(item.cardKey) ? " isSelected" : "";
       const alturaFixa = datasAbertas ? Number(painelProgAlturaCardsDatas.get(chaveCard) || 0) : 0;
@@ -11184,14 +11674,29 @@ return null;
           </div>
 
           <input type="hidden" data-id-vocativo="${getTextoPainelProgramacao(item.vocNorm)}" value="${getTextoPainelProgramacao(item.idVinculado)}" />
-          <button
-            class="btn secondary"
-            type="button"
-            data-vincular-id-vocativo="${getTextoPainelProgramacao(item.vocNorm)}"
-            style="padding:4px 7px; font-weight:900; margin-top:1px; font-size:9px;"
-            title="${idTitle}"
-            onclick="onVincularIdClick(this.getAttribute('data-vincular-id-vocativo'), event)"
-          >${idLabel}</button>
+          <div class="painelProgActionRow">
+            <button
+              class="btn secondary painelProgIdBtn"
+              type="button"
+              data-vincular-id-vocativo="${getTextoPainelProgramacao(item.vocNorm)}"
+              title="${idTitle}"
+              onclick="onVincularIdClick(this.getAttribute('data-vincular-id-vocativo'), event)"
+            >${idLabel}</button>
+            <button
+              class="btn secondary painelProgConsultaBtn"
+              type="button"
+              data-painel-prog-card-key="${cardKeyAttr}"
+              title="Últimos 3 veículos programados"
+              onclick="abrirUltimosVeiculosPainelProgramacao(this.getAttribute('data-painel-prog-card-key'), event)"
+            >🚚</button>
+            <button
+              class="btn secondary painelProgConsultaBtn"
+              type="button"
+              data-painel-prog-card-key="${cardKeyAttr}"
+              title="Relatório completo do vocativo"
+              onclick="abrirRelatorioVocativoPainelProgramacao(this.getAttribute('data-painel-prog-card-key'), event)"
+            >🧾</button>
+          </div>
         </div>
       `;
     }
