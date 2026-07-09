@@ -2637,7 +2637,7 @@
 
     .painelProgPopupVehicleGrid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 4px;
       padding: 6px 8px;
       max-height: none;
@@ -3326,12 +3326,12 @@
 
         <div class="painelProgMultiFilterBox" id="painelProgEntradaFilterBox">
           <button class="painelProgMultiTrigger" id="painelProgEntradaTrigger" type="button" onclick="togglePainelProgMultiDropdown('entrada', event)">
-            <span>Entrada NF: Todos</span><span class="painelProgMultiArrow">▾</span>
+            <span>Prioridade PVD: Todos</span><span class="painelProgMultiArrow">▾</span>
           </button>
           <div class="painelProgMultiDropdown" id="painelProgEntradaDropdown">
             <div class="painelProgMultiHead">
-              <div class="painelProgMultiTitle">Entrada NF</div>
-              <input class="painelProgMultiSearch" id="painelProgEntradaSearch" placeholder="Pesquisar entrada NF..." type="text" oninput="onInputPainelProgFiltroSearch('entrada', this.value, event)" onclick="event.stopPropagation()" />
+              <div class="painelProgMultiTitle">Prioridade PVD</div>
+              <input class="painelProgMultiSearch" id="painelProgEntradaSearch" placeholder="Pesquisar prioridade PVD..." type="text" oninput="onInputPainelProgFiltroSearch('entrada', this.value, event)" onclick="event.stopPropagation()" />
               <div class="painelProgMultiActionsMini">
                 <button class="painelProgMiniActionBtn" type="button" onclick="selecionarTodosPainelProgFiltro('entrada', event)">Selecionar todos</button>
                 <button class="painelProgMiniActionBtn" type="button" onclick="limparPainelProgFiltro('entrada', event)">Limpar</button>
@@ -3410,10 +3410,7 @@
         { value: "carregadoHoje", label: "🔵 Carregado hoje" },
         { value: "carregadoOntem", label: "🟠 Carregado ontem" }
       ],
-      entrada: [
-        { value: "atraso", label: "Entrada em atraso" },
-        { value: "prazo", label: "Entrada no prazo" }
-      ],
+      entrada: [],
       criticidade: [
         { value: "vencidas", label: "🔴 Vencidas" },
         { value: "d0", label: "🔵 D0" },
@@ -3433,8 +3430,10 @@
     let painelProgJanelaCargaDisponiveis = [];
     let painelProgJanelaCargaSelecionados = new Set();
     let painelProgJanelaCargaFiltroInicializado = false;
+    let painelProgPrioridadesDisponiveis = [];
+    let painelProgEntradaSelecionados = new Set();
+    let painelProgPrioridadesFiltroInicializado = false;
     let painelProgStatusSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.status.map(o => o.value));
-    let painelProgEntradaSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.entrada.map(o => o.value));
     let painelProgCriticidadeSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.criticidade.map(o => o.value));
     let painelProgDadosAtuais = [];
     let painelProgDadosAtuaisPorKey = new Map();
@@ -9729,8 +9728,8 @@ return null;
           dropdownId: "painelProgEntradaDropdown",
           listId: "painelProgEntradaList",
           searchId: "painelProgEntradaSearch",
-          tituloTodos: "Entrada NF: Todos",
-          tituloNenhum: "Entrada NF: Nenhum"
+          tituloTodos: "Prioridade PVD: Todos",
+          tituloNenhum: "Prioridade PVD: Nenhuma"
         };
       }
       return {
@@ -9748,6 +9747,7 @@ return null;
       if (tipo === "destino") return painelProgDestinosDisponiveis || [];
       if (tipo === "uf") return painelProgUfsDisponiveis || [];
       if (tipo === "janelaCarga") return painelProgJanelaCargaDisponiveis || [];
+      if (tipo === "entrada") return painelProgPrioridadesDisponiveis || [];
       return PAINEL_PROG_STATIC_FILTERS[tipo] || [];
     }
 
@@ -9984,6 +9984,72 @@ return null;
       ).trim();
     }
 
+    function criarAlertasMercadoriaPainelProgramacao() {
+      return { tubo: 0, chapa: 0, cantoneira: 0, barra: 0 };
+    }
+
+    function somarAlertasMercadoriaPainelProgramacao(destino, origem) {
+      const base = destino || criarAlertasMercadoriaPainelProgramacao();
+      const adicao = origem || {};
+      base.tubo += Number(adicao.tubo || 0);
+      base.chapa += Number(adicao.chapa || 0);
+      base.cantoneira += Number(adicao.cantoneira || 0);
+      base.barra += Number(adicao.barra || 0);
+      return base;
+    }
+
+    function totalAlertasMercadoriaPainelProgramacao(alertas) {
+      const a = alertas || {};
+      return Number(a.tubo || 0) + Number(a.chapa || 0) + Number(a.cantoneira || 0) + Number(a.barra || 0);
+    }
+
+    function clonarAlertasMercadoriaPainelProgramacao(alertas) {
+      return somarAlertasMercadoriaPainelProgramacao(criarAlertasMercadoriaPainelProgramacao(), alertas || {});
+    }
+
+    function contemTermoExatoMercadoriaPainelProgramacao(textoNormalizado, termoNormalizado) {
+      const texto = String(textoNormalizado || "");
+      const termo = String(termoNormalizado || "").trim();
+      if (!texto || !termo) return false;
+
+      const partes = termo
+        .split(/\s+/)
+        .map(parte => parte.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+        .filter(Boolean);
+      if (!partes.length) return false;
+
+      const padrao = partes.join("[^A-Z0-9]+");
+      return new RegExp(`(^|[^A-Z0-9])${padrao}([^A-Z0-9]|$)`).test(texto);
+    }
+
+    function identificarAlertasMercadoriaPainelProgramacao(valorMercadoria) {
+      const texto = normalizar(valorMercadoria || "");
+      const alertas = criarAlertasMercadoriaPainelProgramacao();
+      if (!texto) return alertas;
+
+      if (contemTermoExatoMercadoriaPainelProgramacao(texto, "TUBO")) alertas.tubo = 1;
+      if (contemTermoExatoMercadoriaPainelProgramacao(texto, "CHAPA")) alertas.chapa = 1;
+      if (contemTermoExatoMercadoriaPainelProgramacao(texto, "CANTONEIRA")) alertas.cantoneira = 1;
+      if (
+        contemTermoExatoMercadoriaPainelProgramacao(texto, "BARRA RED") ||
+        contemTermoExatoMercadoriaPainelProgramacao(texto, "BARRA REDONDA") ||
+        contemTermoExatoMercadoriaPainelProgramacao(texto, "BARRA CHATA")
+      ) {
+        alertas.barra = 1;
+      }
+      return alertas;
+    }
+
+    function getLinhasAlertasMercadoriaPainelProgramacao(alertas) {
+      const a = alertas || {};
+      return [
+        { chave: "tubo", label: "TUBO", qtd: Number(a.tubo || 0) },
+        { chave: "chapa", label: "CHAPA", qtd: Number(a.chapa || 0) },
+        { chave: "cantoneira", label: "CANTONEIRA", qtd: Number(a.cantoneira || 0) },
+        { chave: "barra", label: "BARRA", qtd: Number(a.barra || 0) }
+      ].filter(item => item.qtd > 0);
+    }
+
     function montarTotaisPVDPorVocativoClientePainelProgramacao() {
       const mapa = {};
       (detalhadoRows || []).forEach(r => {
@@ -10002,6 +10068,8 @@ return null;
             pesoTotal: 0,
             bps: new Set(),
             onus: new Set(),
+            prioridades: new Set(),
+            alertasMercadoria: criarAlertasMercadoriaPainelProgramacao(),
             alertasMercadoriaCount: 0,
             alertasPesoCount: 0,
             expressoCount: 0,
@@ -10012,7 +10080,9 @@ return null;
         const totalCliente = mapa[almox][clienteNorm];
         totalCliente.totalRegistros++;
 
-        const prioridadeNorm = normalizar(getFieldValue(r, ["Prioridade", "PRIORIDADE", "prioridade"]) || "");
+        const prioridadeValor = String(getFieldValue(r, ["Prioridade", "PRIORIDADE", "prioridade"]) || "").trim();
+        const prioridadeNorm = normalizar(prioridadeValor || "");
+        if (prioridadeNorm) totalCliente.prioridades.add(prioridadeValor || prioridadeNorm);
         if (prioridadeNorm === "EXPRESSO") {
           totalCliente.expressoCount++;
           totalCliente.expressoDetalhes.push({
@@ -10036,9 +10106,10 @@ return null;
 
         getONUsValidasPVD(getFieldValue(r, ["ONU", "Onu", "onu"])).forEach(onu => totalCliente.onus.add(onu));
 
-        const mercadoriaNorm = normalizar(getFieldValue(r, ["Mercadoria", "MERCADORIA"]) || "");
-        if (mercadoriaNorm.includes("TUBO") || mercadoriaNorm.includes("CHAPA")) {
+        const alertasMercadoriaLinha = identificarAlertasMercadoriaPainelProgramacao(getFieldValue(r, ["Mercadoria", "MERCADORIA"]) || "");
+        if (totalAlertasMercadoriaPainelProgramacao(alertasMercadoriaLinha) > 0) {
           totalCliente.alertasMercadoriaCount++;
+          somarAlertasMercadoriaPainelProgramacao(totalCliente.alertasMercadoria, alertasMercadoriaLinha);
         }
 
         if (peso > 2500) {
@@ -10104,7 +10175,9 @@ return null;
       const ufs = new Set();
       const bpsNotas = new Set();
       const onusNotas = new Set();
-      let alertasMercadoriaNotas = 0;
+      const prioridadesNotas = new Set();
+      const alertasMercadoriaNotas = criarAlertasMercadoriaPainelProgramacao();
+      let alertasMercadoriaNotasCount = 0;
       let alertasPesoNotas = 0;
       let expressoNotas = 0;
       const expressoDetalhesNotas = [];
@@ -10127,12 +10200,15 @@ return null;
 
         getONUsValidasPVD(n.onu).forEach(onu => onusNotas.add(onu));
 
-        const mercadoriaNormNota = normalizar(n.mercadoria || "");
-        if (mercadoriaNormNota.includes("TUBO") || mercadoriaNormNota.includes("CHAPA")) {
-          alertasMercadoriaNotas++;
+        const alertasMercadoriaNota = identificarAlertasMercadoriaPainelProgramacao(n.mercadoria || "");
+        if (totalAlertasMercadoriaPainelProgramacao(alertasMercadoriaNota) > 0) {
+          alertasMercadoriaNotasCount++;
+          somarAlertasMercadoriaPainelProgramacao(alertasMercadoriaNotas, alertasMercadoriaNota);
         }
 
-        const prioridadeNormNota = normalizar(n.prioridade || "");
+        const prioridadeValorNota = String(n.prioridade || "").trim();
+        const prioridadeNormNota = normalizar(prioridadeValorNota || "");
+        if (prioridadeNormNota) prioridadesNotas.add(prioridadeValorNota || prioridadeNormNota);
         if (prioridadeNormNota === "EXPRESSO") {
           expressoNotas++;
           expressoDetalhesNotas.push({
@@ -10184,7 +10260,14 @@ return null;
           ? totalPVD.onus
           : (Array.isArray(totalPVD?.onus) ? new Set(totalPVD.onus) : onusNotas)
       ).filter(Boolean).sort((a, b) => String(a).localeCompare(String(b), "pt-BR"));
-      const qtdAlertaMercadoria = Number(totalPVD?.alertasMercadoriaCount ?? alertasMercadoriaNotas ?? 0);
+      const prioridadesPVD = Array.from(
+        totalPVD?.prioridades instanceof Set
+          ? totalPVD.prioridades
+          : (Array.isArray(totalPVD?.prioridades) ? new Set(totalPVD.prioridades) : prioridadesNotas)
+      ).map(v => String(v || "").trim()).filter(Boolean).sort((a, b) => String(a).localeCompare(String(b), "pt-BR"));
+      const prioridadesNorm = Array.from(new Set(prioridadesPVD.map(p => normalizar(p)).filter(Boolean)));
+      const alertasMercadoria = clonarAlertasMercadoriaPainelProgramacao(totalPVD?.alertasMercadoria || alertasMercadoriaNotas);
+      const qtdAlertaMercadoria = Number(totalPVD?.alertasMercadoriaCount ?? alertasMercadoriaNotasCount ?? 0);
       const qtdAlertaPeso = Number(totalPVD?.alertasPesoCount ?? alertasPesoNotas ?? 0);
       const qtdExpresso = Number(totalPVD?.expressoCount ?? expressoNotas ?? 0);
       const expressoDetalhes = Array.isArray(totalPVD?.expressoDetalhes)
@@ -10250,6 +10333,9 @@ return null;
         bpDestinos,
         onuNumeros,
         temMopp: onuNumeros.length > 0,
+        prioridadesPVD,
+        prioridadesNorm,
+        alertasMercadoria,
         qtdAlertaMercadoria,
         qtdAlertaPeso,
         qtdExpresso,
@@ -10279,6 +10365,8 @@ return null;
           status.temCarregadoHoje ? "carregado hoje" : "",
           status.temCarregadoOntem ? "carregado ontem" : "",
           qtdExpresso > 0 ? "EXPRESSO EX" : "",
+          prioridadesPVD.join(" "),
+          getLinhasAlertasMercadoriaPainelProgramacao(alertasMercadoria).map(a => `EXISTE ${a.label}`).join(" "),
           ultimoVeiculo?.id || "",
           ultimoVeiculo?.destinos || "",
           ultimoVeiculo?.refs || ""
@@ -10388,6 +10476,7 @@ return null;
       else if (tipo === "destino") painelProgDestinosDisponiveis = opcoesNovas || [];
       else if (tipo === "uf") painelProgUfsDisponiveis = opcoesNovas || [];
       else if (tipo === "janelaCarga") painelProgJanelaCargaDisponiveis = opcoesNovas || [];
+      else if (tipo === "entrada") painelProgPrioridadesDisponiveis = opcoesNovas || [];
 
       if (!inicializadoAtual || estavaTudoSelecionado) {
         setPainelProgSetFiltro(tipo, new Set(valoresAtuais));
@@ -10401,6 +10490,7 @@ return null;
       else if (tipo === "destino") painelProgDestinosFiltroInicializado = true;
       else if (tipo === "uf") painelProgUfsFiltroInicializado = true;
       else if (tipo === "janelaCarga") painelProgJanelaCargaFiltroInicializado = true;
+      else if (tipo === "entrada") painelProgPrioridadesFiltroInicializado = true;
 
       renderPainelProgMultiFiltro(tipo);
     }
@@ -10410,6 +10500,7 @@ return null;
       const destinos = new Map();
       const ufs = new Map();
       const diasJanelaCarga = new Map();
+      const prioridades = new Map();
 
       (dados || []).forEach(item => {
         const cliente = String(item.clienteResumo || "").trim() || PAINEL_PROG_SEM_CLIENTE;
@@ -10433,6 +10524,12 @@ return null;
           const label = getLabelDiaSemanaJanela(value);
           if (value && !diasJanelaCarga.has(value)) diasJanelaCarga.set(value, label);
         });
+
+        (item.prioridadesPVD || []).forEach(prioridade => {
+          const label = String(prioridade || "").trim();
+          const norm = normalizar(label);
+          if (norm && !prioridades.has(norm)) prioridades.set(norm, label);
+        });
       });
 
       const montarOpcoes = (mapa) => Array.from(mapa.entries())
@@ -10447,6 +10544,7 @@ return null;
       sincronizarOpcoesDinamicasPainelProgramacao("destino", montarOpcoes(destinos), painelProgDestinosFiltroInicializado);
       sincronizarOpcoesDinamicasPainelProgramacao("uf", montarOpcoes(ufs), painelProgUfsFiltroInicializado);
       sincronizarOpcoesDinamicasPainelProgramacao("janelaCarga", montarOpcoesDias(diasJanelaCarga), painelProgJanelaCargaFiltroInicializado);
+      sincronizarOpcoesDinamicasPainelProgramacao("entrada", montarOpcoes(prioridades), painelProgPrioridadesFiltroInicializado);
     }
 
     function filtroPainelProgramacaoPermite(tipo, item) {
@@ -10485,10 +10583,8 @@ return null;
       }
 
       if (tipo === "entrada") {
-        return (
-          (selecionados.has("atraso") && Number(item.entradaAtraso || 0) > 0) ||
-          (selecionados.has("prazo") && Number(item.entradaPrazo || 0) > 0)
-        );
+        const prioridadesItem = Array.isArray(item.prioridadesNorm) ? item.prioridadesNorm : [];
+        return prioridadesItem.some(v => selecionados.has(v));
       }
 
       return (
@@ -10721,7 +10817,11 @@ return null;
         detalhesPorVocativo.flatMap(item => Array.from(item.onus || []))
       )).filter(Boolean).sort((a, b) => String(a).localeCompare(String(b), "pt-BR"));
       const textoMopp = onusSelecionadas.length > 1 ? "ONU DIVERSOS" : (onusSelecionadas.length === 1 ? `ONU ${onusSelecionadas[0]}` : "");
-      const qtdAlertaMercadoria = selecionados.reduce((acc, item) => acc + Number(item.qtdAlertaMercadoria || 0), 0);
+      const alertasMercadoriaSelecionados = selecionados.reduce((acc, item) => {
+        somarAlertasMercadoriaPainelProgramacao(acc, item.alertasMercadoria || {});
+        return acc;
+      }, criarAlertasMercadoriaPainelProgramacao());
+      const linhasAlertasMercadoria = getLinhasAlertasMercadoriaPainelProgramacao(alertasMercadoriaSelecionados);
       const qtdAlertaPeso = selecionados.reduce((acc, item) => acc + Number(item.qtdAlertaPeso || 0), 0);
 
       const textosCopia = [];
@@ -10732,10 +10832,14 @@ return null;
 
       const idxVocativos = addCopy(vocativosTexto);
 
-      const alertaHtml = (qtdAlertaMercadoria || qtdAlertaPeso || textoMopp) ? `
+      const alertaMercadoriaHtml = linhasAlertasMercadoria.map(linha =>
+        `• Existe ${getTextoPainelProgramacao(linha.label)}: ${formatarNumeroPainelProgramacao(linha.qtd, 0)} registro(s).<br>`
+      ).join("");
+
+      const alertaHtml = (alertaMercadoriaHtml || qtdAlertaPeso || textoMopp) ? `
         <div class="painelProgPopupAlert">
           ⚠ Atenção:<br>
-          ${qtdAlertaMercadoria ? `• ${formatarNumeroPainelProgramacao(qtdAlertaMercadoria, 0)} registro(s) com Mercadoria contendo TUBO ou CHAPA.<br>` : ""}
+          ${alertaMercadoriaHtml}
           ${qtdAlertaPeso ? `• ${formatarNumeroPainelProgramacao(qtdAlertaPeso, 0)} registro(s) com Peso acima de 2.500 kg.<br>` : ""}
           ${textoMopp ? `• Vocativo(s) selecionado(s) possuem MOPP: ${getTextoPainelProgramacao(textoMopp)}.` : ""}
         </div>
