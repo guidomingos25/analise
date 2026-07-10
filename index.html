@@ -2088,11 +2088,11 @@
 
     .painelProgFilterBar {
       display: grid;
-      /* Em telas largas, mantém os 10 controles na mesma linha sem ultrapassar o card. */
+      /* Em telas largas, mantém os 11 controles na mesma linha sem ultrapassar o card. */
       grid-template-columns:
-        minmax(180px, 1.45fr)
-        minmax(135px, 1.05fr)
-        repeat(8, minmax(120px, 1fr));
+        minmax(180px, 1.55fr)
+        minmax(125px, 1.05fr)
+        repeat(9, minmax(0, 1fr));
       gap: 8px;
       align-items: center;
       width: 100%;
@@ -2111,7 +2111,7 @@
     }
 
     /* Evita que os menus dos últimos filtros avancem para fora da área principal. */
-    .painelProgFilterBar > .painelProgMultiFilterBox:nth-last-child(-n + 3) .painelProgMultiDropdown {
+    .painelProgFilterBar > .painelProgMultiFilterBox:nth-last-child(-n + 4) .painelProgMultiDropdown {
       left: auto;
       right: 0;
     }
@@ -3397,17 +3397,23 @@
       background: rgba(255,255,255,0.8);
     }
 
-    /* Quando os 10 filtros não cabem com boa leitura, distribui 5 em cada linha. */
-    @media (max-width: 1450px) {
+    /* Quando os 11 controles não cabem em uma linha, usa duas linhas equilibradas:
+       6 controles na primeira e 5 centralizados na segunda. */
+    @media (max-width: 1450px) and (min-width: 901px) {
       .painelProgFilterBar {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+      }
+
+      .painelProgFilterBar > * {
+        grid-column: span 2;
+      }
+
+      .painelProgFilterBar > :nth-child(7) {
+        grid-column: 2 / span 2;
       }
     }
 
     @media (max-width: 1200px) {
-      .painelProgFilterBar {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-      }
       .painelProgKpiGrid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
@@ -3527,7 +3533,7 @@
 
         <div class="painelProgMultiFilterBox" id="painelProgClienteFilterBox">
           <button class="painelProgMultiTrigger" id="painelProgClienteTrigger" type="button" onclick="togglePainelProgMultiDropdown('cliente', event)">
-            <span>Todos os clientes</span><span class="painelProgMultiArrow">▾</span>
+            <span>Clientes</span><span class="painelProgMultiArrow">▾</span>
           </button>
           <div class="painelProgMultiDropdown" id="painelProgClienteDropdown">
             <div class="painelProgMultiHead">
@@ -3544,7 +3550,7 @@
 
         <div class="painelProgMultiFilterBox" id="painelProgDestinoFilterBox">
           <button class="painelProgMultiTrigger" id="painelProgDestinoTrigger" type="button" onclick="togglePainelProgMultiDropdown('destino', event)">
-            <span>Todos os destinos</span><span class="painelProgMultiArrow">▾</span>
+            <span>Destinos</span><span class="painelProgMultiArrow">▾</span>
           </button>
           <div class="painelProgMultiDropdown" id="painelProgDestinoDropdown">
             <div class="painelProgMultiHead">
@@ -3561,7 +3567,7 @@
 
         <div class="painelProgMultiFilterBox" id="painelProgUfFilterBox">
           <button class="painelProgMultiTrigger" id="painelProgUfTrigger" type="button" onclick="togglePainelProgMultiDropdown('uf', event)">
-            <span>Todas as UFs</span><span class="painelProgMultiArrow">▾</span>
+            <span>UFs</span><span class="painelProgMultiArrow">▾</span>
           </button>
           <div class="painelProgMultiDropdown" id="painelProgUfDropdown">
             <div class="painelProgMultiHead">
@@ -3578,7 +3584,7 @@
 
         <div class="painelProgMultiFilterBox" id="painelProgJanelaCargaFilterBox">
           <button class="painelProgMultiTrigger" id="painelProgJanelaCargaTrigger" type="button" onclick="togglePainelProgMultiDropdown('janelaCarga', event)">
-            <span>Janelas carga: Todos</span><span class="painelProgMultiArrow">▾</span>
+            <span>Janelas carga</span><span class="painelProgMultiArrow">▾</span>
           </button>
           <div class="painelProgMultiDropdown" id="painelProgJanelaCargaDropdown">
             <div class="painelProgMultiHead">
@@ -3595,7 +3601,7 @@
 
         <div class="painelProgMultiFilterBox" id="painelProgStatusFilterBox">
           <button class="painelProgMultiTrigger" id="painelProgStatusTrigger" type="button" onclick="togglePainelProgMultiDropdown('status', event)">
-            <span>Todos os status</span><span class="painelProgMultiArrow">▾</span>
+            <span>Status</span><span class="painelProgMultiArrow">▾</span>
           </button>
           <div class="painelProgMultiDropdown" id="painelProgStatusDropdown">
             <div class="painelProgMultiHead">
@@ -3612,7 +3618,7 @@
 
         <div class="painelProgMultiFilterBox" id="painelProgObservacaoFilterBox">
           <button class="painelProgMultiTrigger" id="painelProgObservacaoTrigger" type="button" onclick="togglePainelProgMultiDropdown('observacao', event)">
-            <span>Observação: Todos</span><span class="painelProgMultiArrow">▾</span>
+            <span>Observação</span><span class="painelProgMultiArrow">▾</span>
           </button>
           <div class="painelProgMultiDropdown" id="painelProgObservacaoDropdown">
             <div class="painelProgMultiHead">
@@ -3627,9 +3633,26 @@
           </div>
         </div>
 
+        <div class="painelProgMultiFilterBox" id="painelProgStatusNotaFilterBox">
+          <button class="painelProgMultiTrigger" id="painelProgStatusNotaTrigger" type="button" onclick="togglePainelProgMultiDropdown('statusNota', event)">
+            <span>Status nota</span><span class="painelProgMultiArrow">▾</span>
+          </button>
+          <div class="painelProgMultiDropdown" id="painelProgStatusNotaDropdown">
+            <div class="painelProgMultiHead">
+              <div class="painelProgMultiTitle">STATUS das notas (relatório PVD)</div>
+              <input class="painelProgMultiSearch" id="painelProgStatusNotaSearch" placeholder="Pesquisar STATUS da nota..." type="text" oninput="onInputPainelProgFiltroSearch('statusNota', this.value, event)" onclick="event.stopPropagation()" />
+              <div class="painelProgMultiActionsMini">
+                <button class="painelProgMiniActionBtn" type="button" onclick="selecionarTodosPainelProgFiltro('statusNota', event)">Selecionar todos</button>
+                <button class="painelProgMiniActionBtn" type="button" onclick="limparPainelProgFiltro('statusNota', event)">Limpar</button>
+              </div>
+            </div>
+            <div class="painelProgMultiList" id="painelProgStatusNotaList"></div>
+          </div>
+        </div>
+
         <div class="painelProgMultiFilterBox" id="painelProgEntradaFilterBox">
           <button class="painelProgMultiTrigger" id="painelProgEntradaTrigger" type="button" onclick="togglePainelProgMultiDropdown('entrada', event)">
-            <span>Prioridade PVD: Todos</span><span class="painelProgMultiArrow">▾</span>
+            <span>Prioridade PVD</span><span class="painelProgMultiArrow">▾</span>
           </button>
           <div class="painelProgMultiDropdown" id="painelProgEntradaDropdown">
             <div class="painelProgMultiHead">
@@ -3646,7 +3669,7 @@
 
         <div class="painelProgMultiFilterBox" id="painelProgCriticidadeFilterBox">
           <button class="painelProgMultiTrigger" id="painelProgCriticidadeTrigger" type="button" onclick="togglePainelProgMultiDropdown('criticidade', event)">
-            <span>Criticidade: Todos</span><span class="painelProgMultiArrow">▾</span>
+            <span>Criticidade</span><span class="painelProgMultiArrow">▾</span>
           </button>
           <div class="painelProgMultiDropdown" id="painelProgCriticidadeDropdown">
             <div class="painelProgMultiHead">
@@ -3685,6 +3708,7 @@
     const CRITICIDADE_MULTI_OPTIONS = ["Dmais", "D0", "Dmenos1", "Dge2"];
     const ENTRADA_NF_MULTI_OPTIONS = ["atrasoComCheckin", "atrasoSemCheckinEXW", "atrasoSemCheckinFCA", "noPrazo"];
     const OBSERVACAO_FILTRO_VAZIA = "__EM_BRANCO__";
+    const STATUS_NOTA_FILTRO_VAZIO = "__STATUS_NOTA_EM_BRANCO__";
     let observacaoDisponiveisPopup = [];
     let observacaoSelecionadosPopup = new Set();
     let observacaoCardOpcoesFixas = [];
@@ -3739,6 +3763,9 @@
     let painelProgObservacoesDisponiveis = [];
     let painelProgObservacaoSelecionados = new Set();
     let painelProgObservacaoFiltroInicializado = false;
+    let painelProgStatusNotasDisponiveis = [];
+    let painelProgStatusNotaSelecionados = new Set();
+    let painelProgStatusNotaFiltroInicializado = false;
     let painelProgStatusSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.status.map(o => o.value));
     let painelProgCriticidadeSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.criticidade.map(o => o.value));
     let painelProgDadosAtuais = [];
@@ -9994,7 +10021,7 @@ return null;
     }
 
     function getPainelProgTiposFiltro() {
-      return ["cliente", "destino", "uf", "janelaCarga", "status", "observacao", "entrada", "criticidade"];
+      return ["cliente", "destino", "uf", "janelaCarga", "status", "observacao", "statusNota", "entrada", "criticidade"];
     }
 
     function getPainelProgFiltroConfig(tipo) {
@@ -10004,7 +10031,7 @@ return null;
           dropdownId: "painelProgClienteDropdown",
           listId: "painelProgClienteList",
           searchId: "painelProgClienteSearch",
-          tituloTodos: "Todos os clientes",
+          tituloTodos: "Clientes",
           tituloNenhum: "Nenhum cliente"
         };
       }
@@ -10014,7 +10041,7 @@ return null;
           dropdownId: "painelProgDestinoDropdown",
           listId: "painelProgDestinoList",
           searchId: "painelProgDestinoSearch",
-          tituloTodos: "Todos os destinos",
+          tituloTodos: "Destinos",
           tituloNenhum: "Nenhum destino"
         };
       }
@@ -10024,7 +10051,7 @@ return null;
           dropdownId: "painelProgUfDropdown",
           listId: "painelProgUfList",
           searchId: "painelProgUfSearch",
-          tituloTodos: "Todas as UFs",
+          tituloTodos: "UFs",
           tituloNenhum: "Nenhuma UF"
         };
       }
@@ -10034,7 +10061,7 @@ return null;
           dropdownId: "painelProgJanelaCargaDropdown",
           listId: "painelProgJanelaCargaList",
           searchId: "painelProgJanelaCargaSearch",
-          tituloTodos: "Janelas carga: Todos",
+          tituloTodos: "Janelas carga",
           tituloNenhum: "Janelas carga: Nenhum"
         };
       }
@@ -10044,7 +10071,7 @@ return null;
           dropdownId: "painelProgStatusDropdown",
           listId: "painelProgStatusList",
           searchId: "painelProgStatusSearch",
-          tituloTodos: "Todos os status",
+          tituloTodos: "Status",
           tituloNenhum: "Nenhum status"
         };
       }
@@ -10054,8 +10081,18 @@ return null;
           dropdownId: "painelProgObservacaoDropdown",
           listId: "painelProgObservacaoList",
           searchId: "painelProgObservacaoSearch",
-          tituloTodos: "Observação: Todos",
+          tituloTodos: "Observação",
           tituloNenhum: "Observação: Nenhuma"
+        };
+      }
+      if (tipo === "statusNota") {
+        return {
+          triggerId: "painelProgStatusNotaTrigger",
+          dropdownId: "painelProgStatusNotaDropdown",
+          listId: "painelProgStatusNotaList",
+          searchId: "painelProgStatusNotaSearch",
+          tituloTodos: "Status nota",
+          tituloNenhum: "Status nota: Nenhum"
         };
       }
       if (tipo === "entrada") {
@@ -10064,7 +10101,7 @@ return null;
           dropdownId: "painelProgEntradaDropdown",
           listId: "painelProgEntradaList",
           searchId: "painelProgEntradaSearch",
-          tituloTodos: "Prioridade PVD: Todos",
+          tituloTodos: "Prioridade PVD",
           tituloNenhum: "Prioridade PVD: Nenhuma"
         };
       }
@@ -10073,7 +10110,7 @@ return null;
         dropdownId: "painelProgCriticidadeDropdown",
         listId: "painelProgCriticidadeList",
         searchId: "painelProgCriticidadeSearch",
-        tituloTodos: "Criticidade: Todos",
+        tituloTodos: "Criticidade",
         tituloNenhum: "Criticidade: Nenhum"
       };
     }
@@ -10084,6 +10121,7 @@ return null;
       if (tipo === "uf") return painelProgUfsDisponiveis || [];
       if (tipo === "janelaCarga") return painelProgJanelaCargaDisponiveis || [];
       if (tipo === "observacao") return painelProgObservacoesDisponiveis || [];
+      if (tipo === "statusNota") return painelProgStatusNotasDisponiveis || [];
       if (tipo === "entrada") return painelProgPrioridadesDisponiveis || [];
       return PAINEL_PROG_STATIC_FILTERS[tipo] || [];
     }
@@ -10095,6 +10133,7 @@ return null;
       if (tipo === "janelaCarga") return painelProgJanelaCargaSelecionados;
       if (tipo === "status") return painelProgStatusSelecionados;
       if (tipo === "observacao") return painelProgObservacaoSelecionados;
+      if (tipo === "statusNota") return painelProgStatusNotaSelecionados;
       if (tipo === "entrada") return painelProgEntradaSelecionados;
       return painelProgCriticidadeSelecionados;
     }
@@ -10106,6 +10145,7 @@ return null;
       else if (tipo === "janelaCarga") painelProgJanelaCargaSelecionados = novoSet;
       else if (tipo === "status") painelProgStatusSelecionados = novoSet;
       else if (tipo === "observacao") painelProgObservacaoSelecionados = novoSet;
+      else if (tipo === "statusNota") painelProgStatusNotaSelecionados = novoSet;
       else if (tipo === "entrada") painelProgEntradaSelecionados = novoSet;
       else painelProgCriticidadeSelecionados = novoSet;
     }
@@ -10734,6 +10774,26 @@ return null;
       return painelProgObservacaoSelecionados.has(getObservacaoNotaPainelProgramacao(vocativo, nota));
     }
 
+    function getStatusNotaTextoPainelProgramacao(nota) {
+      const raw = nota?._raw || nota || {};
+      return String(
+        nota?.statusBanco || getFieldValue(raw, ["STATUS", "Status", "status"]) || ""
+      ).trim();
+    }
+
+    function getStatusNotaPainelProgramacao(nota) {
+      const status = getStatusNotaTextoPainelProgramacao(nota);
+      return status ? normalizar(status) : STATUS_NOTA_FILTRO_VAZIO;
+    }
+
+    function notaPassaFiltroStatusNotaPainelProgramacao(nota) {
+      const opcoes = painelProgStatusNotasDisponiveis || [];
+      if (!painelProgStatusNotaFiltroInicializado || !opcoes.length) return true;
+      if (painelProgStatusNotaSelecionados.size === 0) return false;
+      if (painelProgStatusNotaSelecionados.size >= opcoes.length) return true;
+      return painelProgStatusNotaSelecionados.has(getStatusNotaPainelProgramacao(nota));
+    }
+
     function montarTotalPVDNotasPainelProgramacao(notas) {
       const total = {
         totalRegistros: 0, pesoTotal: 0, bps: new Set(), onus: new Set(), prioridades: new Set(),
@@ -10795,6 +10855,25 @@ return null;
         .sort((a, b) => String(a[1]).localeCompare(String(b[1]), "pt-BR"))
         .map(([value, label]) => ({ value, label }));
       sincronizarOpcoesDinamicasPainelProgramacao("observacao", observacoesOpcoes, painelProgObservacaoFiltroInicializado);
+
+      const statusNotasMapa = new Map();
+      Object.values(cache.almoxPendBase || {}).forEach(info => {
+        (info?.notas || []).forEach(nota => {
+          const value = getStatusNotaPainelProgramacao(nota);
+          const textoStatus = getStatusNotaTextoPainelProgramacao(nota);
+          const label = value === STATUS_NOTA_FILTRO_VAZIO ? "(Em branco)" : textoStatus;
+          if (!statusNotasMapa.has(value)) statusNotasMapa.set(value, label || value);
+        });
+      });
+      const statusNotasOpcoes = Array.from(statusNotasMapa.entries())
+        .sort((a, b) => {
+          if (a[0] === STATUS_NOTA_FILTRO_VAZIO) return -1;
+          if (b[0] === STATUS_NOTA_FILTRO_VAZIO) return 1;
+          return String(a[1]).localeCompare(String(b[1]), "pt-BR");
+        })
+        .map(([value, label]) => ({ value, label }));
+      sincronizarOpcoesDinamicasPainelProgramacao("statusNota", statusNotasOpcoes, painelProgStatusNotaFiltroInicializado);
+
       const totaisPorVocativoCliente = montarTotaisPVDPorVocativoClientePainelProgramacao();
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
@@ -10807,15 +10886,22 @@ return null;
         const vocNorm = normalizar(almox);
         const veiculos = filtrarVeiculosAtivosVocativo(vocNorm, cache.almoxUltimoVeiculo?.[almox] || []);
         const notasBaseTodas = Array.isArray(info?.notas) ? info.notas : [];
-        const notasBase = notasBaseTodas.filter(n => notaPassaFiltroObservacaoPainelProgramacao(almox, n));
+        const notasBase = notasBaseTodas.filter(n =>
+          notaPassaFiltroObservacaoPainelProgramacao(almox, n)
+          && notaPassaFiltroStatusNotaPainelProgramacao(n)
+        );
         const filtroObservacaoRestritivo = painelProgObservacaoFiltroInicializado
           && painelProgObservacoesDisponiveis.length > 0
           && painelProgObservacaoSelecionados.size < painelProgObservacoesDisponiveis.length;
-        if (filtroObservacaoRestritivo && !notasBase.length) return;
+        const filtroStatusNotaRestritivo = painelProgStatusNotaFiltroInicializado
+          && painelProgStatusNotasDisponiveis.length > 0
+          && painelProgStatusNotaSelecionados.size < painelProgStatusNotasDisponiveis.length;
+        const filtroNotasRestritivo = filtroObservacaoRestritivo || filtroStatusNotaRestritivo;
+        if (filtroNotasRestritivo && !notasBase.length) return;
         const gruposCliente = new Map();
         const totaisClienteVocativo = totaisPorVocativoCliente[almox] || {};
 
-        if (!filtroObservacaoRestritivo) Object.values(totaisClienteVocativo).forEach(totalCliente => {
+        if (!filtroNotasRestritivo) Object.values(totaisClienteVocativo).forEach(totalCliente => {
           const clienteNome = String(totalCliente.clienteNome || "").trim() || PAINEL_PROG_SEM_CLIENTE;
           const clienteNorm = normalizar(clienteNome) || normalizar(PAINEL_PROG_SEM_CLIENTE);
           if (!gruposCliente.has(clienteNorm)) {
@@ -10866,7 +10952,7 @@ return null;
             {
               cliente: grupo.clienteNome,
               clienteSnapshot: clienteResumoSnapshot,
-              totalPVD: filtroObservacaoRestritivo
+              totalPVD: filtroNotasRestritivo
                 ? montarTotalPVDNotasPainelProgramacao(grupo.notas)
                 : totaisClienteVocativo[grupo.clienteNorm],
               registrosRelatorioPVD: notasBase.map(n => montarRegistroRelatorioPainelProgramacao(almox, n))
@@ -10898,6 +10984,7 @@ return null;
       else if (tipo === "uf") painelProgUfsDisponiveis = opcoesNovas || [];
       else if (tipo === "janelaCarga") painelProgJanelaCargaDisponiveis = opcoesNovas || [];
       else if (tipo === "observacao") painelProgObservacoesDisponiveis = opcoesNovas || [];
+      else if (tipo === "statusNota") painelProgStatusNotasDisponiveis = opcoesNovas || [];
       else if (tipo === "entrada") painelProgPrioridadesDisponiveis = opcoesNovas || [];
 
       if (!inicializadoAtual || estavaTudoSelecionado) {
@@ -10913,6 +11000,7 @@ return null;
       else if (tipo === "uf") painelProgUfsFiltroInicializado = true;
       else if (tipo === "janelaCarga") painelProgJanelaCargaFiltroInicializado = true;
       else if (tipo === "observacao") painelProgObservacaoFiltroInicializado = true;
+      else if (tipo === "statusNota") painelProgStatusNotaFiltroInicializado = true;
       else if (tipo === "entrada") painelProgPrioridadesFiltroInicializado = true;
 
       renderPainelProgMultiFiltro(tipo);
@@ -11009,6 +11097,10 @@ return null;
         return painelProgObservacaoSelecionados.size > 0;
       }
 
+      if (tipo === "statusNota") {
+        return painelProgStatusNotaSelecionados.size > 0;
+      }
+
       if (tipo === "entrada") {
         const prioridadesItem = Array.isArray(item.prioridadesNorm) ? item.prioridadesNorm : [];
         return prioridadesItem.some(v => selecionados.has(v));
@@ -11033,6 +11125,7 @@ return null;
         if (!filtroPainelProgramacaoPermite("janelaCarga", item)) return false;
         if (!filtroPainelProgramacaoPermite("status", item)) return false;
         if (!filtroPainelProgramacaoPermite("observacao", item)) return false;
+        if (!filtroPainelProgramacaoPermite("statusNota", item)) return false;
         if (!filtroPainelProgramacaoPermite("entrada", item)) return false;
         if (!filtroPainelProgramacaoPermite("criticidade", item)) return false;
         return true;
@@ -12091,11 +12184,15 @@ return null;
         const observacaoSemSelecao = painelProgObservacaoFiltroInicializado
           && (painelProgObservacoesDisponiveis || []).length > 0
           && painelProgObservacaoSelecionados.size === 0;
+        const statusNotaSemSelecao = painelProgStatusNotaFiltroInicializado
+          && (painelProgStatusNotasDisponiveis || []).length > 0
+          && painelProgStatusNotaSelecionados.size === 0;
+        const filtroNotaSemSelecao = observacaoSemSelecao || statusNotaSemSelecao;
 
-        // Quando apenas o filtro Observação é limpo, os dados ficam vazios por escolha
-        // do usuário. Nesse cenário, não recalculamos as opções dos demais filtros
-        // com uma base vazia, preservando exatamente as seleções já realizadas.
-        if (!observacaoSemSelecao) {
+        // Ao limpar somente Observação ou STATUS da nota, a base pode ficar vazia.
+        // Não recalculamos os demais filtros com essa base vazia, preservando todas
+        // as seleções que o usuário já havia realizado nos outros filtros.
+        if (!filtroNotaSemSelecao) {
           sincronizarFiltrosDinamicosPainelProgramacao(dados);
         } else {
           renderPainelProgMultiFiltros();
