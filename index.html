@@ -2813,6 +2813,36 @@
       min-height: 0;
     }
 
+    .painelProgConsultaToolbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      background: #ffffff;
+      padding-bottom: 4px;
+    }
+
+    .btnExcelTabelaNotas {
+      cursor: pointer;
+      border: 1px solid #15803d;
+      background: #166534;
+      color: #ffffff;
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: 0 5px 12px rgba(22, 101, 52, 0.18);
+    }
+
+    .btnExcelTabelaNotas:hover {
+      background: #14532d;
+    }
+
     .painelProgConsultaTableWrap {
       max-height: calc(86vh - 130px);
       overflow: auto;
@@ -3516,6 +3546,13 @@
           <div class="painelProgHint">Visualização rápida em cards, usando a mesma regra da página Análise Programação. Padrão: todos juntos em ordem alfabética por vocativo.</div>
         </div>
         <div class="painelProgActions">
+          <button
+            class="btn secondary"
+            id="btnPainelProgExcelFiltrado"
+            type="button"
+            title="Gerar o relatório de notas de todos os vocativos atualmente filtrados"
+            onclick="exportarRelatorioExcelPainelProgramacaoFiltrado()"
+          >📊 GERAR EXCEL</button>
           <button class="btn secondary" type="button" onclick="renderPainelProgramacaoRapido(false, true)">🔄 Atualizar</button>
           <button class="btn secondary" type="button" onclick="voltarPainelProgramacaoPrincipal()">⬅ Voltar</button>
         </div>
@@ -7736,6 +7773,65 @@
       });
     }
 
+    function getUltimoVeiculoCarregadoAposDataObservacao(veiculos, dataBase) {
+      const dtBase = toDateOnlyBrasilia(dataBase);
+      if (!dtBase || !Array.isArray(veiculos) || veiculos.length === 0) return null;
+
+      return filtrarVeiculosParaObservacao(veiculos)
+        .map(v => ({ veiculo: v, dtCarreg: toDateOnlyBrasilia(v?.dtCarreg) }))
+        .filter(item => item.dtCarreg && item.dtCarreg > dtBase)
+        .sort((a, b) => b.dtCarreg.getTime() - a.dtCarreg.getTime())[0]?.veiculo || null;
+    }
+
+    function getLiderUltimoVeiculoNaoCarregado(nota, veiculos) {
+      const dtMaior = maiorDataEntradaOuCheckin(nota?.checkin, nota?.entrada);
+      const ultimoVeiculoCarregado = getUltimoVeiculoCarregadoAposDataObservacao(veiculos, dtMaior);
+      return String(ultimoVeiculoCarregado?.lider || "").trim();
+    }
+
+    function getNomeColunaLiderNaoCarregado(lider) {
+      const liderTexto = String(lider || "").trim() || "NÃO INFORMADO";
+      return `LÍDER ${liderTexto} (NÃO FOI CARREGADO)`;
+    }
+
+    function getResumoVeiculosNaoCarregadosNota(nota, veiculos) {
+      const resumo = { total: 0, porLider: {} };
+      const observacaoPelaRegraAtual = formatarObservacaoExibicao(calcularObservacaoNF(nota, veiculos));
+      if (observacaoPelaRegraAtual !== "NÃO FOI CARREGADO") return resumo;
+
+      const dtCheck = toDateOnlyBrasilia(nota?.checkin);
+      const dtEntrada = toDateOnlyBrasilia(nota?.entrada);
+      const dtMaior = maiorDataEntradaOuCheckin(dtCheck, dtEntrada);
+      if (!dtMaior) return resumo;
+
+      filtrarVeiculosParaObservacao(veiculos).forEach(v => {
+        const dtCarreg = toDateOnlyBrasilia(v?.dtCarreg);
+        if (!dtCarreg || !(dtCarreg > dtMaior)) return;
+
+        resumo.total++;
+        const lider = String(v?.lider || "").trim() || "NÃO INFORMADO";
+        resumo.porLider[lider] = (resumo.porLider[lider] || 0) + 1;
+      });
+
+      return resumo;
+    }
+
+    function getResumoNaoCarregadoSalvoNota(nota, veiculos = []) {
+      if (nota && Number.isFinite(Number(nota.qtdVeiculosNaoCarregado))) {
+        return {
+          total: Number(nota.qtdVeiculosNaoCarregado) || 0,
+          porLider: { ...(nota.qtdVeiculosNaoCarregadoPorLider || {}) }
+        };
+      }
+      return getResumoVeiculosNaoCarregadosNota(nota, veiculos);
+    }
+
+    function isColunaContagemNaoCarregado(coluna) {
+      const txt = String(coluna || "").trim();
+      return txt === "VEÍCULOS CARREGADOS (NÃO FOI CARREGADO)"
+        || /^LÍDER .+ \(NÃO FOI CARREGADO\)$/.test(txt);
+    }
+
     function formatarObservacaoExibicao(valor) {
       const txt = String(valor || "").trim();
       if (!txt) return "";
@@ -7757,6 +7853,17 @@
       const txt = String(valor || "").trim();
       if (!txt) return OBSERVACAO_FILTRO_VAZIA;
       return formatarObservacaoExibicao(txt);
+    }
+
+    function normalizarObservacaoFiltroComLider(valor, lider) {
+      const observacaoNormalizada = normalizarObservacaoFiltro(valor);
+      const liderTexto = String(lider || "").trim();
+
+      if (observacaoNormalizada === "NÃO FOI CARREGADO" && liderTexto) {
+        return `${observacaoNormalizada} (${liderTexto})`;
+      }
+
+      return observacaoNormalizada;
     }
 
     function getStatusProgramacaoObservacao(veiculos) {
@@ -8123,12 +8230,21 @@
         (info.notas || []).forEach(n => {
           n.observacaoAutomatica = calcularObservacaoNF(n, veiculos);
           n.observacaoCalculada = n.observacaoAutomatica;
-          n.observacaoFiltroNorm = normalizarObservacaoFiltro(n.observacaoAutomatica || "");
+          n.liderUltimoVeiculoNaoCarregado = formatarObservacaoExibicao(n.observacaoAutomatica) === "NÃO FOI CARREGADO"
+            ? getLiderUltimoVeiculoNaoCarregado(n, veiculos)
+            : "";
+          n.observacaoFiltroNorm = normalizarObservacaoFiltroComLider(
+            n.observacaoAutomatica || "",
+            n.liderUltimoVeiculoNaoCarregado
+          );
+          const resumoNaoCarregado = getResumoVeiculosNaoCarregadosNota(n, veiculos);
+          n.qtdVeiculosNaoCarregado = resumoNaoCarregado.total;
+          n.qtdVeiculosNaoCarregadoPorLider = resumoNaoCarregado.porLider;
         });
       });
 
       observacaoCardOpcoesFixas = Array.from(new Set(
-        Object.values(almoxPendBase).flatMap(info => (info.notas || []).map(n => n.observacaoFiltroNorm ?? normalizarObservacaoFiltro(n.observacaoCalculada || "")))
+        Object.values(almoxPendBase).flatMap(info => (info.notas || []).map(n => n.observacaoFiltroNorm ?? normalizarObservacaoFiltroComLider(n.observacaoCalculada || "", n.liderUltimoVeiculoNaoCarregado)))
       )).sort((a, b) => {
         if (a === OBSERVACAO_FILTRO_VAZIA) return -1;
         if (b === OBSERVACAO_FILTRO_VAZIA) return 1;
@@ -8355,7 +8471,10 @@ return null;
         notasBase.forEach(n => {
           const observacaoAtual = getObservacaoNFAtual(almox, n.nota, n.observacaoAutomatica || "");
           n.observacaoCalculada = observacaoAtual;
-          n.observacaoFiltroNorm = normalizarObservacaoFiltro(observacaoAtual || "");
+          n.observacaoFiltroNorm = normalizarObservacaoFiltroComLider(
+            observacaoAtual || "",
+            n.liderUltimoVeiculoNaoCarregado
+          );
         });
 
         const notas = filtroPrazoConsolidacaoAtivo
@@ -8921,7 +9040,7 @@ return null;
         stats.totalNotas += qtdD1Filtrado;
 
         notasFiltradas.forEach(n => {
-          const obsNormAtual = n?.observacaoFiltroNorm ?? normalizarObservacaoFiltro(n?.observacaoCalculada || "");
+          const obsNormAtual = n?.observacaoFiltroNorm ?? normalizarObservacaoFiltroComLider(n?.observacaoCalculada || "", n?.liderUltimoVeiculoNaoCarregado);
           stats.observacaoCounts[obsNormAtual] = (stats.observacaoCounts[obsNormAtual] || 0) + 1;
         });
 
@@ -9034,6 +9153,12 @@ return null;
 
         let mapaDias = {};
 
+
+        const lideresNaoCarregadoTabela = Array.from(new Set(
+          notasFiltradas.flatMap(n => Object.keys(getResumoNaoCarregadoSalvoNota(n, veiculos).porLider || {}))
+        )).sort((a, b) => String(a).localeCompare(String(b), "pt-BR"));
+        const tabelaNotasAnaliseId = `tabelaNotasAnalise_${normalizar(almox).replace(/[^A-Z0-9]+/g, "_") || "VOCATIVO"}`;
+        const arquivoNotasAnalise = `Relatorio_Notas_Analise_${almox}`;
 
         const notasHTML = notasFiltradas.map(n => {
 
@@ -9234,6 +9359,7 @@ return null;
 
           const observacaoNF = n.observacaoCalculada || "";
           const observacaoExibicao = formatarObservacaoExibicao(observacaoNF);
+          const resumoNaoCarregadoNota = getResumoNaoCarregadoSalvoNota(n, veiculos);
           const programacaoObservacao = getStatusProgramacaoObservacao(veiculos);
           const clienteNome = (n.cliente || "SEM CLIENTE").toString().trim() || "SEM CLIENTE";
           const dtLimOnly = toDateOnly(n.dtLim);
@@ -9353,6 +9479,10 @@ return null;
       ${mostrarCheckCinza ? iconeCheck("gray") : ""}
     </td>
     <td>${observacaoExibicao || ""}</td>
+    <td style="text-align:center; font-weight:900;">${Number(resumoNaoCarregadoNota.total) || 0}</td>
+    ${lideresNaoCarregadoTabela.map(lider => `
+      <td style="text-align:center; font-weight:800;">${Number(resumoNaoCarregadoNota.porLider?.[lider]) || 0}</td>
+    `).join("")}
   </tr>`;
         }).join("");
 
@@ -9783,8 +9913,17 @@ return null;
 
   <div class="compactNotesWrap">
 
-    <h4 style="margin-top:12px; margin-bottom:8px;">📦 Notas Pendentes</h4>
-    <table class="compactNotesTable">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:12px; margin-bottom:8px;">
+      <h4 style="margin:0;">📦 Notas Pendentes</h4>
+      <button
+        type="button"
+        class="btnExcelTabelaNotas"
+        data-table-id="${escapeHtmlAttr(tabelaNotasAnaliseId)}"
+        data-file-name="${escapeHtmlAttr(arquivoNotasAnalise)}"
+        onclick="exportarTabelaHtmlExcel(this.getAttribute('data-table-id'), this.getAttribute('data-file-name'), 'Notas')"
+      >📊 GERAR EXCEL</button>
+    </div>
+    <table class="compactNotesTable" id="${escapeHtmlAttr(tabelaNotasAnaliseId)}">
       <tr style="background:#f3f4f6;">
         <th>Nota</th>
         <th>Número OEF</th>
@@ -9805,6 +9944,8 @@ return null;
         <th>ENTREGA</th>
         <th>Farol</th>
         <th>Observação</th>
+        <th>Veículos carregados (Não foi carregado)</th>
+        ${lideresNaoCarregadoTabela.map(lider => `<th>${getTextoPainelProgramacao(getNomeColunaLiderNaoCarregado(lider))}</th>`).join("")}
       </tr>
       ${notasHTML}
     </table>
@@ -10763,7 +10904,7 @@ return null;
     function getObservacaoNotaPainelProgramacao(vocativo, nota) {
       const automatica = nota?.observacaoAutomatica || nota?.observacaoCalculada || "";
       const atual = getObservacaoNFAtual(vocativo, nota?.nota || "", automatica);
-      return normalizarObservacaoFiltro(atual || "");
+      return normalizarObservacaoFiltroComLider(atual || "", nota?.liderUltimoVeiculoNaoCarregado);
     }
 
     function notaPassaFiltroObservacaoPainelProgramacao(vocativo, nota) {
@@ -10832,6 +10973,11 @@ return null;
       raw.Observacao = formatarObservacaoExibicao(
         getObservacaoNFAtual(vocativo, nota?.nota || raw.Nota || "", nota?.observacaoAutomatica || nota?.observacaoCalculada || "")
       );
+      const resumoNaoCarregado = getResumoNaoCarregadoSalvoNota(nota);
+      raw["VEÍCULOS CARREGADOS (NÃO FOI CARREGADO)"] = resumoNaoCarregado.total;
+      Object.entries(resumoNaoCarregado.porLider || {}).forEach(([lider, qtd]) => {
+        raw[getNomeColunaLiderNaoCarregado(lider)] = Number(qtd) || 0;
+      });
       return raw;
     }
 
@@ -11838,10 +11984,31 @@ return null;
     }
 
     function getColunasRelatorioVocativoPainelProgramacao(registros) {
+      const colunasContagem = [];
+      const vistosContagem = new Set();
+      (Array.isArray(registros) ? registros : []).forEach(reg => {
+        const raw = reg?._raw || reg || {};
+        Object.keys(raw).forEach(c => {
+          if (!isColunaContagemNaoCarregado(c) || vistosContagem.has(c)) return;
+          vistosContagem.add(c);
+          colunasContagem.push(c);
+        });
+      });
+      colunasContagem.sort((a, b) => {
+        const totalA = a === "VEÍCULOS CARREGADOS (NÃO FOI CARREGADO)";
+        const totalB = b === "VEÍCULOS CARREGADOS (NÃO FOI CARREGADO)";
+        if (totalA && !totalB) return -1;
+        if (!totalA && totalB) return 1;
+        return String(a).localeCompare(String(b), "pt-BR");
+      });
+
       const colsBase = Array.isArray(detalhadoCols) && detalhadoCols.length ? [...detalhadoCols] : [];
       if (colsBase.length) {
         if (!colsBase.some(c => normalizar(c) === "STATUS")) colsBase.push("STATUS");
         if (!colsBase.some(c => normalizar(c) === "OBSERVACAO")) colsBase.push("Observacao");
+        colunasContagem.forEach(c => {
+          if (!colsBase.includes(c)) colsBase.push(c);
+        });
         return colsBase;
       }
 
@@ -11857,6 +12024,137 @@ return null;
         });
       });
       return cols;
+    }
+
+    function sanitizarNomeArquivoExcel(valor) {
+      return String(valor || "Relatorio")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[\\/:*?"<>|]+/g, "-")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 120) || "Relatorio";
+    }
+
+    function exportarTabelaHtmlExcel(tableId, nomeArquivo, nomeAba = "Relatorio") {
+      const tabela = document.getElementById(String(tableId || ""));
+      if (!tabela) {
+        alert("Não foi possível localizar a tabela para gerar o Excel.");
+        return;
+      }
+      if (typeof XLSX === "undefined") {
+        alert("A biblioteca de Excel ainda não está disponível.");
+        return;
+      }
+
+      const planilha = XLSX.utils.table_to_sheet(tabela, { raw: true });
+      const matriz = XLSX.utils.sheet_to_json(planilha, { header: 1, raw: false, defval: "" });
+      const maiorNumeroColunas = matriz.reduce((max, linha) => Math.max(max, Array.isArray(linha) ? linha.length : 0), 0);
+      planilha["!cols"] = Array.from({ length: maiorNumeroColunas }, (_, indice) => {
+        const largura = matriz.reduce((max, linha) => {
+          const valor = Array.isArray(linha) ? String(linha[indice] ?? "") : "";
+          return Math.max(max, valor.length);
+        }, 0);
+        return { wch: Math.min(Math.max(largura + 2, 10), 42) };
+      });
+
+      const workbook = XLSX.utils.book_new();
+      const aba = sanitizarNomeArquivoExcel(nomeAba).slice(0, 31) || "Relatorio";
+      XLSX.utils.book_append_sheet(workbook, planilha, aba);
+      XLSX.writeFile(workbook, `${sanitizarNomeArquivoExcel(nomeArquivo)}.xlsx`);
+    }
+
+    function getVocativosUnicosFiltradosPainelProgramacao() {
+      const porVocativo = new Map();
+      (Array.isArray(painelProgDadosAtuais) ? painelProgDadosAtuais : []).forEach(item => {
+        const chave = String(item?.vocNorm || normalizar(item?.vocativo || "")).trim();
+        if (!chave || porVocativo.has(chave)) return;
+        porVocativo.set(chave, item);
+      });
+      return Array.from(porVocativo.values()).sort((a, b) =>
+        String(a?.vocativo || a?.vocNorm || "").localeCompare(
+          String(b?.vocativo || b?.vocNorm || ""),
+          "pt-BR",
+          { numeric: true, sensitivity: "base" }
+        )
+      );
+    }
+
+    function exportarRelatorioExcelPainelProgramacaoFiltrado() {
+      if (typeof XLSX === "undefined") {
+        alert("A biblioteca de Excel ainda não está disponível.");
+        return;
+      }
+
+      const itensVocativos = getVocativosUnicosFiltradosPainelProgramacao();
+      if (!itensVocativos.length) {
+        alert("Nenhum vocativo está disponível nos filtros atuais para gerar o relatório.");
+        return;
+      }
+
+      const registros = [];
+      itensVocativos.forEach(item => {
+        const registrosItem = Array.isArray(item?.registrosRelatorioPVD)
+          ? item.registrosRelatorioPVD
+          : [];
+        registrosItem.forEach(registro => registros.push(registro));
+      });
+
+      if (!registros.length) {
+        alert("Os vocativos filtrados não possuem registros de notas para gerar o relatório.");
+        return;
+      }
+
+      // Usa exatamente a mesma definição de colunas do relatório aberto em cada card.
+      const colunas = getColunasRelatorioVocativoPainelProgramacao(registros);
+      if (!colunas.length) {
+        alert("Não foi possível identificar as colunas do relatório de notas.");
+        return;
+      }
+
+      const matriz = [colunas.map(coluna => String(coluna || ""))];
+
+      registros.forEach(registro => {
+        const rawOriginal = registro?._raw || registro || {};
+        const raw = { ...rawOriginal };
+
+        colunas.forEach(coluna => {
+          if (
+            isColunaContagemNaoCarregado(coluna)
+            && (raw[coluna] === undefined || raw[coluna] === null || raw[coluna] === "")
+          ) {
+            raw[coluna] = 0;
+          }
+        });
+
+        matriz.push(colunas.map(coluna =>
+          formatarValorConsultaPainelProgramacao(coluna, raw[coluna])
+        ));
+      });
+
+      const planilha = XLSX.utils.aoa_to_sheet(matriz);
+      planilha["!cols"] = colunas.map((_, indice) => {
+        const largura = matriz.reduce((maximo, linha) => {
+          const valor = Array.isArray(linha) ? String(linha[indice] ?? "") : "";
+          return Math.max(maximo, valor.length);
+        }, 0);
+        return { wch: Math.min(Math.max(largura + 2, 10), 42) };
+      });
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, planilha, "Notas");
+
+      const hoje = new Date();
+      const dataArquivo = [
+        hoje.getFullYear(),
+        String(hoje.getMonth() + 1).padStart(2, "0"),
+        String(hoje.getDate()).padStart(2, "0")
+      ].join("-");
+      const nomeArquivo = sanitizarNomeArquivoExcel(
+        `Relatorio_Notas_Painel_Programacao_Filtrado_${dataArquivo}`
+      );
+
+      XLSX.writeFile(workbook, `${nomeArquivo}.xlsx`);
     }
 
     function abrirRelatorioVocativoPainelProgramacao(cardKey, ev) {
@@ -11881,7 +12179,17 @@ return null;
         return;
       }
 
-      const tiposOrdenacao = colunas.map(c => getTipoOrdenacaoConsultaPainelProgramacao(c, registros));
+      const registrosTabela = registros.map(reg => {
+        const rawOriginal = reg?._raw || reg || {};
+        const raw = { ...rawOriginal };
+        colunas.forEach(c => {
+          if (isColunaContagemNaoCarregado(c) && (raw[c] === undefined || raw[c] === null || raw[c] === "")) {
+            raw[c] = 0;
+          }
+        });
+        return raw;
+      });
+      const tiposOrdenacao = colunas.map(c => getTipoOrdenacaoConsultaPainelProgramacao(c, registrosTabela));
       const thead = colunas.map((c, idx) => `
         <th
           title="${getTextoPainelProgramacao(c)}"
@@ -11893,8 +12201,7 @@ return null;
         >${getTextoPainelProgramacao(c)}</th>
       `).join("");
 
-      const tbody = registros.map(reg => {
-        const raw = reg?._raw || reg || {};
+      const tbody = registrosTabela.map(raw => {
         return `<tr>${colunas.map((c, idx) => {
           const valorOriginal = raw[c];
           const valor = formatarValorConsultaPainelProgramacao(c, valorOriginal);
@@ -11907,11 +12214,22 @@ return null;
         }).join("")}</tr>`;
       }).join("");
 
+      const tabelaId = `painelProgRelatorioNotas_${normalizar(vocativo).replace(/[^A-Z0-9]+/g, "_") || "VOCATIVO"}`;
+      const nomeArquivo = `Relatorio_Notas_${vocativo || "Vocativo"}`;
       abrirPopupConsultaPainelProgramacao(
         `🧾 Relatório do vocativo ${vocativo}`,
         `${registros.length} registro(s) PVD | ${colunas.length} coluna(s) do relatório`,
-        `<div class="painelProgConsultaTableWrap">
-          <table class="painelProgConsultaTable">
+        `<div class="painelProgConsultaToolbar">
+          <button
+            type="button"
+            class="btnExcelTabelaNotas"
+            data-table-id="${escapeHtmlAttr(tabelaId)}"
+            data-file-name="${escapeHtmlAttr(nomeArquivo)}"
+            onclick="exportarTabelaHtmlExcel(this.getAttribute('data-table-id'), this.getAttribute('data-file-name'), 'Notas')"
+          >📊 GERAR EXCEL</button>
+        </div>
+        <div class="painelProgConsultaTableWrap">
+          <table class="painelProgConsultaTable" id="${escapeHtmlAttr(tabelaId)}">
             <thead><tr>${thead}</tr></thead>
             <tbody>${tbody}</tbody>
           </table>
@@ -14811,7 +15129,7 @@ Deixe em branco e confirme para desvincular o ID atual.`,
 
     function notaPassaFiltroObservacaoMultiplo(n, modosObservacao) {
       if (!Array.isArray(modosObservacao) || modosObservacao.includes("all")) return true;
-      const obsNorm = n?.observacaoFiltroNorm ?? normalizarObservacaoFiltro(n?.observacaoCalculada || "");
+      const obsNorm = n?.observacaoFiltroNorm ?? normalizarObservacaoFiltroComLider(n?.observacaoCalculada || "", n?.liderUltimoVeiculoNaoCarregado);
       return modosObservacao.includes(obsNorm);
     }
 
@@ -14930,7 +15248,7 @@ Deixe em branco e confirme para desvincular o ID atual.`,
       ];
       const criticidadeOpcoes = ["Dmais", "D0", "Dmenos1", "Dge2"];
       const entradaNFOpcoes = ["atrasoComCheckin", "atrasoSemCheckinEXW", "atrasoSemCheckinFCA", "noPrazo"];
-      const observacaoOpcoes = Array.from(new Set(Object.values(almoxPend).flatMap(info => (info.notas || []).map(n => n.observacaoFiltroNorm ?? normalizarObservacaoFiltro(n.observacaoCalculada || ""))))).sort((a, b) => {
+      const observacaoOpcoes = Array.from(new Set(Object.values(almoxPend).flatMap(info => (info.notas || []).map(n => n.observacaoFiltroNorm ?? normalizarObservacaoFiltroComLider(n.observacaoCalculada || "", n.liderUltimoVeiculoNaoCarregado))))).sort((a, b) => {
         if (a === OBSERVACAO_FILTRO_VAZIA) return -1;
         if (b === OBSERVACAO_FILTRO_VAZIA) return 1;
         return String(a).localeCompare(String(b), "pt-BR");
