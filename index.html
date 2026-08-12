@@ -2650,24 +2650,84 @@
     }
 
     .painelProgPopupVehicleGrid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 4px;
-      padding: 6px 8px;
-      max-height: none;
-      overflow: visible;
+      padding: 4px 6px 6px;
       background: #ffffff;
+    }
+
+    .painelProgPopupVehicleTabs {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin: 1px 0 8px;
+      padding: 6px;
+      background: #eef2f7;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+
+    .painelProgPopupVehicleTab {
+      min-width: 0;
+      min-height: 27px;
+      border: 1px solid #94a3b8;
+      background: #ffffff;
+      color: #334155;
+      border-radius: 7px;
+      padding: 5px 4px;
+      font-size: 8px;
+      font-weight: 1000;
+      cursor: pointer;
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      letter-spacing: .025em;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+      transition: background .12s ease, border-color .12s ease, color .12s ease, box-shadow .12s ease, transform .08s ease;
+    }
+
+    .painelProgPopupVehicleTab:hover {
+      background: #f1f5f9;
+      border-color: #64748b;
+      color: #0f172a;
+      transform: translateY(-1px);
+    }
+
+    .painelProgPopupVehicleTab.active {
+      background: #1e40af;
+      border-color: #1e3a8a;
+      color: #ffffff;
+      box-shadow: 0 0 0 2px #bfdbfe, 0 3px 8px rgba(30, 64, 175, 0.28);
+      transform: translateY(-1px);
+    }
+
+    .painelProgPopupVehicleTab.active::before {
+      content: "✓ ";
+      font-size: 8px;
+      font-weight: 1000;
+    }
+
+    .painelProgPopupVehiclePanel {
+      display: none;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 3px;
+    }
+
+    .painelProgPopupVehiclePanel.active {
+      display: grid;
     }
 
     .painelProgPopupVehicleBtn {
       width: 100%;
-      min-height: 23px;
+      min-width: 0;
+      min-height: 20px;
       border: 1px solid #cbd5e1;
       background: #f8fafc;
       color: #0f172a;
-      border-radius: 8px;
-      padding: 4px 5px;
-      font-size: 8px;
+      border-radius: 6px;
+      padding: 3px 3px;
+      font-size: 7px;
       font-weight: 1000;
       cursor: pointer;
       line-height: 1.05;
@@ -10462,20 +10522,32 @@ return null;
     }
 
     const PAINEL_PROG_PLACAS_VIRTUAIS = [
-      { veiculo: "FIORINO ABERTA", placa: "BF-ZTM250-PEQUENO-PORTE-CARROCERIA-ABERTA" },
-      { veiculo: "FIORINO", placa: "BF-ZTM250-PEQUENO-PORTE" },
-      { veiculo: "VAN ABERTA", placa: "BF-ZTM280-UTILITARIOS-CARROCERIA-ABERTA" },
-      { veiculo: "VAN", placa: "BF-ZTM280-UTILITARIOS" },
-      { veiculo: "3/4 ABERTO", placa: "BF-ZTM290-INTERMEDIARIOS-CARROCERIA-ABERTA" },
-      { veiculo: "3/4", placa: "BF-ZTM290-INTERMEDIARIOS" },
-      { veiculo: "TRUCK ABERTO", placa: "BF-ZTM203-TRUCK-CARROCERIA-ABERTA" },
-      { veiculo: "TRUCK", placa: "BF-ZTM203-TRUCK" },
-      { veiculo: "CARRETA ABERTA", placa: "BF-ZTM306-CARRETA-CARROCERIA-ABERTA1-C" },
-      { veiculo: "CARRETA SIDER", placa: "BF-ZTM306-CARRETA SIDER2-C" },
-      { veiculo: "CARRETA LS ABERTA", placa: "BF-ZTM291-CARRETA-LS-CARROCERIA-ABERTA" },
-      { veiculo: "BI-TREM", placa: "BF-ZTM305-BI-TREM" },
-      { veiculo: "RODO-TREM", placa: "BF-ZTM301-RODO-TREM" },
-      { veiculo: "SUPLEMENTAR", placa: "BF-ZTM306-SUPLEMENTAR" }
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "FIORINO ABERTA", placa: "BF-ZTM250-PEQUENO-PORTE-CARROCERIA-ABERT" },
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "FIORINO", placa: "BF-ZTM250-PEQUENO-PORTE" },
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "VAN ABERTA", placa: "BF-ZTM280-UTILITARIOS-CARROCERIA-ABERTA" },
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "VAN", placa: "BF-ZTM280-UTILITARIOS" },
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "3/4 ABERTO", placa: "BF-ZTM290-INTERMEDIARIOS-CARROCERIA-ABERTA" },
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "3/4", placa: "BF-ZTM290-INTERMEDIARIOS" },
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "TRUCK ABERTO", placa: "BF-ZTM203-TRUCK-CARROCERIA-ABERTA" },
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "TRUCK", placa: "BF-ZTM203-TRUCK" },
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "CARRETA ABERTA", placa: "BF-ZTM306-CARRETA-CARROCERIA-ABERTA1-C" },
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "CARRETA SIDER", placa: "BF-ZTM306-CARRETA SIDER2-C" },
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "CARRETA LS ABERTA", placa: "BF-ZTM291-CARRETA-LS-CARROCERIA-ABERTA" },
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "CARRETA LS", placa: "BF-ZTM291-CARRETA-LS" },
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "BI-TREM", placa: "BF-ZTM305-BI-TREM" },
+      { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", veiculo: "RODO-TREM", placa: "BF-ZTM301-RODO-TREM" },
+      { categoria: "PLACAS DEDICADOS TERCEIROS", veiculo: "CARRETA SIDER", placa: "BFDED-ZTM306-CARRETA SIDER2-C" },
+      { categoria: "PLACAS DEDICADOS TERCEIROS", veiculo: "3/4 ABERTO", placa: "BFDED-ZTM290-INTERMEDIARIOS-CARROCERIA-A" },
+      { categoria: "PLACAS DEDICADOS TERCEIROS", veiculo: "TRUCK ABERTO", placa: "BFDED-ZTM203-TRUCK-CARROCERIA-ABERTA" },
+      { categoria: "PLACAS DEDICADOS TERCEIROS", veiculo: "CARRETA ABERTA", placa: "BFDED-ZTM306-CARRETA-CARROCERIA-ABERTA1C" },
+      { categoria: "PLACAS DEDICADOS TERCEIROS", veiculo: "CARRETA SIDER", placa: "BFDED-ZTM306-CARRETA SIDER2-C" },
+      { categoria: "PLACAS DEDICADOS TERCEIROS", veiculo: "RODO-TREM", placa: "BFDED-ZTM301-RODO-TREM" },
+      { categoria: "PLACAS DEDICADOS TERCEIROS", veiculo: "BI-TREM", placa: "BFDED-ZTM305-BI-TREM" },
+      { categoria: "PLACAS DEDICADOS TERCEIROS", veiculo: "3/4 ABERTO", placa: "BFDED-ZTM290-INTERMEDIARIOS-6METROS" },
+      { categoria: "PLACAS FROTAS", veiculo: "3/4 ABERTO", placa: "BFROTA-ZTM290-INTERMEDIARIOS-CARROCERIA-ABERTA" },
+      { categoria: "PLACAS FROTAS", veiculo: "TRUCK ABERTO", placa: "BFROTA-ZTM203-TRUCK-CARROCERIA-ABERTA" },
+      { categoria: "PLACAS FROTAS", veiculo: "CARRETA ABERTA", placa: "BFROTA-ZTM306-CARRETA-CARROCERIA-ABERTA1" },
+      { categoria: "PLACAS SUPLEMENTAR", veiculo: "SUPLEMENTAR", placa: "BF-ZTM306-SUPLEMENTAR-C" }
     ];
 
     function getONUsValidasPVD(valor) {
@@ -11435,6 +11507,21 @@ return null;
       copiarTextoPainelProgramacao(texto, ev);
     }
 
+    function selecionarCategoriaPlacasPainelProgramacao(indice, ev) {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+
+      const popup = document.getElementById("painelProgPopupResumo");
+      if (!popup) return;
+
+      const indiceAtivo = Number(indice) || 0;
+      popup.querySelectorAll(".painelProgPopupVehicleTab").forEach((tab, idx) => {
+        tab.classList.toggle("active", idx === indiceAtivo);
+      });
+      popup.querySelectorAll(".painelProgPopupVehiclePanel").forEach((painel, idx) => {
+        painel.classList.toggle("active", idx === indiceAtivo);
+      });
+    }
+
     function renderPopupPainelProgramacao() {
       const popup = getPainelProgPopupEl();
       const selecionados = Array.from(painelProgCardsSelecionados)
@@ -11546,10 +11633,42 @@ return null;
           }).join("")
         : `<div class="painelProgPopupTextBox" style="color:#64748b;font-weight:700;">Nenhum vocativo selecionado.</div>`;
 
-      const veiculosBotoesHtml = PAINEL_PROG_PLACAS_VIRTUAIS.map(item => {
-        const idxPlaca = addCopy(item.placa);
-        return `<button class="painelProgPopupVehicleBtn" type="button" title="Copiar ${getTextoPainelProgramacao(item.placa)}" onclick="copiarTextoPainelProgramacaoPorIndice(${idxPlaca}, event)">${getTextoPainelProgramacao(item.veiculo)}</button>`;
+      const categoriasPlacasVirtuais = [
+        { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", rotulo: "Padrão" },
+        { categoria: "PLACAS DEDICADOS TERCEIROS", rotulo: "Dedicados" },
+        { categoria: "PLACAS FROTAS", rotulo: "Frotas" },
+        { categoria: "PLACAS SUPLEMENTAR", rotulo: "Suplementares" }
+      ];
+
+      const abasPlacasHtml = categoriasPlacasVirtuais.map((itemCategoria, indiceCategoria) => `
+        <button
+          class="painelProgPopupVehicleTab${indiceCategoria === 0 ? " active" : ""}"
+          type="button"
+          title="${getTextoPainelProgramacao(itemCategoria.categoria)}"
+          onclick="selecionarCategoriaPlacasPainelProgramacao(${indiceCategoria}, event)"
+        >${getTextoPainelProgramacao(itemCategoria.rotulo)}</button>
+      `).join("");
+
+      const paineisPlacasHtml = categoriasPlacasVirtuais.map((itemCategoria, indiceCategoria) => {
+        const itensCategoria = PAINEL_PROG_PLACAS_VIRTUAIS
+          .filter(item => item.categoria === itemCategoria.categoria);
+
+        const botoesCategoria = itensCategoria.map(item => {
+          const idxPlaca = addCopy(item.placa);
+          return `<button class="painelProgPopupVehicleBtn" type="button" title="Copiar ${getTextoPainelProgramacao(item.placa)}" onclick="copiarTextoPainelProgramacaoPorIndice(${idxPlaca}, event)">${getTextoPainelProgramacao(item.veiculo)}</button>`;
+        }).join("");
+
+        return `
+          <div class="painelProgPopupVehiclePanel${indiceCategoria === 0 ? " active" : ""}">
+            ${botoesCategoria}
+          </div>
+        `;
       }).join("");
+
+      const veiculosBotoesHtml = `
+        <div class="painelProgPopupVehicleTabs">${abasPlacasHtml}</div>
+        ${paineisPlacasHtml}
+      `;
 
       window.__painelProgCopyStore = textosCopia;
       popup.innerHTML = `
