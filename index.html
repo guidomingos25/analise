@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- PERFORMANCE-OPTIMIZED 2026-08-12: regras/visual preservados -->
 
 <html lang="pt-BR">
 
@@ -3865,6 +3866,7 @@
     let painelProgStatusNotaFiltroInicializado = false;
     let painelProgStatusSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.status.map(o => o.value));
     let painelProgCriticidadeSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.criticidade.map(o => o.value));
+    let painelProgDadosBase = [];
     let painelProgDadosAtuais = [];
     let painelProgDadosAtuaisPorKey = new Map();
     let painelProgCardsSelecionados = new Set();
@@ -6306,7 +6308,17 @@
     }
 
     function normalizar(txt) {
-      return (txt || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+      const raw = (txt || "").toString();
+      const cache = window.__normalizarCache;
+      if (cache && cache.has(raw)) return cache.get(raw);
+
+      const valor = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+
+      if (cache) {
+        if (cache.size > 30000) cache.clear();
+        cache.set(raw, valor);
+      }
+      return valor;
     }
 
     const GOOGLE_SHEET_JANELAS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkREcLQFJhAsxEq3WRVxHtYw46zSe3sDVJcQWOreQzFs6-u6PWF-cI8ndRTkQUFXfurUkkog0-NrZq/pubhtml";
@@ -6920,72 +6932,85 @@
 
 
     function processar() {
+      /*
+       * OTIMIZAÇÃO DE PERFORMANCE:
+       * A regra de matching permanece idêntica, mas as linhas PVD são agrupadas
+       * por Almoxarifado uma única vez. Assim, cada veículo testa o regex apenas
+       * contra os almoxarifados distintos e só percorre as notas dos almox que
+       * realmente aparecem em REFERENCIAS/PRIORIDADES.
+       */
+      const gruposPorAlmox = new Map();
 
-
-      const regexCacheProcessar = new Map();
-      const detalhadoPre = detalhadoRows.map(r => {
+      (detalhadoRows || []).forEach((r, ordemOriginal) => {
         const almoxNorm = normalizar(r["Almoxarifado"] || "");
-        let regexAlmox = null;
-        if (almoxNorm) {
-          if (!regexCacheProcessar.has(almoxNorm)) {      const almoxSafe = almoxNorm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            regexCacheProcessar.set(almoxNorm, new RegExp(`(^|[^A-Z0-9])${almoxSafe}([^A-Z0-9]|$)`));
-          }
-          regexAlmox = regexCacheProcessar.get(almoxNorm);
+        if (!almoxNorm) return;
+
+        let grupo = gruposPorAlmox.get(almoxNorm);
+        if (!grupo) {
+          const almoxSafe = almoxNorm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          grupo = {
+            almoxNorm,
+            regex: new RegExp(`(^|[^A-Z0-9])${almoxSafe}([^A-Z0-9]|$)`),
+            linhas: []
+          };
+          gruposPorAlmox.set(almoxNorm, grupo);
         }
-        return {
-          ...r,
-          __almoxNorm: almoxNorm,
-          __regexAlmox: regexAlmox
-        };
+
+        const dtLim = parsePossibleDate(r["Dt Limite Embarque"]);
+        let dtLimKey = null;
+        if (dtLim) {
+          dtLim.setHours(0, 0, 0, 0);
+          dtLimKey = dtLim.getTime();
+        }
+
+        grupo.linhas.push({
+          row: r,
+          dtLimKey,
+          ordemOriginal
+        });
       });
 
-      resultado = dataRows.map(row => {
+      const grupos = Array.from(gruposPorAlmox.values());
+
+      resultado = (dataRows || []).map(row => {
         const dtCarreg = parsePossibleDate(row["DT. CARREGAMENTO"]);
+        let dtCarregKey = null;
+        if (dtCarreg) {
+          dtCarreg.setHours(0, 0, 0, 0);
+          dtCarregKey = dtCarreg.getTime();
+        }
+
         const refsNorm = normalizar(row["REFERENCIAS"] || "");
         const prioridadeNorm = normalizar(row["PRIORIDADES SOLICITACAO"] || "");
+        const matchesMeta = [];
 
+        grupos.forEach(grupo => {
+          const regex = grupo.regex;
+          if (!(regex.test(refsNorm) || regex.test(prioridadeNorm))) return;
 
-        const matches = detalhadoPre.filter(r => {
-          const dtLim = parsePossibleDate(r["Dt Limite Embarque"]);
+          grupo.linhas.forEach(meta => {
+            if (
+              meta.dtLimKey != null &&
+              dtCarregKey != null &&
+              meta.dtLimKey > dtCarregKey
+            ) return;
 
-
-          if (dtLim && dtCarreg) {
-            dtLim.setHours(0, 0, 0, 0);
-            dtCarreg.setHours(0, 0, 0, 0);
-
-            if (dtLim.getTime() > dtCarreg.getTime()) return false;
-          }
-
-
-          const almox = r.__almoxNorm;
-          if (!almox) return false;
-
-
-          const regex = r.__regexAlmox;
-          if (!regex) return false;
-
-
-
-          const matchRefs = regex.test(refsNorm);
-          const matchPrioridade = regex.test(prioridadeNorm);
-
-          if (!(matchRefs || matchPrioridade)) return false;
-
-
-
-          return true;
+            matchesMeta.push(meta);
+          });
         });
 
-        matches.sort((a, b) => {
-          const da = parsePossibleDate(a["Dt Limite Embarque"]);
-          const db = parsePossibleDate(b["Dt Limite Embarque"]);
+        matchesMeta.sort((a, b) => {
+          const da = a.dtLimKey;
+          const db = b.dtLimKey;
 
-          if (!da && !db) return 0;
-          if (!da) return 1;
-          if (!db) return -1;
-
-          return da - db;
+          if (da == null && db == null) return a.ordemOriginal - b.ordemOriginal;
+          if (da == null) return 1;
+          if (db == null) return -1;
+          if (da !== db) return da - db;
+          return a.ordemOriginal - b.ordemOriginal;
         });
+
+        const matches = matchesMeta.map(meta => meta.row);
 
         return {
           dataRow: row,
@@ -7021,8 +7046,6 @@
       document.getElementById("btnAlmoxPendentes").disabled = false;
       document.getElementById("btnPainelProgramacaoRapido") && (document.getElementById("btnPainelProgramacaoRapido").disabled = false);
       document.getElementById("btnCalcularFilialMaisProxima") && (document.getElementById("btnCalcularFilialMaisProxima").disabled = false);
-
-
     }
 
     function exportarExcel() {
@@ -7098,6 +7121,8 @@
 
     fileData.onchange = async e => {
       dataRows = await readExcel(e.target.files[0]);
+      window.__normalizarCache?.clear();
+      window.__dateParseCache?.clear();
       invalidarCacheAnaliseProgramacao();
 
 
@@ -7110,6 +7135,8 @@
 
     fileDetalhado.onchange = async e => {
       detalhadoRows = await readExcel(e.target.files[0]);
+      window.__normalizarCache?.clear();
+      window.__dateParseCache?.clear();
       invalidarCacheAnaliseProgramacao();
 
 
@@ -8028,6 +8055,7 @@
 
     function invalidarCacheAnaliseProgramacao() {
       window.__analiseProgramacaoCache = null;
+      window.__painelProgTotaisPVDCache = null;
       if (window.__analisePerf) {
         window.__analisePerf.clientesCacheKey = "";
         window.__analisePerf.clientesCacheValue = null;
@@ -10207,10 +10235,10 @@ return null;
       painelProgramacaoEventosLigados = true;
 
       const inputBusca = document.getElementById("painelProgSearchInput");
-      if (inputBusca) inputBusca.addEventListener("input", debounce(() => renderPainelProgramacaoRapido(false), 120));
+      if (inputBusca) inputBusca.addEventListener("input", debounce(() => renderPainelProgramacaoComBaseAtual(false), 120));
 
       const selectAgrupamento = document.getElementById("painelProgAgrupamentoSelect");
-      if (selectAgrupamento) selectAgrupamento.addEventListener("change", () => renderPainelProgramacaoRapido(false));
+      if (selectAgrupamento) selectAgrupamento.addEventListener("change", () => renderPainelProgramacaoComBaseAtual(false));
 
       document.addEventListener("click", (ev) => {
         if (!isPainelProgramacaoVisivel()) return;
@@ -10646,6 +10674,9 @@ return null;
     }
 
     function montarTotaisPVDPorVocativoClientePainelProgramacao() {
+      const cacheExistente = window.__painelProgTotaisPVDCache;
+      if (cacheExistente && cacheExistente.data) return cacheExistente.data;
+
       const mapa = {};
       (detalhadoRows || []).forEach(r => {
         const almox = normalizar(r["Almoxarifado"] || "");
@@ -10711,6 +10742,8 @@ return null;
           totalCliente.alertasPesoCount++;
         }
       });
+
+      window.__painelProgTotaisPVDCache = { data: mapa };
       return mapa;
     }
 
@@ -11158,6 +11191,7 @@ return null;
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b, "pt-BR"));
         const clienteResumoSnapshot = clientesSnapshot.length ? clientesSnapshot.join(" / ") : PAINEL_PROG_SEM_CLIENTE;
+        const registrosRelatorioVocativo = notasBase.map(n => montarRegistroRelatorioPainelProgramacao(almox, n));
 
         gruposCliente.forEach(grupo => {
           const itemPainel = calcularIndicadoresPainelProgramacao(
@@ -11173,7 +11207,7 @@ return null;
               totalPVD: filtroNotasRestritivo
                 ? montarTotalPVDNotasPainelProgramacao(grupo.notas)
                 : totaisClienteVocativo[grupo.clienteNorm],
-              registrosRelatorioPVD: notasBase.map(n => montarRegistroRelatorioPainelProgramacao(almox, n))
+              registrosRelatorioPVD: registrosRelatorioVocativo
             }
           );
           itemPainel.cardKey = `${itemPainel.vocNorm}||${itemPainel.clienteNorm || grupo.clienteNorm || ""}`;
@@ -11353,26 +11387,34 @@ return null;
     function renderResumoPainelProgramacao(dados) {
       const resumoEl = document.getElementById("painelProgramacaoResumo");
       if (!resumoEl) return;
-      const contarVocativosDistintos = (filtroFn) => new Set(
-        (dados || [])
-          .filter(filtroFn)
-          .map(i => i.vocNorm || normalizar(i.vocativo || ""))
-          .filter(Boolean)
-      ).size;
-      const total = contarVocativosDistintos(() => true);
-      const programados = contarVocativosDistintos(i => i.temProgramado);
-      const naoProgramados = contarVocativosDistintos(i => i.temNaoProgramado);
-      const carregadosHoje = contarVocativosDistintos(i => i.temCarregadoHoje);
-      const carregadosOntem = contarVocativosDistintos(i => i.temCarregadoOntem);
-      const notas = dados.reduce((acc, i) => acc + Number(i.totalNotasPVD || 0), 0);
-      const peso = dados.reduce((acc, i) => acc + Number(i.pesoTotalPVD || 0), 0);
+
+      const vocativos = new Set();
+      const programadosSet = new Set();
+      const naoProgramadosSet = new Set();
+      const carregadosHojeSet = new Set();
+      const carregadosOntemSet = new Set();
+      let notas = 0;
+      let peso = 0;
+
+      (dados || []).forEach(item => {
+        const vocNorm = item.vocNorm || normalizar(item.vocativo || "");
+        if (vocNorm) {
+          vocativos.add(vocNorm);
+          if (item.temProgramado) programadosSet.add(vocNorm);
+          if (item.temNaoProgramado) naoProgramadosSet.add(vocNorm);
+          if (item.temCarregadoHoje) carregadosHojeSet.add(vocNorm);
+          if (item.temCarregadoOntem) carregadosOntemSet.add(vocNorm);
+        }
+        notas += Number(item.totalNotasPVD || 0);
+        peso += Number(item.pesoTotalPVD || 0);
+      });
 
       const kpis = [
-        ["Cards", formatarNumeroPainelProgramacao(total, 0)],
-        ["Programados", formatarNumeroPainelProgramacao(programados, 0)],
-        ["Não programados", formatarNumeroPainelProgramacao(naoProgramados, 0)],
-        ["Carregados hoje", formatarNumeroPainelProgramacao(carregadosHoje, 0)],
-        ["Carregados ontem", formatarNumeroPainelProgramacao(carregadosOntem, 0)],
+        ["Cards", formatarNumeroPainelProgramacao(vocativos.size, 0)],
+        ["Programados", formatarNumeroPainelProgramacao(programadosSet.size, 0)],
+        ["Não programados", formatarNumeroPainelProgramacao(naoProgramadosSet.size, 0)],
+        ["Carregados hoje", formatarNumeroPainelProgramacao(carregadosHojeSet.size, 0)],
+        ["Carregados ontem", formatarNumeroPainelProgramacao(carregadosOntemSet.size, 0)],
         ["Notas PVD", formatarNumeroPainelProgramacao(notas, 0)],
         ["Peso PVD", formatarNumeroPainelProgramacao(peso, 2)]
       ];
@@ -12611,6 +12653,26 @@ return null;
       cardsEl.innerHTML = html;
     }
 
+    function renderPainelProgramacaoComBaseAtual(rolarTopo = false) {
+      const dados = Array.isArray(painelProgDadosBase) ? painelProgDadosBase : [];
+      if (!dados.length) return renderPainelProgramacaoRapido(rolarTopo);
+
+      const filtrados = filtrarDadosPainelProgramacao(dados);
+      atualizarDadosAtuaisPainelProgramacao(filtrados);
+
+      const baseEl = document.getElementById("painelProgramacaoBaseInfo");
+      if (baseEl) {
+        const vocativosFiltrados = new Set(filtrados.map(i => i.vocNorm).filter(Boolean)).size;
+        const vocativosBase = new Set(dados.map(i => i.vocNorm).filter(Boolean)).size;
+        baseEl.textContent = `Base exibida: ${vocativosFiltrados} de ${vocativosBase} vocativo(s) | ${filtrados.length} card(s) | Organização: ${getPainelProgNomeAgrupamento()} | ${getResumoStatusJanelasGoogle()}`;
+      }
+
+      renderResumoPainelProgramacao(filtrados);
+      renderCardsPainelProgramacao(filtrados);
+      renderPopupPainelProgramacao();
+      if (rolarTopo) window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
     async function renderPainelProgramacaoRapido(rolarTopo = false, recarregarJanelas = false) {
       const cardsEl = document.getElementById("painelProgramacaoCards");
       const baseEl = document.getElementById("painelProgramacaoBaseInfo");
@@ -12618,6 +12680,7 @@ return null;
 
       try {
         const dados = await montarDadosPainelProgramacaoRapido(recarregarJanelas);
+        painelProgDadosBase = Array.isArray(dados) ? dados : [];
         const observacaoSemSelecao = painelProgObservacaoFiltroInicializado
           && (painelProgObservacoesDisponiveis || []).length > 0
           && painelProgObservacaoSelecionados.size === 0;
@@ -15972,17 +16035,18 @@ Deixe em branco e confirme para desvincular o ID atual.`,
         resultadoFiltrado = f;
         const html = f.map(buildGroupHTML).join('');
         PERF.mainFilterCache.set(cacheKey, { items: f, html });
+        while (PERF.mainFilterCache.size > 8) {
+          const primeiraChave = PERF.mainFilterCache.keys().next().value;
+          PERF.mainFilterCache.delete(primeiraChave);
+        }
         resultsDiv.innerHTML = html;
         renderSummary(f);
       };
 
       const originalProcessar = processar;
       processar = function (...args) {
-        const retorno = originalProcessar.apply(this, args);
         invalidateMainFilterCaches();
-        prepareMainFilterArtifacts();
-        aplicarFiltrosEBusca();
-        return retorno;
+        return originalProcessar.apply(this, args);
       };
 
       const originalAgendarListar = agendarListarAlmoxPendentes;
@@ -16044,8 +16108,9 @@ Deixe em branco e confirme para desvincular o ID atual.`,
         });
       }
 
+      const renderResumoVeiculosDebounced = debounce(renderResumoVeiculosPage, 120);
       ["fleetSearchIdInput", "fleetSearchPlacaInput", "fleetSearchDestinosInput", "fleetSearchClientesInput"].forEach(id => {
-        document.getElementById(id)?.addEventListener("input", renderResumoVeiculosPage);
+        document.getElementById(id)?.addEventListener("input", renderResumoVeiculosDebounced);
       });
 
       const fleetDropdown = document.getElementById('fleetStatusFilterDropdown');
