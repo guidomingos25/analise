@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- PERFORMANCE-OPTIMIZED 2026-08-12: regras/visual preservados -->
+<!-- PERFORMANCE-OPTIMIZED 2026-09-11: modo exclusivo Painel de Programação; processar() principal não é executado após uploads -->
 
 <html lang="pt-BR">
 
@@ -3542,13 +3542,77 @@
       }
     }
 
+    /* MODO PRODUÇÃO ENXUTO: a tela inicial serve somente para carregar as duas bases.
+       O bloco antigo de processamento/resultado permanece no DOM apenas por compatibilidade
+       com funções compartilhadas, mas não é exibido nem processado. */
+    #paginaPrincipal > .card {
+      display: none !important;
+    }
+
+    #paginaPrincipal .grid {
+      margin-top: 18px;
+    }
+
+    /* Resumo de datas do card: Embarque à esquerda e Entrega à direita. */
+    .painelProgDatasDuplas {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 4px;
+      min-height: 0;
+      flex: 1 1 auto;
+      overflow: hidden;
+    }
+
+    .painelProgDatasDuplas .painelProgDatasEntregaBox {
+      padding: 3px 4px;
+      font-size: 7.4px;
+    }
+
+    .painelProgDatasDuplas .painelProgDatasEntregaTitle {
+      font-size: 7.6px;
+      font-weight: 800;
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .painelProgDatasDuplas .painelProgDatasEntregaList {
+      gap: 2px;
+      padding-right: 1px;
+    }
+
+    .painelProgDatasDuplas .painelProgDataEntregaRow {
+      gap: 3px;
+      padding: 3px 4px;
+      font-size: 7.35px;
+      font-weight: 700;
+    }
+
+    .painelProgDatasDuplas .painelProgDataEntregaRow b {
+      font-size: 7.5px;
+      font-weight: 900;
+    }
+
+    .painelProgDatasDuplas .painelProgDatasEntregaEmpty {
+      padding: 6px 2px;
+      font-size: 7.4px;
+      font-weight: 700;
+    }
+
+    /* PERFORMANCE: evita layout/pintura dos grupos de cards que ainda estão fora da tela. */
+    .painelProgClienteGrupo {
+      content-visibility: auto;
+      contain-intrinsic-size: 360px;
+    }
+
   </style>
 </head>
 
 <body>
   <div class="container" id="paginaPrincipal">
-    <h1>📊 ANÁLISE CARREGAMENTO</h1>
-    <div class="sub" style="color:#cbd5e1; margin:-6px 0 16px 0; font-size:13px;">Conferência entre Veículos Carregados e PVD com resumo operacional da frota por data.</div>
+    <h1>🧭 PAINEL DE PROGRAMAÇÃO</h1>
+    <div class="sub" style="color:#cbd5e1; margin:-6px 0 16px 0; font-size:13px;">Carregue as duas planilhas. Assim que ambas estiverem prontas, o Painel de Programação será aberto automaticamente.</div>
     <div class="grid">
       <div class="card">
         <h2>1) Veículos Carregados</h2>
@@ -6315,7 +6379,7 @@
       const valor = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
 
       if (cache) {
-        if (cache.size > 30000) cache.clear();
+        if (cache.size > 150000) cache.clear();
         cache.set(raw, valor);
       }
       return valor;
@@ -6609,7 +6673,7 @@
       }
 
       const ts = date && !isNaN(date) ? date.getTime() : null;
-      if (cache.size > 50000) cache.clear();
+      if (cache.size > 150000) cache.clear();
       cache.set(key, ts);
       return ts == null ? null : new Date(ts);
     }
@@ -6632,7 +6696,7 @@
       const wb = XLSX.read(data, {
         type: "array",
         dense: true,
-        cellDates: true,
+        cellDates: false,
         raw: true
       });
       const ws = wb.Sheets["Export"] || wb.Sheets[wb.SheetNames[0]];
@@ -7119,6 +7183,20 @@
 
 
 
+    let abrindoPainelAposUpload = false;
+
+    async function tentarAbrirPainelProgramacaoAposUploads() {
+      if (abrindoPainelAposUpload) return;
+      if (!dataRows.length || !detalhadoRows.length) return;
+
+      abrindoPainelAposUpload = true;
+      try {
+        await abrirPainelProgramacaoRapido();
+      } finally {
+        abrindoPainelAposUpload = false;
+      }
+    }
+
     fileData.onchange = async e => {
       dataRows = await readExcel(e.target.files[0]);
       window.__normalizarCache?.clear();
@@ -7129,6 +7207,7 @@
       document.getElementById("statusData").innerText = "Carregado";
 
       atualizarBotoes();
+      await tentarAbrirPainelProgramacaoAposUploads();
     };
 
     let detalhadoCols = [];
@@ -7148,6 +7227,7 @@
       document.getElementById("statusDetalhado").innerText = "Carregado";
 
       atualizarBotoes();
+      await tentarAbrirPainelProgramacaoAposUploads();
     };
 
 
@@ -8022,6 +8102,100 @@
       return "NÃO PROGRAMADO";
     }
 
+    // PERFORMANCE: índice por vocativo para não filtrar, ordenar e converter as mesmas
+    // datas de veículos repetidamente para cada NF do PVD.
+    function criarIndiceObservacaoVeiculosPainelProgramacao(veiculos) {
+      const considerados = filtrarVeiculosParaObservacao(veiculos);
+      const carregados = [];
+      let ultimaPrevisaoProgramada = null;
+      let ultimaPrevisaoTs = -Infinity;
+
+      considerados.forEach((v, ordem) => {
+        const dtCarreg = toDateOnlyBrasilia(v?.dtCarreg);
+        const dtPrev = toDateOnlyBrasilia(v?.dtPrev);
+
+        if (dtCarreg) {
+          carregados.push({
+            ts: dtCarreg.getTime(),
+            lider: String(v?.lider || "").trim() || "NÃO INFORMADO",
+            veiculo: v,
+            ordem
+          });
+        }
+
+        if (dtPrev && !dtCarreg) {
+          const ts = dtPrev.getTime();
+          if (ts > ultimaPrevisaoTs) {
+            ultimaPrevisaoTs = ts;
+            ultimaPrevisaoProgramada = dtPrev;
+          }
+        }
+      });
+
+      return { carregados, ultimaPrevisaoProgramada };
+    }
+
+    function calcularObservacaoEResumoNFComIndicePainelProgramacao(nota, indice, hojeDia) {
+      const vazio = { observacao: "", liderUltimo: "", resumo: { total: 0, porLider: {} } };
+      const dtCheck = nota?._dtCheckDia || toDateOnlyBrasilia(nota?.checkin);
+      const dtEntrada = nota?._dtEntradaDia || toDateOnlyBrasilia(nota?.entrada);
+      const dtMaior = nota?._dtMaiorDia || maiorDataEntradaOuCheckin(dtCheck, dtEntrada);
+      const dtLimEmbarque = nota?._dtLimDia || toDateOnlyBrasilia(nota?.dtLim);
+      if (!dtMaior) return vazio;
+
+      const maiorTs = dtMaior.getTime();
+      let temCarregamentoApos = false;
+      const carregadosApos = [];
+      (indice?.carregados || []).forEach(item => {
+        if (item.ts > maiorTs) {
+          temCarregamentoApos = true;
+          carregadosApos.push(item);
+        }
+      });
+
+      const nfVencida = !!(dtLimEmbarque && hojeDia && dtLimEmbarque < hojeDia);
+      if (nfVencida && temCarregamentoApos) {
+        const resumo = { total: carregadosApos.length, porLider: {} };
+        let ultimo = null;
+        carregadosApos.forEach(item => {
+          resumo.porLider[item.lider] = (resumo.porLider[item.lider] || 0) + 1;
+          if (!ultimo || item.ts > ultimo.ts) ultimo = item;
+        });
+        return {
+          observacao: "TEVE CARRO E NÃO FOI CARREGADO",
+          liderUltimo: String(ultimo?.veiculo?.lider || "").trim(),
+          resumo
+        };
+      }
+
+      if (dtCheck && dtMaior.getTime() === dtCheck.getTime()) {
+        return {
+          observacao: temCarregamentoApos ? "" : "CHECKIN",
+          liderUltimo: "",
+          resumo: { total: 0, porLider: {} }
+        };
+      }
+
+      if (dtEntrada && dtMaior.getTime() === dtEntrada.getTime()) {
+        if (!temCarregamentoApos && dtLimEmbarque && dtEntrada >= dtLimEmbarque) {
+          const incotermNorm = normalizar(nota?.incoterms || "");
+          if (incotermNorm === "EXW") return { observacao: "ATRASO DE COLETA", liderUltimo: "", resumo: { total: 0, porLider: {} } };
+          if (incotermNorm === "FCA") return { observacao: "ATRASO DE ENTRADA", liderUltimo: "", resumo: { total: 0, porLider: {} } };
+        }
+      }
+
+      const ultimaPrevisao = indice?.ultimaPrevisaoProgramada || null;
+      if (ultimaPrevisao) {
+        return {
+          observacao: `PROGRAMADO PARA ${formatDateBRLocal(ultimaPrevisao)}`,
+          liderUltimo: "",
+          resumo: { total: 0, porLider: {} }
+        };
+      }
+
+      return { observacao: "NÃO PROGRAMADO", liderUltimo: "", resumo: { total: 0, porLider: {} } };
+    }
+
     function getChaveObservacaoNF(vocativo, nota) {
       return `${normalizar(vocativo || "")}||${String(nota || "").trim()}`;
     }
@@ -8073,8 +8247,8 @@
       }
 
       const almoxTotalPVD = {};
-      const almoxRegistrosPVD = {};
       const almoxPendBase = {};
+      const totaisPVDPorVocativoCliente = {};
       const dataRowsByIdNorm = new Map();
       const statusNotasBanco = await carregarStatusNotasBanco(false);
 
@@ -8086,9 +8260,6 @@
       detalhadoRows.forEach(r => {
         const almox = normalizar(r["Almoxarifado"]);
         if (!almox) return;
-
-        if (!almoxRegistrosPVD[almox]) almoxRegistrosPVD[almox] = [];
-        almoxRegistrosPVD[almox].push({ ...r });
 
         if (!almoxTotalPVD[almox]) {
           almoxTotalPVD[almox] = {
@@ -8104,6 +8275,62 @@
           almoxTotalPVD[almox].pesoTotal += peso;
         }
 
+        // Totais por cliente precisam considerar TODO o PVD, inclusive registros sem Dt Limite Embarque,
+        // exatamente como na versão anterior. São calculados aqui para evitar uma segunda varredura completa.
+        const clienteNomeTotal = String(r["Cliente"] || "").trim() || PAINEL_PROG_SEM_CLIENTE;
+        const clienteNormTotal = normalizar(clienteNomeTotal) || normalizar(PAINEL_PROG_SEM_CLIENTE);
+        const prioridadeValor = getFieldValue(r, ["Prioridade", "PRIORIDADE", "prioridade"]) || "";
+        const prioridadeNorm = normalizar(prioridadeValor || "");
+        const onuValor = r["ONU"] || getFieldValue(r, ["ONU", "Onu", "onu"]) || "";
+        const onusValidas = getONUsValidasPVD(onuValor);
+        const mercadoriaValor = getFieldValue(r, ["Mercadoria", "MERCADORIA"]) || "";
+        const alertasMercadoriaLinha = identificarAlertasMercadoriaPainelProgramacao(mercadoriaValor);
+        const bpDestinoValor = getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino"]) || "";
+        const volumesValor = getFieldValue(r, ["Volumes", "VOLUMES"]) || "";
+
+        if (!totaisPVDPorVocativoCliente[almox]) totaisPVDPorVocativoCliente[almox] = {};
+        if (!totaisPVDPorVocativoCliente[almox][clienteNormTotal]) {
+          totaisPVDPorVocativoCliente[almox][clienteNormTotal] = {
+            clienteNome: clienteNomeTotal,
+            clienteNorm: clienteNormTotal,
+            totalRegistros: 0,
+            pesoTotal: 0,
+            bps: new Set(),
+            onus: new Set(),
+            prioridades: new Set(),
+            alertasMercadoria: criarAlertasMercadoriaPainelProgramacao(),
+            alertasMercadoriaCount: 0,
+            alertasPesoCount: 0,
+            expressoCount: 0,
+            expressoDetalhes: []
+          };
+        }
+        const totalCliente = totaisPVDPorVocativoCliente[almox][clienteNormTotal];
+        totalCliente.totalRegistros++;
+        totalCliente.pesoTotal += Number(peso || 0);
+        if (bpDestinoValor) totalCliente.bps.add(String(bpDestinoValor).trim());
+        onusValidas.forEach(onu => totalCliente.onus.add(onu));
+        if (prioridadeNorm) totalCliente.prioridades.add(String(prioridadeValor || prioridadeNorm).trim());
+        if (totalAlertasMercadoriaPainelProgramacao(alertasMercadoriaLinha) > 0) {
+          totalCliente.alertasMercadoriaCount++;
+          somarAlertasMercadoriaPainelProgramacao(totalCliente.alertasMercadoria, alertasMercadoriaLinha);
+        }
+        if (Number(peso || 0) > 2500) totalCliente.alertasPesoCount++;
+        if (prioridadeNorm === "EXPRESSO") {
+          totalCliente.expressoCount++;
+          totalCliente.expressoDetalhes.push({
+            nota: getFieldValue(r, ["Nota", "NOTA", "nota"]) || "",
+            numeroOEF: getFieldValue(r, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF", "numeroOEF"]) || "",
+            peso: r["Peso"] || "",
+            volumes: volumesValor,
+            fornecedor: getFieldValue(r, ["Fornecedor", "FORNECEDOR", "fornecedor"]) || "",
+            dtLimiteEmbarque: getFieldValue(r, ["Dt Limite Embarque", "DT LIMITE EMBARQUE", "Dt. Limite Embarque"]) || "",
+            dtFinalEntrega: getFieldValue(r, ["Dt Final Entrega", "DT FINAL ENTREGA", "Dt. Final Entrega"]) || "",
+            bpDestino: bpDestinoValor,
+            onu: onuValor
+          });
+        }
+
         const dtLim = parsePossibleDate(r["Dt Limite Embarque"]);
         if (!dtLim) return;
         dtLim.setHours(0, 0, 0, 0);
@@ -8114,6 +8341,13 @@
           };
         }
 
+        const dtCheckDia = toDateOnlyBrasilia(r["Data de Check in"]);
+        const dtEntradaDia = toDateOnlyBrasilia(r["Data de Entrada da Nota"]);
+        const dtMaiorDia = (dtCheckDia && dtEntradaDia)
+          ? (dtCheckDia > dtEntradaDia ? dtCheckDia : dtEntradaDia)
+          : (dtCheckDia || dtEntradaDia || null);
+        const dtFinalDia = toDateOnlyBrasilia(r["Dt Final Entrega"]);
+
         const notaObj = {
           dtLim,
           nota: r["Nota"] || r["Numero OEF"] || "",
@@ -8121,7 +8355,7 @@
           destinatario: r["Destinatario"] || "",
           peso: r["Peso"] || "",
           pesado: getFieldValue(r, ["Pesado", "PESADO"]) || "",
-          onu: r["ONU"] || "",
+          onu: onuValor,
           cliente: r["Cliente"] || "",
           destino: r["Destino"] || "",
           uf: r["UF Destino"] || "",
@@ -8129,23 +8363,27 @@
           numeroOEF: getFieldValue(r, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF"]) || "",
           rangeDias: getFieldValue(r, ["RANGE DE DIAS", "Range de Dias", "Range De Dias"]) || "",
           incoterms: getFieldValue(r, ["INCOTERMS", "Incoterms"]) || "",
-          bpDestino: getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino"]) || "",
+          bpDestino: bpDestinoValor,
           endWms: getFieldValue(r, ["End. WMS", "END. WMS", "End WMS", "END WMS"]) || "",
-          volumes: getFieldValue(r, ["Volumes", "VOLUMES"]) || "",
-          mercadoria: getFieldValue(r, ["Mercadoria", "MERCADORIA"]) || "",
-          prioridade: getFieldValue(r, ["Prioridade", "PRIORIDADE", "prioridade"]) || "",
+          volumes: volumesValor,
+          mercadoria: mercadoriaValor,
+          prioridade: prioridadeValor,
           checkin: r["Data de Check in"],
           entrada: r["Data de Entrada da Nota"],
           finalEntrega: r["Dt Final Entrega"],
-          diasConsolidacao: (() => {
-            const dtLimite = toDateOnly(r["Dt Limite Embarque"]);
-            const dtCheck = parsePossibleDate(r["Data de Check in"]);
-            const dtEntrada = parsePossibleDate(r["Data de Entrada da Nota"]);
-            const dtMaior = maiorDataEntradaOuCheckin(dtCheck, dtEntrada);
-            if (!dtLimite || !dtMaior) return null;
-            return Math.round((dtLimite.getTime() - dtMaior.getTime()) / 86400000);
-          })(),
-          _raw: { ...r }
+          diasConsolidacao: (dtLim && dtMaiorDia)
+            ? Math.round((dtLim.getTime() - dtMaiorDia.getTime()) / 86400000)
+            : null,
+          _raw: r,
+          _dtLimDia: dtLim,
+          _dtCheckDia: dtCheckDia,
+          _dtEntradaDia: dtEntradaDia,
+          _dtMaiorDia: dtMaiorDia,
+          _dtFinalDia: dtFinalDia,
+          _pesoNum: peso || 0,
+          _prioridadeNorm: prioridadeNorm,
+          _onusValidas: onusValidas,
+          _alertasMercadoria: alertasMercadoriaLinha
         };
 
         notaObj._clienteNorm = normalizar(notaObj.cliente || "");
@@ -8154,6 +8392,7 @@
         notaObj._notaNorm = normalizar(notaObj.nota || "");
         notaObj._numeroOEFNorm = normalizar(notaObj.numeroOEF || "");
         notaObj.statusBanco = statusNotasBanco[`${notaObj._notaNorm}||${notaObj._numeroOEFNorm}`]?.status || "";
+
 
         almoxPendBase[almox].notas.push(notaObj);
       });
@@ -8252,6 +8491,9 @@
         const prioridadeNorm = normalizar(row["PRIORIDADES SOLICITACAO"] || "");
 
         almoxKeys.forEach(almox => {
+          // includes() é um pré-filtro barato e 100% seguro: se o regex exato pudesse casar,
+          // o texto obrigatoriamente conteria o vocativo. Evita milhares de regex desnecessários.
+          if (!refsNorm.includes(almox) && !prioridadeNorm.includes(almox)) return;
           const regex = almoxRegexCache[almox];
           if (!(regex.test(refsNorm) || regex.test(prioridadeNorm))) return;
 
@@ -8313,21 +8555,21 @@
         almoxUltimoVeiculo[almox].sort((a, b) => b.dtPrev - a.dtPrev);
       });
 
+      const hojeObservacao = toDateOnlyBrasilia(new Date());
       Object.entries(almoxPendBase).forEach(([almox, info]) => {
         const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), almoxUltimoVeiculo[almox] || []);
+        const indiceObservacao = criarIndiceObservacaoVeiculosPainelProgramacao(veiculos);
         (info.notas || []).forEach(n => {
-          n.observacaoAutomatica = calcularObservacaoNF(n, veiculos);
-          n.observacaoCalculada = n.observacaoAutomatica;
-          n.liderUltimoVeiculoNaoCarregado = formatarObservacaoExibicao(n.observacaoAutomatica) === "NÃO FOI CARREGADO"
-            ? getLiderUltimoVeiculoNaoCarregado(n, veiculos)
-            : "";
+          const calculo = calcularObservacaoEResumoNFComIndicePainelProgramacao(n, indiceObservacao, hojeObservacao);
+          n.observacaoAutomatica = calculo.observacao;
+          n.observacaoCalculada = calculo.observacao;
+          n.liderUltimoVeiculoNaoCarregado = calculo.liderUltimo || "";
           n.observacaoFiltroNorm = normalizarObservacaoFiltroComLider(
             n.observacaoAutomatica || "",
             n.liderUltimoVeiculoNaoCarregado
           );
-          const resumoNaoCarregado = getResumoVeiculosNaoCarregadosNota(n, veiculos);
-          n.qtdVeiculosNaoCarregado = resumoNaoCarregado.total;
-          n.qtdVeiculosNaoCarregadoPorLider = resumoNaoCarregado.porLider;
+          n.qtdVeiculosNaoCarregado = Number(calculo.resumo?.total || 0);
+          n.qtdVeiculosNaoCarregadoPorLider = { ...(calculo.resumo?.porLider || {}) };
         });
       });
 
@@ -8346,12 +8588,15 @@
       window.__analiseProgramacaoCache = {
         signature,
         almoxTotalPVD,
-        almoxRegistrosPVD,
         almoxPendBase,
+        totaisPVDPorVocativoCliente,
         almoxUltimoVeiculo,
         clientesUnicos,
         dataRowsByIdNorm
       };
+
+      // Reaproveitado diretamente pelo Painel de Programação, evitando nova varredura do PVD.
+      window.__painelProgTotaisPVDCache = { data: totaisPVDPorVocativoCliente };
 
       return window.__analiseProgramacaoCache;
     }
@@ -8691,7 +8936,7 @@ return null;
 
         if (filtroPrazoConsolidacaoAtivo) {
 
-          const dtLim = toDateOnly(n.dtLim);
+          const dtLim = n?._dtLimDia || toDateOnly(n.dtLim);
           const dtMaior = maiorDataEntradaOuCheckin(n.checkin, n.entrada);
 
           if (!dtLim || !dtMaior) return false;
@@ -10208,7 +10453,7 @@ return null;
 
     async function abrirPainelProgramacaoRapido() {
       if (!dataRows.length || !detalhadoRows.length) {
-        alert("Carregue e processe as planilhas antes de abrir o Painel de Programação.");
+        alert("Carregue as duas planilhas antes de abrir o Painel de Programação.");
         return;
       }
       document.getElementById("paginaPrincipal").style.display = "none";
@@ -10676,7 +10921,13 @@ return null;
     function montarTotaisPVDPorVocativoClientePainelProgramacao() {
       const cacheExistente = window.__painelProgTotaisPVDCache;
       if (cacheExistente && cacheExistente.data) return cacheExistente.data;
+      if (window.__analiseProgramacaoCache?.totaisPVDPorVocativoCliente) {
+        const data = window.__analiseProgramacaoCache.totaisPVDPorVocativoCliente;
+        window.__painelProgTotaisPVDCache = { data };
+        return data;
+      }
 
+      // Fallback de compatibilidade: só é usado caso esta função seja chamada fora do fluxo normal do painel.
       const mapa = {};
       (detalhadoRows || []).forEach(r => {
         const almox = normalizar(r["Almoxarifado"] || "");
@@ -10747,13 +10998,15 @@ return null;
       return mapa;
     }
 
-    function montarResumoDatasEntregaPainelProgramacao(notas) {
+    function montarResumoDatasCampoPainelProgramacao(notas, campo) {
       const mapaDatas = new Map();
 
       (Array.isArray(notas) ? notas : []).forEach(nota => {
-        const valor = nota?.finalEntrega;
+        const valor = nota?.[campo];
         const bruto = String(valor ?? "").trim();
-        const dt = parsePossibleDate(valor);
+        const dt = campo === "dtLim"
+          ? (nota?._dtLimDia || parsePossibleDate(valor))
+          : (campo === "finalEntrega" ? (nota?._dtFinalDia || parsePossibleDate(valor)) : parsePossibleDate(valor));
         let label = "";
         let ordem = Number.MAX_SAFE_INTEGER;
 
@@ -10788,6 +11041,14 @@ return null;
       });
     }
 
+    function montarResumoDatasEmbarquePainelProgramacao(notas) {
+      return montarResumoDatasCampoPainelProgramacao(notas, "dtLim");
+    }
+
+    function montarResumoDatasEntregaPainelProgramacao(notas) {
+      return montarResumoDatasCampoPainelProgramacao(notas, "finalEntrega");
+    }
+
     function calcularIndicadoresPainelProgramacao(almox, info, veiculos, hoje, amanha, almoxTotalPVD, opcoesPainel = {}) {
       const notas = Array.isArray(info?.notas) ? info.notas : [];
       let qtdD1 = 0;
@@ -10820,22 +11081,22 @@ return null;
         const uf = String(n.uf || "").trim().toUpperCase();
         if (uf) ufs.add(uf);
 
-        const peso = parsePesoPVD(n.peso);
+        const peso = Number.isFinite(Number(n?._pesoNum)) ? Number(n._pesoNum) : parsePesoPVD(n.peso);
         if (peso) pesoFiltrado += peso;
 
         const bpDestinoNota = String(n.bpDestino || "").trim();
         if (bpDestinoNota) bpsNotas.add(bpDestinoNota);
 
-        getONUsValidasPVD(n.onu).forEach(onu => onusNotas.add(onu));
+        (Array.isArray(n?._onusValidas) ? n._onusValidas : getONUsValidasPVD(n.onu)).forEach(onu => onusNotas.add(onu));
 
-        const alertasMercadoriaNota = identificarAlertasMercadoriaPainelProgramacao(n.mercadoria || "");
+        const alertasMercadoriaNota = n?._alertasMercadoria || identificarAlertasMercadoriaPainelProgramacao(n.mercadoria || "");
         if (totalAlertasMercadoriaPainelProgramacao(alertasMercadoriaNota) > 0) {
           alertasMercadoriaNotasCount++;
           somarAlertasMercadoriaPainelProgramacao(alertasMercadoriaNotas, alertasMercadoriaNota);
         }
 
         const prioridadeValorNota = String(n.prioridade || "").trim();
-        const prioridadeNormNota = normalizar(prioridadeValorNota || "");
+        const prioridadeNormNota = n?._prioridadeNorm || normalizar(prioridadeValorNota || "");
         if (prioridadeNormNota) prioridadesNotas.add(prioridadeValorNota || prioridadeNormNota);
         if (prioridadeNormNota === "EXPRESSO") {
           expressoNotas++;
@@ -10866,8 +11127,8 @@ return null;
           else if (diasParaLimite >= 2) dge2++;
         }
 
-        const dtCheck = parsePossibleDate(n.checkin);
-        const dtEntrada = parsePossibleDate(n.entrada);
+        const dtCheck = n?._dtCheckDia || parsePossibleDate(n.checkin);
+        const dtEntrada = n?._dtEntradaDia || parsePossibleDate(n.entrada);
         let dentroRegra = false;
         if (dtLim) {
           if (dtCheck && dtCheck >= dtLim) dentroRegra = true;
@@ -10911,6 +11172,7 @@ return null;
       const clienteResumo = clienteLista.length ? clienteLista.join(" / ") : PAINEL_PROG_SEM_CLIENTE;
       const clienteNorm = normalizar(clienteResumo) || normalizar(PAINEL_PROG_SEM_CLIENTE);
       const statusVeiculo = status.temProgramado ? "PROGRAMADO" : "NAO PROGRAMADO";
+      const datasEmbarqueResumo = montarResumoDatasEmbarquePainelProgramacao(notas);
       const datasEntregaResumo = montarResumoDatasEntregaPainelProgramacao(notas);
       const janela = buscarJanelaAlmox(vocNorm);
       const janelaCarregamentoDias = ordenarDiasSemanaJanela(janela?.carregamento || []);
@@ -10947,6 +11209,7 @@ return null;
         ufsNorm: Array.from(ufs).map(u => normalizar(u)),
         statusVeiculo,
         tipoEmbarque,
+        datasEmbarqueResumo,
         datasEntregaResumo,
         janela,
         janelaCarregamentoDias,
@@ -10984,7 +11247,10 @@ return null;
         ultimosVeiculos: Array.isArray(veiculos) ? veiculos.slice(0, 3) : [],
         registrosRelatorioPVD: Array.isArray(opcoesPainel?.registrosRelatorioPVD)
           ? opcoesPainel.registrosRelatorioPVD
-          : notas.map(n => n?._raw || n),
+          : null,
+        notasFonteRelatorioPVD: Array.isArray(opcoesPainel?.notasFonteRelatorioPVD)
+          ? opcoesPainel.notasFonteRelatorioPVD
+          : notas,
         idVinculado: getIdVinculadoPainelProgramacao(vocNorm),
         searchBlob: normalizar([
           almox,
@@ -11048,18 +11314,18 @@ return null;
       };
       (notas || []).forEach(n => {
         total.totalRegistros++;
-        const peso = parsePesoPVD(n?.peso);
+        const peso = Number.isFinite(Number(n?._pesoNum)) ? Number(n._pesoNum) : parsePesoPVD(n?.peso);
         total.pesoTotal += peso;
         const bp = String(n?.bpDestino || "").trim();
         if (bp) total.bps.add(bp);
-        getONUsValidasPVD(n?.onu).forEach(onu => total.onus.add(onu));
+        (Array.isArray(n?._onusValidas) ? n._onusValidas : getONUsValidasPVD(n?.onu)).forEach(onu => total.onus.add(onu));
         const prioridade = String(n?.prioridade || "").trim();
         if (prioridade) total.prioridades.add(prioridade);
-        const alertas = identificarAlertasMercadoriaPainelProgramacao(n?.mercadoria || "");
+        const alertas = n?._alertasMercadoria || identificarAlertasMercadoriaPainelProgramacao(n?.mercadoria || "");
         somarAlertasMercadoriaPainelProgramacao(total.alertasMercadoria, alertas);
         total.alertasMercadoriaCount += totalAlertasMercadoriaPainelProgramacao(alertas);
         if (peso > 2500) total.alertasPesoCount++;
-        if (normalizar(prioridade) === "EXPRESSO") {
+        if ((n?._prioridadeNorm || normalizar(prioridade)) === "EXPRESSO") {
           total.expressoCount++;
           total.expressoDetalhes.push({
             nota: n?.nota || "", numeroOEF: n?.numeroOEF || "", peso: n?.peso || "",
@@ -11086,20 +11352,41 @@ return null;
       return raw;
     }
 
+    function getRegistrosRelatorioItemPainelProgramacao(item) {
+      if (!item) return [];
+      if (Array.isArray(item.registrosRelatorioPVD)) return item.registrosRelatorioPVD;
+      const notasFonte = Array.isArray(item.notasFonteRelatorioPVD) ? item.notasFonteRelatorioPVD : [];
+      const vocativo = item.vocativo || item.vocNorm || "";
+      const registros = notasFonte.map(n => montarRegistroRelatorioPainelProgramacao(vocativo, n));
+      item.registrosRelatorioPVD = registros;
+      return registros;
+    }
+
     async function montarDadosPainelProgramacaoRapido(recarregarJanelas = false) {
+      // Janelas Google não bloqueiam mais a primeira pintura do painel. Elas são carregadas
+      // em paralelo e aplicadas automaticamente assim que chegarem.
+      const janelasJaEstavamCarregadas = !!window.__janelasGoogleState?.carregado && !recarregarJanelas;
+      const promessaJanelas = carregarJanelasGoogle(recarregarJanelas);
+      window.__painelProgPromessaJanelas = janelasJaEstavamCarregadas ? null : promessaJanelas;
+
       await Promise.all([
         carregarObsEStatusHojeCache(false),
         carregarIdsHistoricosVinculados(false),
-        carregarStatusNotasBanco(false),
-        carregarJanelasGoogle(recarregarJanelas)
+        carregarStatusNotasBanco(false)
       ]);
       const cache = await prepararCacheAnaliseProgramacao();
       const observacoesMapa = new Map();
+      const statusNotasMapa = new Map();
       Object.entries(cache.almoxPendBase || {}).forEach(([vocativo, info]) => {
         (info?.notas || []).forEach(nota => {
-          const value = getObservacaoNotaPainelProgramacao(vocativo, nota);
-          const label = value === OBSERVACAO_FILTRO_VAZIA ? "(Em branco)" : formatarObservacaoExibicao(value);
-          if (!observacoesMapa.has(value)) observacoesMapa.set(value, label || value);
+          const obsValue = getObservacaoNotaPainelProgramacao(vocativo, nota);
+          const obsLabel = obsValue === OBSERVACAO_FILTRO_VAZIA ? "(Em branco)" : formatarObservacaoExibicao(obsValue);
+          if (!observacoesMapa.has(obsValue)) observacoesMapa.set(obsValue, obsLabel || obsValue);
+
+          const statusValue = getStatusNotaPainelProgramacao(nota);
+          const textoStatus = getStatusNotaTextoPainelProgramacao(nota);
+          const statusLabel = statusValue === STATUS_NOTA_FILTRO_VAZIO ? "(Em branco)" : textoStatus;
+          if (!statusNotasMapa.has(statusValue)) statusNotasMapa.set(statusValue, statusLabel || statusValue);
         });
       });
       const observacoesOpcoes = Array.from(observacoesMapa.entries())
@@ -11107,15 +11394,6 @@ return null;
         .map(([value, label]) => ({ value, label }));
       sincronizarOpcoesDinamicasPainelProgramacao("observacao", observacoesOpcoes, painelProgObservacaoFiltroInicializado);
 
-      const statusNotasMapa = new Map();
-      Object.values(cache.almoxPendBase || {}).forEach(info => {
-        (info?.notas || []).forEach(nota => {
-          const value = getStatusNotaPainelProgramacao(nota);
-          const textoStatus = getStatusNotaTextoPainelProgramacao(nota);
-          const label = value === STATUS_NOTA_FILTRO_VAZIO ? "(Em branco)" : textoStatus;
-          if (!statusNotasMapa.has(value)) statusNotasMapa.set(value, label || value);
-        });
-      });
       const statusNotasOpcoes = Array.from(statusNotasMapa.entries())
         .sort((a, b) => {
           if (a[0] === STATUS_NOTA_FILTRO_VAZIO) return -1;
@@ -11132,22 +11410,24 @@ return null;
       amanha.setDate(hoje.getDate() + 1);
 
       const linhas = [];
+      const filtroObservacaoRestritivo = painelProgObservacaoFiltroInicializado
+        && painelProgObservacoesDisponiveis.length > 0
+        && painelProgObservacaoSelecionados.size < painelProgObservacoesDisponiveis.length;
+      const filtroStatusNotaRestritivo = painelProgStatusNotaFiltroInicializado
+        && painelProgStatusNotasDisponiveis.length > 0
+        && painelProgStatusNotaSelecionados.size < painelProgStatusNotasDisponiveis.length;
+      const filtroNotasRestritivo = filtroObservacaoRestritivo || filtroStatusNotaRestritivo;
 
       Object.entries(cache.almoxPendBase || {}).forEach(([almox, info]) => {
         const vocNorm = normalizar(almox);
         const veiculos = filtrarVeiculosAtivosVocativo(vocNorm, cache.almoxUltimoVeiculo?.[almox] || []);
         const notasBaseTodas = Array.isArray(info?.notas) ? info.notas : [];
-        const notasBase = notasBaseTodas.filter(n =>
-          notaPassaFiltroObservacaoPainelProgramacao(almox, n)
-          && notaPassaFiltroStatusNotaPainelProgramacao(n)
-        );
-        const filtroObservacaoRestritivo = painelProgObservacaoFiltroInicializado
-          && painelProgObservacoesDisponiveis.length > 0
-          && painelProgObservacaoSelecionados.size < painelProgObservacoesDisponiveis.length;
-        const filtroStatusNotaRestritivo = painelProgStatusNotaFiltroInicializado
-          && painelProgStatusNotasDisponiveis.length > 0
-          && painelProgStatusNotaSelecionados.size < painelProgStatusNotasDisponiveis.length;
-        const filtroNotasRestritivo = filtroObservacaoRestritivo || filtroStatusNotaRestritivo;
+        const notasBase = filtroNotasRestritivo
+          ? notasBaseTodas.filter(n =>
+              notaPassaFiltroObservacaoPainelProgramacao(almox, n)
+              && notaPassaFiltroStatusNotaPainelProgramacao(n)
+            )
+          : notasBaseTodas;
         if (filtroNotasRestritivo && !notasBase.length) return;
         const gruposCliente = new Map();
         const totaisClienteVocativo = totaisPorVocativoCliente[almox] || {};
@@ -11191,7 +11471,10 @@ return null;
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b, "pt-BR"));
         const clienteResumoSnapshot = clientesSnapshot.length ? clientesSnapshot.join(" / ") : PAINEL_PROG_SEM_CLIENTE;
-        const registrosRelatorioVocativo = notasBase.map(n => montarRegistroRelatorioPainelProgramacao(almox, n));
+        // PERFORMANCE: o relatório completo do vocativo é materializado somente quando
+      // o usuário clicar em Relatório/Gerar Excel. No carregamento inicial mantemos apenas
+      // referências às notas já processadas.
+      const notasFonteRelatorioVocativo = notasBase;
 
         gruposCliente.forEach(grupo => {
           const itemPainel = calcularIndicadoresPainelProgramacao(
@@ -11207,7 +11490,8 @@ return null;
               totalPVD: filtroNotasRestritivo
                 ? montarTotalPVDNotasPainelProgramacao(grupo.notas)
                 : totaisClienteVocativo[grupo.clienteNorm],
-              registrosRelatorioPVD: registrosRelatorioVocativo
+              notasFonteRelatorioPVD: notasFonteRelatorioVocativo,
+              registrosRelatorioPVD: null
             }
           );
           itemPainel.cardKey = `${itemPainel.vocNorm}||${itemPainel.clienteNorm || grupo.clienteNorm || ""}`;
@@ -11766,30 +12050,32 @@ return null;
       `;
     }
 
-    function renderDatasEntregaCardPainelProgramacao(item) {
-      const resumo = Array.isArray(item?.datasEntregaResumo) ? item.datasEntregaResumo : [];
-      const totalDatas = resumo.reduce((acc, linha) => acc + Number(linha.qtd || 0), 0);
-
-      if (!resumo.length) {
-        return `
-          <div class="painelProgDatasEntregaBox">
-            <div class="painelProgDatasEntregaTitle">📅 Dt Final Entrega</div>
-            <div class="painelProgDatasEntregaEmpty">Nenhuma data localizada.</div>
-          </div>
-        `;
-      }
+    function renderColunaDatasCardPainelProgramacao(titulo, resumo) {
+      const linhas = Array.isArray(resumo) ? resumo : [];
+      const totalDatas = linhas.reduce((acc, linha) => acc + Number(linha.qtd || 0), 0);
 
       return `
         <div class="painelProgDatasEntregaBox">
-          <div class="painelProgDatasEntregaTitle">📅 Dt Final Entrega: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(totalDatas, 0))} registro(s)</div>
-          <div class="painelProgDatasEntregaList">
-            ${resumo.map(linha => `
-              <div class="painelProgDataEntregaRow" title="${getTextoPainelProgramacao(linha.data || "-")}: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(linha.qtd, 0))} registro(s)">
-                <span>${getTextoPainelProgramacao(linha.data || "-")}</span>
-                <b>${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(linha.qtd, 0))}</b>
-              </div>
-            `).join("")}
-          </div>
+          <div class="painelProgDatasEntregaTitle">${getTextoPainelProgramacao(titulo)}: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(totalDatas, 0))}</div>
+          ${linhas.length ? `
+            <div class="painelProgDatasEntregaList">
+              ${linhas.map(linha => `
+                <div class="painelProgDataEntregaRow" title="${getTextoPainelProgramacao(linha.data || "-")}: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(linha.qtd, 0))} registro(s)">
+                  <span>${getTextoPainelProgramacao(linha.data || "-")}</span>
+                  <b>${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(linha.qtd, 0))}</b>
+                </div>
+              `).join("")}
+            </div>
+          ` : `<div class="painelProgDatasEntregaEmpty">Nenhuma data localizada.</div>`}
+        </div>
+      `;
+    }
+
+    function renderDatasEntregaCardPainelProgramacao(item) {
+      return `
+        <div class="painelProgDatasDuplas">
+          ${renderColunaDatasCardPainelProgramacao("Embarque", item?.datasEmbarqueResumo)}
+          ${renderColunaDatasCardPainelProgramacao("Entrega", item?.datasEntregaResumo)}
         </div>
       `;
     }
@@ -12255,9 +12541,7 @@ return null;
 
       const registros = [];
       itensVocativos.forEach(item => {
-        const registrosItem = Array.isArray(item?.registrosRelatorioPVD)
-          ? item.registrosRelatorioPVD
-          : [];
+        const registrosItem = getRegistrosRelatorioItemPainelProgramacao(item);
         registrosItem.forEach(registro => registros.push(registro));
       });
 
@@ -12326,7 +12610,7 @@ return null;
         return;
       }
 
-      const registros = Array.isArray(item.registrosRelatorioPVD) ? item.registrosRelatorioPVD : [];
+      const registros = getRegistrosRelatorioItemPainelProgramacao(item);
       const colunas = getColunasRelatorioVocativoPainelProgramacao(registros);
       const vocativo = item.vocativo || item.vocNorm || "";
 
@@ -12673,6 +12957,22 @@ return null;
       if (rolarTopo) window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
+    function aplicarJanelasNosDadosPainelProgramacao(dados) {
+      (Array.isArray(dados) ? dados : []).forEach(item => {
+        const janela = buscarJanelaAlmox(item?.vocNorm || item?.vocativo || "");
+        const carga = ordenarDiasSemanaJanela(janela?.carregamento || []);
+        const entrega = ordenarDiasSemanaJanela(janela?.entrega || []);
+        item.janela = janela;
+        item.janelaCarregamentoDias = carga;
+        item.janelaEntregaDias = entrega;
+        item.janelaCarregamentoTexto = formatarDiasSemanaJanela(carga);
+        item.janelaEntregaTexto = formatarDiasSemanaJanela(entrega);
+        item.janelaCarregamentoNorm = carga.map(normalizarDiaSemanaJanela).filter(Boolean);
+        item.searchBlob = normalizar(`${item.searchBlob || ""} ${item.janelaCarregamentoTexto} ${item.janelaEntregaTexto}`);
+      });
+      return dados;
+    }
+
     async function renderPainelProgramacaoRapido(rolarTopo = false, recarregarJanelas = false) {
       const cardsEl = document.getElementById("painelProgramacaoCards");
       const baseEl = document.getElementById("painelProgramacaoBaseInfo");
@@ -12708,6 +13008,20 @@ return null;
         renderResumoPainelProgramacao(filtrados);
         renderCardsPainelProgramacao(filtrados);
         renderPopupPainelProgramacao();
+
+        // Se a planilha de janelas ainda estava em rede, atualiza somente os dados/DOM
+        // quando ela terminar, sem refazer o processamento pesado do PVD.
+        const promessaJanelas = window.__painelProgPromessaJanelas;
+        if (promessaJanelas && typeof promessaJanelas.then === "function") {
+          const baseRef = painelProgDadosBase;
+          promessaJanelas.then(() => {
+            if (!isPainelProgramacaoVisivel() || painelProgDadosBase !== baseRef) return;
+            aplicarJanelasNosDadosPainelProgramacao(painelProgDadosBase);
+            sincronizarFiltrosDinamicosPainelProgramacao(painelProgDadosBase);
+            renderPainelProgramacaoComBaseAtual(false);
+          }).catch(() => {});
+        }
+
         if (rolarTopo) window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (err) {
         console.error("Erro ao renderizar Painel de Programação:", err);
@@ -16449,6 +16763,18 @@ Deixe em branco e confirme para desvincular o ID atual.`,
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
+      // PERFORMANCE: antecipa chamadas de rede enquanto o usuário ainda está escolhendo
+      // as planilhas. Quando o segundo arquivo termina de carregar, estes caches normalmente
+      // já estão prontos e deixam de fazer parte do tempo de abertura do painel.
+      setTimeout(() => {
+        Promise.allSettled([
+          carregarObsEStatusHojeCache(false),
+          carregarIdsHistoricosVinculados(false),
+          carregarStatusNotasBanco(false),
+          carregarJanelasGoogle(false)
+        ]).catch(() => {});
+      }, 0);
+
       const btnFilialMaisProxima = document.getElementById("btnCalcularFilialMaisProxima");
       if (btnFilialMaisProxima && !btnFilialMaisProxima.dataset.listenerAttached) {
         btnFilialMaisProxima.addEventListener("click", calcularFiliaisMaisProximasVisiveis);
