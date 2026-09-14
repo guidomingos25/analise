@@ -3944,13 +3944,9 @@
     let painelProgramacaoEventosLigados = false;
     const PAINEL_PROG_SEM_CLIENTE = "SEM CLIENTE";
     const PAINEL_PROG_SEM_DESTINATARIO = "SEM DESTINATÁRIO";
-    const PAINEL_PROG_DESTINATARIOS_PRIORITARIOS_JULIO = new Set([
-      "VALE SA",
-      "SUZANO S A",
-      "SUZANO SA",
-      "KINROSS BRASIL MINERACAO S A",
-      "NOURYON PULP AND PERFORMANCE INDUST"
-    ].map(normalizar));
+    // Clientes prioritários do Julio identificados por palavra-chave no Destinatário.
+    // A comparação é feita por palavra inteira após normalização, evitando manter dezenas de variações de razão social.
+    const PAINEL_PROG_PALAVRAS_CHAVE_JULIO = new Set(["VALE", "SUZANO", "KINROSS", "NOURYON"]);
     const PAINEL_PROG_UFS_SUDESTE = new Set(["SP", "MG", "RJ", "ES"]);
     const PAINEL_PROG_STATIC_FILTERS = {
       responsavel: [
@@ -11132,11 +11128,21 @@ return null;
 
     function getResponsavelPainelProgramacao(destinatarios = [], ufs = []) {
       const destinatariosNorm = (Array.isArray(destinatarios) ? destinatarios : [destinatarios])
-        .map(v => normalizar(v || ""))
+        .map(v => normalizar(v || "")
+          .replace(/[^A-Z0-9]+/g, " ")
+          .replace(/\s+/g, " ")
+          .trim())
         .filter(Boolean);
 
-      // A prioridade do Julio é identificada pelo Destinatário, que é também a referência usada para separar os cards.
-      if (destinatariosNorm.some(v => PAINEL_PROG_DESTINATARIOS_PRIORITARIOS_JULIO.has(v))) {
+      // A prioridade do Julio é identificada pelo Destinatário.
+      // Ex.: VALE SA, VALE S.A. e VALE S A contêm a palavra inteira VALE e caem na mesma regra.
+      // O mesmo vale para SUZANO, KINROSS e NOURYON.
+      const ehDestinatarioJulio = destinatariosNorm.some(destinatario => {
+        const palavras = new Set(destinatario.split(" ").filter(Boolean));
+        return Array.from(PAINEL_PROG_PALAVRAS_CHAVE_JULIO).some(chave => palavras.has(chave));
+      });
+
+      if (ehDestinatarioJulio) {
         return { key: "julio", nome: "Julio Cesar" };
       }
 
