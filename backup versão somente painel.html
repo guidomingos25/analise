@@ -2089,11 +2089,11 @@
 
     .painelProgFilterBar {
       display: grid;
-      /* Em telas largas, mantém os 12 controles na mesma linha sem ultrapassar o card. */
+      /* Em telas largas, mantém os 11 controles na mesma linha sem ultrapassar o card. */
       grid-template-columns:
         minmax(180px, 1.55fr)
         minmax(125px, 1.05fr)
-        repeat(10, minmax(0, 1fr));
+        repeat(9, minmax(0, 1fr));
       gap: 8px;
       align-items: center;
       width: 100%;
@@ -3250,44 +3250,8 @@
     }
 
     .painelProgCardTop {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 5px;
+      display: block;
       min-width: 0;
-    }
-
-    .painelProgResponsavelBadge {
-      flex: 0 0 auto;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 17px;
-      padding: 2px 5px;
-      border-radius: 999px;
-      font-size: 6.8px;
-      font-weight: 1000;
-      letter-spacing: .01em;
-      white-space: nowrap;
-      border: 1px solid transparent;
-    }
-
-    .painelProgResponsavelBadge.julio {
-      background: #fff4d6;
-      color: #9a6700;
-      border-color: #f8e0a2;
-    }
-
-    .painelProgResponsavelBadge.lucas {
-      background: #eaf1ff;
-      color: #2563eb;
-      border-color: #cbdcff;
-    }
-
-    .painelProgResponsavelBadge.igor {
-      background: #e6f5f2;
-      color: #0f766e;
-      border-color: #bee3dd;
     }
 
     .painelProgStatusRow {
@@ -3524,8 +3488,8 @@
       background: rgba(255,255,255,0.8);
     }
 
-    /* Quando os 12 controles não cabem em uma linha, usa duas linhas equilibradas:
-       6 controles em cada linha. */
+    /* Quando os 11 controles não cabem em uma linha, usa duas linhas equilibradas:
+       6 controles na primeira e 5 centralizados na segunda. */
     @media (max-width: 1450px) and (min-width: 901px) {
       .painelProgFilterBar {
         grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -3535,6 +3499,9 @@
         grid-column: span 2;
       }
 
+      .painelProgFilterBar > :nth-child(7) {
+        grid-column: 2 / span 2;
+      }
     }
 
     @media (max-width: 1200px) {
@@ -3701,7 +3668,7 @@
         <div>
           <h2>🧭 PAINEL DE PROGRAMAÇÃO</h2>
           <div class="painelProgHint" id="painelProgramacaoBaseInfo">Base exibida: 0 card(s)</div>
-          <div class="painelProgHint">Visualização rápida em cards, separados por Destinatário. Use o filtro ou agrupamento por Responsável para visualizar a carteira de cada programador.</div>
+          <div class="painelProgHint">Visualização rápida em cards, usando a mesma regra da página Análise Programação. Padrão: todos juntos em ordem alfabética por vocativo.</div>
         </div>
         <div class="painelProgActions">
           <button
@@ -3717,47 +3684,29 @@
       </div>
 
       <div class="painelProgFilterBar">
-        <input class="filtersCompactInput" id="painelProgSearchInput" placeholder="🔎 Filtrar por vocativo, destinatário, cliente, destino, UF, responsável ou ID..." type="text" />
+        <input class="filtersCompactInput" id="painelProgSearchInput" placeholder="🔎 Filtrar por vocativo, cliente, destino, UF ou ID..." type="text" />
 
         <select class="filtersCompactInput" id="painelProgAgrupamentoSelect" title="Organização dos cards">
           <option value="nenhum">A-Z Vocativo</option>
-          <option value="destinatario">Agrupar por Destinatário</option>
-          <option value="responsavel">Agrupar por Responsável</option>
+          <option value="cliente">Agrupar por Cliente</option>
           <option value="destino">Agrupar por Destino</option>
           <option value="uf">Agrupar por UF</option>
         </select>
 
         <div class="painelProgMultiFilterBox" id="painelProgClienteFilterBox">
           <button class="painelProgMultiTrigger" id="painelProgClienteTrigger" type="button" onclick="togglePainelProgMultiDropdown('cliente', event)">
-            <span>Destinatários</span><span class="painelProgMultiArrow">▾</span>
+            <span>Clientes</span><span class="painelProgMultiArrow">▾</span>
           </button>
           <div class="painelProgMultiDropdown" id="painelProgClienteDropdown">
             <div class="painelProgMultiHead">
-              <div class="painelProgMultiTitle">Destinatário PVD</div>
-              <input class="painelProgMultiSearch" id="painelProgClienteSearch" placeholder="Pesquisar destinatário..." type="text" oninput="onInputPainelProgFiltroSearch('cliente', this.value, event)" onclick="event.stopPropagation()" />
+              <div class="painelProgMultiTitle">Cliente PVD</div>
+              <input class="painelProgMultiSearch" id="painelProgClienteSearch" placeholder="Pesquisar cliente..." type="text" oninput="onInputPainelProgFiltroSearch('cliente', this.value, event)" onclick="event.stopPropagation()" />
               <div class="painelProgMultiActionsMini">
                 <button class="painelProgMiniActionBtn" type="button" onclick="selecionarTodosPainelProgFiltro('cliente', event)">Selecionar todos</button>
                 <button class="painelProgMiniActionBtn" type="button" onclick="limparPainelProgFiltro('cliente', event)">Limpar</button>
               </div>
             </div>
             <div class="painelProgMultiList" id="painelProgClienteList"></div>
-          </div>
-        </div>
-
-        <div class="painelProgMultiFilterBox" id="painelProgResponsavelFilterBox">
-          <button class="painelProgMultiTrigger" id="painelProgResponsavelTrigger" type="button" onclick="togglePainelProgMultiDropdown('responsavel', event)">
-            <span>Responsáveis</span><span class="painelProgMultiArrow">▾</span>
-          </button>
-          <div class="painelProgMultiDropdown" id="painelProgResponsavelDropdown">
-            <div class="painelProgMultiHead">
-              <div class="painelProgMultiTitle">Responsável pela programação</div>
-              <input class="painelProgMultiSearch" id="painelProgResponsavelSearch" placeholder="Pesquisar responsável..." type="text" oninput="onInputPainelProgFiltroSearch('responsavel', this.value, event)" onclick="event.stopPropagation()" />
-              <div class="painelProgMultiActionsMini">
-                <button class="painelProgMiniActionBtn" type="button" onclick="selecionarTodosPainelProgFiltro('responsavel', event)">Selecionar todos</button>
-                <button class="painelProgMiniActionBtn" type="button" onclick="limparPainelProgFiltro('responsavel', event)">Limpar</button>
-              </div>
-            </div>
-            <div class="painelProgMultiList" id="painelProgResponsavelList"></div>
           </div>
         </div>
 
@@ -3943,21 +3892,7 @@
     let filtroPrazoConsolidacaoAtivo = null;
     let painelProgramacaoEventosLigados = false;
     const PAINEL_PROG_SEM_CLIENTE = "SEM CLIENTE";
-    const PAINEL_PROG_SEM_DESTINATARIO = "SEM DESTINATÁRIO";
-    const PAINEL_PROG_DESTINATARIOS_PRIORITARIOS_JULIO = new Set([
-      "VALE SA",
-      "SUZANO S A",
-      "SUZANO SA",
-      "KINROSS BRASIL MINERACAO S A",
-      "NOURYON PULP AND PERFORMANCE INDUST"
-    ].map(normalizar));
-    const PAINEL_PROG_UFS_SUDESTE = new Set(["SP", "MG", "RJ", "ES"]);
     const PAINEL_PROG_STATIC_FILTERS = {
-      responsavel: [
-        { value: "julio", label: "🟠 Julio Cesar" },
-        { value: "lucas", label: "🔵 Lucas" },
-        { value: "igor", label: "🟢 Igor" }
-      ],
       status: [
         { value: "programado", label: "🟢 Programado" },
         { value: "naoProgramado", label: "🔴 Não programado" },
@@ -3972,11 +3907,9 @@
         { value: "dge2", label: "🟢 >= D-2" }
       ]
     };
-    // Mantemos os nomes internos antigos "Clientes" por compatibilidade; neste painel eles representam Destinatário.
     let painelProgClientesDisponiveis = [];
     let painelProgClientesSelecionados = new Set();
     let painelProgClientesFiltroInicializado = false;
-    let painelProgResponsavelSelecionados = new Set(PAINEL_PROG_STATIC_FILTERS.responsavel.map(o => o.value));
     let painelProgDestinosDisponiveis = [];
     let painelProgDestinosSelecionados = new Set();
     let painelProgDestinosFiltroInicializado = false;
@@ -8315,7 +8248,7 @@
 
       const almoxTotalPVD = {};
       const almoxPendBase = {};
-      const totaisPVDPorVocativoDestinatario = {};
+      const totaisPVDPorVocativoCliente = {};
       const dataRowsByIdNorm = new Map();
       const statusNotasBanco = await carregarStatusNotasBanco(false);
 
@@ -8342,10 +8275,10 @@
           almoxTotalPVD[almox].pesoTotal += peso;
         }
 
-        // Totais por destinatário consideram TODO o PVD, inclusive registros sem Dt Limite Embarque.
-        // Isso evita duplicar cards quando o mesmo destinatário possui pagadores/clientes diferentes.
-        const destinatarioNomeTotal = String(r["Destinatario"] || "").trim() || PAINEL_PROG_SEM_DESTINATARIO;
-        const destinatarioNormTotal = normalizar(destinatarioNomeTotal) || normalizar(PAINEL_PROG_SEM_DESTINATARIO);
+        // Totais por cliente precisam considerar TODO o PVD, inclusive registros sem Dt Limite Embarque,
+        // exatamente como na versão anterior. São calculados aqui para evitar uma segunda varredura completa.
+        const clienteNomeTotal = String(r["Cliente"] || "").trim() || PAINEL_PROG_SEM_CLIENTE;
+        const clienteNormTotal = normalizar(clienteNomeTotal) || normalizar(PAINEL_PROG_SEM_CLIENTE);
         const prioridadeValor = getFieldValue(r, ["Prioridade", "PRIORIDADE", "prioridade"]) || "";
         const prioridadeNorm = normalizar(prioridadeValor || "");
         const onuValor = r["ONU"] || getFieldValue(r, ["ONU", "Onu", "onu"]) || "";
@@ -8355,11 +8288,11 @@
         const bpDestinoValor = getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino"]) || "";
         const volumesValor = getFieldValue(r, ["Volumes", "VOLUMES"]) || "";
 
-        if (!totaisPVDPorVocativoDestinatario[almox]) totaisPVDPorVocativoDestinatario[almox] = {};
-        if (!totaisPVDPorVocativoDestinatario[almox][destinatarioNormTotal]) {
-          totaisPVDPorVocativoDestinatario[almox][destinatarioNormTotal] = {
-            destinatarioNome: destinatarioNomeTotal,
-            destinatarioNorm: destinatarioNormTotal,
+        if (!totaisPVDPorVocativoCliente[almox]) totaisPVDPorVocativoCliente[almox] = {};
+        if (!totaisPVDPorVocativoCliente[almox][clienteNormTotal]) {
+          totaisPVDPorVocativoCliente[almox][clienteNormTotal] = {
+            clienteNome: clienteNomeTotal,
+            clienteNorm: clienteNormTotal,
             totalRegistros: 0,
             pesoTotal: 0,
             bps: new Set(),
@@ -8372,20 +8305,20 @@
             expressoDetalhes: []
           };
         }
-        const totalDestinatario = totaisPVDPorVocativoDestinatario[almox][destinatarioNormTotal];
-        totalDestinatario.totalRegistros++;
-        totalDestinatario.pesoTotal += Number(peso || 0);
-        if (bpDestinoValor) totalDestinatario.bps.add(String(bpDestinoValor).trim());
-        onusValidas.forEach(onu => totalDestinatario.onus.add(onu));
-        if (prioridadeNorm) totalDestinatario.prioridades.add(String(prioridadeValor || prioridadeNorm).trim());
+        const totalCliente = totaisPVDPorVocativoCliente[almox][clienteNormTotal];
+        totalCliente.totalRegistros++;
+        totalCliente.pesoTotal += Number(peso || 0);
+        if (bpDestinoValor) totalCliente.bps.add(String(bpDestinoValor).trim());
+        onusValidas.forEach(onu => totalCliente.onus.add(onu));
+        if (prioridadeNorm) totalCliente.prioridades.add(String(prioridadeValor || prioridadeNorm).trim());
         if (totalAlertasMercadoriaPainelProgramacao(alertasMercadoriaLinha) > 0) {
-          totalDestinatario.alertasMercadoriaCount++;
-          somarAlertasMercadoriaPainelProgramacao(totalDestinatario.alertasMercadoria, alertasMercadoriaLinha);
+          totalCliente.alertasMercadoriaCount++;
+          somarAlertasMercadoriaPainelProgramacao(totalCliente.alertasMercadoria, alertasMercadoriaLinha);
         }
-        if (Number(peso || 0) > 2500) totalDestinatario.alertasPesoCount++;
+        if (Number(peso || 0) > 2500) totalCliente.alertasPesoCount++;
         if (prioridadeNorm === "EXPRESSO") {
-          totalDestinatario.expressoCount++;
-          totalDestinatario.expressoDetalhes.push({
+          totalCliente.expressoCount++;
+          totalCliente.expressoDetalhes.push({
             nota: getFieldValue(r, ["Nota", "NOTA", "nota"]) || "",
             numeroOEF: getFieldValue(r, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF", "numeroOEF"]) || "",
             peso: r["Peso"] || "",
@@ -8454,7 +8387,6 @@
         };
 
         notaObj._clienteNorm = normalizar(notaObj.cliente || "");
-        notaObj._destinatarioNorm = normalizar(notaObj.destinatario || "");
         notaObj._destinoNorm = normalizar(notaObj.destino || "");
         notaObj._ufNorm = normalizar(notaObj.uf || "");
         notaObj._notaNorm = normalizar(notaObj.nota || "");
@@ -8657,14 +8589,14 @@
         signature,
         almoxTotalPVD,
         almoxPendBase,
-        totaisPVDPorVocativoDestinatario,
+        totaisPVDPorVocativoCliente,
         almoxUltimoVeiculo,
         clientesUnicos,
         dataRowsByIdNorm
       };
 
       // Reaproveitado diretamente pelo Painel de Programação, evitando nova varredura do PVD.
-      window.__painelProgTotaisPVDCache = { data: totaisPVDPorVocativoDestinatario };
+      window.__painelProgTotaisPVDCache = { data: totaisPVDPorVocativoCliente };
 
       return window.__analiseProgramacaoCache;
     }
@@ -10563,7 +10495,7 @@ return null;
     }
 
     function getPainelProgTiposFiltro() {
-      return ["cliente", "responsavel", "destino", "uf", "janelaCarga", "status", "observacao", "statusNota", "entrada", "criticidade"];
+      return ["cliente", "destino", "uf", "janelaCarga", "status", "observacao", "statusNota", "entrada", "criticidade"];
     }
 
     function getPainelProgFiltroConfig(tipo) {
@@ -10573,18 +10505,8 @@ return null;
           dropdownId: "painelProgClienteDropdown",
           listId: "painelProgClienteList",
           searchId: "painelProgClienteSearch",
-          tituloTodos: "Destinatários",
-          tituloNenhum: "Nenhum destinatário"
-        };
-      }
-      if (tipo === "responsavel") {
-        return {
-          triggerId: "painelProgResponsavelTrigger",
-          dropdownId: "painelProgResponsavelDropdown",
-          listId: "painelProgResponsavelList",
-          searchId: "painelProgResponsavelSearch",
-          tituloTodos: "Responsáveis",
-          tituloNenhum: "Nenhum responsável"
+          tituloTodos: "Clientes",
+          tituloNenhum: "Nenhum cliente"
         };
       }
       if (tipo === "destino") {
@@ -10669,7 +10591,6 @@ return null;
 
     function getPainelProgOpcoesFiltro(tipo) {
       if (tipo === "cliente") return painelProgClientesDisponiveis || [];
-      if (tipo === "responsavel") return PAINEL_PROG_STATIC_FILTERS.responsavel || [];
       if (tipo === "destino") return painelProgDestinosDisponiveis || [];
       if (tipo === "uf") return painelProgUfsDisponiveis || [];
       if (tipo === "janelaCarga") return painelProgJanelaCargaDisponiveis || [];
@@ -10681,7 +10602,6 @@ return null;
 
     function getPainelProgSetFiltro(tipo) {
       if (tipo === "cliente") return painelProgClientesSelecionados;
-      if (tipo === "responsavel") return painelProgResponsavelSelecionados;
       if (tipo === "destino") return painelProgDestinosSelecionados;
       if (tipo === "uf") return painelProgUfsSelecionados;
       if (tipo === "janelaCarga") return painelProgJanelaCargaSelecionados;
@@ -10694,7 +10614,6 @@ return null;
 
     function setPainelProgSetFiltro(tipo, novoSet) {
       if (tipo === "cliente") painelProgClientesSelecionados = novoSet;
-      else if (tipo === "responsavel") painelProgResponsavelSelecionados = novoSet;
       else if (tipo === "destino") painelProgDestinosSelecionados = novoSet;
       else if (tipo === "uf") painelProgUfsSelecionados = novoSet;
       else if (tipo === "janelaCarga") painelProgJanelaCargaSelecionados = novoSet;
@@ -10999,11 +10918,11 @@ return null;
       ].filter(item => item.qtd > 0);
     }
 
-    function montarTotaisPVDPorVocativoDestinatarioPainelProgramacao() {
+    function montarTotaisPVDPorVocativoClientePainelProgramacao() {
       const cacheExistente = window.__painelProgTotaisPVDCache;
       if (cacheExistente && cacheExistente.data) return cacheExistente.data;
-      if (window.__analiseProgramacaoCache?.totaisPVDPorVocativoDestinatario) {
-        const data = window.__analiseProgramacaoCache.totaisPVDPorVocativoDestinatario;
+      if (window.__analiseProgramacaoCache?.totaisPVDPorVocativoCliente) {
+        const data = window.__analiseProgramacaoCache.totaisPVDPorVocativoCliente;
         window.__painelProgTotaisPVDCache = { data };
         return data;
       }
@@ -11014,14 +10933,14 @@ return null;
         const almox = normalizar(r["Almoxarifado"] || "");
         if (!almox) return;
 
-        const destinatarioNome = String(r["Destinatario"] || "").trim() || PAINEL_PROG_SEM_DESTINATARIO;
-        const destinatarioNorm = normalizar(destinatarioNome) || normalizar(PAINEL_PROG_SEM_DESTINATARIO);
+        const clienteNome = String(r["Cliente"] || "").trim() || PAINEL_PROG_SEM_CLIENTE;
+        const clienteNorm = normalizar(clienteNome) || normalizar(PAINEL_PROG_SEM_CLIENTE);
 
         if (!mapa[almox]) mapa[almox] = {};
-        if (!mapa[almox][destinatarioNorm]) {
-          mapa[almox][destinatarioNorm] = {
-            destinatarioNome,
-            destinatarioNorm,
+        if (!mapa[almox][clienteNorm]) {
+          mapa[almox][clienteNorm] = {
+            clienteNome,
+            clienteNorm,
             totalRegistros: 0,
             pesoTotal: 0,
             bps: new Set(),
@@ -11035,15 +10954,15 @@ return null;
           };
         }
 
-        const totalDestinatario = mapa[almox][destinatarioNorm];
-        totalDestinatario.totalRegistros++;
+        const totalCliente = mapa[almox][clienteNorm];
+        totalCliente.totalRegistros++;
 
         const prioridadeValor = String(getFieldValue(r, ["Prioridade", "PRIORIDADE", "prioridade"]) || "").trim();
         const prioridadeNorm = normalizar(prioridadeValor || "");
-        if (prioridadeNorm) totalDestinatario.prioridades.add(prioridadeValor || prioridadeNorm);
+        if (prioridadeNorm) totalCliente.prioridades.add(prioridadeValor || prioridadeNorm);
         if (prioridadeNorm === "EXPRESSO") {
-          totalDestinatario.expressoCount++;
-          totalDestinatario.expressoDetalhes.push({
+          totalCliente.expressoCount++;
+          totalCliente.expressoDetalhes.push({
             nota: getFieldValue(r, ["Nota", "NOTA", "nota"]) || "",
             numeroOEF: getFieldValue(r, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF", "numeroOEF"]) || "",
             peso: getFieldValue(r, ["Peso", "PESO", "peso"]) || "",
@@ -11057,21 +10976,21 @@ return null;
         }
 
         const peso = parsePesoPVD(r["Peso"]);
-        if (peso) totalDestinatario.pesoTotal += peso;
+        if (peso) totalCliente.pesoTotal += peso;
 
         const bpDestino = String(getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino"]) || "").trim();
-        if (bpDestino) totalDestinatario.bps.add(bpDestino);
+        if (bpDestino) totalCliente.bps.add(bpDestino);
 
-        getONUsValidasPVD(getFieldValue(r, ["ONU", "Onu", "onu"])).forEach(onu => totalDestinatario.onus.add(onu));
+        getONUsValidasPVD(getFieldValue(r, ["ONU", "Onu", "onu"])).forEach(onu => totalCliente.onus.add(onu));
 
         const alertasMercadoriaLinha = identificarAlertasMercadoriaPainelProgramacao(getFieldValue(r, ["Mercadoria", "MERCADORIA"]) || "");
         if (totalAlertasMercadoriaPainelProgramacao(alertasMercadoriaLinha) > 0) {
-          totalDestinatario.alertasMercadoriaCount++;
-          somarAlertasMercadoriaPainelProgramacao(totalDestinatario.alertasMercadoria, alertasMercadoriaLinha);
+          totalCliente.alertasMercadoriaCount++;
+          somarAlertasMercadoriaPainelProgramacao(totalCliente.alertasMercadoria, alertasMercadoriaLinha);
         }
 
         if (peso > 2500) {
-          totalDestinatario.alertasPesoCount++;
+          totalCliente.alertasPesoCount++;
         }
       });
 
@@ -11130,28 +11049,6 @@ return null;
       return montarResumoDatasCampoPainelProgramacao(notas, "finalEntrega");
     }
 
-    function getResponsavelPainelProgramacao(destinatarios = [], ufs = []) {
-      const destinatariosNorm = (Array.isArray(destinatarios) ? destinatarios : [destinatarios])
-        .map(v => normalizar(v || ""))
-        .filter(Boolean);
-
-      // A prioridade do Julio é identificada pelo Destinatário, que é também a referência usada para separar os cards.
-      if (destinatariosNorm.some(v => PAINEL_PROG_DESTINATARIOS_PRIORITARIOS_JULIO.has(v))) {
-        return { key: "julio", nome: "Julio Cesar" };
-      }
-
-      const ufsNorm = (Array.isArray(ufs) ? ufs : [ufs])
-        .map(v => String(v || "").trim().toUpperCase())
-        .filter(Boolean);
-
-      // Destinatários não prioritários do Sudeste ficam com Lucas; demais UFs com Igor.
-      // Em caso raro de dados com mais de uma UF no mesmo destinatário, basta uma UF fora do Sudeste para cair em Igor.
-      if (ufsNorm.length && ufsNorm.every(uf => PAINEL_PROG_UFS_SUDESTE.has(uf))) {
-        return { key: "lucas", nome: "Lucas" };
-      }
-      return { key: "igor", nome: "Igor" };
-    }
-
     function calcularIndicadoresPainelProgramacao(almox, info, veiculos, hoje, amanha, almoxTotalPVD, opcoesPainel = {}) {
       const notas = Array.isArray(info?.notas) ? info.notas : [];
       let qtdD1 = 0;
@@ -11163,7 +11060,6 @@ return null;
       let dge2 = 0;
       let pesoFiltrado = 0;
       const clientes = new Set();
-      const destinatarios = new Set();
       const destinos = new Set();
       const ufs = new Set();
       const bpsNotas = new Set();
@@ -11174,14 +11070,12 @@ return null;
       let alertasPesoNotas = 0;
       let expressoNotas = 0;
       const expressoDetalhesNotas = [];
-      const destinatarioForcado = String(opcoesPainel?.destinatario || "").trim();
+      const clienteForcado = String(opcoesPainel?.cliente || "").trim();
       const clienteSnapshot = String(opcoesPainel?.clienteSnapshot || "").trim();
 
       notas.forEach(n => {
         const cliente = String(n.cliente || "").trim() || PAINEL_PROG_SEM_CLIENTE;
         if (cliente) clientes.add(cliente);
-        const destinatario = String(n.destinatario || "").trim() || PAINEL_PROG_SEM_DESTINATARIO;
-        if (destinatario) destinatarios.add(destinatario);
         const destino = String(n.destino || "").trim();
         if (destino) destinos.add(destino);
         const uf = String(n.uf || "").trim().toUpperCase();
@@ -11272,15 +11166,11 @@ return null;
       const tipoEmbarque = getTipoEmbarqueVocativo(almox, veiculos);
       const vocNorm = normalizar(almox);
       const ultimoVeiculo = Array.isArray(veiculos) && veiculos.length ? veiculos[0] : null;
-      const clienteLista = Array.from(clientes).filter(Boolean).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      const clienteLista = clienteForcado
+        ? [clienteForcado]
+        : Array.from(clientes).filter(Boolean).sort((a, b) => a.localeCompare(b, "pt-BR"));
       const clienteResumo = clienteLista.length ? clienteLista.join(" / ") : PAINEL_PROG_SEM_CLIENTE;
       const clienteNorm = normalizar(clienteResumo) || normalizar(PAINEL_PROG_SEM_CLIENTE);
-      const destinatarioLista = destinatarioForcado
-        ? [destinatarioForcado]
-        : Array.from(destinatarios).filter(Boolean).sort((a, b) => a.localeCompare(b, "pt-BR"));
-      const destinatarioResumo = destinatarioLista.length ? destinatarioLista.join(" / ") : PAINEL_PROG_SEM_DESTINATARIO;
-      const destinatarioNorm = normalizar(destinatarioResumo) || normalizar(PAINEL_PROG_SEM_DESTINATARIO);
-      const responsavelInfo = getResponsavelPainelProgramacao(destinatarioLista, Array.from(ufs));
       const statusVeiculo = status.temProgramado ? "PROGRAMADO" : "NAO PROGRAMADO";
       const datasEmbarqueResumo = montarResumoDatasEmbarquePainelProgramacao(notas);
       const datasEntregaResumo = montarResumoDatasEntregaPainelProgramacao(notas);
@@ -11312,13 +11202,7 @@ return null;
         clienteNorm,
         clienteSnapshot: clienteSnapshot || clienteResumo,
         clientes: clienteLista,
-        clientesNorm: clienteLista.map(c => normalizar(c)).filter(Boolean),
-        destinatarioResumo,
-        destinatarioNorm,
-        destinatarios: destinatarioLista,
-        destinatariosNorm: destinatarioLista.map(d => normalizar(d)).filter(Boolean),
-        responsavel: responsavelInfo.nome,
-        responsavelKey: responsavelInfo.key,
+        clientesNorm: [clienteNorm],
         destinos: Array.from(destinos).filter(Boolean).sort((a, b) => a.localeCompare(b, "pt-BR")),
         destinosNorm: Array.from(destinos).map(d => normalizar(d)),
         ufs: Array.from(ufs).filter(Boolean).sort((a, b) => a.localeCompare(b, "pt-BR")),
@@ -11370,10 +11254,8 @@ return null;
         idVinculado: getIdVinculadoPainelProgramacao(vocNorm),
         searchBlob: normalizar([
           almox,
-          destinatarioResumo,
           clienteResumo,
           clienteSnapshot,
-          responsavelInfo.nome,
           Array.from(destinos).join(" "),
           Array.from(ufs).join(" "),
           janelaCarregamentoTexto,
@@ -11521,7 +11403,7 @@ return null;
         .map(([value, label]) => ({ value, label }));
       sincronizarOpcoesDinamicasPainelProgramacao("statusNota", statusNotasOpcoes, painelProgStatusNotaFiltroInicializado);
 
-      const totaisPorVocativoDestinatario = montarTotaisPVDPorVocativoDestinatarioPainelProgramacao();
+      const totaisPorVocativoCliente = montarTotaisPVDPorVocativoClientePainelProgramacao();
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
       const amanha = new Date(hoje);
@@ -11547,53 +11429,54 @@ return null;
             )
           : notasBaseTodas;
         if (filtroNotasRestritivo && !notasBase.length) return;
-        const gruposDestinatario = new Map();
-        const totaisDestinatarioVocativo = totaisPorVocativoDestinatario[almox] || {};
+        const gruposCliente = new Map();
+        const totaisClienteVocativo = totaisPorVocativoCliente[almox] || {};
 
-        if (!filtroNotasRestritivo) Object.values(totaisDestinatarioVocativo).forEach(totalDestinatario => {
-          const destinatarioNome = String(totalDestinatario.destinatarioNome || "").trim() || PAINEL_PROG_SEM_DESTINATARIO;
-          const destinatarioNorm = normalizar(destinatarioNome) || normalizar(PAINEL_PROG_SEM_DESTINATARIO);
-          if (!gruposDestinatario.has(destinatarioNorm)) {
-            gruposDestinatario.set(destinatarioNorm, {
-              destinatarioNome,
-              destinatarioNorm,
+        if (!filtroNotasRestritivo) Object.values(totaisClienteVocativo).forEach(totalCliente => {
+          const clienteNome = String(totalCliente.clienteNome || "").trim() || PAINEL_PROG_SEM_CLIENTE;
+          const clienteNorm = normalizar(clienteNome) || normalizar(PAINEL_PROG_SEM_CLIENTE);
+          if (!gruposCliente.has(clienteNorm)) {
+            gruposCliente.set(clienteNorm, {
+              clienteNome,
+              clienteNorm,
               notas: []
             });
           }
         });
 
         notasBase.forEach(n => {
-          const destinatarioNome = String(n.destinatario || "").trim() || PAINEL_PROG_SEM_DESTINATARIO;
-          const destinatarioNorm = normalizar(destinatarioNome) || normalizar(PAINEL_PROG_SEM_DESTINATARIO);
-          if (!gruposDestinatario.has(destinatarioNorm)) {
-            gruposDestinatario.set(destinatarioNorm, {
-              destinatarioNome,
-              destinatarioNorm,
+          const clienteNome = String(n.cliente || "").trim() || PAINEL_PROG_SEM_CLIENTE;
+          const clienteNorm = normalizar(clienteNome) || normalizar(PAINEL_PROG_SEM_CLIENTE);
+          if (!gruposCliente.has(clienteNorm)) {
+            gruposCliente.set(clienteNorm, {
+              clienteNome,
+              clienteNorm,
               notas: []
             });
           }
-          gruposDestinatario.get(destinatarioNorm).notas.push(n);
+          gruposCliente.get(clienteNorm).notas.push(n);
         });
 
-        if (!gruposDestinatario.size) {
-          const destinatarioNorm = normalizar(PAINEL_PROG_SEM_DESTINATARIO);
-          gruposDestinatario.set(destinatarioNorm, {
-            destinatarioNome: PAINEL_PROG_SEM_DESTINATARIO,
-            destinatarioNorm,
+        if (!gruposCliente.size) {
+          const clienteNorm = normalizar(PAINEL_PROG_SEM_CLIENTE);
+          gruposCliente.set(clienteNorm, {
+            clienteNome: PAINEL_PROG_SEM_CLIENTE,
+            clienteNorm,
             notas: []
           });
         }
 
-        const clientesSnapshot = Array.from(new Set(
-          notasBase.map(n => String(n.cliente || "").trim()).filter(Boolean)
-        )).sort((a, b) => a.localeCompare(b, "pt-BR"));
+        const clientesSnapshot = Array.from(gruposCliente.values())
+          .map(g => g.clienteNome)
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b, "pt-BR"));
         const clienteResumoSnapshot = clientesSnapshot.length ? clientesSnapshot.join(" / ") : PAINEL_PROG_SEM_CLIENTE;
         // PERFORMANCE: o relatório completo do vocativo é materializado somente quando
-        // o usuário clicar em Relatório/Gerar Excel. No carregamento inicial mantemos apenas
-        // referências às notas já processadas.
-        const notasFonteRelatorioVocativo = notasBase;
+      // o usuário clicar em Relatório/Gerar Excel. No carregamento inicial mantemos apenas
+      // referências às notas já processadas.
+      const notasFonteRelatorioVocativo = notasBase;
 
-        gruposDestinatario.forEach(grupo => {
+        gruposCliente.forEach(grupo => {
           const itemPainel = calcularIndicadoresPainelProgramacao(
             almox,
             { notas: grupo.notas },
@@ -11602,23 +11485,23 @@ return null;
             amanha,
             cache.almoxTotalPVD || {},
             {
-              destinatario: grupo.destinatarioNome,
+              cliente: grupo.clienteNome,
               clienteSnapshot: clienteResumoSnapshot,
               totalPVD: filtroNotasRestritivo
                 ? montarTotalPVDNotasPainelProgramacao(grupo.notas)
-                : totaisDestinatarioVocativo[grupo.destinatarioNorm],
+                : totaisClienteVocativo[grupo.clienteNorm],
               notasFonteRelatorioPVD: notasFonteRelatorioVocativo,
               registrosRelatorioPVD: null
             }
           );
-          itemPainel.cardKey = `${itemPainel.vocNorm}||${itemPainel.destinatarioNorm || grupo.destinatarioNorm || ""}`;
+          itemPainel.cardKey = `${itemPainel.vocNorm}||${itemPainel.clienteNorm || grupo.clienteNorm || ""}`;
           linhas.push(itemPainel);
         });
       });
 
       return linhas.sort((a, b) => {
-        const cmpDestinatario = String(a.destinatarioResumo || "").localeCompare(String(b.destinatarioResumo || ""), "pt-BR");
-        if (cmpDestinatario !== 0) return cmpDestinatario;
+        const cmpCliente = String(a.clienteResumo || "").localeCompare(String(b.clienteResumo || ""), "pt-BR");
+        if (cmpCliente !== 0) return cmpCliente;
         return String(a.vocativo || "").localeCompare(String(b.vocativo || ""), "pt-BR");
       });
     }
@@ -11660,16 +11543,16 @@ return null;
     }
 
     function sincronizarFiltrosDinamicosPainelProgramacao(dados) {
-      const destinatarios = new Map();
+      const clientes = new Map();
       const destinos = new Map();
       const ufs = new Map();
       const diasJanelaCarga = new Map();
       const prioridades = new Map();
 
       (dados || []).forEach(item => {
-        const destinatario = String(item.destinatarioResumo || "").trim() || PAINEL_PROG_SEM_DESTINATARIO;
-        const destinatarioNorm = normalizar(destinatario) || normalizar(PAINEL_PROG_SEM_DESTINATARIO);
-        if (destinatarioNorm && !destinatarios.has(destinatarioNorm)) destinatarios.set(destinatarioNorm, destinatario);
+        const cliente = String(item.clienteResumo || "").trim() || PAINEL_PROG_SEM_CLIENTE;
+        const clienteNorm = normalizar(cliente) || normalizar(PAINEL_PROG_SEM_CLIENTE);
+        if (clienteNorm && !clientes.has(clienteNorm)) clientes.set(clienteNorm, cliente);
 
         (item.destinos || []).forEach(destino => {
           const label = String(destino || "").trim();
@@ -11704,7 +11587,7 @@ return null;
         .sort((a, b) => DIAS_SEMANA_JANELA_ORDEM.indexOf(a[0]) - DIAS_SEMANA_JANELA_ORDEM.indexOf(b[0]))
         .map(([value, label]) => ({ value, label }));
 
-      sincronizarOpcoesDinamicasPainelProgramacao("cliente", montarOpcoes(destinatarios), painelProgClientesFiltroInicializado);
+      sincronizarOpcoesDinamicasPainelProgramacao("cliente", montarOpcoes(clientes), painelProgClientesFiltroInicializado);
       sincronizarOpcoesDinamicasPainelProgramacao("destino", montarOpcoes(destinos), painelProgDestinosFiltroInicializado);
       sincronizarOpcoesDinamicasPainelProgramacao("uf", montarOpcoes(ufs), painelProgUfsFiltroInicializado);
       sincronizarOpcoesDinamicasPainelProgramacao("janelaCarga", montarOpcoesDias(diasJanelaCarga), painelProgJanelaCargaFiltroInicializado);
@@ -11719,11 +11602,7 @@ return null;
       if (selecionados.size >= opcoes.length) return true;
 
       if (tipo === "cliente") {
-        return selecionados.has(item.destinatarioNorm);
-      }
-
-      if (tipo === "responsavel") {
-        return selecionados.has(String(item.responsavelKey || ""));
+        return selecionados.has(item.clienteNorm);
       }
 
       if (tipo === "destino") {
@@ -11777,7 +11656,6 @@ return null;
       return (dados || []).filter(item => {
         if (termo && !item.searchBlob.includes(termo)) return false;
         if (!filtroPainelProgramacaoPermite("cliente", item)) return false;
-        if (!filtroPainelProgramacaoPermite("responsavel", item)) return false;
         if (!filtroPainelProgramacaoPermite("destino", item)) return false;
         if (!filtroPainelProgramacaoPermite("uf", item)) return false;
         if (!filtroPainelProgramacaoPermite("janelaCarga", item)) return false;
@@ -12914,10 +12792,6 @@ return null;
         : "";
       const janelaCarregamentoCardTexto = normalizar(item.janelaCarregamentoTexto) === "NAO CADASTRADO" ? "" : (item.janelaCarregamentoTexto || "");
       const janelaEntregaCardTexto = normalizar(item.janelaEntregaTexto) === "NAO CADASTRADO" ? "" : (item.janelaEntregaTexto || "");
-      const responsavelKey = String(item.responsavelKey || "igor");
-      const responsavelNome = String(item.responsavel || "Igor");
-      const responsavelCurto = responsavelKey === "julio" ? "JULIO" : responsavelKey === "lucas" ? "LUCAS" : "IGOR";
-      const responsavelBadge = `<span class="painelProgResponsavelBadge ${getTextoPainelProgramacao(responsavelKey)}" title="Responsável: ${getTextoPainelProgramacao(responsavelNome)}">${getTextoPainelProgramacao(responsavelCurto)}</span>`;
 
       return `
         <div class="painelProgCard ${classeStatus}${classeExpresso}${classeSelecionado}" data-painel-prog-key="${getTextoPainelProgramacao(item.cardKey || "")}" onmouseenter="abrirTooltipExpressoPainelProgramacao(this, event)" onmousemove="posicionarTooltipExpressoPainelProgramacao(event, this)" onmouseleave="agendarFechamentoTooltipExpressoPainelProgramacao()" onclick="onClickPainelProgCard(this, event)"${estiloAltura}>
@@ -12925,7 +12799,6 @@ return null;
           ${tooltipExpresso}
           <div class="painelProgCardTop">
             <div class="painelProgVocativo" title="${getTextoPainelProgramacao(item.vocativo)}">🏭 ${getTextoPainelProgramacao(item.vocativo)}</div>
-            ${responsavelBadge}
           </div>
           <div class="painelProgStatusRow">
             <div class="painelProgStatusLeft">${carregadoBadges || ""}</div>
@@ -12990,8 +12863,7 @@ return null;
     }
 
     function getPainelProgNomeAgrupamento(valor = getPainelProgAgrupamentoAtual()) {
-      if (valor === "destinatario") return "Destinatário";
-      if (valor === "responsavel") return "Responsável";
+      if (valor === "cliente") return "Cliente";
       if (valor === "destino") return "Destino";
       if (valor === "uf") return "UF";
       return "A-Z Vocativo";
@@ -13004,11 +12876,8 @@ return null;
     }
 
     function getGrupoPainelProgramacao(item, modo) {
-      if (modo === "destinatario") {
-        return { icon: "👥", label: String(item.destinatarioResumo || PAINEL_PROG_SEM_DESTINATARIO).trim() || PAINEL_PROG_SEM_DESTINATARIO };
-      }
-      if (modo === "responsavel") {
-        return { icon: "👤", label: String(item.responsavel || "SEM RESPONSÁVEL").trim() || "SEM RESPONSÁVEL", responsavelKey: String(item.responsavelKey || "") };
+      if (modo === "cliente") {
+        return { icon: "👥", label: String(item.clienteResumo || PAINEL_PROG_SEM_CLIENTE).trim() || PAINEL_PROG_SEM_CLIENTE };
       }
       if (modo === "destino") {
         const destino = (Array.isArray(item.destinos) && item.destinos.length) ? item.destinos.join(" / ") : "SEM DESTINO";
@@ -13051,16 +12920,8 @@ return null;
         grupos.get(chave).itens.push(item);
       });
 
-      const ordemResponsavel = { julio: 1, lucas: 2, igor: 3 };
       const html = Array.from(grupos.values())
-        .sort((a, b) => {
-          if (modoAgrupamento === "responsavel") {
-            const ao = ordemResponsavel[String(a.responsavelKey || "")] || 99;
-            const bo = ordemResponsavel[String(b.responsavelKey || "")] || 99;
-            if (ao !== bo) return ao - bo;
-          }
-          return String(a.label || "").localeCompare(String(b.label || ""), "pt-BR");
-        })
+        .sort((a, b) => String(a.label || "").localeCompare(String(b.label || ""), "pt-BR"))
         .map(grupo => `
           <div class="painelProgClienteGrupo">
             <div class="painelProgClienteHeader">
