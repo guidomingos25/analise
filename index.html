@@ -2373,13 +2373,21 @@
     }
 
     .painelProgCard.isSelected {
-      outline: 3px solid #2563eb;
-      outline-offset: 2px;
+      outline: none;
+      z-index: 2;
     }
 
+    /* Destaque de seleção desenhado dentro do card para não ser cortado
+       nas extremidades da grade ou entre uma linha e outra. */
     .painelProgCard.isSelected::after {
-      display: none;
-      content: none;
+      content: "";
+      display: block;
+      position: absolute;
+      inset: 1px;
+      border: 3px solid #2563eb;
+      border-radius: 9px;
+      pointer-events: none;
+      z-index: 20;
     }
 
     .painelProgPopupResumo {
