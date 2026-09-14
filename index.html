@@ -2330,6 +2330,8 @@
 
     .painelProgCardsArea {
       min-width: 0;
+      /* Evita que o navegador reposicione a página quando a grade é renderizada novamente. */
+      overflow-anchor: none;
     }
 
     .painelProgResumoSideHost {
@@ -2346,6 +2348,8 @@
       justify-content: start;
       gap: 7px;
       align-items: stretch;
+      /* Respiro para o outline externo dos cards das extremidades não ser cortado. */
+      padding: 5px 5px 8px 6px;
     }
 
     .painelProgCard {
@@ -2373,21 +2377,14 @@
     }
 
     .painelProgCard.isSelected {
-      outline: none;
+      outline: 3px solid #2563eb;
+      outline-offset: 2px;
       z-index: 2;
     }
 
-    /* Destaque de seleção desenhado dentro do card para não ser cortado
-       nas extremidades da grade ou entre uma linha e outra. */
     .painelProgCard.isSelected::after {
-      content: "";
-      display: block;
-      position: absolute;
-      inset: 1px;
-      border: 3px solid #2563eb;
-      border-radius: 9px;
-      pointer-events: none;
-      z-index: 20;
+      display: none;
+      content: none;
     }
 
     .painelProgPopupResumo {
@@ -11899,6 +11896,31 @@ return null;
       renderCardsPainelProgramacao(painelProgDadosAtuais);
     }
 
+    function preservarPosicaoCardPainelProgramacao(chave, topoAnterior, scrollAnterior) {
+      const corrigir = () => {
+        const cardNovo = Array.from(document.querySelectorAll(".painelProgCard[data-painel-prog-key]"))
+          .find(card => String(card.getAttribute("data-painel-prog-key") || "").trim() === chave);
+
+        if (!cardNovo) {
+          window.scrollTo({ top: scrollAnterior, left: window.scrollX || 0, behavior: "auto" });
+          return;
+        }
+
+        const topoNovo = cardNovo.getBoundingClientRect().top;
+        const diferenca = topoNovo - topoAnterior;
+        if (Math.abs(diferenca) > 0.5) {
+          window.scrollBy({ top: diferenca, left: 0, behavior: "auto" });
+        }
+      };
+
+      /* Duas passagens: a primeira após a nova grade entrar no DOM e a segunda
+         após o navegador concluir o layout/paint (inclusive content-visibility). */
+      requestAnimationFrame(() => {
+        corrigir();
+        requestAnimationFrame(corrigir);
+      });
+    }
+
     function onClickPainelProgCard(cardEl, ev) {
       if (ev) {
         const alvoInterativo = ev.target && ev.target.closest && ev.target.closest("button, input, select, textarea, a, .painelProgMultiFilterBox");
@@ -11909,6 +11931,12 @@ return null;
 
       const chave = String(cardEl?.getAttribute?.("data-painel-prog-key") || "").trim();
       if (!chave) return;
+
+      /* O clique re-renderiza a grade para alternar o conteúdo do card.
+         Guardamos a posição visual do card para ele permanecer exatamente
+         no mesmo ponto da tela após a renderização. */
+      const topoAnterior = Number(cardEl?.getBoundingClientRect?.().top || 0);
+      const scrollAnterior = Number(window.scrollY || window.pageYOffset || 0);
 
       if (painelProgCardsSelecionados.has(chave)) painelProgCardsSelecionados.delete(chave);
       else painelProgCardsSelecionados.add(chave);
@@ -11924,6 +11952,7 @@ return null;
 
       renderCardsPainelProgramacao(painelProgDadosAtuais);
       renderPopupPainelProgramacao();
+      preservarPosicaoCardPainelProgramacao(chave, topoAnterior, scrollAnterior);
     }
 
     function copiarTextoPainelProgramacao(texto, ev) {
