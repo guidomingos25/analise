@@ -11887,13 +11887,17 @@ return null;
 
     function fecharPopupPainelProgramacao(ev) {
       if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      const chavesAfetadas = new Set([
+        ...Array.from(painelProgCardsSelecionados),
+        ...Array.from(painelProgCardsDatasAbertas)
+      ]);
       painelProgCardsSelecionados.clear();
       painelProgCardsDatasAbertas.clear();
       painelProgAlturaCardsDatas.clear();
       const popup = getPainelProgPopupEl();
       popup.classList.remove("open");
       popup.innerHTML = "";
-      renderCardsPainelProgramacao(painelProgDadosAtuais);
+      chavesAfetadas.forEach(chave => atualizarCardPainelProgramacaoNoDOM(chave));
     }
 
     function preservarPosicaoCardPainelProgramacao(chave, topoAnterior, scrollAnterior) {
@@ -11921,6 +11925,48 @@ return null;
       });
     }
 
+    function atualizarCardPainelProgramacaoNoDOM(chave, cardEl = null) {
+      const item = painelProgDadosAtuaisPorKey.get(String(chave || "").trim());
+      const card = cardEl || Array.from(document.querySelectorAll(".painelProgCard[data-painel-prog-key]"))
+        .find(el => String(el.getAttribute("data-painel-prog-key") || "").trim() === String(chave || "").trim());
+      if (!item || !card) return;
+
+      const selecionado = painelProgCardsSelecionados.has(chave);
+      const datasAbertas = painelProgCardsDatasAbertas.has(chave);
+      card.classList.toggle("isSelected", selecionado);
+
+      const body = card.querySelector(".painelProgCardDynamicBody");
+      if (body) {
+        body.classList.toggle("isDatasEntrega", datasAbertas);
+        body.innerHTML = datasAbertas
+          ? renderDatasEntregaCardPainelProgramacao(item)
+          : `
+              <div class="painelProgMetrics">
+                <div class="painelProgMetricBox" style="color:#991b1b;">Entrada em Atraso: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.entradaAtraso, 0))}</div>
+                <div class="painelProgMetricBox" style="color:#14532d;">Entrada No Prazo: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.entradaPrazo, 0))}</div>
+                <div class="painelProgMetricBox" style="color:#dc2626;">🔴 Vencidas: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.vencidas, 0))}</div>
+                <div class="painelProgMetricBox" style="color:#2563eb;">🔵 D0: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.d0, 0))}</div>
+                <div class="painelProgMetricBox" style="color:#16a34a;">🟢 D-1: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.d1, 0))}</div>
+                <div class="painelProgMetricBox" style="color:#15803d;">🟢 &gt;= D-2: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.dge2, 0))}</div>
+              </div>
+              ${renderUltimoVeiculoPainelProgramacao(item.ultimoVeiculo)}
+            `;
+      }
+
+      if (datasAbertas) {
+        const altura = Number(painelProgAlturaCardsDatas.get(chave) || card.offsetHeight || 0);
+        if (altura > 0) {
+          card.style.height = `${altura}px`;
+          card.style.minHeight = `${altura}px`;
+          card.style.overflow = "hidden";
+        }
+      } else {
+        card.style.removeProperty("height");
+        card.style.removeProperty("min-height");
+        card.style.removeProperty("overflow");
+      }
+    }
+
     function onClickPainelProgCard(cardEl, ev) {
       if (ev) {
         const alvoInterativo = ev.target && ev.target.closest && ev.target.closest("button, input, select, textarea, a, .painelProgMultiFilterBox");
@@ -11932,12 +11978,8 @@ return null;
       const chave = String(cardEl?.getAttribute?.("data-painel-prog-key") || "").trim();
       if (!chave) return;
 
-      /* O clique re-renderiza a grade para alternar o conteúdo do card.
-         Guardamos a posição visual do card para ele permanecer exatamente
-         no mesmo ponto da tela após a renderização. */
-      const topoAnterior = Number(cardEl?.getBoundingClientRect?.().top || 0);
-      const scrollAnterior = Number(window.scrollY || window.pageYOffset || 0);
-
+      /* Não recria mais a grade inteira. O próprio card é atualizado no DOM,
+         eliminando o frame intermediário e o efeito visual de "salto/retorno". */
       if (painelProgCardsSelecionados.has(chave)) painelProgCardsSelecionados.delete(chave);
       else painelProgCardsSelecionados.add(chave);
 
@@ -11950,9 +11992,8 @@ return null;
         painelProgCardsDatasAbertas.add(chave);
       }
 
-      renderCardsPainelProgramacao(painelProgDadosAtuais);
+      atualizarCardPainelProgramacaoNoDOM(chave, cardEl);
       renderPopupPainelProgramacao();
-      preservarPosicaoCardPainelProgramacao(chave, topoAnterior, scrollAnterior);
     }
 
     function copiarTextoPainelProgramacao(texto, ev) {
