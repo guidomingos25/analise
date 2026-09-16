@@ -11918,6 +11918,12 @@ return null;
           const norm = normalizar(label);
           if (norm && !prioridades.has(norm)) prioridades.set(norm, label);
         });
+
+        // SPOT não vem da coluna Prioridade; é identificado pela coluna Contrato.
+        // Mesmo assim, entra como opção virtual no filtro Prioridade PVD.
+        if (item.temSpot === true && !prioridades.has("SPOT")) {
+          prioridades.set("SPOT", "SPOT");
+        }
       });
 
       const montarOpcoes = (mapa) => Array.from(mapa.entries())
@@ -11984,7 +11990,10 @@ return null;
 
       if (tipo === "entrada") {
         const prioridadesItem = Array.isArray(item.prioridadesNorm) ? item.prioridadesNorm : [];
-        return prioridadesItem.some(v => selecionados.has(v));
+        return (
+          prioridadesItem.some(v => selecionados.has(v)) ||
+          (item.temSpot === true && selecionados.has("SPOT"))
+        );
       }
 
       return (
