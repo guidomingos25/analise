@@ -8383,7 +8383,7 @@
           totalDestinatario.alertasMercadoriaCount++;
           somarAlertasMercadoriaPainelProgramacao(totalDestinatario.alertasMercadoria, alertasMercadoriaLinha);
         }
-        if (Number(peso || 0) > 2500) totalDestinatario.alertasPesoCount++;
+        if (Number(peso || 0) > 2000) totalDestinatario.alertasPesoCount++;
         if (prioridadeNorm === "EXPRESSO") {
           totalDestinatario.expressoCount++;
           totalDestinatario.expressoDetalhes.push({
@@ -11071,7 +11071,7 @@ return null;
           somarAlertasMercadoriaPainelProgramacao(totalDestinatario.alertasMercadoria, alertasMercadoriaLinha);
         }
 
-        if (peso > 2500) {
+        if (peso > 2000) {
           totalDestinatario.alertasPesoCount++;
         }
       });
@@ -11230,7 +11230,7 @@ return null;
           });
         }
 
-        if (peso > 2500) {
+        if (peso > 2000) {
           alertasPesoNotas++;
         }
 
@@ -11453,7 +11453,7 @@ return null;
         const alertas = n?._alertasMercadoria || identificarAlertasMercadoriaPainelProgramacao(n?.mercadoria || "");
         somarAlertasMercadoriaPainelProgramacao(total.alertasMercadoria, alertas);
         total.alertasMercadoriaCount += totalAlertasMercadoriaPainelProgramacao(alertas);
-        if (peso > 2500) total.alertasPesoCount++;
+        if (peso > 2000) total.alertasPesoCount++;
         if ((n?._prioridadeNorm || normalizar(prioridade)) === "EXPRESSO") {
           total.expressoCount++;
           total.expressoDetalhes.push({
@@ -12126,7 +12126,7 @@ return null;
         <div class="painelProgPopupAlert">
           ⚠ Atenção:<br>
           ${alertaMercadoriaHtml}
-          ${qtdAlertaPeso ? `• ${formatarNumeroPainelProgramacao(qtdAlertaPeso, 0)} registro(s) com Peso acima de 2.500 kg.<br>` : ""}
+          ${qtdAlertaPeso ? `• ${formatarNumeroPainelProgramacao(qtdAlertaPeso, 0)} registro(s) com Peso acima de 2.000 kg.<br>` : ""}
           ${textoMopp ? `• Vocativo(s) selecionado(s) possuem MOPP: ${getTextoPainelProgramacao(textoMopp)}.` : ""}
         </div>
       ` : "";
