@@ -2368,20 +2368,27 @@
     .painelProgCard {
       cursor: pointer;
       position: relative;
+      z-index: 1;
       transition: transform .08s ease, box-shadow .12s ease, outline-color .12s ease;
     }
 
     .painelProgCard:hover {
       transform: translateY(-1px);
       box-shadow: 0 12px 24px rgba(2, 6, 23, 0.14);
+      z-index: 2;
+      overflow: visible;
     }
 
     .painelProgCard.isSelected {
+      /* A seleção pertence somente ao card. Os selos SPOT/EX são renderizados
+         em uma camada global independente, portanto nunca são cortados por ela. */
       outline: 3px solid #2563eb;
       outline-offset: 2px;
-      z-index: 2;
+      z-index: 3;
+      overflow: visible;
     }
 
+    .painelProgCard.isSelected::before,
     .painelProgCard.isSelected::after {
       display: none;
       content: none;
@@ -3061,11 +3068,43 @@
         0 18px 38px rgba(194, 65, 12, 0.42) !important;
     }
 
-    .painelProgSeloExpresso {
+    /* O selo dentro do card é apenas a fonte para a camada global. */
+    .painelProgCard > .painelProgSelosPrioridade {
       position: absolute;
       top: -11px;
       right: -12px;
-      z-index: 8;
+      display: inline-flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      gap: 5px;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    /* Camada independente dos cards. Assim SPOT/EX ficam sempre acima de
+       cards vizinhos, hover, seleção e borda azul. */
+    #painelProgSelosOverlayLayer {
+      position: fixed;
+      inset: 0;
+      z-index: 2147483000;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .painelProgSelosPrioridadeOverlay {
+      position: fixed;
+      display: inline-flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      gap: 5px;
+      pointer-events: none;
+      white-space: nowrap;
+      transform: translateX(-100%);
+      transform-origin: top right;
+    }
+
+    .painelProgSeloExpresso {
+      position: relative;
       display: inline-flex;
       flex-direction: column;
       align-items: center;
@@ -3099,7 +3138,46 @@
       line-height: 1;
     }
 
-    .painelProgCard.isExpresso {
+    .painelProgSeloSpot {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
+      min-height: 28px;
+      padding: 4px 7px;
+      border-radius: 11px;
+      border: 2px solid;
+      box-shadow: 0 7px 15px rgba(15, 23, 42, 0.20);
+      transform: rotate(4deg);
+      pointer-events: auto;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .painelProgSeloSpot strong {
+      font-size: 10px;
+      font-weight: 1000;
+      letter-spacing: .04em;
+      line-height: 1;
+    }
+
+    .painelProgCard.isProgramado .painelProgSeloSpot,
+    .painelProgSelosPrioridadeOverlay.isProgramado .painelProgSeloSpot {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #22c55e;
+    }
+
+    .painelProgCard.isNaoProgramado .painelProgSeloSpot,
+    .painelProgSelosPrioridadeOverlay.isNaoProgramado .painelProgSeloSpot {
+      background: #fee2e2;
+      color: #991b1b;
+      border-color: #ef4444;
+    }
+
+    .painelProgCard.isExpresso,
+    .painelProgCard.isSpot {
       overflow: visible;
     }
 
@@ -3133,6 +3211,15 @@
       scrollbar-color: #fb923c #ffedd5;
     }
 
+    .painelProgExpressoTooltipGlobal.isSpotOnly {
+      border-color: #94a3b8;
+      background: #f8fafc;
+      box-shadow:
+        0 18px 46px rgba(15, 23, 42, 0.28),
+        0 0 0 3px rgba(148, 163, 184, 0.16);
+      scrollbar-color: #94a3b8 #e2e8f0;
+    }
+
     .painelProgExpressoTooltipGlobal::-webkit-scrollbar {
       width: 8px;
     }
@@ -3142,10 +3229,19 @@
       border-radius: 999px;
     }
 
+    .painelProgExpressoTooltipGlobal.isSpotOnly::-webkit-scrollbar-track {
+      background: #e2e8f0;
+    }
+
     .painelProgExpressoTooltipGlobal::-webkit-scrollbar-thumb {
       background: #fb923c;
       border-radius: 999px;
       border: 2px solid #ffedd5;
+    }
+
+    .painelProgExpressoTooltipGlobal.isSpotOnly::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-color: #e2e8f0;
     }
 
     .painelProgExpressoTooltipGlobal.open {
@@ -3242,6 +3338,39 @@
       font-size: 9px;
       font-weight: 800;
       text-align: center;
+    }
+
+    .painelProgPrioridadeSecao + .painelProgPrioridadeSecao {
+      margin-top: 10px;
+      padding-top: 9px;
+      border-top: 2px solid #e2e8f0;
+    }
+
+    .painelProgPrioridadeSecao.isSpot .painelProgExpressoTooltipTitle {
+      color: #334155;
+      border-bottom-color: #cbd5e1;
+    }
+
+    .painelProgPrioridadeSecao.isSpot .painelProgExpressoTooltipCount {
+      background: #475569;
+    }
+
+    .painelProgPrioridadeSecao.isSpot .painelProgExpressoRegistro {
+      border-color: #cbd5e1;
+    }
+
+    .painelProgPrioridadeSecao.isSpot .painelProgExpressoRegistroHead {
+      background: #f1f5f9;
+      color: #334155;
+      border-bottom-color: #cbd5e1;
+    }
+
+    .painelProgPrioridadeSecao.isSpot .painelProgExpressoCampo {
+      border-bottom-color: #e2e8f0;
+    }
+
+    .painelProgPrioridadeSecao.isSpot .painelProgExpressoCampoLabel {
+      color: #475569;
     }
 
     @media (max-width: 900px) {
@@ -3380,6 +3509,13 @@
       font-weight: 700;
       color: #334155;
       line-height: 1.12;
+    }
+
+    .painelProgProgramadorLine {
+      font-size: 8.8px;
+      font-weight: 600;
+      color: #64748b;
+      margin-top: 1px;
     }
 
     .painelProgJanelaBox {
@@ -8355,6 +8491,8 @@
         const alertasMercadoriaLinha = identificarAlertasMercadoriaPainelProgramacao(mercadoriaValor);
         const bpDestinoValor = getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino"]) || "";
         const volumesValor = getFieldValue(r, ["Volumes", "VOLUMES"]) || "";
+        const contratoValor = getFieldValue(r, ["Contrato", "CONTRATO", "contrato"]) || "";
+        const temSpotLinha = normalizar(contratoValor).includes("SPOT");
 
         if (!totaisPVDPorVocativoDestinatario[almox]) totaisPVDPorVocativoDestinatario[almox] = {};
         if (!totaisPVDPorVocativoDestinatario[almox][destinatarioNormTotal]) {
@@ -8370,7 +8508,9 @@
             alertasMercadoriaCount: 0,
             alertasPesoCount: 0,
             expressoCount: 0,
-            expressoDetalhes: []
+            expressoDetalhes: [],
+            spotCount: 0,
+            spotDetalhes: []
           };
         }
         const totalDestinatario = totaisPVDPorVocativoDestinatario[almox][destinatarioNormTotal];
@@ -8389,6 +8529,21 @@
           totalDestinatario.expressoDetalhes.push({
             nota: getFieldValue(r, ["Nota", "NOTA", "nota"]) || "",
             numeroOEF: getFieldValue(r, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF", "numeroOEF"]) || "",
+            peso: r["Peso"] || "",
+            volumes: volumesValor,
+            fornecedor: getFieldValue(r, ["Fornecedor", "FORNECEDOR", "fornecedor"]) || "",
+            dtLimiteEmbarque: getFieldValue(r, ["Dt Limite Embarque", "DT LIMITE EMBARQUE", "Dt. Limite Embarque"]) || "",
+            dtFinalEntrega: getFieldValue(r, ["Dt Final Entrega", "DT FINAL ENTREGA", "Dt. Final Entrega"]) || "",
+            bpDestino: bpDestinoValor,
+            onu: onuValor
+          });
+        }
+        if (temSpotLinha) {
+          totalDestinatario.spotCount++;
+          totalDestinatario.spotDetalhes.push({
+            nota: getFieldValue(r, ["Nota", "NOTA", "nota"]) || "",
+            numeroOEF: getFieldValue(r, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF", "numeroOEF"]) || "",
+            contrato: contratoValor,
             peso: r["Peso"] || "",
             volumes: volumesValor,
             fornecedor: getFieldValue(r, ["Fornecedor", "FORNECEDOR", "fornecedor"]) || "",
@@ -8436,6 +8591,7 @@
           volumes: volumesValor,
           mercadoria: mercadoriaValor,
           prioridade: prioridadeValor,
+          contrato: contratoValor,
           checkin: r["Data de Check in"],
           entrada: r["Data de Entrada da Nota"],
           finalEntrega: r["Dt Final Entrega"],
@@ -8450,6 +8606,7 @@
           _dtFinalDia: dtFinalDia,
           _pesoNum: peso || 0,
           _prioridadeNorm: prioridadeNorm,
+          _temSpot: temSpotLinha,
           _onusValidas: onusValidas,
           _alertasMercadoria: alertasMercadoriaLinha
         };
@@ -11032,7 +11189,9 @@ return null;
             alertasMercadoriaCount: 0,
             alertasPesoCount: 0,
             expressoCount: 0,
-            expressoDetalhes: []
+            expressoDetalhes: [],
+            spotCount: 0,
+            spotDetalhes: []
           };
         }
 
@@ -11041,12 +11200,29 @@ return null;
 
         const prioridadeValor = String(getFieldValue(r, ["Prioridade", "PRIORIDADE", "prioridade"]) || "").trim();
         const prioridadeNorm = normalizar(prioridadeValor || "");
+        const contratoValor = getFieldValue(r, ["Contrato", "CONTRATO", "contrato"]) || "";
+        const temSpotLinha = normalizar(contratoValor).includes("SPOT");
         if (prioridadeNorm) totalDestinatario.prioridades.add(prioridadeValor || prioridadeNorm);
         if (prioridadeNorm === "EXPRESSO") {
           totalDestinatario.expressoCount++;
           totalDestinatario.expressoDetalhes.push({
             nota: getFieldValue(r, ["Nota", "NOTA", "nota"]) || "",
             numeroOEF: getFieldValue(r, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF", "numeroOEF"]) || "",
+            peso: getFieldValue(r, ["Peso", "PESO", "peso"]) || "",
+            volumes: getFieldValue(r, ["Volumes", "VOLUMES", "volumes"]) || "",
+            fornecedor: getFieldValue(r, ["Fornecedor", "FORNECEDOR", "fornecedor"]) || "",
+            dtLimiteEmbarque: getFieldValue(r, ["Dt Limite Embarque", "DT LIMITE EMBARQUE", "Dt. Limite Embarque"]) || "",
+            dtFinalEntrega: getFieldValue(r, ["Dt Final Entrega", "DT FINAL ENTREGA", "Dt. Final Entrega"]) || "",
+            bpDestino: getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino", "bpDestino"]) || "",
+            onu: getFieldValue(r, ["ONU", "Onu", "onu"]) || ""
+          });
+        }
+        if (temSpotLinha) {
+          totalDestinatario.spotCount++;
+          totalDestinatario.spotDetalhes.push({
+            nota: getFieldValue(r, ["Nota", "NOTA", "nota"]) || "",
+            numeroOEF: getFieldValue(r, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF", "numeroOEF"]) || "",
+            contrato: contratoValor,
             peso: getFieldValue(r, ["Peso", "PESO", "peso"]) || "",
             volumes: getFieldValue(r, ["Volumes", "VOLUMES", "volumes"]) || "",
             fornecedor: getFieldValue(r, ["Fornecedor", "FORNECEDOR", "fornecedor"]) || "",
@@ -11185,6 +11361,8 @@ return null;
       let alertasPesoNotas = 0;
       let expressoNotas = 0;
       const expressoDetalhesNotas = [];
+      let spotNotas = 0;
+      const spotDetalhesNotas = [];
       const destinatarioForcado = String(opcoesPainel?.destinatario || "").trim();
       const clienteSnapshot = String(opcoesPainel?.clienteSnapshot || "").trim();
 
@@ -11220,6 +11398,23 @@ return null;
           expressoDetalhesNotas.push({
             nota: n.nota || "",
             numeroOEF: n.numeroOEF || "",
+            peso: n.peso || "",
+            volumes: n.volumes || "",
+            fornecedor: n.fornecedor || "",
+            dtLimiteEmbarque: n.dtLim || "",
+            dtFinalEntrega: n.finalEntrega || "",
+            bpDestino: n.bpDestino || "",
+            onu: n.onu || ""
+          });
+        }
+        const contratoNota = String(n?.contrato || getFieldValue(n?._raw || {}, ["Contrato", "CONTRATO", "contrato"]) || "").trim();
+        const temSpotNota = n?._temSpot === true || normalizar(contratoNota).includes("SPOT");
+        if (temSpotNota) {
+          spotNotas++;
+          spotDetalhesNotas.push({
+            nota: n.nota || "",
+            numeroOEF: n.numeroOEF || "",
+            contrato: contratoNota,
             peso: n.peso || "",
             volumes: n.volumes || "",
             fornecedor: n.fornecedor || "",
@@ -11279,6 +11474,10 @@ return null;
       const expressoDetalhes = Array.isArray(totalPVD?.expressoDetalhes)
         ? totalPVD.expressoDetalhes
         : expressoDetalhesNotas;
+      const qtdSpot = Number(totalPVD?.spotCount ?? spotNotas ?? 0);
+      const spotDetalhes = Array.isArray(totalPVD?.spotDetalhes)
+        ? totalPVD.spotDetalhes
+        : spotDetalhesNotas;
       const status = getStatusVocativo(almox, veiculos, hoje);
       const tipoEmbarque = getTipoEmbarqueVocativo(almox, veiculos);
       const vocNorm = normalizar(almox);
@@ -11358,9 +11557,12 @@ return null;
         qtdAlertaPeso,
         qtdExpresso,
         expressoDetalhes,
+        qtdSpot,
+        spotDetalhes,
         temAlertaMercadoria: qtdAlertaMercadoria > 0,
         temAlertaPeso: qtdAlertaPeso > 0,
         temExpresso: qtdExpresso > 0,
+        temSpot: qtdSpot > 0,
         pesoTotalPVD: Number(totalPVD.pesoTotal ?? pesoFiltrado ?? 0),
         totalNotasPVD: Number(totalPVD.totalRegistros ?? notas.length ?? 0),
         notasD1: qtdD1,
@@ -11392,6 +11594,7 @@ return null;
           status.temCarregadoHoje ? "carregado hoje" : "",
           status.temCarregadoOntem ? "carregado ontem" : "",
           qtdExpresso > 0 ? "EXPRESSO EX" : "",
+          qtdSpot > 0 ? "SPOT" : "",
           prioridadesPVD.join(" "),
           getLinhasAlertasMercadoriaPainelProgramacao(alertasMercadoria).map(a => `EXISTE ${a.label}`).join(" "),
           ultimoVeiculo?.id || "",
@@ -11439,7 +11642,7 @@ return null;
       const total = {
         totalRegistros: 0, pesoTotal: 0, bps: new Set(), onus: new Set(), prioridades: new Set(),
         alertasMercadoria: criarAlertasMercadoriaPainelProgramacao(), alertasMercadoriaCount: 0,
-        alertasPesoCount: 0, expressoCount: 0, expressoDetalhes: []
+        alertasPesoCount: 0, expressoCount: 0, expressoDetalhes: [], spotCount: 0, spotDetalhes: []
       };
       (notas || []).forEach(n => {
         total.totalRegistros++;
@@ -11459,6 +11662,16 @@ return null;
           total.expressoDetalhes.push({
             nota: n?.nota || "", numeroOEF: n?.numeroOEF || "", peso: n?.peso || "",
             volumes: n?.volumes || "", fornecedor: n?.fornecedor || "",
+            dtLimiteEmbarque: n?.dtLim || "", dtFinalEntrega: n?.finalEntrega || "",
+            bpDestino: n?.bpDestino || "", onu: n?.onu || ""
+          });
+        }
+        const contrato = String(n?.contrato || getFieldValue(n?._raw || {}, ["Contrato", "CONTRATO", "contrato"]) || "").trim();
+        if (n?._temSpot === true || normalizar(contrato).includes("SPOT")) {
+          total.spotCount++;
+          total.spotDetalhes.push({
+            nota: n?.nota || "", numeroOEF: n?.numeroOEF || "", contrato,
+            peso: n?.peso || "", volumes: n?.volumes || "", fornecedor: n?.fornecedor || "",
             dtLimiteEmbarque: n?.dtLim || "", dtFinalEntrega: n?.finalEntrega || "",
             bpDestino: n?.bpDestino || "", onu: n?.onu || ""
           });
@@ -11965,6 +12178,7 @@ return null;
         card.style.removeProperty("min-height");
         card.style.removeProperty("overflow");
       }
+      agendarSincronizacaoSelosOverlayPainelProgramacao();
     }
 
     function onClickPainelProgCard(cardEl, ev) {
@@ -12369,8 +12583,10 @@ return null;
       cancelarFechamentoTooltipExpressoPainelProgramacao();
       painelProgExpressoTooltipMouseOver = false;
       const tooltip = getOrCreateTooltipExpressoGlobalPainelProgramacao();
+      const temaPrioridade = String(origem.getAttribute("data-tema-prioridade") || "").trim();
       tooltip.innerHTML = origem.innerHTML;
       tooltip.scrollTop = 0;
+      tooltip.classList.toggle("isSpotOnly", temaPrioridade === "spot");
       tooltip.classList.add("open");
       posicionarTooltipExpressoPainelProgramacao(ev, cardEl);
     }
@@ -12380,14 +12596,13 @@ return null;
       painelProgExpressoTooltipMouseOver = false;
       const tooltip = document.getElementById("painelProgExpressoTooltipGlobal");
       if (!tooltip) return;
-      tooltip.classList.remove("open");
+      tooltip.classList.remove("open", "isSpotOnly");
       tooltip.innerHTML = "";
     }
 
     function renderTooltipExpressoPainelProgramacao(item) {
-      const detalhes = (Array.isArray(item?.expressoDetalhes) ? item.expressoDetalhes : [])
-        .filter(Boolean);
-      const total = Number(item?.qtdExpresso || detalhes.length || 0);
+      const detalhesExpresso = (Array.isArray(item?.expressoDetalhes) ? item.expressoDetalhes : []).filter(Boolean);
+      const totalExpresso = Number(item?.qtdExpresso || detalhesExpresso.length || 0);
       const tituloVocativo = getTextoPainelProgramacao(item?.vocativo || "");
 
       const renderCampo = (label, valor) => `
@@ -12397,39 +12612,45 @@ return null;
         </div>
       `;
 
-      if (!detalhes.length) {
+      if (!detalhesExpresso.length && totalExpresso <= 0) return "";
+
+      if (!detalhesExpresso.length) {
         return `
-          <div class="painelProgExpressoTooltip">
-            <div class="painelProgExpressoTooltipTitle">
-              <span>Registro EXPRESSO ${tituloVocativo ? `- ${tituloVocativo}` : ""}</span>
-              <span class="painelProgExpressoTooltipCount">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(total, 0))}</span>
+          <div class="painelProgExpressoTooltip" data-tema-prioridade="expresso">
+            <div class="painelProgPrioridadeSecao">
+              <div class="painelProgExpressoTooltipTitle">
+                <span>Registro EXPRESSO ${tituloVocativo ? `- ${tituloVocativo}` : ""}</span>
+                <span class="painelProgExpressoTooltipCount">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(totalExpresso, 0))}</span>
+              </div>
+              <div class="painelProgExpressoTooltipEmpty">Nenhum detalhe localizado para o registro EXPRESSO.</div>
             </div>
-            <div class="painelProgExpressoTooltipEmpty">Nenhum detalhe localizado para o registro EXPRESSO.</div>
           </div>
         `;
       }
 
       return `
-        <div class="painelProgExpressoTooltip">
-          <div class="painelProgExpressoTooltipTitle">
-            <span>Somente registro(s) EXPRESSO ${tituloVocativo ? `- ${tituloVocativo}` : ""}</span>
-            <span class="painelProgExpressoTooltipCount">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(detalhes.length, 0))}</span>
-          </div>
-          <div class="painelProgExpressoRegistros">
-            ${detalhes.map((linha, idx) => `
-              <div class="painelProgExpressoRegistro">
-                <div class="painelProgExpressoRegistroHead">EXPRESSO ${detalhes.length > 1 ? `${idx + 1}/${detalhes.length}` : ""}</div>
-                ${renderCampo("Nota", linha.nota || "")}
-                ${renderCampo("Numero OEF", linha.numeroOEF || "")}
-                ${renderCampo("Peso", linha.peso || "")}
-                ${renderCampo("Volumes", linha.volumes || "")}
-                ${renderCampo("Fornecedor", linha.fornecedor || "")}
-                ${renderCampo("Dt Limite Embarque", formatarDataTooltipExpressoPainelProgramacao(linha.dtLimiteEmbarque))}
-                ${renderCampo("Dt Final Entrega", formatarDataTooltipExpressoPainelProgramacao(linha.dtFinalEntrega))}
-                ${renderCampo("BP Destino", linha.bpDestino || "")}
-                ${renderCampo("ONU", linha.onu || "")}
-              </div>
-            `).join("")}
+        <div class="painelProgExpressoTooltip" data-tema-prioridade="expresso">
+          <div class="painelProgPrioridadeSecao">
+            <div class="painelProgExpressoTooltipTitle">
+              <span>Somente registro(s) EXPRESSO ${tituloVocativo ? `- ${tituloVocativo}` : ""}</span>
+              <span class="painelProgExpressoTooltipCount">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(detalhesExpresso.length, 0))}</span>
+            </div>
+            <div class="painelProgExpressoRegistros">
+              ${detalhesExpresso.map((linha, idx) => `
+                <div class="painelProgExpressoRegistro">
+                  <div class="painelProgExpressoRegistroHead">EXPRESSO ${detalhesExpresso.length > 1 ? `${idx + 1}/${detalhesExpresso.length}` : ""}</div>
+                  ${renderCampo("Nota", linha.nota || "")}
+                  ${renderCampo("Numero OEF", linha.numeroOEF || "")}
+                  ${renderCampo("Peso", linha.peso || "")}
+                  ${renderCampo("Volumes", linha.volumes || "")}
+                  ${renderCampo("Fornecedor", linha.fornecedor || "")}
+                  ${renderCampo("Dt Limite Embarque", formatarDataTooltipExpressoPainelProgramacao(linha.dtLimiteEmbarque))}
+                  ${renderCampo("Dt Final Entrega", formatarDataTooltipExpressoPainelProgramacao(linha.dtFinalEntrega))}
+                  ${renderCampo("BP Destino", linha.bpDestino || "")}
+                  ${renderCampo("ONU", linha.onu || "")}
+                </div>
+              `).join("")}
+            </div>
           </div>
         </div>
       `;
@@ -12970,11 +13191,106 @@ return null;
       );
     }
 
+    let painelProgSelosOverlayRaf = 0;
+    let painelProgSelosOverlayObserver = null;
+    let painelProgSelosOverlayResizeObserver = null;
+
+    function getOrCreatePainelProgSelosOverlayLayer() {
+      let layer = document.getElementById("painelProgSelosOverlayLayer");
+      if (!layer) {
+        layer = document.createElement("div");
+        layer.id = "painelProgSelosOverlayLayer";
+        layer.setAttribute("aria-hidden", "true");
+        document.body.appendChild(layer);
+      }
+      return layer;
+    }
+
+    function sincronizarSelosOverlayPainelProgramacao() {
+      painelProgSelosOverlayRaf = 0;
+      const layer = getOrCreatePainelProgSelosOverlayLayer();
+      const cardsArea = document.getElementById("painelProgramacaoCards");
+      if (!cardsArea || !isPainelProgramacaoVisivel()) {
+        layer.innerHTML = "";
+        return;
+      }
+
+      const cards = Array.from(cardsArea.querySelectorAll(".painelProgCard"));
+      const fragment = document.createDocumentFragment();
+      const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+
+      cards.forEach(card => {
+        const fonte = card.querySelector(":scope > .painelProgSelosPrioridade");
+        if (!fonte || !fonte.children.length) return;
+
+        const rect = card.getBoundingClientRect();
+        if (rect.bottom < -50 || rect.top > vh + 50 || rect.right < -50 || rect.left > vw + 50) return;
+
+        const overlay = document.createElement("div");
+        overlay.className = "painelProgSelosPrioridadeOverlay";
+        if (card.classList.contains("isProgramado")) overlay.classList.add("isProgramado");
+        if (card.classList.contains("isNaoProgramado")) overlay.classList.add("isNaoProgramado");
+        if (card.classList.contains("isExpresso")) overlay.classList.add("isExpresso");
+        if (card.classList.contains("isSpot")) overlay.classList.add("isSpot");
+        overlay.innerHTML = fonte.innerHTML;
+
+        /* Mantém exatamente a posição visual anterior: 11px acima e 12px
+           para fora do canto superior direito do card. */
+        overlay.style.left = `${Math.round(rect.right + 12)}px`;
+        overlay.style.top = `${Math.round(rect.top - 11)}px`;
+        fragment.appendChild(overlay);
+      });
+
+      layer.replaceChildren(fragment);
+    }
+
+    function agendarSincronizacaoSelosOverlayPainelProgramacao() {
+      if (painelProgSelosOverlayRaf) return;
+      painelProgSelosOverlayRaf = requestAnimationFrame(sincronizarSelosOverlayPainelProgramacao);
+    }
+
+    function iniciarSelosOverlayPainelProgramacao() {
+      if (window.__painelProgSelosOverlayIniciado) return;
+      window.__painelProgSelosOverlayIniciado = true;
+
+      window.addEventListener("scroll", agendarSincronizacaoSelosOverlayPainelProgramacao, { passive: true, capture: true });
+      window.addEventListener("resize", agendarSincronizacaoSelosOverlayPainelProgramacao, { passive: true });
+      document.addEventListener("mousemove", ev => {
+        if (ev.target?.closest?.(".painelProgCard")) agendarSincronizacaoSelosOverlayPainelProgramacao();
+      }, { passive: true });
+
+      const cardsArea = document.getElementById("painelProgramacaoCards");
+      if (cardsArea && typeof MutationObserver !== "undefined") {
+        painelProgSelosOverlayObserver = new MutationObserver(agendarSincronizacaoSelosOverlayPainelProgramacao);
+        painelProgSelosOverlayObserver.observe(cardsArea, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["class", "style"]
+        });
+      }
+
+      if (cardsArea && typeof ResizeObserver !== "undefined") {
+        painelProgSelosOverlayResizeObserver = new ResizeObserver(agendarSincronizacaoSelosOverlayPainelProgramacao);
+        painelProgSelosOverlayResizeObserver.observe(cardsArea);
+      }
+
+      agendarSincronizacaoSelosOverlayPainelProgramacao();
+    }
+
     function renderCardPainelProgramacao(item) {
       const classeStatus = item.temProgramado ? "isProgramado" : "isNaoProgramado";
       const classeExpresso = item.temExpresso ? " isExpresso" : "";
+      const classeSpot = item.temSpot ? " isSpot" : "";
       const seloExpresso = item.temExpresso
         ? `<span class="painelProgSeloExpresso" title="Prioridade Expresso no PVD"><strong>EX</strong><small>EXPRESSO</small></span>`
+        : "";
+      const seloSpot = item.temSpot
+        ? `<span class="painelProgSeloSpot" title="Contrato contém SPOT no PVD"><strong>SPOT</strong></span>`
+        : "";
+      const selosPrioridade = (seloExpresso || seloSpot)
+        ? `<div class="painelProgSelosPrioridade">${seloSpot}${seloExpresso}</div>`
         : "";
       const tooltipExpresso = item.temExpresso ? renderTooltipExpressoPainelProgramacao(item) : "";
       const statusBadge = item.temProgramado
@@ -12998,18 +13314,15 @@ return null;
         : "";
       const janelaCarregamentoCardTexto = normalizar(item.janelaCarregamentoTexto) === "NAO CADASTRADO" ? "" : (item.janelaCarregamentoTexto || "");
       const janelaEntregaCardTexto = normalizar(item.janelaEntregaTexto) === "NAO CADASTRADO" ? "" : (item.janelaEntregaTexto || "");
-      const responsavelKey = String(item.responsavelKey || "igor");
-      const responsavelNome = String(item.responsavel || "Igor");
-      const responsavelCurto = responsavelKey === "julio" ? "JULIO" : responsavelKey === "lucas" ? "LUCAS" : "IGOR";
-      const responsavelBadge = `<span class="painelProgResponsavelBadge ${getTextoPainelProgramacao(responsavelKey)}" title="Responsável: ${getTextoPainelProgramacao(responsavelNome)}">${getTextoPainelProgramacao(responsavelCurto)}</span>`;
+      const responsavelNome = String(item.responsavel || "Igor").trim() || "Igor";
+      const programadorLinha = `<div class="painelProgLine painelProgProgramadorLine">Programador: ${getTextoPainelProgramacao(responsavelNome)}</div>`;
 
       return `
-        <div class="painelProgCard ${classeStatus}${classeExpresso}${classeSelecionado}" data-painel-prog-key="${getTextoPainelProgramacao(item.cardKey || "")}" onmouseenter="abrirTooltipExpressoPainelProgramacao(this, event)" onmousemove="posicionarTooltipExpressoPainelProgramacao(event, this)" onmouseleave="agendarFechamentoTooltipExpressoPainelProgramacao()" onclick="onClickPainelProgCard(this, event)"${estiloAltura}>
-          ${seloExpresso}
+        <div class="painelProgCard ${classeStatus}${classeExpresso}${classeSpot}${classeSelecionado}" data-painel-prog-key="${getTextoPainelProgramacao(item.cardKey || "")}" onmouseenter="abrirTooltipExpressoPainelProgramacao(this, event)" onmousemove="posicionarTooltipExpressoPainelProgramacao(event, this)" onmouseleave="agendarFechamentoTooltipExpressoPainelProgramacao()" onclick="onClickPainelProgCard(this, event)"${estiloAltura}>
+          ${selosPrioridade}
           ${tooltipExpresso}
           <div class="painelProgCardTop">
             <div class="painelProgVocativo" title="${getTextoPainelProgramacao(item.vocativo)}">🏭 ${getTextoPainelProgramacao(item.vocativo)}</div>
-            ${responsavelBadge}
           </div>
           <div class="painelProgStatusRow">
             <div class="painelProgStatusLeft">${carregadoBadges || ""}</div>
@@ -13017,6 +13330,7 @@ return null;
           </div>
 
           <div class="painelProgLine">EMBARQUE: ${getTextoPainelProgramacao(item.temProgramado ? (item.tipoEmbarque || "-") : "-")}</div>
+          ${programadorLinha}
           <div class="painelProgLine">⚖ Peso Total PVD: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.pesoTotalPVD, 2))}</div>
           <div class="painelProgLine">📄 Total Notas PVD: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.totalNotasPVD, 0))}</div>
           <div class="painelProgLine">📦 Notas &lt;= D-1: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.notasD1, 0))}</div>
@@ -13112,6 +13426,8 @@ return null;
         painelProgCardsSelecionados.clear();
         renderPopupPainelProgramacao();
         cardsEl.innerHTML = `<div class="painelProgEmptyState">Nenhum vocativo encontrado para os filtros selecionados.</div>`;
+        iniciarSelosOverlayPainelProgramacao();
+        agendarSincronizacaoSelosOverlayPainelProgramacao();
         return;
       }
 
@@ -13124,6 +13440,8 @@ return null;
             ${ordenados.map(renderCardPainelProgramacao).join("")}
           </div>
         `;
+        iniciarSelosOverlayPainelProgramacao();
+        agendarSincronizacaoSelosOverlayPainelProgramacao();
         return;
       }
 
@@ -13158,6 +13476,8 @@ return null;
         `).join("");
 
       cardsEl.innerHTML = html;
+      iniciarSelosOverlayPainelProgramacao();
+      agendarSincronizacaoSelosOverlayPainelProgramacao();
     }
 
     function renderPainelProgramacaoComBaseAtual(rolarTopo = false) {
