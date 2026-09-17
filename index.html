@@ -2355,7 +2355,7 @@
     .painelProgCard {
       border-radius: 11px;
       padding: 7px;
-      min-height: 216px;
+      min-height: 286px;
       box-shadow: var(--shadowSoft);
       border: 1px solid rgba(15, 23, 42, 0.10);
       display: flex;
@@ -12290,7 +12290,9 @@ return null;
       }
 
       if (datasAbertas) {
-        const altura = Number(painelProgAlturaCardsDatas.get(chave) || card.offsetHeight || 0);
+        const alturaOriginal = Number(painelProgAlturaCardsDatas.get(chave) || card.offsetHeight || 0);
+        const alturaMinimaParaDatas = 286;
+        const altura = Math.max(alturaOriginal, alturaMinimaParaDatas);
         if (altura > 0) {
           card.style.height = `${altura}px`;
           card.style.minHeight = `${altura}px`;
@@ -13525,7 +13527,8 @@ return null;
       const cardKeyAttr = getTextoPainelProgramacao(chaveCard);
       const datasAbertas = painelProgCardsDatasAbertas.has(chaveCard);
       const classeSelecionado = painelProgCardsSelecionados.has(item.cardKey) ? " isSelected" : "";
-      const alturaFixa = datasAbertas ? Number(painelProgAlturaCardsDatas.get(chaveCard) || 0) : 0;
+      const alturaOriginalDatas = datasAbertas ? Number(painelProgAlturaCardsDatas.get(chaveCard) || 0) : 0;
+      const alturaFixa = datasAbertas ? Math.max(alturaOriginalDatas, 286) : 0;
       const estiloAltura = alturaFixa > 0
         ? ` style="height:${alturaFixa}px;min-height:${alturaFixa}px;overflow:hidden;"`
         : "";
