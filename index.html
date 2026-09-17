@@ -3152,10 +3152,10 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 42px;
-      min-height: 28px;
-      padding: 4px 7px;
-      border-radius: 11px;
+      min-width: 36px;
+      min-height: 24px;
+      padding: 3px 6px;
+      border-radius: 9px;
       border: 2px solid;
       box-shadow: 0 7px 15px rgba(15, 23, 42, 0.20);
       transform: rotate(4deg);
@@ -3165,7 +3165,7 @@
     }
 
     .painelProgSeloSpot strong {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 1000;
       letter-spacing: .04em;
       line-height: 1;
@@ -13539,7 +13539,7 @@ return null;
           ${selosPrioridade}
           ${tooltipExpresso}
           <div class="painelProgCardTop">
-            <div class="painelProgVocativo" title="${getTextoPainelProgramacao(item.vocativo)}">🏭 ${getTextoPainelProgramacao(item.vocativo)}</div>
+            <div class="painelProgVocativo" title="${getTextoPainelProgramacao(item.vocativo)}">${getTextoPainelProgramacao(item.vocativo)}</div>
           </div>
           <div class="painelProgStatusRow">
             <div class="painelProgStatusLeft">${carregadoBadges || ""}</div>
