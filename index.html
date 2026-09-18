@@ -2440,6 +2440,36 @@
       line-height: 1.15;
     }
 
+    .painelProgPopupHeaderActions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .painelProgPopupPdfMini {
+      height: 22px;
+      min-width: 42px;
+      border: 1px solid #93c5fd;
+      border-radius: 7px;
+      background: #ffffff;
+      color: #1e40af;
+      cursor: pointer;
+      font-size: 9px;
+      line-height: 1;
+      font-weight: 1000;
+      padding: 0 8px;
+      letter-spacing: .025em;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+
+    .painelProgPopupPdfMini:hover {
+      background: #dbeafe;
+      border-color: #60a5fa;
+    }
+
     .painelProgPopupClose {
       width: 22px;
       height: 22px;
@@ -3933,6 +3963,13 @@
             title="Gerar o relatório de notas de todos os vocativos atualmente filtrados"
             onclick="exportarRelatorioExcelPainelProgramacaoFiltrado()"
           >📊 GERAR EXCEL</button>
+          <button
+            class="btn secondary"
+            id="btnPainelProgPdfSelecionados"
+            type="button"
+            title="Gerar PDF no padrão do relatório de carregamento com os cards selecionados e os filtros atuais"
+            onclick="gerarRelatorioPDFCardsSelecionadosPainelProgramacao()"
+          >🧾 GERAR PDF</button>
           <button class="btn secondary" type="button" onclick="renderPainelProgramacaoRapido(false, true)">🔄 Atualizar</button>
           <button class="btn secondary" type="button" onclick="voltarPainelProgramacaoPrincipal()">⬅ Voltar</button>
         </div>
@@ -8566,7 +8603,7 @@
         const destinatarioNormTotal = normalizar(destinatarioNomeTotal) || normalizar(PAINEL_PROG_SEM_DESTINATARIO);
         const prioridadeValor = getFieldValue(r, ["Prioridade", "PRIORIDADE", "prioridade"]) || "";
         const prioridadeNorm = normalizar(prioridadeValor || "");
-        const onuValor = r["ONU"] || getFieldValue(r, ["ONU", "Onu", "onu"]) || "";
+        const onuValor = r["ONU"] || r["UNO"] || getFieldValue(r, ["ONU", "UNO", "Onu", "Uno", "onu", "uno"]) || "";
         const onusValidas = getONUsValidasPVD(onuValor);
         const mercadoriaValor = getFieldValue(r, ["Mercadoria", "MERCADORIA"]) || "";
         const alertasMercadoriaLinha = identificarAlertasMercadoriaPainelProgramacao(mercadoriaValor);
@@ -11161,6 +11198,16 @@ return null;
       return [bruto];
     }
 
+    // Regra exclusiva do filtro "Químico": considera químico todo registro cujo
+    // campo ONU/UNO esteja preenchido e seja diferente de 0000 (ou apenas zeros).
+    function isQuimicoPainelProgramacao(valor) {
+      const bruto = String(valor ?? "").trim();
+      if (!bruto) return false;
+      const compacto = bruto.replace(/[\s.,;:\/|\-]+/g, "");
+      if (compacto && /^0+$/.test(compacto)) return false;
+      return bruto !== "0000";
+    }
+
     function getIdVinculadoPainelProgramacao(vocNorm) {
       return String(
         (window.idDrafts && Object.prototype.hasOwnProperty.call(window.idDrafts, vocNorm))
@@ -11295,7 +11342,7 @@ return null;
             dtLimiteEmbarque: getFieldValue(r, ["Dt Limite Embarque", "DT LIMITE EMBARQUE", "Dt. Limite Embarque"]) || "",
             dtFinalEntrega: getFieldValue(r, ["Dt Final Entrega", "DT FINAL ENTREGA", "Dt. Final Entrega"]) || "",
             bpDestino: getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino", "bpDestino"]) || "",
-            onu: getFieldValue(r, ["ONU", "Onu", "onu"]) || ""
+            onu: getFieldValue(r, ["ONU", "UNO", "Onu", "Uno", "onu", "uno"]) || ""
           });
         }
         if (temSpotLinha) {
@@ -11310,7 +11357,7 @@ return null;
             dtLimiteEmbarque: getFieldValue(r, ["Dt Limite Embarque", "DT LIMITE EMBARQUE", "Dt. Limite Embarque"]) || "",
             dtFinalEntrega: getFieldValue(r, ["Dt Final Entrega", "DT FINAL ENTREGA", "Dt. Final Entrega"]) || "",
             bpDestino: getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino", "bpDestino"]) || "",
-            onu: getFieldValue(r, ["ONU", "Onu", "onu"]) || ""
+            onu: getFieldValue(r, ["ONU", "UNO", "Onu", "Uno", "onu", "uno"]) || ""
           });
         }
 
@@ -11320,7 +11367,7 @@ return null;
         const bpDestino = String(getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino"]) || "").trim();
         if (bpDestino) totalDestinatario.bps.add(bpDestino);
 
-        getONUsValidasPVD(getFieldValue(r, ["ONU", "Onu", "onu"])).forEach(onu => totalDestinatario.onus.add(onu));
+        getONUsValidasPVD(getFieldValue(r, ["ONU", "UNO", "Onu", "Uno", "onu", "uno"])).forEach(onu => totalDestinatario.onus.add(onu));
 
         const alertasMercadoriaLinha = identificarAlertasMercadoriaPainelProgramacao(getFieldValue(r, ["Mercadoria", "MERCADORIA"]) || "");
         if (totalAlertasMercadoriaPainelProgramacao(alertasMercadoriaLinha) > 0) {
@@ -11468,6 +11515,7 @@ return null;
       const expressoDetalhesNotas = [];
       let spotNotas = 0;
       const spotDetalhesNotas = [];
+      let quimicoNotas = 0;
       const destinatarioForcado = String(opcoesPainel?.destinatario || "").trim();
       const clienteSnapshot = String(opcoesPainel?.clienteSnapshot || "").trim();
 
@@ -11488,6 +11536,9 @@ return null;
         if (bpDestinoNota) bpsNotas.add(bpDestinoNota);
 
         (Array.isArray(n?._onusValidas) ? n._onusValidas : getONUsValidasPVD(n.onu)).forEach(onu => onusNotas.add(onu));
+        if (isQuimicoPainelProgramacao(n?.onu ?? getFieldValue(n?._raw || {}, ["ONU", "UNO", "Onu", "Uno", "onu", "uno"]))) {
+          quimicoNotas++;
+        }
 
         const alertasMercadoriaNota = n?._alertasMercadoria || identificarAlertasMercadoriaPainelProgramacao(n.mercadoria || "");
         if (totalAlertasMercadoriaPainelProgramacao(alertasMercadoriaNota) > 0) {
@@ -11649,6 +11700,8 @@ return null;
         bpDestinos,
         onuNumeros,
         temMopp: onuNumeros.length > 0,
+        qtdQuimico: quimicoNotas,
+        temQuimico: quimicoNotas > 0,
         prioridadesPVD,
         prioridadesNorm,
         alertasMercadoria,
@@ -12036,6 +12089,12 @@ return null;
         if (item.temSpot === true && !prioridades.has("SPOT")) {
           prioridades.set("SPOT", "SPOT");
         }
+
+        // Químico também é uma opção virtual: não depende da coluna Prioridade,
+        // e sim de ONU/UNO preenchido e diferente de 0000.
+        if (item.temQuimico === true && !prioridades.has("QUIMICO")) {
+          prioridades.set("QUIMICO", "Químico");
+        }
       });
 
       const montarOpcoes = (mapa) => Array.from(mapa.entries())
@@ -12104,7 +12163,8 @@ return null;
         const prioridadesItem = Array.isArray(item.prioridadesNorm) ? item.prioridadesNorm : [];
         return (
           prioridadesItem.some(v => selecionados.has(v)) ||
-          (item.temSpot === true && selecionados.has("SPOT"))
+          (item.temSpot === true && selecionados.has("SPOT")) ||
+          (item.temQuimico === true && selecionados.has("QUIMICO"))
         );
       }
 
@@ -12548,7 +12608,15 @@ return null;
             <div class="painelProgPopupTitle">Resumo do(s) card(s)</div>
             <div class="painelProgPopupSub">${formatarNumeroPainelProgramacao(vocativos.length, 0)} vocativo(s) selecionado(s)</div>
           </div>
-          <button class="painelProgPopupClose" type="button" onclick="fecharPopupPainelProgramacao(event)" title="Fechar">×</button>
+          <div class="painelProgPopupHeaderActions">
+            <button
+              class="painelProgPopupPdfMini"
+              type="button"
+              title="Gerar PDF dos cards selecionados"
+              onclick="event.preventDefault(); event.stopPropagation(); gerarRelatorioPDFCardsSelecionadosPainelProgramacao()"
+            >PDF</button>
+            <button class="painelProgPopupClose" type="button" onclick="fecharPopupPainelProgramacao(event)" title="Fechar">×</button>
+          </div>
         </div>
         <div class="painelProgPopupBody">
           <div class="painelProgPopupSection" style="margin-top:0;">
@@ -13152,6 +13220,503 @@ return null;
       );
 
       XLSX.writeFile(workbook, `${nomeArquivo}.xlsx`);
+    }
+
+
+    // =========================
+    // PDF - CARDS SELECIONADOS
+    // Layout e ordenação espelhados do Gerador de Relatório de Carregamento.
+    // Todos os blocos são tratados como ENTREGA DIRETA, sem telas/classificações adicionais.
+    // =========================
+    function getCampoRelatorioCarregamentoPainelProgramacao(row, aliases) {
+      return getFieldValue(row || {}, aliases || []) ?? "";
+    }
+
+    function isBlankRelatorioCarregamentoPainelProgramacao(v) {
+      return v === null || v === undefined || String(v).trim() === "";
+    }
+
+    function escRelatorioCarregamentoPainelProgramacao(v) {
+      return String(v ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+      }[c]));
+    }
+
+    function numeroRelatorioCarregamentoPainelProgramacao(v) {
+      if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+      const n = Number(String(v ?? "").replace(",", "."));
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function dataRelatorioCarregamentoPainelProgramacao(v) {
+      if (v instanceof Date && !Number.isNaN(v.getTime())) {
+        return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+      }
+      if (typeof v === "number" && Number.isFinite(v) && v >= 1000) {
+        const utc = Math.round((v - 25569) * 86400 * 1000);
+        const d = new Date(utc);
+        return Number.isNaN(d.getTime()) ? null : new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+      }
+      const s = String(v ?? "").trim();
+      if (!s) return null;
+      if (/^\d+(\.\d+)?$/.test(s)) {
+        const n = Number(s);
+        if (Number.isFinite(n) && n >= 1000) {
+          const utc = Math.round((n - 25569) * 86400 * 1000);
+          const d = new Date(utc);
+          return Number.isNaN(d.getTime()) ? null : new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+        }
+      }
+      const m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
+      if (m) {
+        let y = Number(m[3]);
+        if (y < 100) y += 2000;
+        const d = new Date(y, Number(m[2]) - 1, Number(m[1]));
+        return Number.isNaN(d.getTime()) ? null : d;
+      }
+      const d = new Date(s);
+      return Number.isNaN(d.getTime()) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+
+    function fmtDataRelatorioCarregamentoPainelProgramacao(v, fourDigit = false) {
+      const d = dataRelatorioCarregamentoPainelProgramacao(v);
+      if (!d) return "";
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const yy = fourDigit ? d.getFullYear() : String(d.getFullYear()).slice(-2);
+      return `${dd}/${mm}/${yy}`;
+    }
+
+    function fmtPesoRelatorioCarregamentoPainelProgramacao(n) {
+      const v = Number(n) || 0;
+      return v.toLocaleString("en-US", {
+        useGrouping: false,
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function fmtAgoraRelatorioCarregamentoPainelProgramacao() {
+      const d = new Date();
+      return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    }
+
+    function getVocRelatorioCarregamentoPainelProgramacao(row) {
+      return String(getCampoRelatorioCarregamentoPainelProgramacao(row, ["Almoxarifado", "ALMOXARIFADO", "almoxarifado"]) || "").trim();
+    }
+
+    function getBPRelatorioCarregamentoPainelProgramacao(row) {
+      return String(getCampoRelatorioCarregamentoPainelProgramacao(row, ["BP Destino", "BP DESTINO", "Bp Destino", "bpDestino"]) || "").trim();
+    }
+
+    function getONURelatorioCarregamentoPainelProgramacao(row) {
+      return getCampoRelatorioCarregamentoPainelProgramacao(row, ["ONU", "UNO", "Onu", "Uno", "onu", "uno"]);
+    }
+
+    function getChegadaRelatorioCarregamentoPainelProgramacao(row) {
+      const datas = [
+        getCampoRelatorioCarregamentoPainelProgramacao(row, ["Data de Check in", "DATA DE CHECK IN", "Data Check in", "DATA CHECK IN"]),
+        getCampoRelatorioCarregamentoPainelProgramacao(row, ["Data de Entrada da Nota", "DATA DE ENTRADA DA NOTA", "Data Entrada", "DATA ENTRADA"]),
+        getCampoRelatorioCarregamentoPainelProgramacao(row, ["Data Resolução Ocorrencia", "Data Resolução Ocorrência", "DATA RESOLUÇÃO OCORRENCIA", "DATA RESOLUCAO OCORRENCIA"])
+      ].map(dataRelatorioCarregamentoPainelProgramacao).filter(Boolean);
+      return datas.length ? new Date(Math.max(...datas.map(d => d.getTime()))) : null;
+    }
+
+    function prioridadeRankRelatorioCarregamentoPainelProgramacao(row) {
+      const prioridade = normalizar(getCampoRelatorioCarregamentoPainelProgramacao(row, ["Prioridade", "PRIORIDADE", "prioridade"]));
+      if (prioridade === "EXPRESSO") return 0;
+      const contrato = normalizar(getCampoRelatorioCarregamentoPainelProgramacao(row, ["Contrato", "CONTRATO", "contrato"]));
+      if (contrato.includes("SPOT")) return 1;
+      if (prioridade === "PRIORIDADE") return 2;
+      if (prioridade === "P0") return 3;
+      if (prioridade === "P1") return 4;
+      if (prioridade === "PADRAO") return 5;
+      return 9;
+    }
+
+    function displayPrioridadeRelatorioCarregamentoPainelProgramacao(row) {
+      const p = String(getCampoRelatorioCarregamentoPainelProgramacao(row, ["Prioridade", "PRIORIDADE", "prioridade"]) || "").trim();
+      if (p && normalizar(p) !== "PADRAO") return p;
+      const contrato = normalizar(getCampoRelatorioCarregamentoPainelProgramacao(row, ["Contrato", "CONTRATO", "contrato"]));
+      if (contrato.includes("SPOT")) return "Spot";
+      return "";
+    }
+
+    function displayONURelatorioCarregamentoPainelProgramacao(row) {
+      const s = String(getONURelatorioCarregamentoPainelProgramacao(row) ?? "").trim();
+      return (!s || /^0+$/.test(s)) ? "" : s;
+    }
+
+    function displayJanelaEmissaoRelatorioCarregamentoPainelProgramacao(row) {
+      const cte = getCampoRelatorioCarregamentoPainelProgramacao(row, ["CTE", "Cte", "cte"]);
+      const pesado = normalizar(getCampoRelatorioCarregamentoPainelProgramacao(row, ["Pesado", "PESADO", "pesado"]));
+      if (!isBlankRelatorioCarregamentoPainelProgramacao(cte) || pesado !== "S") return "";
+      const janela = getCampoRelatorioCarregamentoPainelProgramacao(row, ["Janela de Emissao", "Janela de Emissão", "JANELA DE EMISSAO", "JANELA DE EMISSÃO"]);
+      return fmtDataRelatorioCarregamentoPainelProgramacao(janela, true);
+    }
+
+    function isPesadoJanelaFuturaRelatorioCarregamentoPainelProgramacao(row) {
+      const pesado = normalizar(getCampoRelatorioCarregamentoPainelProgramacao(row, ["Pesado", "PESADO", "pesado"]));
+      if (pesado !== "S") return false;
+      const janela = getCampoRelatorioCarregamentoPainelProgramacao(row, ["Janela de Emissao", "Janela de Emissão", "JANELA DE EMISSAO", "JANELA DE EMISSÃO"]);
+      if (isBlankRelatorioCarregamentoPainelProgramacao(janela)) return false;
+      const jan = dataRelatorioCarregamentoPainelProgramacao(janela);
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      return !!jan && jan.getTime() > hoje.getTime();
+    }
+
+    function isNaoPesadoOuJanelaFuturaRelatorioCarregamentoPainelProgramacao(row) {
+      const pesado = normalizar(getCampoRelatorioCarregamentoPainelProgramacao(row, ["Pesado", "PESADO", "pesado"]));
+      return pesado === "N" || isPesadoJanelaFuturaRelatorioCarregamentoPainelProgramacao(row);
+    }
+
+    function filtroDinamicoRestritivoRelatorioPainelProgramacao(tipo) {
+      const opcoes = getPainelProgOpcoesFiltro(tipo) || [];
+      const selecionados = getPainelProgSetFiltro(tipo) || new Set();
+      return opcoes.length > 0 && selecionados.size > 0 && selecionados.size < opcoes.length;
+    }
+
+    function getDestinatarioNormNotaRelatorioPainelProgramacao(nota) {
+      const raw = nota?._raw || nota || {};
+      const valor = String(nota?.destinatario ?? getCampoRelatorioCarregamentoPainelProgramacao(raw, ["Destinatario", "Destinatário", "DESTINATARIO", "DESTINATÁRIO"]) ?? "").trim();
+      return normalizar(valor || PAINEL_PROG_SEM_DESTINATARIO) || normalizar(PAINEL_PROG_SEM_DESTINATARIO);
+    }
+
+    function notaPassaFiltrosRelatorioCardsPainelProgramacao(nota, item) {
+      if (!nota || !item) return false;
+
+      const destinatarioItem = String(item.destinatarioNorm || "").trim() || normalizar(PAINEL_PROG_SEM_DESTINATARIO);
+      if (getDestinatarioNormNotaRelatorioPainelProgramacao(nota) !== destinatarioItem) return false;
+
+      if (filtroDinamicoRestritivoRelatorioPainelProgramacao("destino")) {
+        const destinoNorm = String(nota?._destinoNorm || normalizar(nota?.destino || "")).trim();
+        if (!painelProgDestinosSelecionados.has(destinoNorm)) return false;
+      }
+
+      if (filtroDinamicoRestritivoRelatorioPainelProgramacao("uf")) {
+        const ufNorm = String(nota?._ufNorm || normalizar(nota?.uf || "")).trim();
+        if (!painelProgUfsSelecionados.has(ufNorm)) return false;
+      }
+
+      if (filtroDinamicoRestritivoRelatorioPainelProgramacao("entrada")) {
+        const prioridadeNorm = String(nota?._prioridadeNorm || normalizar(nota?.prioridade || "")).trim();
+        const contrato = String(nota?.contrato || getCampoRelatorioCarregamentoPainelProgramacao(nota?._raw || {}, ["Contrato", "CONTRATO", "contrato"]) || "");
+        const temSpot = nota?._temSpot === true || normalizar(contrato).includes("SPOT");
+        const onuUno = nota?.onu ?? getCampoRelatorioCarregamentoPainelProgramacao(nota?._raw || {}, ["ONU", "UNO", "Onu", "Uno", "onu", "uno"]);
+        const temQuimico = isQuimicoPainelProgramacao(onuUno);
+        const passaPrioridade = (
+          (prioridadeNorm && painelProgEntradaSelecionados.has(prioridadeNorm)) ||
+          (temSpot && painelProgEntradaSelecionados.has("SPOT")) ||
+          (temQuimico && painelProgEntradaSelecionados.has("QUIMICO"))
+        );
+        if (!passaPrioridade) return false;
+      }
+
+      const opcoesCrit = PAINEL_PROG_STATIC_FILTERS.criticidade || [];
+      if (opcoesCrit.length && painelProgCriticidadeSelecionados.size > 0 && painelProgCriticidadeSelecionados.size < opcoesCrit.length) {
+        const dtLim = nota?._dtLimDia || dataRelatorioCarregamentoPainelProgramacao(nota?.dtLim);
+        if (!dtLim) return false;
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const dt = new Date(dtLim);
+        dt.setHours(0, 0, 0, 0);
+        const dias = Math.round((dt.getTime() - hoje.getTime()) / 86400000);
+        const passaCrit = (
+          (dias < 0 && painelProgCriticidadeSelecionados.has("vencidas")) ||
+          (dias === 0 && painelProgCriticidadeSelecionados.has("d0")) ||
+          (dias === 1 && painelProgCriticidadeSelecionados.has("d1")) ||
+          (dias >= 2 && painelProgCriticidadeSelecionados.has("dge2"))
+        );
+        if (!passaCrit) return false;
+      }
+
+      return true;
+    }
+
+    function getRegistrosSelecionadosRelatorioCarregamentoPainelProgramacao() {
+      const itensAtuais = Array.isArray(painelProgDadosAtuais) ? painelProgDadosAtuais : [];
+      const temCardsSelecionados = (painelProgCardsSelecionados?.size || 0) > 0;
+      const itensSelecionados = temCardsSelecionados
+        ? itensAtuais.filter(item => painelProgCardsSelecionados.has(String(item?.cardKey || "")))
+        : itensAtuais;
+
+      const vistosNotas = new Set();
+      const vistosFallback = new Set();
+      const registros = [];
+
+      itensSelecionados.forEach(item => {
+        const notasFonte = Array.isArray(item?.notasFonteRelatorioPVD) ? item.notasFonteRelatorioPVD : [];
+        if (notasFonte.length) {
+          notasFonte.forEach(nota => {
+            if (!notaPassaFiltrosRelatorioCardsPainelProgramacao(nota, item)) return;
+            if (vistosNotas.has(nota)) return;
+            vistosNotas.add(nota);
+            registros.push(montarRegistroRelatorioPainelProgramacao(item.vocativo || item.vocNorm || "", nota));
+          });
+          return;
+        }
+
+        // Fallback de compatibilidade para itens sem referência às notas processadas.
+        (getRegistrosRelatorioItemPainelProgramacao(item) || []).forEach((registro, idx) => {
+          const destNorm = normalizar(String(getCampoRelatorioCarregamentoPainelProgramacao(registro, ["Destinatario", "Destinatário", "DESTINATARIO", "DESTINATÁRIO"]) || PAINEL_PROG_SEM_DESTINATARIO));
+          if (destNorm !== (String(item.destinatarioNorm || "").trim() || normalizar(PAINEL_PROG_SEM_DESTINATARIO))) return;
+          const chave = [
+            getVocRelatorioCarregamentoPainelProgramacao(registro),
+            getCampoRelatorioCarregamentoPainelProgramacao(registro, ["Nota", "NOTA", "nota"]),
+            getCampoRelatorioCarregamentoPainelProgramacao(registro, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF"]),
+            destNorm,
+            idx
+          ].join("||");
+          if (vistosFallback.has(chave)) return;
+          vistosFallback.add(chave);
+          registros.push({ ...registro });
+        });
+      });
+
+      return registros.map((r, idx) => {
+        Object.defineProperty(r, "__painelProgPdfIdx", { value: idx, enumerable: false, configurable: true });
+        return r;
+      });
+    }
+
+    function ordenarRegistrosRelatorioCarregamentoPainelProgramacao(registros) {
+      return [...(registros || [])].sort((a, b) => {
+        const nwa = isNaoPesadoOuJanelaFuturaRelatorioCarregamentoPainelProgramacao(a) ? 1 : 0;
+        const nwb = isNaoPesadoOuJanelaFuturaRelatorioCarregamentoPainelProgramacao(b) ? 1 : 0;
+        if (nwa !== nwb) return nwa - nwb;
+        const p = prioridadeRankRelatorioCarregamentoPainelProgramacao(a) - prioridadeRankRelatorioCarregamentoPainelProgramacao(b);
+        if (p) return p;
+        const da = dataRelatorioCarregamentoPainelProgramacao(getCampoRelatorioCarregamentoPainelProgramacao(a, ["Dt Limite Embarque", "DT LIMITE EMBARQUE", "Dt. Limite Embarque"]));
+        const db = dataRelatorioCarregamentoPainelProgramacao(getCampoRelatorioCarregamentoPainelProgramacao(b, ["Dt Limite Embarque", "DT LIMITE EMBARQUE", "Dt. Limite Embarque"]));
+        const ta = da ? da.getTime() : Infinity;
+        const tb = db ? db.getTime() : Infinity;
+        if (ta !== tb) return ta - tb;
+        return Number(a.__painelProgPdfIdx || 0) - Number(b.__painelProgPdfIdx || 0);
+      });
+    }
+
+    function getVocativosOrdemRelatorioCarregamentoPainelProgramacao(registros) {
+      const out = [];
+      const seen = new Set();
+      (registros || []).forEach(r => {
+        const v = getVocRelatorioCarregamentoPainelProgramacao(r);
+        if (v && !seen.has(v)) {
+          seen.add(v);
+          out.push(v);
+        }
+      });
+      return out;
+    }
+
+    function getZonaEntregaRelatorioCarregamentoPainelProgramacao(registros) {
+      const contagem = new Map();
+      let melhor = "";
+      let melhorQtd = -1;
+      (registros || []).forEach(r => {
+        const v = getVocRelatorioCarregamentoPainelProgramacao(r);
+        if (!v) return;
+        const qtd = (contagem.get(v) || 0) + 1;
+        contagem.set(v, qtd);
+        if (qtd > melhorQtd) {
+          melhorQtd = qtd;
+          melhor = v;
+        }
+      });
+      return melhor || "—";
+    }
+
+    function getBPSummaryRelatorioCarregamentoPainelProgramacao(registros) {
+      const map = new Map();
+      (registros || []).forEach(r => {
+        const bp = getBPRelatorioCarregamentoPainelProgramacao(r);
+        const voc = getVocRelatorioCarregamentoPainelProgramacao(r);
+        if (!bp) return;
+        const key = `${bp}\u0000${voc}`;
+        if (!map.has(key)) map.set(key, { bp, voc, count: 0 });
+        map.get(key).count++;
+      });
+      const vocOrder = new Map(getVocativosOrdemRelatorioCarregamentoPainelProgramacao(registros).map((v, i) => [v, i]));
+      return Array.from(map.values()).sort((a, b) => {
+        const va = vocOrder.get(a.voc) ?? 9999;
+        const vb = vocOrder.get(b.voc) ?? 9999;
+        if (va !== vb) return va - vb;
+        return String(a.bp || "").localeCompare(String(b.bp || ""), "pt-BR", { numeric: true });
+      });
+    }
+
+    function getLargurasColunasRelatorioCarregamentoPainelProgramacao(registros) {
+      const maxAlmoxChars = Math.max("Almoxarifado".length, ...(registros || []).map(r => getVocRelatorioCarregamentoPainelProgramacao(r).length));
+      const maxEtqChars = Math.max("Etq. Unica".length, ...(registros || []).map(r => {
+        const v = getCampoRelatorioCarregamentoPainelProgramacao(r, ["Etiqueta Unica", "Etiqueta Única", "ETIQUETA UNICA", "ETIQUETA ÚNICA"]);
+        return (isBlankRelatorioCarregamentoPainelProgramacao(v) ? "nan" : String(v)).length;
+      }));
+      const almox = Math.min(20.5, Math.max(9.8, 6.4 + (maxAlmoxChars * 0.27)));
+      const etq = Math.min(11.5, Math.max(4.7, 2.9 + (maxEtqChars * 0.34)));
+      const extra = (almox - 9.8) + (etq - 4.7);
+      const remetente = Math.max(5.2, 9.8 - (extra * 0.55));
+      const mercadoria = Math.max(4.4, 8.3 - (extra * 0.45));
+      return { almox, etq, remetente, mercadoria };
+    }
+
+    function getTabelaRelatorioCarregamentoPainelProgramacao(data, larguras) {
+      let notWeighedStarted = false;
+      const body = (data || []).map(r => {
+        const voc = getVocRelatorioCarregamentoPainelProgramacao(r);
+        const p = displayPrioridadeRelatorioCarregamentoPainelProgramacao(r);
+        const isNotWeighed = isNaoPesadoOuJanelaFuturaRelatorioCarregamentoPainelProgramacao(r);
+        const divider = isNotWeighed && !notWeighedStarted
+          ? '<tr class="not-weighed-divider"><td colspan="18">NOTAS FISCAIS NÃO PESADAS / JANELA DE AMANHÃ</td></tr>'
+          : "";
+        if (isNotWeighed) notWeighedStarted = true;
+        const rowClass = isNotWeighed ? ' class="not-weighed-row"' : "";
+        const pesadoClass = isNotWeighed ? ' class="not-weighed-flag"' : "";
+
+        const etiqueta = getCampoRelatorioCarregamentoPainelProgramacao(r, ["Etiqueta Unica", "Etiqueta Única", "ETIQUETA UNICA", "ETIQUETA ÚNICA"]);
+        const cte = getCampoRelatorioCarregamentoPainelProgramacao(r, ["CTE", "Cte", "cte"]);
+        const oef = getCampoRelatorioCarregamentoPainelProgramacao(r, ["Numero OEF", "Número OEF", "NUMERO OEF", "NÚMERO OEF"]);
+        const pesado = getCampoRelatorioCarregamentoPainelProgramacao(r, ["Pesado", "PESADO", "pesado"]);
+        const peso = numeroRelatorioCarregamentoPainelProgramacao(getCampoRelatorioCarregamentoPainelProgramacao(r, ["Peso", "PESO", "peso"]));
+        const volumes = getCampoRelatorioCarregamentoPainelProgramacao(r, ["Volumes", "VOLUMES", "volumes"]);
+        const fornecedor = getCampoRelatorioCarregamentoPainelProgramacao(r, ["Fornecedor", "FORNECEDOR", "fornecedor"]);
+        const mercadoria = getCampoRelatorioCarregamentoPainelProgramacao(r, ["Mercadoria", "MERCADORIA", "mercadoria"]);
+        const fragil = getCampoRelatorioCarregamentoPainelProgramacao(r, ["FRAGIL?", "FRÁGIL?", "Fragil?", "Frágil?"]);
+        const dtLim = getCampoRelatorioCarregamentoPainelProgramacao(r, ["Dt Limite Embarque", "DT LIMITE EMBARQUE", "Dt. Limite Embarque"]);
+        const dtEntrega = getCampoRelatorioCarregamentoPainelProgramacao(r, ["Dt Final Entrega", "DT FINAL ENTREGA", "Dt. Final Entrega"]);
+        const endWms = getCampoRelatorioCarregamentoPainelProgramacao(r, ["End. WMS", "END. WMS", "End WMS", "END WMS"]);
+        const nota = getCampoRelatorioCarregamentoPainelProgramacao(r, ["Nota", "NOTA", "nota"]);
+
+        return `${divider}<tr${rowClass}>
+          <td>${fmtDataRelatorioCarregamentoPainelProgramacao(getChegadaRelatorioCarregamentoPainelProgramacao(r))}</td>
+          <td>${escRelatorioCarregamentoPainelProgramacao(nota)}</td>
+          <td>${isBlankRelatorioCarregamentoPainelProgramacao(etiqueta) ? "nan" : escRelatorioCarregamentoPainelProgramacao(etiqueta)}</td>
+          <td>${escRelatorioCarregamentoPainelProgramacao(cte)}</td>
+          <td>${escRelatorioCarregamentoPainelProgramacao(oef)}</td>
+          <td${pesadoClass}>${escRelatorioCarregamentoPainelProgramacao(pesado)}</td>
+          <td>${displayJanelaEmissaoRelatorioCarregamentoPainelProgramacao(r)}</td>
+          <td>${fmtPesoRelatorioCarregamentoPainelProgramacao(peso)}</td>
+          <td>${escRelatorioCarregamentoPainelProgramacao(volumes)}</td>
+          <td>${escRelatorioCarregamentoPainelProgramacao(p)}</td>
+          <td>${escRelatorioCarregamentoPainelProgramacao(displayONURelatorioCarregamentoPainelProgramacao(r))}</td>
+          <td class="left" title="${escRelatorioCarregamentoPainelProgramacao(fornecedor)}">${escRelatorioCarregamentoPainelProgramacao(fornecedor)}</td>
+          <td class="left" title="${escRelatorioCarregamentoPainelProgramacao(voc)}">${escRelatorioCarregamentoPainelProgramacao(voc)}</td>
+          <td title="${escRelatorioCarregamentoPainelProgramacao(mercadoria)}">${escRelatorioCarregamentoPainelProgramacao(mercadoria)}</td>
+          <td>${escRelatorioCarregamentoPainelProgramacao(fragil)}</td>
+          <td>${fmtDataRelatorioCarregamentoPainelProgramacao(dtLim)}</td>
+          <td>${fmtDataRelatorioCarregamentoPainelProgramacao(dtEntrega)}</td>
+          <td class="wms-cell">${escRelatorioCarregamentoPainelProgramacao(endWms)}</td>
+        </tr>`;
+      }).join("");
+
+      return `<table class="main-report"><colgroup>
+        <col style="width:5.5%"><col style="width:5.0%"><col style="width:${larguras.etq.toFixed(2)}%"><col style="width:6.0%"><col style="width:4.8%"><col style="width:3.0%"><col style="width:5.2%"><col style="width:4.0%"><col style="width:2.8%"><col style="width:4.7%"><col style="width:3.0%"><col style="width:${larguras.remetente.toFixed(2)}%"><col style="width:${larguras.almox.toFixed(2)}%"><col style="width:${larguras.mercadoria.toFixed(2)}%"><col style="width:3.0%"><col style="width:5.9%"><col style="width:5.9%"><col style="width:10.7%">
+      </colgroup><thead><tr><th>Chegada</th><th>Nota</th><th>Etq. Unica</th><th>CTE</th><th>OEF</th><th>Pesado</th><th>Jan. Emissao</th><th>KG</th><th>Vol</th><th>Prior</th><th>ONU</th><th>Remetente</th><th>Almoxarifado</th><th>Mercadoria</th><th>FRAGIL?</th><th>Lim. Embarque</th><th>Data Entrega</th><th>End. WMS</th></tr></thead><tbody>${body}</tbody></table>`;
+    }
+
+    function montarHtmlRelatorioCarregamentoPainelProgramacao(registros) {
+      const zona = getZonaEntregaRelatorioCarregamentoPainelProgramacao(registros);
+      const totalKg = (registros || []).reduce((s, r) => s + numeroRelatorioCarregamentoPainelProgramacao(getCampoRelatorioCarregamentoPainelProgramacao(r, ["Peso", "PESO", "peso"])), 0);
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      let atrasado = 0;
+      (registros || []).forEach(r => {
+        const lim = dataRelatorioCarregamentoPainelProgramacao(getCampoRelatorioCarregamentoPainelProgramacao(r, ["Dt Limite Embarque", "DT LIMITE EMBARQUE", "Dt. Limite Embarque"]));
+        if (lim && lim.getTime() < hoje.getTime()) {
+          atrasado += numeroRelatorioCarregamentoPainelProgramacao(getCampoRelatorioCarregamentoPainelProgramacao(r, ["Peso", "PESO", "peso"]));
+        }
+      });
+      const dentro = totalKg - atrasado;
+      const bpRows = getBPSummaryRelatorioCarregamentoPainelProgramacao(registros);
+      const perGroup = Math.max(1, Math.ceil(bpRows.length / 3));
+      const bpGroups = [bpRows.slice(0, perGroup), bpRows.slice(perGroup, perGroup * 2), bpRows.slice(perGroup * 2)];
+      const bpTableHtml = group => `<table class="bp-summary"><colgroup><col style="width:27%"><col style="width:17%"><col style="width:56%"></colgroup><thead><tr><th>BP</th><th>Qtd Notas</th><th>Vocativo</th></tr></thead><tbody>${group.map(x => `<tr><td>${escRelatorioCarregamentoPainelProgramacao(x.bp)}</td><td>${x.count}</td><td title="${escRelatorioCarregamentoPainelProgramacao(x.voc)}">${escRelatorioCarregamentoPainelProgramacao(x.voc)}</td></tr>`).join("") || '<tr><td colspan="3">—</td></tr>'}</tbody></table>`;
+      const bpHtml = bpRows.length ? bpGroups.map(bpTableHtml).join("") : bpTableHtml([]);
+
+      const sorted = ordenarRegistrosRelatorioCarregamentoPainelProgramacao(registros);
+      const vocOrder = getVocativosOrdemRelatorioCarregamentoPainelProgramacao(registros);
+      const blocosOrdem = vocOrder.map((v, i) => ({
+        v,
+        i,
+        count: registros.filter(r => getVocRelatorioCarregamentoPainelProgramacao(r) === v).length
+      })).sort((a, b) => b.count - a.count || a.i - b.i);
+      const larguras = getLargurasColunasRelatorioCarregamentoPainelProgramacao(registros);
+      const blocos = blocosOrdem.map(({ v }) => {
+        const data = sorted.filter(r => getVocRelatorioCarregamentoPainelProgramacao(r) === v);
+        if (!data.length) return "";
+        const kg = data.reduce((s, r) => s + numeroRelatorioCarregamentoPainelProgramacao(getCampoRelatorioCarregamentoPainelProgramacao(r, ["Peso", "PESO", "peso"])), 0);
+        return `<section class="report-block"><h2 class="block-title">ENTREGA DIRETA - ${escRelatorioCarregamentoPainelProgramacao(v)} - Peso: ${fmtPesoRelatorioCarregamentoPainelProgramacao(kg)} KG - Notas: ${data.length}</h2>${getTabelaRelatorioCarregamentoPainelProgramacao(data, larguras)}</section>`;
+      }).join("");
+
+      const estilos = `
+        *{box-sizing:border-box}
+        body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#dfe3e8;color:#000}
+        .report-wrap{overflow:auto;padding:16px;background:#dfe3e8}
+        .report-sheet{width:1120px;min-height:760px;margin:0 auto;background:#fff;padding:20px 7px 12px;box-shadow:0 4px 18px rgba(0,0,0,.14);color:#000}
+        .report-title{text-align:center;font-weight:800;line-height:1.03;font-size:20px;margin:0}
+        .report-subtitle{text-align:center;font-weight:800;line-height:1.05;font-size:19px;margin:1px 0 0}
+        .bp-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:18px;align-items:start;margin:24px auto 34px;width:94%}
+        .bp-summary{border-collapse:collapse;width:100%;table-layout:fixed;font-size:8px}
+        .bp-summary th{background:#000;color:#fff;font-weight:700;border:1px solid #5d5d5d;padding:4px 3px;text-align:center;line-height:1.05}
+        .bp-summary td{border:1px solid #999;background:#f7f7f7;padding:3px 3px;text-align:center;white-space:nowrap;overflow:visible;line-height:1.05}
+        .bp-summary td:nth-child(3){white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+        .main-report{border-collapse:collapse;width:100%;table-layout:fixed;font-size:8.1px}
+        .main-report th{background:#000;color:#fff;border:1px solid #5d5d5d;padding:4px 2px;font-weight:400;text-align:center;white-space:nowrap;overflow:hidden}
+        .main-report td{border:1px solid #8c8c8c;padding:4px 2px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:clip;height:22px;background:#fff}
+        .main-report td.left{text-align:left}
+        .report-block{margin-top:24px;break-inside:auto;page-break-inside:auto}.report-block:first-child{margin-top:0}
+        .block-title{text-align:center;font-size:18px;font-weight:800;margin:0 0 4px;line-height:1.1}
+        .main-report tr.not-weighed-row td{background:#f3f4f6}
+        .main-report tr.not-weighed-row td.not-weighed-flag{font-weight:800}
+        .main-report tr.not-weighed-divider td{background:#e5e7eb;font-weight:800;text-align:left;padding:3px 5px;border-top:1.4px solid #000;border-bottom:1px solid #8c8c8c;letter-spacing:.02em}
+        .main-report td.wms-cell{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;word-break:break-word;line-height:1.15}
+        .print-footer{text-align:center;font-size:9px;margin-top:15px}
+        @page{size:A4 landscape;margin:7mm 5mm 7mm}
+        @media print{
+          body{background:#fff;margin:0}.report-wrap{padding:0;border:0;background:#fff;overflow:visible}.report-sheet{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}
+          .report-sheet,.report-sheet *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+          .report-title{font-size:14.8pt}.report-subtitle{font-size:14.2pt}
+          .bp-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:4mm;margin:5mm auto 8mm;width:96%}
+          .bp-summary{width:100%;font-size:5.4pt}.bp-summary th{font-size:5.4pt;padding:.9mm .55mm}.bp-summary td{font-size:5.2pt;padding:.75mm .55mm}
+          .bp-summary th,.main-report th{background:#000!important;color:#fff!important}
+          .main-report{font-size:5.7pt}.main-report th{font-size:5.7pt;padding:1.1mm .35mm}.main-report td{font-size:5.5pt;padding:1.05mm .35mm;height:auto}
+          .report-block{margin-top:5mm}.block-title{font-size:13pt;margin:0 0 1.5mm}
+          .bp-summary thead{display:table-header-group}.main-report thead{display:table-row-group!important}tr{break-inside:avoid;page-break-inside:avoid}.print-footer{font-size:6.8pt;margin-top:4mm}
+        }
+      `;
+
+      return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Relatório de Carregamento</title><style>${estilos}</style></head><body>
+        <section class="report-wrap"><article class="report-sheet">
+          <h1 class="report-title">Relatório de Carregamento - Zona de Entrega: ${escRelatorioCarregamentoPainelProgramacao(zona)}</h1>
+          <div class="report-subtitle">Peso Total: ${fmtPesoRelatorioCarregamentoPainelProgramacao(totalKg)} KG - NFs Totais: ${registros.length}</div>
+          <div class="report-subtitle">Dentro do Prazo: ${fmtPesoRelatorioCarregamentoPainelProgramacao(dentro)} KG \\ Embarque Atrasado: ${fmtPesoRelatorioCarregamentoPainelProgramacao(atrasado)} KG</div>
+          <div class="bp-summary-grid">${bpHtml}</div>
+          <div>${blocos}</div>
+          <div class="print-footer">Impresso em: ${escRelatorioCarregamentoPainelProgramacao(fmtAgoraRelatorioCarregamentoPainelProgramacao())}</div>
+        </article></section>
+        <script>window.addEventListener('load',function(){setTimeout(function(){window.print();},180);});<\/script>
+      </body></html>`;
+    }
+
+    function gerarRelatorioPDFCardsSelecionadosPainelProgramacao() {
+      const quantidadeCards = painelProgCardsSelecionados?.size || 0;
+
+      const registros = getRegistrosSelecionadosRelatorioCarregamentoPainelProgramacao();
+      if (!registros.length) {
+        alert(quantidadeCards
+          ? "Os cards selecionados não possuem notas compatíveis com os filtros atuais para gerar o relatório."
+          : "Não existem notas compatíveis com os filtros atuais para gerar o relatório.");
+        return;
+      }
+
+      const janela = window.open("", "_blank");
+      if (!janela) {
+        alert("O navegador bloqueou a janela do relatório. Libere pop-ups para esta página e tente novamente.");
+        return;
+      }
+
+      janela.document.open();
+      janela.document.write(montarHtmlRelatorioCarregamentoPainelProgramacao(registros));
+      janela.document.close();
     }
 
     function abrirRelatorioVocativoPainelProgramacao(cardKey, ev) {
