@@ -6707,6 +6707,13 @@
       return valor;
     }
 
+    const CONTRATO_SPOT_ADICIONAL = "S2025019999";
+
+    function isContratoSpot(valorContrato) {
+      const contrato = normalizar(valorContrato);
+      return contrato.includes("SPOT") || contrato === CONTRATO_SPOT_ADICIONAL;
+    }
+
     const GOOGLE_SHEET_JANELAS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkREcLQFJhAsxEq3WRVxHtYw46zSe3sDVJcQWOreQzFs6-u6PWF-cI8ndRTkQUFXfurUkkog0-NrZq/pubhtml";
     const DIAS_SEMANA_JANELA_ORDEM = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"];
     const DIAS_SEMANA_JANELA_LABEL = {
@@ -8610,7 +8617,7 @@
         const bpDestinoValor = getFieldValue(r, ["BP Destino", "BP DESTINO", "Bp Destino"]) || "";
         const volumesValor = getFieldValue(r, ["Volumes", "VOLUMES"]) || "";
         const contratoValor = getFieldValue(r, ["Contrato", "CONTRATO", "contrato"]) || "";
-        const temSpotLinha = normalizar(contratoValor).includes("SPOT");
+        const temSpotLinha = isContratoSpot(contratoValor);
 
         if (!totaisPVDPorVocativoDestinatario[almox]) totaisPVDPorVocativoDestinatario[almox] = {};
         if (!totaisPVDPorVocativoDestinatario[almox][destinatarioNormTotal]) {
@@ -11329,7 +11336,7 @@ return null;
         const prioridadeValor = String(getFieldValue(r, ["Prioridade", "PRIORIDADE", "prioridade"]) || "").trim();
         const prioridadeNorm = normalizar(prioridadeValor || "");
         const contratoValor = getFieldValue(r, ["Contrato", "CONTRATO", "contrato"]) || "";
-        const temSpotLinha = normalizar(contratoValor).includes("SPOT");
+        const temSpotLinha = isContratoSpot(contratoValor);
         if (prioridadeNorm) totalDestinatario.prioridades.add(prioridadeValor || prioridadeNorm);
         if (prioridadeNorm === "EXPRESSO") {
           totalDestinatario.expressoCount++;
@@ -11564,7 +11571,7 @@ return null;
           });
         }
         const contratoNota = String(n?.contrato || getFieldValue(n?._raw || {}, ["Contrato", "CONTRATO", "contrato"]) || "").trim();
-        const temSpotNota = n?._temSpot === true || normalizar(contratoNota).includes("SPOT");
+        const temSpotNota = n?._temSpot === true || isContratoSpot(contratoNota);
         if (temSpotNota) {
           spotNotas++;
           spotDetalhesNotas.push({
@@ -11819,7 +11826,7 @@ return null;
           });
         }
         const contrato = String(n?.contrato || getFieldValue(n?._raw || {}, ["Contrato", "CONTRATO", "contrato"]) || "").trim();
-        if (n?._temSpot === true || normalizar(contrato).includes("SPOT")) {
+        if (n?._temSpot === true || isContratoSpot(contrato)) {
           total.spotCount++;
           total.spotDetalhes.push({
             nota: n?.nota || "", numeroOEF: n?.numeroOEF || "", contrato,
@@ -12084,7 +12091,7 @@ return null;
           if (norm && !prioridades.has(norm)) prioridades.set(norm, label);
         });
 
-        // SPOT não vem da coluna Prioridade; é identificado pela coluna Contrato.
+        // SPOT não vem da coluna Prioridade; é identificado pela coluna Contrato (texto contendo SPOT ou contrato S2025019999).
         // Mesmo assim, entra como opção virtual no filtro Prioridade PVD.
         if (item.temSpot === true && !prioridades.has("SPOT")) {
           prioridades.set("SPOT", "SPOT");
@@ -13326,7 +13333,7 @@ return null;
       const prioridade = normalizar(getCampoRelatorioCarregamentoPainelProgramacao(row, ["Prioridade", "PRIORIDADE", "prioridade"]));
       if (prioridade === "EXPRESSO") return 0;
       const contrato = normalizar(getCampoRelatorioCarregamentoPainelProgramacao(row, ["Contrato", "CONTRATO", "contrato"]));
-      if (contrato.includes("SPOT")) return 1;
+      if (isContratoSpot(contrato)) return 1;
       if (prioridade === "PRIORIDADE") return 2;
       if (prioridade === "P0") return 3;
       if (prioridade === "P1") return 4;
@@ -13338,7 +13345,7 @@ return null;
       const p = String(getCampoRelatorioCarregamentoPainelProgramacao(row, ["Prioridade", "PRIORIDADE", "prioridade"]) || "").trim();
       if (p && normalizar(p) !== "PADRAO") return p;
       const contrato = normalizar(getCampoRelatorioCarregamentoPainelProgramacao(row, ["Contrato", "CONTRATO", "contrato"]));
-      if (contrato.includes("SPOT")) return "Spot";
+      if (isContratoSpot(contrato)) return "Spot";
       return "";
     }
 
@@ -13402,7 +13409,7 @@ return null;
       if (filtroDinamicoRestritivoRelatorioPainelProgramacao("entrada")) {
         const prioridadeNorm = String(nota?._prioridadeNorm || normalizar(nota?.prioridade || "")).trim();
         const contrato = String(nota?.contrato || getCampoRelatorioCarregamentoPainelProgramacao(nota?._raw || {}, ["Contrato", "CONTRATO", "contrato"]) || "");
-        const temSpot = nota?._temSpot === true || normalizar(contrato).includes("SPOT");
+        const temSpot = nota?._temSpot === true || isContratoSpot(contrato);
         const onuUno = nota?.onu ?? getCampoRelatorioCarregamentoPainelProgramacao(nota?._raw || {}, ["ONU", "UNO", "Onu", "Uno", "onu", "uno"]);
         const temQuimico = isQuimicoPainelProgramacao(onuUno);
         const passaPrioridade = (
@@ -14071,7 +14078,7 @@ return null;
         ? `<span class="painelProgSeloExpresso" title="Prioridade Expresso no PVD"><strong>EX</strong><small>EXPRESSO</small></span>`
         : "";
       const seloSpot = item.temSpot
-        ? `<span class="painelProgSeloSpot" title="Contrato contém SPOT no PVD"><strong>SPOT</strong></span>`
+        ? `<span class="painelProgSeloSpot" title="Contrato classificado como SPOT no PVD"><strong>SPOT</strong></span>`
         : "";
       const selosPrioridade = (seloExpresso || seloSpot)
         ? `<div class="painelProgSelosPrioridade">${seloSpot}${seloExpresso}</div>`
