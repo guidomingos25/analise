@@ -15302,7 +15302,7 @@ return null;
     function getRouteGeoCacheStorage() {
       if (painelProgGeoCacheMem && typeof painelProgGeoCacheMem === "object") return painelProgGeoCacheMem;
       try {
-        const raw = localStorage.getItem("gira_route_geo_cep_v2");
+        const raw = localStorage.getItem("gira_route_geo_cep_v3");
         const parsed = raw ? JSON.parse(raw) : {};
         painelProgGeoCacheMem = parsed && typeof parsed === "object" ? parsed : {};
       } catch (_) {
@@ -15315,7 +15315,7 @@ return null;
       try {
         painelProgGeoCacheMem = cache && typeof cache === "object" ? cache : {};
         const entries = Object.entries(painelProgGeoCacheMem).slice(-1500);
-        localStorage.setItem("gira_route_geo_cep_v2", JSON.stringify(Object.fromEntries(entries)));
+        localStorage.setItem("gira_route_geo_cep_v3", JSON.stringify(Object.fromEntries(entries)));
       } catch (_) {}
     }
 
@@ -15332,6 +15332,14 @@ return null;
       return destino ? `CIDADE:${normalizar(destino)}|${normalizar(uf)}` : "";
     }
 
+    function coordenadaValidaBrasilPainelProgramacao(lat, lon) {
+      lat = Number(lat); lon = Number(lon);
+      // Caixa geográfica ampla do território brasileiro + pequena margem.
+      return Number.isFinite(lat) && Number.isFinite(lon)
+        && lat >= -35.5 && lat <= 6.5
+        && lon >= -75.5 && lon <= -31.0;
+    }
+
     async function geocodificarTextoORSPainelProgramacao(text) {
       if (!text) return null;
       const url = `${ORS_GEOCODE_BASE_URL}/search?api_key=${encodeURIComponent(ORS_API_KEY)}&text=${encodeURIComponent(text)}&size=1&boundary.country=BR`;
@@ -15343,8 +15351,32 @@ return null;
       if (!Array.isArray(coords) || coords.length < 2) return null;
       const lon = Number(coords[0]);
       const lat = Number(coords[1]);
-      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+      if (!coordenadaValidaBrasilPainelProgramacao(lat, lon)) return null;
       return { lon, lat, label:feat?.properties?.label || text };
+    }
+
+    async function consultarBrasilApiCepPainelProgramacao(digits) {
+      if (!/^\d{8}$/.test(String(digits || ""))) return null;
+      try {
+        const resp = await fetch(`https://brasilapi.com.br/api/cep/v2/${digits}`);
+        if (!resp.ok) return null;
+        const json = await resp.json();
+        const coords = json?.location?.coordinates || {};
+        const lon = Number(coords.longitude);
+        const lat = Number(coords.latitude);
+        return {
+          cep: String(json?.cep || digits).replace(/\D/g, ""),
+          uf: String(json?.state || "").trim().toUpperCase(),
+          cidade: String(json?.city || "").trim(),
+          bairro: String(json?.neighborhood || "").trim(),
+          rua: String(json?.street || "").trim(),
+          lat: coordenadaValidaBrasilPainelProgramacao(lat, lon) ? lat : null,
+          lon: coordenadaValidaBrasilPainelProgramacao(lat, lon) ? lon : null
+        };
+      } catch (err) {
+        console.warn("Falha ao consultar BrasilAPI para CEP:", digits, err);
+        return null;
+      }
     }
 
     async function getGeocodeCEPPainelProgramacao(cep, item) {
@@ -15355,24 +15387,42 @@ return null;
 
       const cache = getRouteGeoCacheStorage();
       const cached = cache[cacheKey];
-      if (cached && Number.isFinite(Number(cached.lat)) && Number.isFinite(Number(cached.lon))) {
-        return cached;
-      }
+      if (cached && coordenadaValidaBrasilPainelProgramacao(cached.lat, cached.lon)) return cached;
+      if (cached) delete cache[cacheKey];
 
       let result = null;
-      // Primeiro tenta o CEP junto com cidade/UF para aumentar a precisão do Pelias.
+
+      // 1) CEP oficializado/normalizado pela BrasilAPI. Quando ela fornece coordenadas válidas,
+      //    usamos diretamente; isso evita resultados ambíguos do geocoder por texto.
       if (digits.length === 8) {
-        try {
-          const cepFmt = `${digits.slice(0,5)}-${digits.slice(5)}`;
-          const contexto = [cepFmt, destino, uf, "Brasil"].filter(Boolean).join(", ");
-          const geo = await geocodificarTextoORSPainelProgramacao(contexto);
-          if (geo) result = { ...geo, source:"cep" };
-        } catch (err) {
-          console.warn("Falha na geocodificação por CEP:", err);
+        const brCep = await consultarBrasilApiCepPainelProgramacao(digits);
+        const ufEsperada = String(uf || "").trim().toUpperCase();
+        const ufCompativel = !ufEsperada || !brCep?.uf || brCep.uf === ufEsperada;
+        if (brCep && ufCompativel && coordenadaValidaBrasilPainelProgramacao(brCep.lat, brCep.lon)) {
+          result = {
+            lat: brCep.lat,
+            lon: brCep.lon,
+            label: [brCep.rua, brCep.bairro, brCep.cidade, brCep.uf, digits].filter(Boolean).join(", "),
+            source: "brasilapi-cep"
+          };
+        }
+
+        // 2) Se o CEP foi reconhecido mas veio sem coordenadas, usa o endereço retornado por ele
+        //    para geocodificar de forma muito menos ambígua que apenas "CEP, Brasil".
+        if (!result && brCep && ufCompativel) {
+          try {
+            const textoEndereco = [brCep.rua, brCep.bairro, brCep.cidade, brCep.uf, "Brasil"].filter(Boolean).join(", ");
+            if (textoEndereco) {
+              const geo = await geocodificarTextoORSPainelProgramacao(textoEndereco);
+              if (geo) result = { ...geo, source:"cep-endereco" };
+            }
+          } catch (err) {
+            console.warn("Falha na geocodificação do endereço do CEP:", err);
+          }
         }
       }
 
-      // Se o CEP não estiver disponível ou não retornar ponto, posiciona pela cidade/UF.
+      // 3) Fallback controlado pela cidade/UF do próprio card.
       if (!result && destino) {
         try {
           const geo = await geocodificarTextoORSPainelProgramacao([destino, uf, "Brasil"].filter(Boolean).join(", "));
@@ -15382,16 +15432,16 @@ return null;
         }
       }
 
-      if (result) {
+      if (result && coordenadaValidaBrasilPainelProgramacao(result.lat, result.lon)) {
         cache[cacheKey] = { ...result, savedAt:Date.now() };
-        // O mesmo destino pode voltar em outro card sem CEP. Salva também a chave por cidade.
         if (destino) {
           const cityKey = `CIDADE:${normalizar(destino)}|${normalizar(uf)}`;
           if (!cache[cityKey]) cache[cityKey] = { ...result, source: result.source || "cidade", savedAt:Date.now() };
         }
         saveRouteGeoCacheStorage(cache);
+        return result;
       }
-      return result;
+      return null;
     }
 
     function getAssinaturaMapaPainelProgramacao(dados) {
