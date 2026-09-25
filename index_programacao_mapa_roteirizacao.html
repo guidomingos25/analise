@@ -3898,45 +3898,41 @@
 
   
 
-
-    #painelProgAgrupamentoSelect { display:none !important; }
-    /* ===== Painel de Programação - Mapa Leaflet ===== */
-    .painelProgMapShell {
-      background:#fff; border:1px solid rgba(15,23,42,.10); border-radius:16px;
-      box-shadow:var(--shadowSoft); overflow:hidden; min-width:0;
-    }
-    .painelProgMapToolbar {
-      display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
-      padding:10px 12px; border-bottom:1px solid #e5e7eb; background:#f8fafc;
-    }
-    .painelProgMapToolbarLeft,.painelProgMapToolbarRight{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .painelProgMapMeta{font-size:12px;color:#475569;font-weight:700}
-    .painelProgMapBtn{padding:8px 10px!important;font-size:11px!important;min-height:34px}
-    #painelProgMap { width:100%; height:min(68vh,720px); min-height:520px; background:#e2e8f0; }
-    .painelProgMapStatusBar {
-      display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; padding:10px 12px;
-      border-top:1px solid #e5e7eb; background:#fff;
-    }
-    .painelProgMapStat{padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc}
-    .painelProgMapStat b{display:block;font-size:15px;color:#0f172a}.painelProgMapStat span{font-size:10px;color:#64748b;font-weight:800;text-transform:uppercase}
+    /* ===== Painel de Programação - Mapa Leaflet sincronizado com cards ===== */
+    .painelProgMapShell { background:#fff; border:1px solid rgba(15,23,42,.10); border-radius:16px; box-shadow:var(--shadowSoft); overflow:hidden; min-width:0; margin-bottom:14px; }
+    .painelProgMapToolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:10px 12px; border-bottom:1px solid #e5e7eb; background:#f8fafc; }
+    .painelProgMapToolbarLeft,.painelProgMapToolbarRight { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .painelProgMapBtn { padding:8px 10px!important; font-size:11px!important; min-height:34px; }
+    .painelProgMapCityBox { display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding-left:8px; border-left:1px solid #dbe3ec; }
+    .painelProgMapCityInput { height:34px; min-width:190px; max-width:240px; padding:6px 9px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#0f172a; font-size:11px; }
+    .painelProgMapUfInput { height:34px; width:64px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#0f172a; font-size:11px; text-transform:uppercase; }
+    #painelProgMap { width:100%; height:min(58vh,620px); min-height:440px; background:#e2e8f0; }
+    .painelProgMapStatusBar { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; padding:10px 12px; border-top:1px solid #e5e7eb; background:#fff; }
+    .painelProgMapStat { padding:8px 10px; border:1px solid #e5e7eb; border-radius:10px; background:#f8fafc; }
+    .painelProgMapStat b { display:block; font-size:15px; color:#0f172a; }
+    .painelProgMapStat span { font-size:10px; color:#64748b; font-weight:800; text-transform:uppercase; }
     .painelProgGeoWarning { margin:10px 12px 12px; border:1px solid #fed7aa; background:#fff7ed; border-radius:12px; overflow:hidden; }
-    .painelProgGeoWarningHead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 10px;font-size:12px;font-weight:900;color:#9a3412;cursor:pointer}
-    .painelProgGeoWarningList{display:none;max-height:180px;overflow:auto;border-top:1px solid #fed7aa;background:#fff}
-    .painelProgGeoWarning.open .painelProgGeoWarningList{display:block}
-    .painelProgGeoWarningRow{display:grid;grid-template-columns:minmax(130px,.8fr) minmax(110px,.7fr) 1.5fr;gap:8px;padding:7px 10px;border-bottom:1px solid #ffedd5;font-size:11px;color:#7c2d12}
-    .painelProgGeoWarningRow:last-child{border-bottom:none}
-    .painelProgLeafletTooltip{min-width:260px;max-width:340px;font-size:11px;line-height:1.35;color:#0f172a}
-    .painelProgLeafletTooltip .ttl{font-size:13px;font-weight:1000;margin-bottom:6px}.painelProgLeafletTooltip .row{margin:2px 0}.painelProgLeafletTooltip .sep{border-top:1px solid #e5e7eb;margin:6px 0}
-    .painelProgMarkerWrap{background:transparent!important;border:none!important}
-    .painelProgMarker{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(15,23,42,.35);display:flex;align-items:center;justify-content:center;position:relative}
-    .painelProgMarker>span{transform:rotate(45deg);font-size:10px;font-weight:1000;color:#fff}
-    .painelProgMarker.programado{background:#16a34a}.painelProgMarker.naoProgramado{background:#dc2626}.painelProgMarker.carregadoHoje{background:#2563eb}.painelProgMarker.carregadoOntem{background:#ea580c}
-    .painelProgMarker.selected{outline:4px solid rgba(37,99,235,.35);box-shadow:0 0 0 3px #1d4ed8,0 4px 12px rgba(15,23,42,.4)}
-    .painelProgMarker.spot:after{content:'S';position:absolute;right:-8px;top:-9px;width:15px;height:15px;border-radius:999px;background:#f59e0b;color:#fff;font-size:8px;font-weight:1000;display:flex;align-items:center;justify-content:center;transform:rotate(45deg);border:1px solid #fff}
-    .painelProgMarker.expresso:before{content:'EX';position:absolute;left:-10px;top:-9px;min-width:18px;height:15px;border-radius:999px;background:#7c3aed;color:#fff;font-size:7px;font-weight:1000;display:flex;align-items:center;justify-content:center;transform:rotate(45deg);border:1px solid #fff;padding:0 2px}
-    .painelProgRouteInfo{font-size:11px;color:#334155;font-weight:700}
-    .painelProgRouteError{color:#b91c1c!important}
-    @media(max-width:900px){#painelProgMap{height:62vh;min-height:430px}.painelProgMapStatusBar{grid-template-columns:repeat(2,minmax(0,1fr))}.painelProgGeoWarningRow{grid-template-columns:1fr}.painelProgMapToolbar{align-items:flex-start}}
+    .painelProgGeoWarningHead { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 10px; font-size:12px; font-weight:900; color:#9a3412; cursor:pointer; }
+    .painelProgGeoWarningList { display:none; max-height:180px; overflow:auto; border-top:1px solid #fed7aa; background:#fff; }
+    .painelProgGeoWarning.open .painelProgGeoWarningList { display:block; }
+    .painelProgGeoWarningRow { display:grid; grid-template-columns:minmax(130px,.8fr) minmax(110px,.7fr) 1.5fr; gap:8px; padding:7px 10px; border-bottom:1px solid #ffedd5; font-size:11px; color:#7c2d12; }
+    .painelProgGeoWarningRow:last-child { border-bottom:none; }
+    .painelProgLeafletTooltip { min-width:260px; max-width:340px; font-size:11px; line-height:1.35; color:#0f172a; }
+    .painelProgLeafletTooltip .ttl { font-size:13px; font-weight:1000; margin-bottom:6px; }
+    .painelProgLeafletTooltip .row { margin:2px 0; }
+    .painelProgLeafletTooltip .sep { border-top:1px solid #e5e7eb; margin:6px 0; }
+    .painelProgMarkerWrap { background:transparent!important; border:none!important; }
+    .painelProgMarker { width:30px; height:30px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:3px solid #fff; box-shadow:0 2px 8px rgba(15,23,42,.35); display:flex; align-items:center; justify-content:center; position:relative; }
+    .painelProgMarker>span { transform:rotate(45deg); font-size:10px; font-weight:1000; color:#fff; }
+    .painelProgMarker.programado { background:#16a34a; } .painelProgMarker.naoProgramado { background:#dc2626; } .painelProgMarker.carregadoHoje { background:#2563eb; } .painelProgMarker.carregadoOntem { background:#ea580c; }
+    .painelProgMarker.selected { outline:4px solid rgba(37,99,235,.35); box-shadow:0 0 0 3px #1d4ed8,0 4px 12px rgba(15,23,42,.4); }
+    .painelProgMarker.spot:after { content:'S'; position:absolute; right:-8px; top:-9px; width:15px; height:15px; border-radius:999px; background:#f59e0b; color:#fff; font-size:8px; font-weight:1000; display:flex; align-items:center; justify-content:center; transform:rotate(45deg); border:1px solid #fff; }
+    .painelProgMarker.expresso:before { content:'EX'; position:absolute; left:-10px; top:-9px; min-width:18px; height:15px; border-radius:999px; background:#7c3aed; color:#fff; font-size:7px; font-weight:1000; display:flex; align-items:center; justify-content:center; transform:rotate(45deg); border:1px solid #fff; padding:0 2px; }
+    .painelProgExtraMarker { width:32px; height:32px; border-radius:50%; background:#7c3aed; border:3px solid #fff; box-shadow:0 2px 9px rgba(15,23,42,.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px; font-weight:900; }
+    .painelProgRouteInfo { font-size:11px; color:#334155; font-weight:700; }
+    .painelProgRouteError { color:#b91c1c!important; }
+    .painelProgRouteExtra { color:#6d28d9; font-weight:900; }
+    @media(max-width:900px){ #painelProgMap{height:55vh;min-height:400px}.painelProgMapStatusBar{grid-template-columns:repeat(2,minmax(0,1fr))}.painelProgGeoWarningRow{grid-template-columns:1fr}.painelProgMapToolbar{align-items:flex-start}.painelProgMapCityBox{border-left:0;padding-left:0;width:100%}.painelProgMapCityInput{flex:1;max-width:none} }
 </style>
 </head>
 
@@ -4024,7 +4020,7 @@
       <div class="painelProgFilterBar">
         <input class="filtersCompactInput" id="painelProgSearchInput" placeholder="🔎 Filtrar por vocativo, destinatário, cliente, destino, UF, responsável ou ID..." type="text" />
 
-        <select class="filtersCompactInput" id="painelProgAgrupamentoSelect" title="Organização mantida para compatibilidade dos filtros; o mapa sempre exibe os pontos filtrados">
+        <select class="filtersCompactInput" id="painelProgAgrupamentoSelect" title="Organização dos cards">
           <option value="nenhum">A-Z Vocativo</option>
           <option value="destinatario">Agrupar por Destinatário</option>
           <option value="responsavel">Agrupar por Responsável</option>
@@ -4204,6 +4200,7 @@
       </div>
 
       <div id="painelProgramacaoResumo" class="painelProgKpiGrid"></div>
+      <div id="painelProgramacaoMapaHost"></div>
       <div class="painelProgMainLayout">
         <div id="painelProgramacaoCards" class="painelProgCardsArea"></div>
         <div id="painelProgResumoSideHost" class="painelProgResumoSideHost"></div>
@@ -4317,22 +4314,18 @@
     };
 
 
-    // Mapa / geocodificação / roteamento
-    // Leaflet cuida apenas da visualização. BrasilAPI CEP v2 fornece coordenadas; OSRM calcula a rota rodoviária.
+    // Geocodificação e roteamento do mapa do Painel de Programação.
+    // CEP: BrasilAPI v2. Cidade digitada: Nominatim sob demanda. Rota rodoviária: OSRM.
     const PAINEL_PROG_CEP_API_BASE = "https://brasilapi.com.br/api/cep/v2";
     const PAINEL_PROG_OSRM_BASE = "https://router.project-osrm.org";
-    const PAINEL_PROG_CEP_CACHE_KEY = "painelProgCepGeoCache_v1";
+    const PAINEL_PROG_NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
+    const PAINEL_PROG_CEP_CACHE_KEY = "painelProgCepGeoCache_v2";
+    const PAINEL_PROG_CITY_CACHE_KEY = "painelProgCityGeoCache_v1";
 
     window.__painelProgMapState = window.__painelProgMapState || {
-      map: null,
-      cluster: null,
-      markers: new Map(),
-      localizacoes: new Map(),
-      pendencias: new Map(),
-      routeLayer: null,
-      routeResult: null,
-      renderSeq: 0,
-      cepCache: null
+      map: null, cluster: null, markers: new Map(), localizacoes: new Map(), pendencias: new Map(),
+      routeLayer: null, routeResult: null, renderSeq: 0, cepCache: null, cityCache: null,
+      extraDestino: null, extraMarker: null, dadosFiltrados: [], mapFilterSelectedOnly: false
     };
 
     window.statusHojeServidor = window.statusHojeServidor || {};
@@ -12246,7 +12239,7 @@ return null;
       });
 
       const kpis = [
-        ["Vocativos", formatarNumeroPainelProgramacao(vocativos.size, 0)],
+        ["Cards", formatarNumeroPainelProgramacao(vocativos.size, 0)],
         ["Programados", formatarNumeroPainelProgramacao(programadosSet.size, 0)],
         ["Não programados", formatarNumeroPainelProgramacao(naoProgramadosSet.size, 0)],
         ["Carregados hoje", formatarNumeroPainelProgramacao(carregadosHojeSet.size, 0)],
@@ -12302,7 +12295,7 @@ return null;
         const chave = card.getAttribute("data-painel-prog-key") || "";
         card.classList.toggle("isSelected", painelProgCardsSelecionados.has(chave));
       });
-      if (typeof atualizarMarcadoresSelecaoPainelProgramacao === "function") atualizarMarcadoresSelecaoPainelProgramacao();
+      if (typeof atualizarMapaComSelecaoPainelProgramacao === "function") atualizarMapaComSelecaoPainelProgramacao();
     }
 
     function fecharPopupPainelProgramacao(ev) {
@@ -12318,6 +12311,8 @@ return null;
       popup.classList.remove("open");
       popup.innerHTML = "";
       chavesAfetadas.forEach(chave => atualizarCardPainelProgramacaoNoDOM(chave));
+      if (window.__painelProgMapState) window.__painelProgMapState.mapFilterSelectedOnly = false;
+      if (typeof atualizarMapaComSelecaoPainelProgramacao === "function") atualizarMapaComSelecaoPainelProgramacao(true);
     }
 
     function preservarPosicaoCardPainelProgramacao(chave, topoAnterior, scrollAnterior) {
@@ -12419,6 +12414,8 @@ return null;
 
       atualizarCardPainelProgramacaoNoDOM(chave, cardEl);
       renderPopupPainelProgramacao();
+      if (window.__painelProgMapState) window.__painelProgMapState.mapFilterSelectedOnly = painelProgCardsSelecionados.size > 0;
+      if (typeof atualizarMapaComSelecaoPainelProgramacao === "function") atualizarMapaComSelecaoPainelProgramacao(true);
     }
 
     function copiarTextoPainelProgramacao(texto, ev) {
@@ -14228,23 +14225,17 @@ return null;
       return cep.length === 8 ? cep : "";
     }
 
-    function carregarCacheCepPainelProgramacao() {
+    function carregarCacheMapaPainelProgramacao(chave, prop) {
       const st = window.__painelProgMapState;
-      if (st.cepCache instanceof Map) return st.cepCache;
+      if (st[prop] instanceof Map) return st[prop];
       let obj = {};
-      try { obj = JSON.parse(localStorage.getItem(PAINEL_PROG_CEP_CACHE_KEY) || "{}"); } catch (_) { obj = {}; }
-      st.cepCache = new Map(Object.entries(obj || {}));
-      return st.cepCache;
+      try { obj = JSON.parse(localStorage.getItem(chave) || "{}"); } catch (_) { obj = {}; }
+      st[prop] = new Map(Object.entries(obj || {}));
+      return st[prop];
     }
-
-    function salvarCacheCepPainelProgramacao() {
-      const st = window.__painelProgMapState;
-      try {
-        const obj = Object.fromEntries(st.cepCache instanceof Map ? st.cepCache.entries() : []);
-        localStorage.setItem(PAINEL_PROG_CEP_CACHE_KEY, JSON.stringify(obj));
-      } catch (_) {}
+    function salvarCacheMapaPainelProgramacao(chave, mapa) {
+      try { localStorage.setItem(chave, JSON.stringify(Object.fromEntries(mapa instanceof Map ? mapa.entries() : []))); } catch (_) {}
     }
-
     function coordenadaValidaBrasilPainelProgramacao(lat, lon) {
       lat = Number(lat); lon = Number(lon);
       return Number.isFinite(lat) && Number.isFinite(lon) && lat >= -34.5 && lat <= 6.5 && lon >= -74.5 && lon <= -32;
@@ -14255,7 +14246,7 @@ return null;
       if (!ceps.length) return { ok:false, motivo:"CEP Destino ausente ou inválido na PVD", tipo:"sem_cep" };
       if (ceps.length > 1) return { ok:false, motivo:`Mais de um CEP Destino no mesmo vocativo/destinatário: ${ceps.join(" / ")}`, tipo:"multiplos_ceps" };
       const cep = ceps[0];
-      const cache = carregarCacheCepPainelProgramacao();
+      const cache = carregarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY, "cepCache");
       if (!forcar && cache.has(cep)) {
         const cached = cache.get(cep);
         if (cached?.ok && coordenadaValidaBrasilPainelProgramacao(cached.lat, cached.lon)) {
@@ -14263,267 +14254,238 @@ return null;
           if (!ufEsperada || !cached.uf || cached.uf === ufEsperada) return { ...cached, cache:true };
         }
       }
-
       const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
       const timer = ctrl ? setTimeout(() => ctrl.abort(), 9000) : null;
       try {
         const resp = await fetch(`${PAINEL_PROG_CEP_API_BASE}/${encodeURIComponent(cep)}`, { signal: ctrl?.signal, cache:"force-cache" });
         if (!resp.ok) {
-          const resultado = { ok:false, cep, motivo: resp.status === 404 ? "CEP não encontrado pela BrasilAPI" : `Falha ao consultar CEP (HTTP ${resp.status})`, tipo:"api_cep" };
-          cache.set(cep, resultado); salvarCacheCepPainelProgramacao(); return resultado;
+          const r = { ok:false, cep, motivo: resp.status === 404 ? "CEP não encontrado pela BrasilAPI" : `Falha ao consultar CEP (HTTP ${resp.status})`, tipo:"api_cep" };
+          cache.set(cep,r); salvarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,cache); return r;
         }
         const json = await resp.json();
         const coords = json?.location?.coordinates || {};
         const lat = Number(coords.latitude), lon = Number(coords.longitude);
         if (!coordenadaValidaBrasilPainelProgramacao(lat, lon)) {
-          const resultado = { ok:false, cep, motivo:"CEP encontrado, mas sem coordenada geográfica válida", tipo:"sem_coordenada" };
-          cache.set(cep, resultado); salvarCacheCepPainelProgramacao(); return resultado;
+          const r = { ok:false, cep, motivo:"CEP encontrado, mas sem coordenada geográfica válida", tipo:"sem_coordenada" };
+          cache.set(cep,r); salvarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,cache); return r;
         }
         const uf = String(json?.state || "").trim().toUpperCase();
         const ufEsperada = (Array.isArray(item?.ufs) && item.ufs.length === 1) ? String(item.ufs[0] || "").toUpperCase() : "";
         if (ufEsperada && uf && uf !== ufEsperada) {
-          const resultado = { ok:false, cep, motivo:`UF do CEP (${uf}) diverge da UF Destino da PVD (${ufEsperada})`, tipo:"uf_divergente" };
-          cache.set(cep, resultado); salvarCacheCepPainelProgramacao(); return resultado;
+          const r = { ok:false, cep, motivo:`UF do CEP (${uf}) diverge da UF Destino da PVD (${ufEsperada})`, tipo:"uf_divergente" };
+          cache.set(cep,r); salvarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,cache); return r;
         }
-        const resultado = { ok:true, cep, lat, lon, uf, cidade:String(json?.city || ""), bairro:String(json?.neighborhood || ""), rua:String(json?.street || ""), provider:String(json?.service || "") };
-        cache.set(cep, resultado); salvarCacheCepPainelProgramacao(); return resultado;
+        const r = { ok:true, cep, lat, lon, uf, cidade:String(json?.city || ""), bairro:String(json?.neighborhood || ""), rua:String(json?.street || ""), provider:String(json?.service || "") };
+        cache.set(cep,r); salvarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,cache); return r;
       } catch (err) {
         return { ok:false, cep, motivo: err?.name === "AbortError" ? "Tempo excedido ao consultar o CEP" : "Falha de rede ao consultar o CEP", tipo:"rede" };
       } finally { if (timer) clearTimeout(timer); }
     }
 
-    function garantirEstruturaMapaPainelProgramacao() {
-      const host = document.getElementById("painelProgramacaoCards");
-      if (!host) return null;
-      const st = window.__painelProgMapState;
-      // Se o host foi recriado por uma atualização, descarte a instância Leaflet ligada ao DOM antigo.
-      if (!document.getElementById("painelProgMap") && st?.map) {
-        try { st.map.remove(); } catch (_) {}
-        st.map = null; st.cluster = null; st.markers = new Map(); st.localizacoes = new Map(); st.pendencias = new Map(); st.routeLayer = null; st.routeResult = null;
-      }
-      if (!document.getElementById("painelProgMap")) {
-        host.innerHTML = `
-          <div class="painelProgMapShell">
-            <div class="painelProgMapToolbar">
-              <div class="painelProgMapToolbarLeft">
-                <button class="btn painelProgMapBtn" type="button" onclick="calcularRotaMapaPainelProgramacao()">🛣️ Calcular rota</button>
-                <button class="btn secondary painelProgMapBtn" type="button" onclick="limparRotaMapaPainelProgramacao()">Limpar rota</button>
-                <button class="btn secondary painelProgMapBtn" type="button" onclick="ajustarMapaAosPontosPainelProgramacao()">◎ Enquadrar pontos</button>
-                <button class="btn secondary painelProgMapBtn" type="button" onclick="reprocessarCepsPendentesPainelProgramacao()">↻ Reprocessar CEPs</button>
-              </div>
-              <div class="painelProgMapToolbarRight">
-                <span id="painelProgRouteInfo" class="painelProgRouteInfo">Selecione 2 ou mais vocativos para calcular a rota.</span>
-              </div>
-            </div>
-            <div id="painelProgMap"></div>
-            <div id="painelProgMapStatusBar" class="painelProgMapStatusBar"></div>
-            <div id="painelProgGeoWarningHost"></div>
-          </div>`;
-      }
-      if (!window.L) {
-        host.innerHTML = `<div class="painelProgEmptyState" style="border-color:#fecaca;color:#991b1b;background:#fef2f2;">Não foi possível carregar a biblioteca Leaflet. Verifique a conexão com a internet e recarregue a página.</div>`;
-        return null;
-      }
-      if (!st.map) {
-        st.map = L.map("painelProgMap", { preferCanvas:true, zoomControl:true }).setView([-14.235, -51.9253], 4);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom:19,
-          attribution:'&copy; OpenStreetMap contributors'
-        }).addTo(st.map);
-        st.cluster = typeof L.markerClusterGroup === "function" ? L.markerClusterGroup({ chunkedLoading:true, spiderfyOnMaxZoom:true, showCoverageOnHover:false, maxClusterRadius:45 }) : L.layerGroup();
-        st.cluster.addTo(st.map);
-        setTimeout(() => st.map.invalidateSize(), 0);
-      }
-      return st;
-    }
-
-    function getClasseMarkerPainelProgramacao(item) {
-      if (item?.temCarregadoHoje) return "carregadoHoje";
-      if (item?.temCarregadoOntem) return "carregadoOntem";
-      return item?.temProgramado ? "programado" : "naoProgramado";
-    }
-
-    function criarIconeMarkerPainelProgramacao(item) {
-      const chave = String(item?.cardKey || "");
-      const selecionado = painelProgCardsSelecionados.has(chave) ? " selected" : "";
-      const spot = item?.temSpot ? " spot" : "";
-      const expresso = item?.temExpresso ? " expresso" : "";
-      const letra = String(item?.vocativo || "?").trim().slice(0,2).toUpperCase();
-      return L.divIcon({
-        className:"painelProgMarkerWrap",
-        html:`<div class="painelProgMarker ${getClasseMarkerPainelProgramacao(item)}${selecionado}${spot}${expresso}"><span>${getTextoPainelProgramacao(letra)}</span></div>`,
-        iconSize:[34,42], iconAnchor:[17,38], popupAnchor:[0,-36], tooltipAnchor:[0,-30]
-      });
-    }
-
-    function renderTooltipMapaPainelProgramacao(item, geo) {
-      const janelaCarga = normalizar(item?.janelaCarregamentoTexto) === "NAO CADASTRADO" ? "" : (item?.janelaCarregamentoTexto || "-");
-      const janelaEntrega = normalizar(item?.janelaEntregaTexto) === "NAO CADASTRADO" ? "" : (item?.janelaEntregaTexto || "-");
-      const ultimo = item?.ultimoVeiculo;
-      const cepFmt = geo?.cep ? `${geo.cep.slice(0,5)}-${geo.cep.slice(5)}` : "-";
-      const local = [geo?.cidade, geo?.uf].filter(Boolean).join(" - ");
-      return `<div class="painelProgLeafletTooltip">
-        <div class="ttl">${getTextoPainelProgramacao(item?.vocativo || "-")}</div>
-        <div class="row"><b>Status:</b> ${item?.temProgramado ? "PROGRAMADO" : "NÃO PROGRAMADO"}${item?.temCarregadoHoje ? " | CARREGADO HOJE" : ""}${item?.temCarregadoOntem ? " | CARREGADO ONTEM" : ""}</div>
-        <div class="row"><b>Embarque:</b> ${getTextoPainelProgramacao(item?.temProgramado ? (item?.tipoEmbarque || "-") : "-")}</div>
-        <div class="row"><b>Programador:</b> ${getTextoPainelProgramacao(item?.responsavel || "-")}</div>
-        <div class="row"><b>Peso Total PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.pesoTotalPVD,2))}</div>
-        <div class="row"><b>Total Notas PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.totalNotasPVD,0))}</div>
-        <div class="row"><b>Entrada em atraso:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.entradaAtraso,0))}</div>
-        <div class="row"><b>Notas &lt;= D-1:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.notasD1,0))}</div>
-        <div class="sep"></div>
-        <div class="row"><b>CEP Destino:</b> ${cepFmt}${local ? ` | ${getTextoPainelProgramacao(local)}` : ""}</div>
-        <div class="row"><b>Carga:</b> ${getTextoPainelProgramacao(janelaCarga)}</div>
-        <div class="row"><b>Entrega:</b> ${getTextoPainelProgramacao(janelaEntrega)}</div>
-        <div class="row"><b>ID vinculado:</b> ${getTextoPainelProgramacao(item?.idVinculado || "-")}</div>
-        <div class="row"><b>Último veículo:</b> ${getTextoPainelProgramacao(ultimo?.id || "-")}${ultimo?.dtPrev ? ` | Prev. ${getTextoPainelProgramacao(formatarData(ultimo.dtPrev))}` : ""}</div>
-        ${item?.temSpot ? '<div class="row"><b>SPOT</b></div>' : ""}${item?.temExpresso ? '<div class="row"><b>EXPRESSO</b></div>' : ""}
-      </div>`;
-    }
-
-    function selecionarMarcadorPainelProgramacao(chave, ev) {
-      if (ev?.originalEvent) L.DomEvent.stopPropagation(ev.originalEvent);
-      chave = String(chave || "").trim();
-      if (!chave) return;
-      if (painelProgCardsSelecionados.has(chave)) painelProgCardsSelecionados.delete(chave);
-      else painelProgCardsSelecionados.add(chave);
-      atualizarSelecaoVisualPainelProgramacao();
-      renderPopupPainelProgramacao();
-      atualizarResumoMapaPainelProgramacao();
-    }
-
-    function atualizarMarcadoresSelecaoPainelProgramacao() {
-      const st = window.__painelProgMapState;
-      if (!(st?.markers instanceof Map)) return;
-      st.markers.forEach((marker, chave) => {
-        const item = painelProgDadosAtuaisPorKey.get(chave);
-        if (item && marker?.setIcon) marker.setIcon(criarIconeMarkerPainelProgramacao(item));
-      });
-    }
-
-    function atualizarResumoMapaPainelProgramacao() {
-      const st = window.__painelProgMapState;
-      const total = painelProgDadosAtuais?.length || 0;
-      const localizados = st?.localizacoes?.size || 0;
-      const pendencias = st?.pendencias?.size || 0;
-      const selecionados = painelProgCardsSelecionados?.size || 0;
-      const status = document.getElementById("painelProgMapStatusBar");
-      if (status) status.innerHTML = [
-        ["Pontos filtrados", total], ["Localizados", localizados], ["Pendências CEP", pendencias], ["Selecionados", selecionados]
-      ].map(([l,v])=>`<div class="painelProgMapStat"><b>${getTextoPainelProgramacao(v)}</b><span>${getTextoPainelProgramacao(l)}</span></div>`).join("");
+    function normalizarUfDigitadaPainelProgramacao(v) { return String(v || "").trim().toUpperCase().replace(/[^A-Z]/g, "").slice(0,2); }
+    async function geocodificarCidadeExtraPainelProgramacao() {
+      const cidade = String(document.getElementById("painelProgCidadeExtra")?.value || "").trim();
+      const uf = normalizarUfDigitadaPainelProgramacao(document.getElementById("painelProgUfExtra")?.value || "");
       const info = document.getElementById("painelProgRouteInfo");
-      if (info && !st?.routeResult) info.textContent = selecionados >= 2 ? `${selecionados} selecionados — clique em Calcular rota.` : "Selecione 2 ou mais vocativos para calcular a rota.";
-    }
-
-    function renderPendenciasMapaPainelProgramacao() {
-      const st = window.__painelProgMapState;
-      const host = document.getElementById("painelProgGeoWarningHost");
-      if (!host) return;
-      const lista = Array.from(st?.pendencias?.entries?.() || []);
-      if (!lista.length) { host.innerHTML = ""; return; }
-      host.innerHTML = `<div class="painelProgGeoWarning" id="painelProgGeoWarning">
-        <div class="painelProgGeoWarningHead" onclick="document.getElementById('painelProgGeoWarning')?.classList.toggle('open')">
-          <span>⚠️ ${lista.length} ponto(s) sem localização segura — não entram no cálculo de rota</span><span>Ver detalhes ▾</span>
-        </div>
-        <div class="painelProgGeoWarningList">${lista.map(([chave,p]) => `<div class="painelProgGeoWarningRow" data-pending-key="${getTextoPainelProgramacao(chave)}" style="cursor:pointer" title="Clique para abrir este vocativo no painel lateral"><b>${getTextoPainelProgramacao(p.item?.vocativo || chave)}</b><span>${getTextoPainelProgramacao((p.item?.cepsDestino || []).join(" / ") || "SEM CEP")}</span><span>${getTextoPainelProgramacao(p.geo?.motivo || "Localização indisponível")}</span></div>`).join("")}</div>
-      </div>`;
-      host.querySelectorAll("[data-pending-key]").forEach(el => el.addEventListener("click", ev => {
-        ev.stopPropagation();
-        const chave = String(el.getAttribute("data-pending-key") || "").trim();
-        if (!chave) return;
-        if (!painelProgCardsSelecionados.has(chave)) painelProgCardsSelecionados.add(chave);
-        atualizarSelecaoVisualPainelProgramacao(); renderPopupPainelProgramacao(); atualizarResumoMapaPainelProgramacao();
-      }));
-    }
-
-    async function renderMapaPainelProgramacao(dados, {forcarGeocode=false} = {}) {
-      const st = garantirEstruturaMapaPainelProgramacao();
-      if (!st) return;
-      const seq = ++st.renderSeq;
-      st.cluster.clearLayers(); st.markers.clear(); st.localizacoes.clear(); st.pendencias.clear();
-      limparRotaMapaPainelProgramacao(false);
+      if (!cidade) { if(info){info.classList.add("painelProgRouteError");info.textContent="Digite uma cidade para adicionar à rota.";} return; }
+      const queryKey = normalizar(`${cidade}|${uf}|BRASIL`);
+      const cache = carregarCacheMapaPainelProgramacao(PAINEL_PROG_CITY_CACHE_KEY, "cityCache");
+      let geo = cache.get(queryKey);
+      if (!geo?.ok) {
+        if(info){info.classList.remove("painelProgRouteError");info.textContent=`Localizando ${cidade}${uf ? " - "+uf : ""}...`;}
+        const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+        const timer = ctrl ? setTimeout(() => ctrl.abort(), 9000) : null;
+        try {
+          const q = [cidade, uf, "Brasil"].filter(Boolean).join(", ");
+          const url = `${PAINEL_PROG_NOMINATIM_BASE}?format=jsonv2&limit=1&countrycodes=br&addressdetails=1&q=${encodeURIComponent(q)}`;
+          const resp = await fetch(url, { signal:ctrl?.signal, headers:{"Accept":"application/json"}, cache:"force-cache" });
+          const arr = await resp.json().catch(()=>[]);
+          const r = Array.isArray(arr) ? arr[0] : null;
+          const lat = Number(r?.lat), lon = Number(r?.lon);
+          if (!resp.ok || !r || !coordenadaValidaBrasilPainelProgramacao(lat,lon)) throw new Error("Cidade não encontrada com localização segura.");
+          const ufRet = String(r?.address?.state_code || "").replace(/^BR-/i,"").toUpperCase();
+          if (uf && ufRet && ufRet !== uf) throw new Error(`A cidade encontrada pertence a ${ufRet}, diferente da UF informada (${uf}).`);
+          geo = { ok:true, lat, lon, cidade:String(r?.address?.city || r?.address?.town || r?.address?.municipality || cidade), uf:ufRet || uf, display:String(r?.display_name || q) };
+          cache.set(queryKey,geo); salvarCacheMapaPainelProgramacao(PAINEL_PROG_CITY_CACHE_KEY,cache);
+        } catch(err) {
+          if(info){info.classList.add("painelProgRouteError");info.textContent=`Não foi possível adicionar a cidade: ${String(err?.message || err)}`;}
+          return;
+        } finally { if(timer) clearTimeout(timer); }
+      }
+      const st = garantirEstruturaMapaPainelProgramacao(); if(!st) return;
+      st.extraDestino = { ...geo, label:`${geo.cidade || cidade}${(geo.uf || uf) ? " - "+(geo.uf || uf) : ""}` };
+      atualizarMarcadorDestinoExtraPainelProgramacao();
       atualizarResumoMapaPainelProgramacao();
-      const lista = ordenarPainelProgPorVocativo(dados || []);
-      if (!lista.length) { renderPendenciasMapaPainelProgramacao(); return; }
-
-      // Limite de concorrência simples: evita disparar centenas de consultas simultâneas.
-      const fila = [...lista];
-      const worker = async () => {
-        while (fila.length && st.renderSeq === seq) {
-          const item = fila.shift();
-          const geo = await geocodificarCepPainelProgramacao(item, forcarGeocode);
-          if (st.renderSeq !== seq) return;
-          const chave = String(item?.cardKey || "").trim();
-          if (!chave) continue;
-          if (!geo?.ok) { st.pendencias.set(chave,{item,geo}); atualizarResumoMapaPainelProgramacao(); continue; }
-          st.localizacoes.set(chave,{item,geo});
-          const marker = L.marker([geo.lat,geo.lon], { icon:criarIconeMarkerPainelProgramacao(item), keyboard:true, title:String(item?.vocativo || "") });
-          marker.bindTooltip(renderTooltipMapaPainelProgramacao(item,geo), { direction:"top", sticky:true, opacity:.98, className:"painelProgMapTooltip" });
-          marker.on("click", ev => selecionarMarcadorPainelProgramacao(chave,ev));
-          st.markers.set(chave,marker); st.cluster.addLayer(marker); atualizarResumoMapaPainelProgramacao();
-        }
-      };
-      await Promise.all(Array.from({length:Math.min(4,lista.length)},()=>worker()));
-      if (st.renderSeq !== seq) return;
-      renderPendenciasMapaPainelProgramacao(); atualizarResumoMapaPainelProgramacao();
+      if(info){info.classList.remove("painelProgRouteError");info.innerHTML=`Destino extra: <span class="painelProgRouteExtra">${getTextoPainelProgramacao(st.extraDestino.label)}</span>. Selecione os cards e clique em Calcular rota.`;}
       ajustarMapaAosPontosPainelProgramacao();
-      setTimeout(()=>st.map?.invalidateSize(),0);
     }
+    function removerCidadeExtraPainelProgramacao() {
+      const st=window.__painelProgMapState;
+      if(st?.extraMarker && st?.map){try{st.map.removeLayer(st.extraMarker)}catch(_){}}
+      if(st){st.extraMarker=null;st.extraDestino=null;}
+      const c=document.getElementById("painelProgCidadeExtra"),u=document.getElementById("painelProgUfExtra"); if(c)c.value=""; if(u)u.value="";
+      limparRotaMapaPainelProgramacao(); atualizarResumoMapaPainelProgramacao();
+    }
+    function atualizarMarcadorDestinoExtraPainelProgramacao(){
+      const st=window.__painelProgMapState; if(!st?.map) return;
+      if(st.extraMarker){try{st.map.removeLayer(st.extraMarker)}catch(_){} st.extraMarker=null;}
+      if(!st.extraDestino?.ok) return;
+      const icon=L.divIcon({className:"painelProgMarkerWrap",html:'<div class="painelProgExtraMarker">★</div>',iconSize:[36,36],iconAnchor:[18,18]});
+      st.extraMarker=L.marker([st.extraDestino.lat,st.extraDestino.lon],{icon,title:st.extraDestino.label}).addTo(st.map).bindTooltip(`<b>Destino extra</b><br>${getTextoPainelProgramacao(st.extraDestino.label)}`,{direction:"top"});
+    }
+
+    function garantirEstruturaMapaPainelProgramacao() {
+      const host = document.getElementById("painelProgramacaoMapaHost"); if(!host) return null;
+      const st = window.__painelProgMapState;
+      if (!document.getElementById("painelProgMap") && st?.map) { try{st.map.remove()}catch(_){} st.map=null;st.cluster=null;st.markers=new Map();st.localizacoes=new Map();st.pendencias=new Map();st.routeLayer=null;st.routeResult=null;st.extraMarker=null; }
+      if (!document.getElementById("painelProgMap")) {
+        host.innerHTML = `<div class="painelProgMapShell"><div class="painelProgMapToolbar"><div class="painelProgMapToolbarLeft">
+          <button class="btn painelProgMapBtn" type="button" onclick="calcularRotaMapaPainelProgramacao()">🛣️ Calcular rota</button>
+          <button class="btn secondary painelProgMapBtn" type="button" onclick="limparRotaMapaPainelProgramacao()">Limpar rota</button>
+          <button class="btn secondary painelProgMapBtn" type="button" onclick="ajustarMapaAosPontosPainelProgramacao()">◎ Enquadrar pontos</button>
+          <button class="btn secondary painelProgMapBtn" type="button" onclick="reprocessarCepsPendentesPainelProgramacao()">↻ Reprocessar CEPs</button>
+          <div class="painelProgMapCityBox" title="Adiciona uma cidade como última parada da rota">
+            <input id="painelProgCidadeExtra" class="painelProgMapCityInput" placeholder="Cidade extra (ex.: Ribeirão Preto)" type="text" onkeydown="if(event.key==='Enter'){event.preventDefault();geocodificarCidadeExtraPainelProgramacao();}">
+            <input id="painelProgUfExtra" class="painelProgMapUfInput" placeholder="UF" maxlength="2" type="text" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,2)" onkeydown="if(event.key==='Enter'){event.preventDefault();geocodificarCidadeExtraPainelProgramacao();}">
+            <button class="btn secondary painelProgMapBtn" type="button" onclick="geocodificarCidadeExtraPainelProgramacao()">+ Adicionar cidade</button>
+            <button class="btn secondary painelProgMapBtn" type="button" onclick="removerCidadeExtraPainelProgramacao()" title="Remover destino extra">×</button>
+          </div>
+        </div><div class="painelProgMapToolbarRight"><span id="painelProgRouteInfo" class="painelProgRouteInfo">Selecione cards ou pontos para calcular uma rota.</span></div></div>
+        <div id="painelProgMap"></div><div id="painelProgMapStatusBar" class="painelProgMapStatusBar"></div><div id="painelProgGeoWarningHost"></div></div>`;
+      }
+      if(!window.L){host.innerHTML='<div class="painelProgEmptyState" style="border-color:#fecaca;color:#991b1b;background:#fef2f2;">Não foi possível carregar o Leaflet. Verifique a conexão e recarregue a página.</div>';return null;}
+      if(!st.map){
+        st.map=L.map("painelProgMap",{preferCanvas:true,zoomControl:true}).setView([-14.235,-51.9253],4);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(st.map);
+        st.cluster=typeof L.markerClusterGroup==="function"?L.markerClusterGroup({chunkedLoading:true,spiderfyOnMaxZoom:true,showCoverageOnHover:false,maxClusterRadius:45}):L.layerGroup();
+        st.cluster.addTo(st.map); setTimeout(()=>st.map.invalidateSize(),0);
+      }
+      atualizarMarcadorDestinoExtraPainelProgramacao(); return st;
+    }
+
+    function getClasseMarkerPainelProgramacao(item){ if(item?.temCarregadoHoje)return"carregadoHoje";if(item?.temCarregadoOntem)return"carregadoOntem";return item?.temProgramado?"programado":"naoProgramado"; }
+    function criarIconeMarkerPainelProgramacao(item){
+      const chave=String(item?.cardKey||""),sel=painelProgCardsSelecionados.has(chave)?" selected":"",spot=item?.temSpot?" spot":"",ex=item?.temExpresso?" expresso":"",letra=String(item?.vocativo||"?").trim().slice(0,2).toUpperCase();
+      return L.divIcon({className:"painelProgMarkerWrap",html:`<div class="painelProgMarker ${getClasseMarkerPainelProgramacao(item)}${sel}${spot}${ex}"><span>${getTextoPainelProgramacao(letra)}</span></div>`,iconSize:[34,42],iconAnchor:[17,38],tooltipAnchor:[0,-30]});
+    }
+    function renderTooltipMapaPainelProgramacao(item,geo){
+      const jc=normalizar(item?.janelaCarregamentoTexto)==="NAO CADASTRADO"?"":(item?.janelaCarregamentoTexto||"-"),je=normalizar(item?.janelaEntregaTexto)==="NAO CADASTRADO"?"":(item?.janelaEntregaTexto||"-"),u=item?.ultimoVeiculo,cep=geo?.cep?`${geo.cep.slice(0,5)}-${geo.cep.slice(5)}`:"-",local=[geo?.cidade,geo?.uf].filter(Boolean).join(" - ");
+      return `<div class="painelProgLeafletTooltip"><div class="ttl">${getTextoPainelProgramacao(item?.vocativo||"-")}</div><div class="row"><b>Status:</b> ${item?.temProgramado?"PROGRAMADO":"NÃO PROGRAMADO"}${item?.temCarregadoHoje?" | CARREGADO HOJE":""}${item?.temCarregadoOntem?" | CARREGADO ONTEM":""}</div><div class="row"><b>Embarque:</b> ${getTextoPainelProgramacao(item?.temProgramado?(item?.tipoEmbarque||"-"):"-")}</div><div class="row"><b>Programador:</b> ${getTextoPainelProgramacao(item?.responsavel||"-")}</div><div class="row"><b>Peso Total PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.pesoTotalPVD,2))}</div><div class="row"><b>Total Notas PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.totalNotasPVD,0))}</div><div class="row"><b>Entrada em atraso:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.entradaAtraso,0))}</div><div class="row"><b>Notas &lt;= D-1:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.notasD1,0))}</div><div class="sep"></div><div class="row"><b>CEP Destino:</b> ${cep}${local?` | ${getTextoPainelProgramacao(local)}`:""}</div><div class="row"><b>Carga:</b> ${getTextoPainelProgramacao(jc)}</div><div class="row"><b>Entrega:</b> ${getTextoPainelProgramacao(je)}</div>${u?`<div class="sep"></div><div class="row"><b>Último veículo:</b> ${getTextoPainelProgramacao(u.id||"-")}</div><div class="row"><b>Previsão:</b> ${getTextoPainelProgramacao(u.previsaoTexto||u.previsao||"-")}</div><div class="row"><b>Destino:</b> ${getTextoPainelProgramacao(u.destinos||"-")}</div>`:""}</div>`;
+    }
+
+    function selecionarMarcadorPainelProgramacao(chave){
+      chave=String(chave||"").trim(); if(!chave)return;
+      if(painelProgCardsSelecionados.has(chave)) painelProgCardsSelecionados.delete(chave); else painelProgCardsSelecionados.add(chave);
+      // Clique no mapa mantém todos os pontos visíveis para permitir seleção múltipla diretamente no mapa.
+      window.__painelProgMapState.mapFilterSelectedOnly=false;
+      atualizarSelecaoVisualPainelProgramacao();
+      const card=[...document.querySelectorAll('.painelProgCard[data-painel-prog-key]')].find(el=>String(el.getAttribute('data-painel-prog-key')||'').trim()===chave);
+      if(card) atualizarCardPainelProgramacaoNoDOM(chave,card);
+      renderPopupPainelProgramacao(); atualizarMapaComSelecaoPainelProgramacao(false);
+    }
+
+    function atualizarResumoMapaPainelProgramacao(){
+      const st=window.__painelProgMapState,el=document.getElementById("painelProgMapStatusBar"); if(!el)return;
+      const total=Number(st?.dadosFiltrados?.length||0),loc=Number(st?.localizacoes?.size||0),pend=Number(st?.pendencias?.size||0),sel=Number(painelProgCardsSelecionados?.size||0),extra=st?.extraDestino?.ok?1:0;
+      el.innerHTML=[["Pontos filtrados",total],["Localizados",loc],["Pendências CEP",pend],["Selecionados",sel],["Destino extra",extra]].map(([l,v])=>`<div class="painelProgMapStat"><b>${v}</b><span>${l}</span></div>`).join("");
+    }
+    function renderPendenciasMapaPainelProgramacao(){
+      const st=window.__painelProgMapState,host=document.getElementById("painelProgGeoWarningHost"); if(!host)return; const lista=Array.from(st?.pendencias?.entries?.()||[]); if(!lista.length){host.innerHTML="";return;}
+      host.innerHTML=`<div class="painelProgGeoWarning" id="painelProgGeoWarning"><div class="painelProgGeoWarningHead" onclick="document.getElementById('painelProgGeoWarning')?.classList.toggle('open')"><span>⚠️ ${lista.length} ponto(s) sem localização segura — não entram no cálculo de rota</span><span>Ver detalhes ▾</span></div><div class="painelProgGeoWarningList">${lista.map(([k,p])=>`<div class="painelProgGeoWarningRow"><b>${getTextoPainelProgramacao(p.item?.vocativo||k)}</b><span>${getTextoPainelProgramacao((p.item?.cepsDestino||[]).join(" / ")||"SEM CEP")}</span><span>${getTextoPainelProgramacao(p.geo?.motivo||"Localização indisponível")}</span></div>`).join("")}</div></div>`;
+    }
+    function atualizarMapaComSelecaoPainelProgramacao(enquadrar=false){
+      const st=window.__painelProgMapState; if(!st?.cluster)return;
+      st.cluster.clearLayers();
+      const somenteSelecionados=st.mapFilterSelectedOnly && painelProgCardsSelecionados.size>0;
+      st.markers.forEach((marker,chave)=>{
+        const loc=st.localizacoes.get(chave); if(loc) marker.setIcon(criarIconeMarkerPainelProgramacao(loc.item));
+        if(!somenteSelecionados || painelProgCardsSelecionados.has(chave)) st.cluster.addLayer(marker);
+      });
+      atualizarResumoMapaPainelProgramacao(); limparRotaMapaPainelProgramacao(false);
+      if(enquadrar) ajustarMapaAosPontosPainelProgramacao();
+      const info=document.getElementById("painelProgRouteInfo"); if(info && !st.routeResult){info.classList.remove("painelProgRouteError"); info.textContent=somenteSelecionados?`${painelProgCardsSelecionados.size} card(s) selecionado(s) — mapa filtrado pela seleção.`:`${painelProgCardsSelecionados.size||0} selecionado(s) — clique em Calcular rota quando desejar.`;}
+    }
+    async function renderMapaPainelProgramacao(dados,{forcarGeocode=false}={}){
+      const st=garantirEstruturaMapaPainelProgramacao(); if(!st)return; const seq=++st.renderSeq; st.dadosFiltrados=[...(dados||[])]; st.cluster.clearLayers();st.markers.clear();st.localizacoes.clear();st.pendencias.clear();st.mapFilterSelectedOnly=painelProgCardsSelecionados.size>0; limparRotaMapaPainelProgramacao(false); atualizarResumoMapaPainelProgramacao();
+      const fila=ordenarPainelProgPorVocativo(dados||[]); if(!fila.length){renderPendenciasMapaPainelProgramacao();return;}
+      const worker=async()=>{while(fila.length&&st.renderSeq===seq){const item=fila.shift(),geo=await geocodificarCepPainelProgramacao(item,forcarGeocode);if(st.renderSeq!==seq)return;const chave=String(item?.cardKey||"").trim();if(!chave)continue;if(!geo?.ok){st.pendencias.set(chave,{item,geo});atualizarResumoMapaPainelProgramacao();continue;}st.localizacoes.set(chave,{item,geo});const marker=L.marker([geo.lat,geo.lon],{icon:criarIconeMarkerPainelProgramacao(item),keyboard:true,title:String(item?.vocativo||"")});marker.bindTooltip(renderTooltipMapaPainelProgramacao(item,geo),{direction:"top",sticky:true,opacity:.98});marker.on("click",()=>selecionarMarcadorPainelProgramacao(chave));st.markers.set(chave,marker);}};
+      await Promise.all(Array.from({length:Math.min(4,fila.length)},()=>worker())); if(st.renderSeq!==seq)return; renderPendenciasMapaPainelProgramacao(); atualizarMapaComSelecaoPainelProgramacao(false); atualizarMarcadorDestinoExtraPainelProgramacao(); ajustarMapaAosPontosPainelProgramacao(); setTimeout(()=>st.map?.invalidateSize(),0);
+    }
+    function ajustarMapaAosPontosPainelProgramacao(){
+      const st=window.__painelProgMapState;if(!st?.map)return;const pts=[];st.cluster?.eachLayer?.(m=>{const ll=m.getLatLng?.();if(ll)pts.push(ll)});if(st.extraDestino?.ok)pts.push(L.latLng(st.extraDestino.lat,st.extraDestino.lon));if(!pts.length)return;if(pts.length===1)st.map.setView(pts[0],12);else st.map.fitBounds(L.latLngBounds(pts),{padding:[28,28],maxZoom:12});
+    }
+    function limparRotaMapaPainelProgramacao(atualizarTexto=true){
+      const st=window.__painelProgMapState;if(st?.routeLayer&&st?.map){try{st.map.removeLayer(st.routeLayer)}catch(_){}}if(st){st.routeLayer=null;st.routeResult=null;}if(atualizarTexto){const el=document.getElementById("painelProgRouteInfo");if(el){el.classList.remove("painelProgRouteError");el.textContent="Selecione cards ou pontos e clique em Calcular rota.";}}
+    }
+    function formatKmBRMapa(m){const km=Number(m||0)/1000;return`${km.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km`;} function formatDurationBRMapa(s){const min=Math.round(Number(s||0)/60),h=Math.floor(min/60),m=min%60;return h<=0?`${m} min`:(m===0?`${h}h`:`${h}h ${m}min`);}
+    async function calcularRotaMapaPainelProgramacao(){
+      const st=garantirEstruturaMapaPainelProgramacao();if(!st)return;const info=document.getElementById("painelProgRouteInfo"),chaves=Array.from(painelProgCardsSelecionados||[]),faltantes=chaves.filter(k=>!st.localizacoes.has(k));if(faltantes.length){if(info){info.classList.add("painelProgRouteError");info.textContent=`Rota bloqueada: ${faltantes.length} selecionado(s) sem localização segura.`;}return;}
+      const pontos=chaves.map(k=>st.localizacoes.get(k)).map(p=>({lat:p.geo.lat,lon:p.geo.lon,label:p.item?.vocativo||"Vocativo"})); if(st.extraDestino?.ok)pontos.push({lat:st.extraDestino.lat,lon:st.extraDestino.lon,label:st.extraDestino.label,extra:true});
+      if(pontos.length<2){if(info){info.classList.add("painelProgRouteError");info.textContent="Selecione pelo menos 2 pontos no total (cards/pontos e/ou cidade extra).";}return;}
+      const coords=pontos.map(p=>`${Number(p.lon).toFixed(6)},${Number(p.lat).toFixed(6)}`).join(";");if(info){info.classList.remove("painelProgRouteError");info.textContent="Calculando rota rodoviária...";}
+      try{const resp=await fetch(`${PAINEL_PROG_OSRM_BASE}/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`,{cache:"no-store"}),json=await resp.json().catch(()=>({}));if(!resp.ok||json?.code!=="Ok"||!json?.routes?.length)throw new Error(json?.message||(json?.code==="NoRoute"?"Não existe rota rodoviária entre os pontos selecionados.":`Falha OSRM (${json?.code||resp.status})`));limparRotaMapaPainelProgramacao(false);const rota=json.routes[0];st.routeLayer=L.geoJSON(rota.geometry,{style:{weight:6,opacity:.82}}).addTo(st.map);st.routeResult={distance:rota.distance,duration:rota.duration,pontos};const b=st.routeLayer.getBounds?.();if(b?.isValid?.())st.map.fitBounds(b,{padding:[30,30]});if(info){info.classList.remove("painelProgRouteError");info.innerHTML=`${pontos.length} paradas | ${formatKmBRMapa(rota.distance)} | ${formatDurationBRMapa(rota.duration)}${st.extraDestino?.ok?` | final: <span class="painelProgRouteExtra">${getTextoPainelProgramacao(st.extraDestino.label)}</span>`:""}`;}}catch(err){console.error("Erro OSRM:",err);if(info){info.classList.add("painelProgRouteError");info.textContent=`Não foi possível calcular a rota: ${String(err?.message||err)}`;}}
+    }
+    async function reprocessarCepsPendentesPainelProgramacao(){const cache=carregarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,"cepCache");Array.from(window.__painelProgMapState?.pendencias?.values?.()||[]).forEach(p=>(p?.item?.cepsDestino||[]).map(normalizarCepPainelProgramacao).filter(Boolean).forEach(cep=>cache.delete(cep)));salvarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,cache);await renderMapaPainelProgramacao(painelProgDadosAtuais||[],{forcarGeocode:true});}
 
     function renderCardsPainelProgramacao(dados) {
-      renderMapaPainelProgramacao(dados).catch(err => {
-        console.error("Erro ao renderizar mapa do Painel de Programação:",err);
-        const host=document.getElementById("painelProgramacaoCards");
-        if(host) host.innerHTML=`<div class="painelProgEmptyState" style="border-color:#fecaca;color:#991b1b;background:#fef2f2;">Não foi possível montar o mapa.<br><span style="font-size:11px;">${getTextoPainelProgramacao(err?.message || err)}</span></div>`;
+      const cardsEl = document.getElementById("painelProgramacaoCards");
+      if (!cardsEl) return;
+      if (!dados.length) {
+        painelProgCardsSelecionados.clear();
+        renderPopupPainelProgramacao();
+        cardsEl.innerHTML = `<div class="painelProgEmptyState">Nenhum vocativo encontrado para os filtros selecionados.</div>`;
+        iniciarSelosOverlayPainelProgramacao();
+        agendarSincronizacaoSelosOverlayPainelProgramacao();
+        return;
+      }
+
+      const modoAgrupamento = getPainelProgAgrupamentoAtual();
+      const ordenados = ordenarPainelProgPorVocativo(dados);
+
+      if (modoAgrupamento === "nenhum") {
+        cardsEl.innerHTML = `
+          <div class="painelProgCardsGrid">
+            ${ordenados.map(renderCardPainelProgramacao).join("")}
+          </div>
+        `;
+        iniciarSelosOverlayPainelProgramacao();
+        agendarSincronizacaoSelosOverlayPainelProgramacao();
+        return;
+      }
+
+      const grupos = new Map();
+      ordenados.forEach(item => {
+        const grupo = getGrupoPainelProgramacao(item, modoAgrupamento);
+        const chave = normalizar(grupo.label) || grupo.label;
+        if (!grupos.has(chave)) grupos.set(chave, { ...grupo, itens: [] });
+        grupos.get(chave).itens.push(item);
       });
-    }
 
-    function ajustarMapaAosPontosPainelProgramacao() {
-      const st=window.__painelProgMapState;
-      if(!st?.map || !st?.markers?.size) return;
-      const pontos=[]; st.markers.forEach(m=>{const ll=m.getLatLng?.(); if(ll) pontos.push(ll);});
-      if(!pontos.length) return;
-      if(pontos.length===1) st.map.setView(pontos[0],12); else st.map.fitBounds(L.latLngBounds(pontos),{padding:[28,28],maxZoom:12});
-    }
+      const ordemResponsavel = { julio: 1, lucas: 2, igor: 3 };
+      const html = Array.from(grupos.values())
+        .sort((a, b) => {
+          if (modoAgrupamento === "responsavel") {
+            const ao = ordemResponsavel[String(a.responsavelKey || "")] || 99;
+            const bo = ordemResponsavel[String(b.responsavelKey || "")] || 99;
+            if (ao !== bo) return ao - bo;
+          }
+          return String(a.label || "").localeCompare(String(b.label || ""), "pt-BR");
+        })
+        .map(grupo => `
+          <div class="painelProgClienteGrupo">
+            <div class="painelProgClienteHeader">
+              <div class="painelProgClienteTitle">${grupo.icon} ${getTextoPainelProgramacao(grupo.label)}</div>
+              <div class="painelProgHint">${grupo.itens.length} card(s) | ${new Set(grupo.itens.map(i => i.vocNorm)).size} vocativo(s)</div>
+            </div>
+            <div class="painelProgCardsGrid">
+              ${grupo.itens.map(renderCardPainelProgramacao).join("")}
+            </div>
+          </div>
+        `).join("");
 
-    function limparRotaMapaPainelProgramacao(atualizarTexto=true) {
-      const st=window.__painelProgMapState;
-      if(st?.routeLayer && st?.map){ try{st.map.removeLayer(st.routeLayer);}catch(_){} }
-      if(st){st.routeLayer=null;st.routeResult=null;}
-      if(atualizarTexto){const el=document.getElementById("painelProgRouteInfo"); if(el){el.classList.remove("painelProgRouteError");el.textContent=(painelProgCardsSelecionados?.size||0)>=2?`${painelProgCardsSelecionados.size} selecionados — clique em Calcular rota.`:"Selecione 2 ou mais vocativos para calcular a rota.";}}
-    }
-
-    function formatKmBR(meters) { const km=Number(meters||0)/1000; return `${km.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km`; }
-    function formatDurationBR(seconds) { const totalMin=Math.round(Number(seconds||0)/60),h=Math.floor(totalMin/60),m=totalMin%60; return h<=0?`${m} min`:(m===0?`${h}h`:`${h}h ${m}min`); }
-
-    async function calcularRotaMapaPainelProgramacao() {
-      const st=garantirEstruturaMapaPainelProgramacao(); if(!st) return;
-      const chaves=Array.from(painelProgCardsSelecionados||[]);
-      const info=document.getElementById("painelProgRouteInfo");
-      const faltantes=chaves.filter(k=>!st.localizacoes.has(k));
-      if(chaves.length<2){ if(info){info.classList.add("painelProgRouteError");info.textContent="Selecione pelo menos 2 vocativos localizados.";} return; }
-      if(faltantes.length){ if(info){info.classList.add("painelProgRouteError");info.textContent=`A rota não foi calculada: ${faltantes.length} selecionado(s) sem localização segura.`;} return; }
-      const pontos=chaves.map(k=>st.localizacoes.get(k));
-      const coords=pontos.map(p=>`${Number(p.geo.lon).toFixed(6)},${Number(p.geo.lat).toFixed(6)}`).join(";");
-      if(info){info.classList.remove("painelProgRouteError");info.textContent="Calculando rota rodoviária...";}
-      try{
-        const resp=await fetch(`${PAINEL_PROG_OSRM_BASE}/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`,{cache:"no-store"});
-        const json=await resp.json().catch(()=>({}));
-        if(!resp.ok || json?.code!=="Ok" || !json?.routes?.length) throw new Error(json?.message || (json?.code==="NoRoute"?"Não existe rota rodoviária entre os pontos selecionados.":`Falha OSRM (${json?.code || resp.status})`));
-        limparRotaMapaPainelProgramacao(false);
-        const rota=json.routes[0];
-        st.routeLayer=L.geoJSON(rota.geometry,{style:{weight:6,opacity:.82}}).addTo(st.map);
-        st.routeResult={distance:rota.distance,duration:rota.duration,chaves:[...chaves]};
-        const bounds=st.routeLayer.getBounds?.(); if(bounds?.isValid?.()) st.map.fitBounds(bounds,{padding:[30,30]});
-        if(info){info.classList.remove("painelProgRouteError");info.textContent=`${chaves.length} paradas | ${formatKmBR(rota.distance)} | ${formatDurationBR(rota.duration)}`;}
-      }catch(err){console.error("Erro OSRM:",err);if(info){info.classList.add("painelProgRouteError");info.textContent=`Não foi possível calcular a rota: ${String(err?.message || err)}`;}}
-    }
-
-    async function reprocessarCepsPendentesPainelProgramacao() {
-      const cache=carregarCacheCepPainelProgramacao();
-      Array.from(window.__painelProgMapState?.pendencias?.values?.()||[]).forEach(p=>{(p?.item?.cepsDestino||[]).map(normalizarCepPainelProgramacao).filter(Boolean).forEach(cep=>cache.delete(cep));});
-      salvarCacheCepPainelProgramacao();
-      await renderMapaPainelProgramacao(painelProgDadosAtuais||[],{forcarGeocode:true});
+      cardsEl.innerHTML = html;
+      iniciarSelosOverlayPainelProgramacao();
+      agendarSincronizacaoSelosOverlayPainelProgramacao();
     }
 
     function renderPainelProgramacaoComBaseAtual(rolarTopo = false) {
@@ -14537,11 +14499,12 @@ return null;
       if (baseEl) {
         const vocativosFiltrados = new Set(filtrados.map(i => i.vocNorm).filter(Boolean)).size;
         const vocativosBase = new Set(dados.map(i => i.vocNorm).filter(Boolean)).size;
-        baseEl.textContent = `Base exibida: ${vocativosFiltrados} de ${vocativosBase} vocativo(s) | ${filtrados.length} ponto(s) | Mapa por CEP Destino | ${getResumoStatusJanelasGoogle()}`;
+        baseEl.textContent = `Base exibida: ${vocativosFiltrados} de ${vocativosBase} vocativo(s) | ${filtrados.length} card(s) | Cards + mapa por CEP Destino | Organização: ${getPainelProgNomeAgrupamento()} | ${getResumoStatusJanelasGoogle()}`;
       }
 
       renderResumoPainelProgramacao(filtrados);
       renderCardsPainelProgramacao(filtrados);
+      renderMapaPainelProgramacao(filtrados).catch(err => console.error("Erro ao renderizar mapa:", err));
       renderPopupPainelProgramacao();
       if (rolarTopo) window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -14592,10 +14555,11 @@ return null;
         if (baseEl) {
           const vocativosFiltrados = new Set(filtrados.map(i => i.vocNorm).filter(Boolean)).size;
           const vocativosBase = new Set(dados.map(i => i.vocNorm).filter(Boolean)).size;
-          baseEl.textContent = `Base exibida: ${vocativosFiltrados} de ${vocativosBase} vocativo(s) | ${filtrados.length} ponto(s) | Mapa por CEP Destino | ${getResumoStatusJanelasGoogle()}`;
+          baseEl.textContent = `Base exibida: ${vocativosFiltrados} de ${vocativosBase} vocativo(s) | ${filtrados.length} card(s) | Cards + mapa por CEP Destino | Organização: ${getPainelProgNomeAgrupamento()} | ${getResumoStatusJanelasGoogle()}`;
         }
         renderResumoPainelProgramacao(filtrados);
         renderCardsPainelProgramacao(filtrados);
+        renderMapaPainelProgramacao(filtrados).catch(err => console.error("Erro ao renderizar mapa:", err));
         renderPopupPainelProgramacao();
 
         // Se a planilha de janelas ainda estava em rede, atualiza somente os dados/DOM
@@ -17777,6 +17741,7 @@ Deixe em branco e confirme para desvincular o ID atual.`,
         </div>
       </div>
       <div id="resumoAnalise" style="margin-top:10px; width:100%;"></div>
+      <div id="routeSuggestions" style="margin-top:10px; width:100%;"></div>
       <div id="almoxList" style="margin-top:10px; font-size:13px;"></div>
     </div>
   </div>
