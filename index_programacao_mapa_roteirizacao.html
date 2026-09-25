@@ -3926,12 +3926,17 @@
     .routeMapKpi:last-child { border-right:0; }
     .routeMapKpiLabel { font-size:9px; color:#64748b; text-transform:uppercase; font-weight:900; letter-spacing:.05em; }
     .routeMapKpiValue { font-size:18px; color:#0f172a; font-weight:1000; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .routeMapMain { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(300px,.65fr); min-height:620px; }
-    .routeMapCanvasWrap { position:relative; min-width:0; background:#e2e8f0; }
-    #painelProgLeafletMap { width:100%; height:620px; z-index:1; }
+    .painelProgMainLayout.isMapView { grid-template-columns:minmax(0,1fr); }
+    .painelProgMainLayout.isMapView #painelProgMapArea { grid-column:1 / -1; width:100%; min-width:0; }
+    .painelProgMainLayout.isMapView #painelProgResumoSideHost { display:none !important; }
+    .routeMapMain { display:grid; grid-template-columns:minmax(0,1fr) 380px; min-height:620px; width:100%; min-width:0; }
+    .routeMapCanvasWrap { position:relative; min-width:0; background:#e2e8f0; overflow:hidden !important; }
+    #painelProgLeafletMap { width:100%; height:620px; z-index:1; overflow:hidden !important; }
+    #painelProgLeafletMap.leaflet-container { overflow:hidden !important; }
     .routeMapLoading { position:absolute; left:50%; top:18px; transform:translateX(-50%); z-index:500; background:rgba(15,23,42,.92); color:#fff; border-radius:999px; padding:8px 12px; font-size:11px; font-weight:800; box-shadow:0 8px 18px rgba(15,23,42,.20); pointer-events:none; }
-    .routeMapSidebar { border-left:1px solid #e2e8f0; background:#f8fafc; display:flex; flex-direction:column; min-width:0; max-height:620px; }
-    .routeMapDetail { padding:14px; overflow:auto; flex:1; }
+    .routeMapSidebar { border-left:1px solid #e2e8f0; background:#f8fafc; display:flex; flex-direction:column; width:380px; min-width:380px; max-width:380px; max-height:620px; overflow:hidden; }
+    .routeMapDetail { padding:16px; overflow:auto; overflow-x:hidden; flex:1; min-width:0; }
+    .routeMapDetail * { max-width:100%; box-sizing:border-box; }
     .routeMapEmpty { display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; min-height:260px; color:#64748b; gap:8px; padding:24px; }
     .routeMapEmptyIcon { width:54px; height:54px; border-radius:18px; background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-size:25px; }
     .routeDetailHead { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:12px; }
@@ -3974,9 +3979,9 @@
     .routeMapLegend { position:absolute; left:10px; bottom:10px; z-index:450; display:flex; gap:5px; flex-wrap:wrap; max-width:calc(100% - 20px); }
     .routeMapLegendItem { display:flex; align-items:center; gap:5px; background:rgba(255,255,255,.94); border:1px solid #e2e8f0; border-radius:999px; padding:5px 7px; font-size:9px; color:#475569; font-weight:900; box-shadow:0 3px 10px rgba(15,23,42,.08); }
     .routeMapDot { width:8px; height:8px; border-radius:50%; }
-    @media (max-width:1050px) {
+    @media (max-width:1150px) {
       .routeMapMain { grid-template-columns:1fr; }
-      .routeMapSidebar { border-left:0; border-top:1px solid #e2e8f0; max-height:none; }
+      .routeMapSidebar { border-left:0; border-top:1px solid #e2e8f0; width:100%; min-width:0; max-width:none; max-height:none; }
       #painelProgLeafletMap { height:520px; }
       .routeMapKpis { grid-template-columns:repeat(3,minmax(0,1fr)); }
     }
@@ -4269,7 +4274,7 @@
               <div class="routeMapHeaderActions">
                 <button class="routeMapTinyBtn" id="btnRouteLabels" type="button" onclick="togglePainelProgMapLabels()">Vocativos</button>
                 <button class="routeMapTinyBtn" id="btnRouteMode" type="button" onclick="togglePainelProgRouteMode()">＋ Montar rota</button>
-                <button class="routeMapTinyBtn primary" id="btnRouteCalc" type="button" onclick="calcularRotaPainelProgramacao()">Calcular rota</button>
+                <button class="routeMapTinyBtn primary" id="btnRouteCalc" type="button" onclick="calcularRotaPainelProgramacao()">Calcular distância</button>
                 <button class="routeMapTinyBtn danger" type="button" onclick="limparRotaPainelProgramacao()">Limpar</button>
               </div>
             </div>
@@ -4297,7 +4302,7 @@
                 </div>
                 <div class="routePlanner">
                   <div class="routePlannerHead"><div class="routePlannerTitle">Planejamento de rota</div><span id="routeStopsCount" style="font-size:9px;color:#64748b;font-weight:900;">0 parada(s)</span></div>
-                  <div class="routeStops" id="routeStopsList"><span style="font-size:9px;color:#94a3b8;">Ative “Montar rota” e clique nos pontos.</span></div>
+                  <div class="routeStops" id="routeStopsList"><span style="font-size:9px;color:#94a3b8;">Clique em “Montar rota” e depois selecione 2 clientes.</span></div>
                   <div class="routePlannerMetrics">
                     <div class="routePlannerMetric"><span>Distância</span><strong id="routeMetricDistance">0 km</strong></div>
                     <div class="routePlannerMetric"><span>Tempo base</span><strong id="routeMetricDuration">0 min</strong></div>
@@ -15149,12 +15154,13 @@ return null;
 
     // ============================================================
     // MAPA / ROTEIRIZAÇÃO — PAINEL DE PROGRAMAÇÃO
-    // Leaflet + OpenFreeMap (visual) + OSRM (rota)
-    // Geocodificação: HEIGIT/openrouteservice Pelias com cache persistente e fallback Cidade/UF.
+    // Leaflet + OpenFreeMap (visual) + OSRM público (rota sob demanda entre 2 pontos)
+    // Geolocalização dos clientes: AwesomeAPI CEP -> latitude/longitude, com cache persistente.
+    // O mapa não usa OpenRouteService para posicionar os cards.
     // ============================================================
     const PAINEL_PROG_MAP_DEFAULT_CENTER = [-14.2350, -51.9253];
     const PAINEL_PROG_MAP_DEFAULT_ZOOM = 4;
-    const PAINEL_PROG_ROUTE_MAX_STOPS = 25;
+    const PAINEL_PROG_ROUTE_MAX_STOPS = 2;
     let painelProgVisualizacaoAtual = "mapa";
     let painelProgLeafletMap = null;
     let painelProgMapLibreBaseLayer = null;
@@ -15181,6 +15187,8 @@ return null;
       const cardsArea = document.getElementById("painelProgramacaoCards");
       const btnCards = document.getElementById("btnPainelProgViewCards");
       const btnMap = document.getElementById("btnPainelProgViewMap");
+      const mainLayout = document.querySelector("#paginaPainelProgramacao .painelProgMainLayout");
+      mainLayout?.classList.toggle("isMapView", view === "mapa");
       if (mapArea) mapArea.style.display = view === "mapa" ? "block" : "none";
       if (cardsArea) cardsArea.style.display = view === "cards" ? "block" : "none";
       btnCards?.classList.toggle("active", view === "cards");
@@ -15302,7 +15310,8 @@ return null;
     function getRouteGeoCacheStorage() {
       if (painelProgGeoCacheMem && typeof painelProgGeoCacheMem === "object") return painelProgGeoCacheMem;
       try {
-        const raw = localStorage.getItem("gira_route_geo_cep_v3");
+        // Nova chave: invalida coordenadas das versões anteriores que usavam geocodificação textual.
+        const raw = localStorage.getItem("gira_route_geo_cep_v4_awesome");
         const parsed = raw ? JSON.parse(raw) : {};
         painelProgGeoCacheMem = parsed && typeof parsed === "object" ? parsed : {};
       } catch (_) {
@@ -15315,7 +15324,7 @@ return null;
       try {
         painelProgGeoCacheMem = cache && typeof cache === "object" ? cache : {};
         const entries = Object.entries(painelProgGeoCacheMem).slice(-1500);
-        localStorage.setItem("gira_route_geo_cep_v3", JSON.stringify(Object.fromEntries(entries)));
+        localStorage.setItem("gira_route_geo_cep_v4_awesome", JSON.stringify(Object.fromEntries(entries)));
       } catch (_) {}
     }
 
@@ -15327,120 +15336,65 @@ return null;
 
     function getChaveGeoPainelProgramacao(cep, item) {
       const digits = String(cep || "").replace(/\D/g, "");
-      if (digits.length === 8) return `CEP:${digits}`;
-      const { destino, uf } = getDestinoUfGeoPainelProgramacao(item);
-      return destino ? `CIDADE:${normalizar(destino)}|${normalizar(uf)}` : "";
+      return digits.length === 8 ? `CEP:${digits}` : "";
     }
 
     function coordenadaValidaBrasilPainelProgramacao(lat, lon) {
       lat = Number(lat); lon = Number(lon);
-      // Caixa geográfica ampla do território brasileiro + pequena margem.
       return Number.isFinite(lat) && Number.isFinite(lon)
         && lat >= -35.5 && lat <= 6.5
         && lon >= -75.5 && lon <= -31.0;
     }
 
-    async function geocodificarTextoORSPainelProgramacao(text) {
-      if (!text) return null;
-      const url = `${ORS_GEOCODE_BASE_URL}/search?api_key=${encodeURIComponent(ORS_API_KEY)}&text=${encodeURIComponent(text)}&size=1&boundary.country=BR`;
-      const resp = await fetch(url);
-      if (!resp.ok) throw new Error(`Geocodificação ORS: HTTP ${resp.status}`);
-      const json = await resp.json();
-      const feat = json?.features?.[0];
-      const coords = feat?.geometry?.coordinates;
-      if (!Array.isArray(coords) || coords.length < 2) return null;
-      const lon = Number(coords[0]);
-      const lat = Number(coords[1]);
-      if (!coordenadaValidaBrasilPainelProgramacao(lat, lon)) return null;
-      return { lon, lat, label:feat?.properties?.label || text };
-    }
-
-    async function consultarBrasilApiCepPainelProgramacao(digits) {
+    async function consultarAwesomeApiCepPainelProgramacao(digits, item) {
       if (!/^\d{8}$/.test(String(digits || ""))) return null;
-      try {
-        const resp = await fetch(`https://brasilapi.com.br/api/cep/v2/${digits}`);
-        if (!resp.ok) return null;
-        const json = await resp.json();
-        const coords = json?.location?.coordinates || {};
-        const lon = Number(coords.longitude);
-        const lat = Number(coords.latitude);
-        return {
-          cep: String(json?.cep || digits).replace(/\D/g, ""),
-          uf: String(json?.state || "").trim().toUpperCase(),
-          cidade: String(json?.city || "").trim(),
-          bairro: String(json?.neighborhood || "").trim(),
-          rua: String(json?.street || "").trim(),
-          lat: coordenadaValidaBrasilPainelProgramacao(lat, lon) ? lat : null,
-          lon: coordenadaValidaBrasilPainelProgramacao(lat, lon) ? lon : null
-        };
-      } catch (err) {
-        console.warn("Falha ao consultar BrasilAPI para CEP:", digits, err);
-        return null;
-      }
+      const resp = await fetch(`https://cep.awesomeapi.com.br/json/${digits}`, { cache:"force-cache" });
+      if (!resp.ok) return null;
+      const json = await resp.json();
+      const lat = Number(json?.lat);
+      const lon = Number(json?.lng);
+      if (!coordenadaValidaBrasilPainelProgramacao(lat, lon)) return null;
+
+      // Segurança adicional: não aceita um CEP geolocalizado em UF diferente da UF do card.
+      const { uf: ufEsperada } = getDestinoUfGeoPainelProgramacao(item);
+      const ufApi = String(json?.state || "").trim().toUpperCase();
+      if (ufEsperada && ufApi && ufEsperada !== ufApi) return null;
+
+      return {
+        lat,
+        lon,
+        label:[json?.address, json?.district, json?.city, json?.state, digits].filter(Boolean).join(", "),
+        source:"awesomeapi-cep",
+        apiCep:String(json?.cep || digits).replace(/\D/g,""),
+        apiUf:ufApi,
+        apiCidade:String(json?.city || "").trim()
+      };
     }
 
     async function getGeocodeCEPPainelProgramacao(cep, item) {
       const digits = String(cep || "").replace(/\D/g, "");
-      const { destino, uf } = getDestinoUfGeoPainelProgramacao(item);
       const cacheKey = getChaveGeoPainelProgramacao(digits, item);
       if (!cacheKey) return null;
 
       const cache = getRouteGeoCacheStorage();
       const cached = cache[cacheKey];
-      if (cached && coordenadaValidaBrasilPainelProgramacao(cached.lat, cached.lon)) return cached;
-      if (cached) delete cache[cacheKey];
-
-      let result = null;
-
-      // 1) CEP oficializado/normalizado pela BrasilAPI. Quando ela fornece coordenadas válidas,
-      //    usamos diretamente; isso evita resultados ambíguos do geocoder por texto.
-      if (digits.length === 8) {
-        const brCep = await consultarBrasilApiCepPainelProgramacao(digits);
-        const ufEsperada = String(uf || "").trim().toUpperCase();
-        const ufCompativel = !ufEsperada || !brCep?.uf || brCep.uf === ufEsperada;
-        if (brCep && ufCompativel && coordenadaValidaBrasilPainelProgramacao(brCep.lat, brCep.lon)) {
-          result = {
-            lat: brCep.lat,
-            lon: brCep.lon,
-            label: [brCep.rua, brCep.bairro, brCep.cidade, brCep.uf, digits].filter(Boolean).join(", "),
-            source: "brasilapi-cep"
-          };
-        }
-
-        // 2) Se o CEP foi reconhecido mas veio sem coordenadas, usa o endereço retornado por ele
-        //    para geocodificar de forma muito menos ambígua que apenas "CEP, Brasil".
-        if (!result && brCep && ufCompativel) {
-          try {
-            const textoEndereco = [brCep.rua, brCep.bairro, brCep.cidade, brCep.uf, "Brasil"].filter(Boolean).join(", ");
-            if (textoEndereco) {
-              const geo = await geocodificarTextoORSPainelProgramacao(textoEndereco);
-              if (geo) result = { ...geo, source:"cep-endereco" };
-            }
-          } catch (err) {
-            console.warn("Falha na geocodificação do endereço do CEP:", err);
-          }
-        }
+      if (cached && coordenadaValidaBrasilPainelProgramacao(cached.lat, cached.lon)) {
+        const { uf } = getDestinoUfGeoPainelProgramacao(item);
+        if (!uf || !cached.apiUf || cached.apiUf === uf) return cached;
+        delete cache[cacheKey];
       }
 
-      // 3) Fallback controlado pela cidade/UF do próprio card.
-      if (!result && destino) {
-        try {
-          const geo = await geocodificarTextoORSPainelProgramacao([destino, uf, "Brasil"].filter(Boolean).join(", "));
-          if (geo) result = { ...geo, source:"cidade" };
-        } catch (err) {
-          console.warn("Falha na geocodificação por cidade:", err);
+      try {
+        const result = await consultarAwesomeApiCepPainelProgramacao(digits, item);
+        if (result) {
+          cache[cacheKey] = { ...result, savedAt:Date.now() };
+          saveRouteGeoCacheStorage(cache);
+          return result;
         }
+      } catch (err) {
+        console.warn("Falha ao localizar CEP na AwesomeAPI:", digits, err);
       }
-
-      if (result && coordenadaValidaBrasilPainelProgramacao(result.lat, result.lon)) {
-        cache[cacheKey] = { ...result, savedAt:Date.now() };
-        if (destino) {
-          const cityKey = `CIDADE:${normalizar(destino)}|${normalizar(uf)}`;
-          if (!cache[cityKey]) cache[cityKey] = { ...result, source: result.source || "cidade", savedAt:Date.now() };
-        }
-        saveRouteGeoCacheStorage(cache);
-        return result;
-      }
+      // Sem fallback textual: é preferível declarar sem localização a colocar um cliente em cidade/posição errada.
       return null;
     }
 
@@ -15527,7 +15481,7 @@ return null;
       const notas = getNotasCardPainelProgramacao(item);
       const prioridades = Array.isArray(item.prioridadesPVD) ? item.prioridadesPVD.filter(Boolean) : [];
       const cepExtra = ponto.totalCeps > 1 ? `<div class="routeDetailTag" title="CEPs encontrados neste card">${ponto.totalCeps} CEPs no card</div>` : "";
-      const geoFallback = ponto.geoSource === "cidade" ? `<div class="routeDetailTag" style="border-color:#f59e0b;color:#92400e;background:#fffbeb;">Posição aproximada pela cidade</div>` : "";
+      const geoFallback = ponto.geoSource === "awesomeapi-cep" ? `<div class="routeDetailTag" style="border-color:#22c55e;color:#166534;background:#f0fdf4;">Posição pelo CEP</div>` : "";
       const routeAdded = painelProgRouteStops.some(s => s.key === ponto.key);
       const jCarga = normalizar(item.janelaCarregamentoTexto) === "NAO CADASTRADO" ? "-" : (item.janelaCarregamentoTexto || "-");
       const jEntrega = normalizar(item.janelaEntregaTexto) === "NAO CADASTRADO" ? "-" : (item.janelaEntregaTexto || "-");
@@ -15547,12 +15501,15 @@ return null;
           <div class="routeDetailBox routeDetailWide"><div class="routeDetailLabel">Destino</div><div class="routeDetailValue">${getTextoPainelProgramacao(getDestinoResumoMapaPainelProgramacao(item))}</div></div>
           <div class="routeDetailBox"><div class="routeDetailLabel">CEP</div><div class="routeDetailValue">${formatCepPainelProgramacao(ponto.cep)}</div></div>
           <div class="routeDetailBox"><div class="routeDetailLabel">Programador</div><div class="routeDetailValue">${getTextoPainelProgramacao(item.responsavel || "-")}</div></div>
+          <div class="routeDetailBox"><div class="routeDetailLabel">Embarque</div><div class="routeDetailValue">${getTextoPainelProgramacao(item.temProgramado ? (item.tipoEmbarque || "-") : "-")}</div></div>
+          <div class="routeDetailBox"><div class="routeDetailLabel">ID vinculado</div><div class="routeDetailValue">${getTextoPainelProgramacao(item.idVinculado || "-")}</div></div>
           <div class="routeDetailBox"><div class="routeDetailLabel">Peso total PVD</div><div class="routeDetailValue">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.pesoTotalPVD,2))} kg</div></div>
           <div class="routeDetailBox"><div class="routeDetailLabel">Notas PVD</div><div class="routeDetailValue">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.totalNotasPVD,0))}</div></div>
           <div class="routeDetailBox"><div class="routeDetailLabel">Entrada em atraso</div><div class="routeDetailValue">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.entradaAtraso,0))}</div></div>
           <div class="routeDetailBox"><div class="routeDetailLabel">Notas ≤ D-1</div><div class="routeDetailValue">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.notasD1,0))}</div></div>
           <div class="routeDetailBox routeDetailWide"><div class="routeDetailLabel">Janela carga</div><div class="routeDetailValue">${getTextoPainelProgramacao(jCarga)}</div></div>
           <div class="routeDetailBox routeDetailWide"><div class="routeDetailLabel">Janela entrega</div><div class="routeDetailValue">${getTextoPainelProgramacao(jEntrega)}</div></div>
+          <div class="routeDetailBox routeDetailWide"><div class="routeDetailLabel">Último veículo localizado</div><div class="routeDetailValue">${getTextoPainelProgramacao(item.ultimoVeiculo?.id || item.ultimoVeiculo?.ID || item.ultimoVeiculo?.placa || item.ultimoVeiculo?.['PLACA'] || "-")}</div></div>
           <div class="routeDetailBox routeDetailWide"><div class="routeDetailLabel">Notas deste card</div><div class="routeDetailValue">${notas.map(n => getTextoPainelProgramacao(n.nota || n.numeroOEF || "")).filter(Boolean).slice(0,8).join(", ") || "-"}${notas.length>8 ? ` +${notas.length-8}` : ""}</div></div>
         </div>
         <div class="routeDetailActions">
@@ -15636,35 +15593,40 @@ return null;
       });
       const grupos = Array.from(porDestinoGeo.entries());
       let cardsProcessados = semLocal;
+      const CONCORRENCIA_CEP = 6;
 
-      for (let i=0;i<grupos.length;i++) {
+      for (let inicio=0; inicio<grupos.length; inicio += CONCORRENCIA_CEP) {
         if (token !== painelProgMapRenderToken) return;
-        const [, grupo] = grupos[i];
-        const cep = grupo[0]?.cep || "";
-        const geo = await getGeocodeCEPPainelProgramacao(cep, grupo[0]?.item);
-        if (!geo) {
-          semLocal += grupo.length;
+        const lote = grupos.slice(inicio, inicio + CONCORRENCIA_CEP);
+        const resultados = await Promise.all(lote.map(async ([, grupo]) => {
+          const cep = grupo[0]?.cep || "";
+          const geo = await getGeocodeCEPPainelProgramacao(cep, grupo[0]?.item);
+          return { grupo, geo };
+        }));
+        if (token !== painelProgMapRenderToken) return;
+
+        resultados.forEach(({grupo, geo}) => {
+          if (!geo) {
+            semLocal += grupo.length;
+          } else {
+            grupo.forEach(ponto => {
+              ponto.lat = Number(geo.lat);
+              ponto.lon = Number(geo.lon);
+              ponto.geoSource = geo.source || "awesomeapi-cep";
+              ponto.geoLabel = geo.label || "";
+              adicionarMarcador(ponto);
+            });
+          }
           cardsProcessados += grupo.length;
-        } else {
-          grupo.forEach(ponto => {
-            ponto.lat = Number(geo.lat);
-            ponto.lon = Number(geo.lon);
-            ponto.geoSource = geo.source || "cep";
-            ponto.geoLabel = geo.label || "";
-            adicionarMarcador(ponto);
-          });
-          cardsProcessados += grupo.length;
-        }
+        });
 
         atualizarKpisMapaPainelProgramacao(pontos,semLocal);
-        if (loading) loading.textContent = `Localizando destinos... ${Math.min(cardsProcessados,pontos.length)}/${pontos.length}`;
+        if (loading) loading.textContent = `Localizando CEPs... ${Math.min(cardsProcessados,pontos.length)}/${pontos.length}`;
         if (status) status.textContent = `${renderizados.size} ponto(s) localizado(s) • ${semLocal} sem localização • carregando...`;
-
-        // Exibe o mapa progressivamente; não espera os 290 cards terminarem.
-        if (bounds.length && (i === 0 || i % 10 === 0)) {
+        if (bounds.length) {
           try { map.fitBounds(bounds,{padding:[35,35],maxZoom:12}); } catch (_) {}
         }
-        if (i % 8 === 0) await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
       if (token !== painelProgMapRenderToken) return;
 
@@ -15724,8 +15686,8 @@ return null;
         painelProgRouteStops.splice(idx,1);
       } else {
         if (painelProgRouteStops.length >= PAINEL_PROG_ROUTE_MAX_STOPS) {
-          alert(`Para manter o cálculo estável, selecione no máximo ${PAINEL_PROG_ROUTE_MAX_STOPS} paradas por rota.`);
-          return;
+          // Para manter o fluxo simples A -> B, ao clicar em um terceiro ponto reiniciamos a seleção por ele.
+          painelProgRouteStops = [];
         }
         painelProgRouteStops.push({key:ponto.key,lat:ponto.lat,lon:ponto.lon,vocativo:ponto.item?.vocativo||"",destino:getDestinoResumoMapaPainelProgramacao(ponto.item),peso:Number(ponto.item?.pesoTotalPVD)||0});
       }
@@ -15733,6 +15695,7 @@ return null;
       renderRouteStopsPainelProgramacao();
       atualizarMarcadoresRotaPainelProgramacao();
       if (painelProgMapSelectedKey===key) renderDetalheMapaPainelProgramacao(ponto);
+      if (painelProgRouteStops.length === 2) calcularRotaPainelProgramacao(true);
     }
 
     function removerStopRotaPainelProgramacao(index) {
@@ -15743,7 +15706,7 @@ return null;
       const list=document.getElementById("routeStopsList"), count=document.getElementById("routeStopsCount");
       if(count) count.textContent=`${painelProgRouteStops.length} parada(s)`;
       if(!list) return;
-      if(!painelProgRouteStops.length){ list.innerHTML='<span style="font-size:9px;color:#94a3b8;">Ative “Montar rota” e clique nos pontos.</span>'; return; }
+      if(!painelProgRouteStops.length){ list.innerHTML='<span style="font-size:9px;color:#94a3b8;">Clique em “Montar rota” e depois selecione 2 clientes.</span>'; return; }
       list.innerHTML=painelProgRouteStops.map((s,i)=>`<button class="routeStop" type="button" title="Clique para remover" onclick="removerStopRotaPainelProgramacao(${i})"><span class="routeStopNum">${i+1}</span><span class="routeStopText">${getTextoPainelProgramacao(s.vocativo)}</span> ×</button>`).join("");
     }
 
@@ -15767,8 +15730,8 @@ return null;
       const min=Math.round((Number(seconds)||0)/60); if(min<60)return `${min} min`; const h=Math.floor(min/60),m=min%60; return `${h}h ${String(m).padStart(2,"0")}min`;
     }
 
-    async function calcularRotaPainelProgramacao() {
-      if(painelProgRouteStops.length<2){ alert("Selecione pelo menos 2 pontos para calcular a rota."); return; }
+    async function calcularRotaPainelProgramacao(auto=false) {
+      if(painelProgRouteStops.length<2){ if(!auto) alert("Selecione 2 pontos para calcular a distância rodoviária."); return; }
       const btn=document.getElementById("btnRouteCalc"); const old=btn?.textContent; if(btn){btn.disabled=true;btn.textContent="Calculando...";}
       try {
         const coords=painelProgRouteStops.map(s=>`${Number(s.lon).toFixed(6)},${Number(s.lat).toFixed(6)}`).join(";");
@@ -15785,8 +15748,8 @@ return null;
         if(d)d.textContent=`${(Number(rota.distance||0)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km`;
         if(t)t.textContent=formatRouteDurationPainelProgramacao(rota.duration);
       } catch(err) {
-        console.error("Erro ao calcular rota OSRM:",err); alert(`Não foi possível calcular a rota neste momento. ${err?.message||err}`);
-      } finally { if(btn){btn.disabled=false;btn.textContent=old||"Calcular rota";} }
+        console.error("Erro ao calcular rota OSRM:",err); if(!auto) alert(`Não foi possível calcular a distância neste momento. ${err?.message||err}`);
+      } finally { if(btn){btn.disabled=false;btn.textContent=old||"Calcular distância";} }
     }
 
     async function salvarObservacoes() {
