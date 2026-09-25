@@ -4420,7 +4420,8 @@
 
 
     const ORS_API_KEY = "5b3ce3597851110001cf62489c210549016b487db0ad9707f9a53bcb";
-    const ORS_BASE_URL = "https://api.openrouteservice.org";
+    const ORS_BASE_URL = "https://api.heigit.org/openrouteservice";
+    const ORS_GEOCODE_BASE_URL = "https://api.heigit.org/pelias/v1";
     const FILIAIS_ORS = [
       { cidade: "Maceió", uf: "AL" },
       { cidade: "Manaus", uf: "AM" },
@@ -14692,7 +14693,7 @@ return null;
       if (!key) return null;
       if (estado.geocodeCache.has(key)) return estado.geocodeCache.get(key);
 
-      const url = `${ORS_BASE_URL}/geocode/search?api_key=${encodeURIComponent(ORS_API_KEY)}&text=${encodeURIComponent(local)}&size=1&boundary.country=BR&layers=locality`;
+      const url = `${ORS_GEOCODE_BASE_URL}/search?api_key=${encodeURIComponent(ORS_API_KEY)}&text=${encodeURIComponent(local)}&size=1&boundary.country=BR`;
       const resp = await fetch(url);
       if (!resp.ok) throw new Error(`Falha ao geocodificar ${local}: ${resp.status}`);
       const json = await resp.json();
@@ -15148,8 +15149,8 @@ return null;
 
     // ============================================================
     // MAPA / ROTEIRIZAÇÃO — PAINEL DE PROGRAMAÇÃO
-    // Leaflet + OpenStreetMap (visual) + OSRM (rota)
-    // Geocodificação de CEP reaproveita OpenRouteService já configurado na aplicação.
+    // Leaflet + OpenFreeMap (visual) + OSRM (rota)
+    // Geocodificação: HEIGIT/openrouteservice Pelias com cache persistente e fallback Cidade/UF.
     // ============================================================
     const PAINEL_PROG_MAP_DEFAULT_CENTER = [-14.2350, -51.9253];
     const PAINEL_PROG_MAP_DEFAULT_ZOOM = 4;
@@ -15167,6 +15168,11 @@ return null;
     let painelProgMapRenderTimer = null;
     let painelProgMapPontosAtuais = [];
     let painelProgMapSelectedKey = "";
+    let painelProgMapSignatureRenderizada = "";
+    let painelProgMapRenderConcluido = false;
+    let painelProgGeoCacheMem = null;
+    let painelProgCepInfoCache = new Map();
+    let painelProgCepInfoRowsRef = null;
 
     function setPainelProgVisualizacao(modo) {
       const view = modo === "cards" ? "cards" : "mapa";
@@ -15184,7 +15190,7 @@ return null;
           garantirMapaPainelProgramacao();
           redimensionarMapaPainelProgramacao();
           setTimeout(() => redimensionarMapaPainelProgramacao(), 120);
-          agendarRenderMapaPainelProgramacao(true);
+          agendarRenderMapaPainelProgramacao(false);
         });
       }
     }
@@ -15245,73 +15251,161 @@ return null;
     }
 
     function getCepPredominantePainelProgramacao(item) {
-      const notas = Array.isArray(item?.notasFonteRelatorioPVD) ? item.notasFonteRelatorioPVD : [];
+      if (painelProgCepInfoRowsRef !== detalhadoRows) {
+        painelProgCepInfoRowsRef = detalhadoRows;
+        painelProgCepInfoCache.clear();
+      }
+      const cacheKeyCard = String(item?.cardKey || "");
+      if (cacheKeyCard && painelProgCepInfoCache.has(cacheKeyCard)) return painelProgCepInfoCache.get(cacheKeyCard);
+
       const destinatarioNorm = String(item?.destinatarioNorm || "");
+      const vocNorm = String(item?.vocNorm || normalizar(item?.vocativo || ""));
       const contagem = new Map();
+
+      const adicionarCep = (valor) => {
+        const digits = String(valor ?? "").replace(/\D/g, "");
+        if (digits.length !== 8) return;
+        contagem.set(digits, (contagem.get(digits) || 0) + 1);
+      };
+
+      // Fonte principal: as mesmas notas já processadas pelo Painel de Programação.
+      const notas = Array.isArray(item?.notasFonteRelatorioPVD) ? item.notasFonteRelatorioPVD : [];
       notas.forEach(nota => {
-        if (destinatarioNorm && normalizar(nota?.destinatario || "") !== destinatarioNorm) return;
-        const cep = getCepPainelProgramacaoNota(nota);
-        if (!cep) return;
-        contagem.set(cep, (contagem.get(cep) || 0) + 1);
+        const destinatarioNota = normalizar(nota?.destinatario || getFieldValue(nota?._raw || nota || {}, ["Destinatario", "DESTINATARIO", "Destinatário"]));
+        if (destinatarioNorm && destinatarioNota && destinatarioNota !== destinatarioNorm) return;
+        adicionarCep(getCepPainelProgramacaoNota(nota));
       });
+
+      // Fallback robusto: consulta diretamente a base PVD original caso o objeto
+      // resumido do card não tenha carregado o CEP. Isso evita declarar o card
+      // "sem localização" quando a coluna CEP Destino existe no relatório.
+      if (!contagem.size && Array.isArray(detalhadoRows)) {
+        detalhadoRows.forEach(raw => {
+          const almox = normalizar(getFieldValue(raw, ["Almoxarifado", "ALMOXARIFADO", "almoxarifado"]));
+          if (vocNorm && almox !== vocNorm) return;
+          const dest = normalizar(getFieldValue(raw, ["Destinatario", "DESTINATARIO", "Destinatário"]));
+          if (destinatarioNorm && dest && dest !== destinatarioNorm) return;
+          adicionarCep(getFieldValue(raw, ["CEP Destino", "CEP DESTINO", "Cep Destino", "CEP", "cep"]));
+        });
+      }
+
       const ordenados = Array.from(contagem.entries()).sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]));
-      return {
+      const info = {
         cep: ordenados[0]?.[0] || "",
         ceps: ordenados.map(([cep,qtd]) => ({cep,qtd})),
         totalCeps: ordenados.length
       };
+      if (cacheKeyCard) painelProgCepInfoCache.set(cacheKeyCard, info);
+      return info;
     }
 
     function getRouteGeoCacheStorage() {
+      if (painelProgGeoCacheMem && typeof painelProgGeoCacheMem === "object") return painelProgGeoCacheMem;
       try {
-        const raw = localStorage.getItem("gira_route_geo_cep_v1");
+        const raw = localStorage.getItem("gira_route_geo_cep_v2");
         const parsed = raw ? JSON.parse(raw) : {};
-        return parsed && typeof parsed === "object" ? parsed : {};
-      } catch (_) { return {}; }
+        painelProgGeoCacheMem = parsed && typeof parsed === "object" ? parsed : {};
+      } catch (_) {
+        painelProgGeoCacheMem = {};
+      }
+      return painelProgGeoCacheMem;
     }
 
     function saveRouteGeoCacheStorage(cache) {
       try {
-        const entries = Object.entries(cache || {}).slice(-800);
-        localStorage.setItem("gira_route_geo_cep_v1", JSON.stringify(Object.fromEntries(entries)));
+        painelProgGeoCacheMem = cache && typeof cache === "object" ? cache : {};
+        const entries = Object.entries(painelProgGeoCacheMem).slice(-1500);
+        localStorage.setItem("gira_route_geo_cep_v2", JSON.stringify(Object.fromEntries(entries)));
       } catch (_) {}
     }
 
+    function getDestinoUfGeoPainelProgramacao(item) {
+      const destino = Array.isArray(item?.destinos) ? String(item.destinos[0] || "").trim() : "";
+      const uf = Array.isArray(item?.ufs) ? String(item.ufs[0] || "").trim().toUpperCase() : "";
+      return { destino, uf };
+    }
+
+    function getChaveGeoPainelProgramacao(cep, item) {
+      const digits = String(cep || "").replace(/\D/g, "");
+      if (digits.length === 8) return `CEP:${digits}`;
+      const { destino, uf } = getDestinoUfGeoPainelProgramacao(item);
+      return destino ? `CIDADE:${normalizar(destino)}|${normalizar(uf)}` : "";
+    }
+
+    async function geocodificarTextoORSPainelProgramacao(text) {
+      if (!text) return null;
+      const url = `${ORS_GEOCODE_BASE_URL}/search?api_key=${encodeURIComponent(ORS_API_KEY)}&text=${encodeURIComponent(text)}&size=1&boundary.country=BR`;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`Geocodificação ORS: HTTP ${resp.status}`);
+      const json = await resp.json();
+      const feat = json?.features?.[0];
+      const coords = feat?.geometry?.coordinates;
+      if (!Array.isArray(coords) || coords.length < 2) return null;
+      const lon = Number(coords[0]);
+      const lat = Number(coords[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+      return { lon, lat, label:feat?.properties?.label || text };
+    }
+
     async function getGeocodeCEPPainelProgramacao(cep, item) {
-      const key = String(cep || "").replace(/\D/g, "");
-      if (key.length !== 8) return null;
+      const digits = String(cep || "").replace(/\D/g, "");
+      const { destino, uf } = getDestinoUfGeoPainelProgramacao(item);
+      const cacheKey = getChaveGeoPainelProgramacao(digits, item);
+      if (!cacheKey) return null;
+
       const cache = getRouteGeoCacheStorage();
-      if (cache[key] && Number.isFinite(Number(cache[key].lat)) && Number.isFinite(Number(cache[key].lon))) return cache[key];
+      const cached = cache[cacheKey];
+      if (cached && Number.isFinite(Number(cached.lat)) && Number.isFinite(Number(cached.lon))) {
+        return cached;
+      }
 
       let result = null;
-      try {
-        const text = `${key.slice(0,5)}-${key.slice(5)}, Brasil`;
-        const url = `${ORS_BASE_URL}/geocode/search?api_key=${encodeURIComponent(ORS_API_KEY)}&text=${encodeURIComponent(text)}&size=1&boundary.country=BR`;
-        const resp = await fetch(url);
-        if (resp.ok) {
-          const json = await resp.json();
-          const feat = json?.features?.[0];
-          const coords = feat?.geometry?.coordinates;
-          if (Array.isArray(coords) && coords.length >= 2) {
-            result = { lon:Number(coords[0]), lat:Number(coords[1]), label:feat?.properties?.label || text, source:"cep" };
-          }
-        }
-      } catch (_) {}
-
-      if (!result) {
-        const destino = Array.isArray(item?.destinos) ? item.destinos[0] : "";
-        const uf = Array.isArray(item?.ufs) ? item.ufs[0] : "";
+      // Primeiro tenta o CEP junto com cidade/UF para aumentar a precisão do Pelias.
+      if (digits.length === 8) {
         try {
-          const fallback = destino && uf ? await getGeocodeORS(`${destino} - ${uf}, Brasil`) : null;
-          if (fallback) result = { ...fallback, source:"cidade" };
-        } catch (_) {}
+          const cepFmt = `${digits.slice(0,5)}-${digits.slice(5)}`;
+          const contexto = [cepFmt, destino, uf, "Brasil"].filter(Boolean).join(", ");
+          const geo = await geocodificarTextoORSPainelProgramacao(contexto);
+          if (geo) result = { ...geo, source:"cep" };
+        } catch (err) {
+          console.warn("Falha na geocodificação por CEP:", err);
+        }
+      }
+
+      // Se o CEP não estiver disponível ou não retornar ponto, posiciona pela cidade/UF.
+      if (!result && destino) {
+        try {
+          const geo = await geocodificarTextoORSPainelProgramacao([destino, uf, "Brasil"].filter(Boolean).join(", "));
+          if (geo) result = { ...geo, source:"cidade" };
+        } catch (err) {
+          console.warn("Falha na geocodificação por cidade:", err);
+        }
       }
 
       if (result) {
-        cache[key] = { ...result, savedAt:Date.now() };
+        cache[cacheKey] = { ...result, savedAt:Date.now() };
+        // O mesmo destino pode voltar em outro card sem CEP. Salva também a chave por cidade.
+        if (destino) {
+          const cityKey = `CIDADE:${normalizar(destino)}|${normalizar(uf)}`;
+          if (!cache[cityKey]) cache[cityKey] = { ...result, source: result.source || "cidade", savedAt:Date.now() };
+        }
         saveRouteGeoCacheStorage(cache);
       }
       return result;
+    }
+
+    function getAssinaturaMapaPainelProgramacao(dados) {
+      return (Array.isArray(dados) ? dados : []).map(item => {
+        const cep = getCepPredominantePainelProgramacao(item).cep || "";
+        return [
+          String(item?.cardKey || ""), cep,
+          item?.temProgramado ? 1 : 0,
+          item?.temNaoProgramado ? 1 : 0,
+          item?.temCarregadoHoje ? 1 : 0,
+          Number(item?.pesoTotalPVD || 0),
+          Number(item?.totalNotasPVD || 0)
+        ].join(":");
+      }).join("|");
     }
 
     function montarPontosMapaPainelProgramacao(dados) {
@@ -15428,12 +15522,28 @@ return null;
       set("routeKpiPeso",`${formatarNumeroPainelProgramacao(peso,0)} kg`); set("routeKpiSemLocal",semLocal);
     }
 
-    async function renderMapaPainelProgramacao(forceFit=false) {
+    async function renderMapaPainelProgramacao(forceFit=false, forceRebuild=false) {
       if (painelProgVisualizacaoAtual !== "mapa") return;
       const map = garantirMapaPainelProgramacao();
       if (!map || !painelProgLeafletLayer) return;
-      const token = ++painelProgMapRenderToken;
       const dados = Array.isArray(painelProgDadosAtuais) ? painelProgDadosAtuais : [];
+      const assinaturaAtual = getAssinaturaMapaPainelProgramacao(dados);
+
+      // Ao alternar Cards/Mapa ou sair e voltar para esta página, não refaz
+      // geocodificação, markers nem fitBounds quando a base não mudou.
+      if (!forceRebuild && painelProgMapRenderConcluido && assinaturaAtual === painelProgMapSignatureRenderizada) {
+        redimensionarMapaPainelProgramacao();
+        const semLocalAtual = painelProgMapPontosAtuais.filter(p => !Number.isFinite(p.lat) || !Number.isFinite(p.lon)).length;
+        atualizarKpisMapaPainelProgramacao(painelProgMapPontosAtuais, semLocalAtual);
+        const status = document.getElementById("painelProgMapStatus");
+        const locAtual = painelProgMapPontosAtuais.length - semLocalAtual;
+        if (status) status.textContent = `${locAtual} ponto(s) localizado(s) • ${semLocalAtual} sem localização • mapa mantido em memória.`;
+        return;
+      }
+
+      const token = ++painelProgMapRenderToken;
+      painelProgMapRenderConcluido = false;
+      painelProgMapSignatureRenderizada = assinaturaAtual;
       const pontos = montarPontosMapaPainelProgramacao(dados);
       painelProgMapPontosAtuais = pontos;
       const loading = document.getElementById("painelProgMapLoading");
@@ -15447,7 +15557,7 @@ return null;
       }
       if (status) status.textContent = `Localizando ${pontos.length} card(s) pelos CEPs da base filtrada...`;
 
-      let semLocal = pontos.filter(p => !p.cep).length;
+      let semLocal = 0;
       const bounds = [];
       const renderizados = new Set();
 
@@ -15462,19 +15572,25 @@ return null;
         bounds.push([ponto.lat,ponto.lon]);
       };
 
-      // Agrupa por CEP: se 20 cards tiverem o mesmo CEP, fazemos apenas 1 consulta.
-      const porCep = new Map();
+      // Agrupa por CEP; quando o CEP não estiver disponível, agrupa por Cidade/UF.
+      // Assim vários cards do mesmo destino fazem somente uma consulta.
+      const porDestinoGeo = new Map();
       pontos.forEach(p => {
-        if (!p.cep) return;
-        if (!porCep.has(p.cep)) porCep.set(p.cep, []);
-        porCep.get(p.cep).push(p);
+        const geoKey = getChaveGeoPainelProgramacao(p.cep, p.item);
+        if (!geoKey) {
+          semLocal++;
+          return;
+        }
+        if (!porDestinoGeo.has(geoKey)) porDestinoGeo.set(geoKey, []);
+        porDestinoGeo.get(geoKey).push(p);
       });
-      const grupos = Array.from(porCep.entries());
+      const grupos = Array.from(porDestinoGeo.entries());
       let cardsProcessados = semLocal;
 
       for (let i=0;i<grupos.length;i++) {
         if (token !== painelProgMapRenderToken) return;
-        const [cep, grupo] = grupos[i];
+        const [, grupo] = grupos[i];
+        const cep = grupo[0]?.cep || "";
         const geo = await getGeocodeCEPPainelProgramacao(cep, grupo[0]?.item);
         if (!geo) {
           semLocal += grupo.length;
@@ -15514,19 +15630,33 @@ return null;
         const selected = pontos.find(p => p.key===painelProgMapSelectedKey);
         if (selected) renderDetalheMapaPainelProgramacao(selected);
       }
+      painelProgMapRenderConcluido = true;
       setTimeout(() => redimensionarMapaPainelProgramacao(), 50);
       setTimeout(() => redimensionarMapaPainelProgramacao(), 220);
     }
 
-    function agendarRenderMapaPainelProgramacao(forceFit=false) {
+    function agendarRenderMapaPainelProgramacao(forceFit=false, forceRebuild=false) {
       clearTimeout(painelProgMapRenderTimer);
-      painelProgMapRenderTimer = setTimeout(() => renderMapaPainelProgramacao(forceFit), 80);
+      painelProgMapRenderTimer = setTimeout(() => renderMapaPainelProgramacao(forceFit, forceRebuild), 80);
+    }
+
+    function forcarAtualizacaoMapaPainelProgramacao() {
+      painelProgMapRenderConcluido = false;
+      agendarRenderMapaPainelProgramacao(true, true);
     }
 
     function togglePainelProgMapLabels() {
       painelProgMapLabelsVisible = !painelProgMapLabelsVisible;
       document.getElementById("btnRouteLabels")?.classList.toggle("active",painelProgMapLabelsVisible);
-      agendarRenderMapaPainelProgramacao(false);
+      painelProgLeafletMarkers.forEach((marker, key) => {
+        const ponto = painelProgMapPontosAtuais.find(p => p.key === key);
+        if (!marker || !ponto) return;
+        try { marker.unbindTooltip(); } catch (_) {}
+        if (painelProgMapLabelsVisible) {
+          marker.bindTooltip(String(ponto.item?.vocativo || ""), {permanent:true,direction:"top",offset:[0,-27],className:"routeMapLabel"});
+          try { marker.openTooltip(); } catch (_) {}
+        }
+      });
     }
 
     function togglePainelProgRouteMode() {
