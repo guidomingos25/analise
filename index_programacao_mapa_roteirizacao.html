@@ -10,8 +10,11 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynWPwZJ1VtnW7VfN2nT/8W9xG4Y=" crossorigin="" />
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
@@ -15153,6 +15156,7 @@ return null;
     const PAINEL_PROG_ROUTE_MAX_STOPS = 25;
     let painelProgVisualizacaoAtual = "mapa";
     let painelProgLeafletMap = null;
+    let painelProgMapLibreBaseLayer = null;
     let painelProgLeafletMarkers = new Map();
     let painelProgLeafletLayer = null;
     let painelProgRouteLayer = null;
@@ -15178,10 +15182,16 @@ return null;
       if (view === "mapa") {
         requestAnimationFrame(() => {
           garantirMapaPainelProgramacao();
-          painelProgLeafletMap?.invalidateSize?.();
+          redimensionarMapaPainelProgramacao();
+          setTimeout(() => redimensionarMapaPainelProgramacao(), 120);
           agendarRenderMapaPainelProgramacao(true);
         });
       }
+    }
+
+    function redimensionarMapaPainelProgramacao() {
+      try { painelProgLeafletMap?.invalidateSize?.({ pan:false, debounceMoveend:true }); } catch (_) {}
+      try { painelProgMapLibreBaseLayer?.getMaplibreMap?.()?.resize?.(); } catch (_) {}
     }
 
     function garantirMapaPainelProgramacao() {
@@ -15189,19 +15199,41 @@ return null;
       if (!el || typeof L === "undefined") return null;
       if (painelProgLeafletMap) return painelProgLeafletMap;
 
-      painelProgLeafletMap = L.map(el, { zoomControl:true, preferCanvas:true }).setView(PAINEL_PROG_MAP_DEFAULT_CENTER, PAINEL_PROG_MAP_DEFAULT_ZOOM);
-      const streets = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom:19,
-        attribution:'&copy; OpenStreetMap contributors'
-      });
-      const topo = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
-        maxZoom:17,
-        attribution:'Map data &copy; OpenStreetMap contributors, SRTM | Map style &copy; OpenTopoMap'
-      });
-      streets.addTo(painelProgLeafletMap);
-      L.control.layers({ "Ruas": streets, "Topográfico": topo }, null, { position:"topright", collapsed:true }).addTo(painelProgLeafletMap);
+      painelProgLeafletMap = L.map(el, {
+        zoomControl:true,
+        preferCanvas:true,
+        minZoom:1,
+        maxBounds:[[-85,-Infinity],[85,Infinity]],
+        maxBoundsViscosity:1
+      }).setView(PAINEL_PROG_MAP_DEFAULT_CENTER, Math.max(1, PAINEL_PROG_MAP_DEFAULT_ZOOM));
+
+      // OpenFreeMap usa dados do OpenStreetMap, mas não depende dos servidores
+      // públicos tile.openstreetmap.org. Isso também permite testar o HTML via file://.
+      let streets = null;
+      let light = null;
+      if (typeof L.maplibreGL === "function") {
+        streets = L.maplibreGL({ style:"https://tiles.openfreemap.org/styles/liberty" });
+        light = L.maplibreGL({ style:"https://tiles.openfreemap.org/styles/positron" });
+        streets.addTo(painelProgLeafletMap);
+        painelProgMapLibreBaseLayer = streets;
+        painelProgLeafletMap.on("baselayerchange", (ev) => {
+          painelProgMapLibreBaseLayer = ev?.layer || painelProgMapLibreBaseLayer;
+          setTimeout(() => redimensionarMapaPainelProgramacao(), 30);
+        });
+        L.control.layers({ "Ruas": streets, "Claro": light }, null, { position:"topright", collapsed:true }).addTo(painelProgLeafletMap);
+        painelProgLeafletMap.attributionControl.addAttribution('OpenFreeMap &copy; OpenMapTiles Data from OpenStreetMap');
+      } else {
+        console.warn("MapLibre GL Leaflet não carregou; mapa base indisponível.");
+      }
       painelProgLeafletLayer = L.layerGroup().addTo(painelProgLeafletMap);
       painelProgRouteLayer = L.layerGroup().addTo(painelProgLeafletMap);
+      try {
+        const ro = new ResizeObserver(() => redimensionarMapaPainelProgramacao());
+        ro.observe(el);
+        window.__painelProgMapResizeObserver = ro;
+      } catch (_) {}
+      setTimeout(() => redimensionarMapaPainelProgramacao(), 0);
+      setTimeout(() => redimensionarMapaPainelProgramacao(), 150);
       return painelProgLeafletMap;
     }
 
@@ -15406,33 +15438,70 @@ return null;
       painelProgMapPontosAtuais = pontos;
       const loading = document.getElementById("painelProgMapLoading");
       const status = document.getElementById("painelProgMapStatus");
-      if (loading) loading.style.display = "block";
-      if (status) status.textContent = `Localizando ${pontos.length} card(s) pelos CEPs da base filtrada...`;
-
-      let semLocal = 0;
-      for (let i=0;i<pontos.length;i++) {
-        if (token !== painelProgMapRenderToken) return;
-        const ponto = pontos[i];
-        if (!ponto.cep) { semLocal++; continue; }
-        const geo = await getGeocodeCEPPainelProgramacao(ponto.cep, ponto.item);
-        if (!geo) { semLocal++; continue; }
-        ponto.lat = Number(geo.lat); ponto.lon = Number(geo.lon); ponto.geoSource = geo.source || "cep"; ponto.geoLabel = geo.label || "";
-        if (loading) loading.textContent = `Localizando destinos... ${i+1}/${pontos.length}`;
-      }
-      if (token !== painelProgMapRenderToken) return;
 
       painelProgLeafletLayer.clearLayers();
       painelProgLeafletMarkers.clear();
+      if (loading) {
+        loading.style.display = "block";
+        loading.textContent = `Preparando destinos... 0/${pontos.length}`;
+      }
+      if (status) status.textContent = `Localizando ${pontos.length} card(s) pelos CEPs da base filtrada...`;
+
+      let semLocal = pontos.filter(p => !p.cep).length;
       const bounds = [];
-      pontos.forEach(ponto => {
-        if (!Number.isFinite(ponto.lat) || !Number.isFinite(ponto.lon)) return;
+      const renderizados = new Set();
+
+      const adicionarMarcador = (ponto) => {
+        if (!ponto || renderizados.has(ponto.key) || !Number.isFinite(ponto.lat) || !Number.isFinite(ponto.lon)) return;
         const marker = L.marker([ponto.lat,ponto.lon], {icon:createMarkerIconPainelProgramacao(ponto), keyboard:true, riseOnHover:true});
         marker.on("click", () => selecionarPontoMapaPainelProgramacao(ponto.key, false));
         if (painelProgMapLabelsVisible) marker.bindTooltip(String(ponto.item?.vocativo || ""), {permanent:true,direction:"top",offset:[0,-27],className:"routeMapLabel"});
         marker.addTo(painelProgLeafletLayer);
         painelProgLeafletMarkers.set(ponto.key, marker);
+        renderizados.add(ponto.key);
         bounds.push([ponto.lat,ponto.lon]);
+      };
+
+      // Agrupa por CEP: se 20 cards tiverem o mesmo CEP, fazemos apenas 1 consulta.
+      const porCep = new Map();
+      pontos.forEach(p => {
+        if (!p.cep) return;
+        if (!porCep.has(p.cep)) porCep.set(p.cep, []);
+        porCep.get(p.cep).push(p);
       });
+      const grupos = Array.from(porCep.entries());
+      let cardsProcessados = semLocal;
+
+      for (let i=0;i<grupos.length;i++) {
+        if (token !== painelProgMapRenderToken) return;
+        const [cep, grupo] = grupos[i];
+        const geo = await getGeocodeCEPPainelProgramacao(cep, grupo[0]?.item);
+        if (!geo) {
+          semLocal += grupo.length;
+          cardsProcessados += grupo.length;
+        } else {
+          grupo.forEach(ponto => {
+            ponto.lat = Number(geo.lat);
+            ponto.lon = Number(geo.lon);
+            ponto.geoSource = geo.source || "cep";
+            ponto.geoLabel = geo.label || "";
+            adicionarMarcador(ponto);
+          });
+          cardsProcessados += grupo.length;
+        }
+
+        atualizarKpisMapaPainelProgramacao(pontos,semLocal);
+        if (loading) loading.textContent = `Localizando destinos... ${Math.min(cardsProcessados,pontos.length)}/${pontos.length}`;
+        if (status) status.textContent = `${renderizados.size} ponto(s) localizado(s) • ${semLocal} sem localização • carregando...`;
+
+        // Exibe o mapa progressivamente; não espera os 290 cards terminarem.
+        if (bounds.length && (i === 0 || i % 10 === 0)) {
+          try { map.fitBounds(bounds,{padding:[35,35],maxZoom:12}); } catch (_) {}
+        }
+        if (i % 8 === 0) await new Promise(resolve => setTimeout(resolve, 0));
+      }
+      if (token !== painelProgMapRenderToken) return;
+
       atualizarKpisMapaPainelProgramacao(pontos,semLocal);
       atualizarMarcadoresRotaPainelProgramacao();
       if (loading) loading.style.display = "none";
@@ -15445,7 +15514,8 @@ return null;
         const selected = pontos.find(p => p.key===painelProgMapSelectedKey);
         if (selected) renderDetalheMapaPainelProgramacao(selected);
       }
-      setTimeout(() => map.invalidateSize(),50);
+      setTimeout(() => redimensionarMapaPainelProgramacao(), 50);
+      setTimeout(() => redimensionarMapaPainelProgramacao(), 220);
     }
 
     function agendarRenderMapaPainelProgramacao(forceFit=false) {
