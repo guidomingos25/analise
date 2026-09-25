@@ -3898,6 +3898,34 @@
 
   
 
+    /* ===== Correção de empilhamento: filtros sempre acima do mapa ===== */
+    #paginaAnalise .filtersBar {
+      position: relative;
+      z-index: 5000;
+      overflow: visible;
+    }
+    #paginaAnalise .filtersRow,
+    #paginaAnalise .clientFilterBox {
+      position: relative;
+      z-index: 5001;
+      overflow: visible;
+    }
+    #paginaAnalise .clientFilterDropdown {
+      z-index: 6000 !important;
+    }
+    #paginaAnalise .card {
+      overflow: visible;
+    }
+    #painelProgramacaoMapaHost,
+    .painelProgMapShell {
+      position: relative;
+      z-index: 1;
+    }
+    #painelProgMap {
+      position: relative;
+      z-index: 1;
+    }
+
     /* ===== Painel de Programação - Mapa Leaflet sincronizado com cards ===== */
     .painelProgMapShell { background:#fff; border:1px solid rgba(15,23,42,.10); border-radius:16px; box-shadow:var(--shadowSoft); overflow:hidden; min-width:0; margin-bottom:14px; }
     .painelProgMapToolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:10px 12px; border-bottom:1px solid #e5e7eb; background:#f8fafc; }
