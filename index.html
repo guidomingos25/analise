@@ -11072,14 +11072,17 @@ return null;
       const opcoes = getPainelProgOpcoesFiltro(tipo);
       setPainelProgSetFiltro(tipo, new Set(opcoes.map(o => o.value)));
       renderPainelProgMultiFiltro(tipo);
-      renderPainelProgramacaoRapido(false);
+      // Recalcula as facetas usando a base já montada, sem reconstruir o painel.
+      // Assim os demais dropdowns passam a exibir somente opções compatíveis
+      // com os filtros ativos (ex.: UF=SP limita Destinatários/Destinos/etc.).
+      renderPainelProgramacaoComBaseAtual(false);
     }
 
     function limparPainelProgFiltro(tipo, ev) {
       if (ev) { ev.preventDefault(); ev.stopPropagation(); }
       setPainelProgSetFiltro(tipo, new Set());
       renderPainelProgMultiFiltro(tipo);
-      renderPainelProgramacaoRapido(false);
+      renderPainelProgramacaoComBaseAtual(false);
     }
 
     function onChangePainelProgMultiFiltro(tipo, valor, marcado, ev) {
@@ -11089,7 +11092,9 @@ return null;
       else setAtual.delete(valor);
       setPainelProgSetFiltro(tipo, setAtual);
       renderPainelProgMultiFiltro(tipo);
-      renderPainelProgramacaoRapido(false);
+      // Somente mudanças nos filtros atualizam as opções dos outros filtros.
+      // Seleção de cards/pontos do mapa não participa deste fluxo.
+      renderPainelProgramacaoComBaseAtual(false);
     }
 
     function renderPainelProgMultiFiltros() {
