@@ -9,13 +9,13 @@
   <title>ANÁLISE CARREGAMENTO</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynWPwZJ1VtnW7VfN2nT/8W9xG4Y=" crossorigin="" />
-  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -3898,101 +3898,46 @@
 
   
 
-    /* =========================
-       MAPA DE ROTEIRIZAÇÃO — PAINEL DE PROGRAMAÇÃO
-       ========================= */
-    .painelProgViewSwitch {
-      display:inline-flex; gap:4px; padding:4px; border:1px solid #dbe3ee;
-      background:#f8fafc; border-radius:12px; box-shadow:0 2px 8px rgba(15,23,42,.06);
-    }
-    .painelProgViewBtn {
-      border:0; background:transparent; color:#475569; font-size:12px; font-weight:900;
-      padding:8px 12px; border-radius:9px; cursor:pointer; white-space:nowrap;
-    }
-    .painelProgViewBtn.active { background:#0f172a; color:#fff; box-shadow:0 3px 10px rgba(15,23,42,.18); }
-    #painelProgMapArea { margin-top:12px; }
-    .routeMapShell { border:1px solid #dbe3ee; border-radius:18px; background:#fff; overflow:hidden; box-shadow:0 10px 28px rgba(15,23,42,.10); }
-    .routeMapHeader { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 14px; border-bottom:1px solid #e2e8f0; background:linear-gradient(180deg,#fff,#f8fafc); flex-wrap:wrap; }
-    .routeMapTitle { font-size:13px; font-weight:1000; color:#0f172a; letter-spacing:.04em; text-transform:uppercase; }
-    .routeMapSub { font-size:11px; color:#64748b; margin-top:2px; }
-    .routeMapHeaderActions { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
-    .routeMapTinyBtn { border:1px solid #cbd5e1; background:#fff; color:#334155; border-radius:10px; padding:7px 10px; font-size:11px; font-weight:900; cursor:pointer; }
-    .routeMapTinyBtn:hover { background:#f1f5f9; }
-    .routeMapTinyBtn.active { background:#dbeafe; border-color:#60a5fa; color:#1d4ed8; }
-    .routeMapTinyBtn.primary { background:#2563eb; border-color:#2563eb; color:#fff; }
-    .routeMapTinyBtn.danger { color:#b91c1c; }
-    .routeMapKpis { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:0; border-bottom:1px solid #e2e8f0; background:#fff; }
-    .routeMapKpi { padding:10px 13px; border-right:1px solid #eef2f7; min-width:0; }
-    .routeMapKpi:last-child { border-right:0; }
-    .routeMapKpiLabel { font-size:9px; color:#64748b; text-transform:uppercase; font-weight:900; letter-spacing:.05em; }
-    .routeMapKpiValue { font-size:18px; color:#0f172a; font-weight:1000; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .painelProgMainLayout.isMapView { grid-template-columns:minmax(0,1fr); }
-    .painelProgMainLayout.isMapView #painelProgMapArea { grid-column:1 / -1; width:100%; min-width:0; }
-    .painelProgMainLayout.isMapView #painelProgResumoSideHost { display:none !important; }
-    .routeMapMain { display:grid; grid-template-columns:minmax(0,1fr) 380px; min-height:620px; width:100%; min-width:0; }
-    .routeMapCanvasWrap { position:relative; min-width:0; background:#e2e8f0; overflow:hidden !important; }
-    #painelProgLeafletMap { width:100%; height:620px; z-index:1; overflow:hidden !important; }
-    #painelProgLeafletMap.leaflet-container { overflow:hidden !important; }
-    .routeMapLoading { position:absolute; left:50%; top:18px; transform:translateX(-50%); z-index:500; background:rgba(15,23,42,.92); color:#fff; border-radius:999px; padding:8px 12px; font-size:11px; font-weight:800; box-shadow:0 8px 18px rgba(15,23,42,.20); pointer-events:none; }
-    .routeMapSidebar { border-left:1px solid #e2e8f0; background:#f8fafc; display:flex; flex-direction:column; width:380px; min-width:380px; max-width:380px; max-height:620px; overflow:hidden; }
-    .routeMapDetail { padding:16px; overflow:auto; overflow-x:hidden; flex:1; min-width:0; }
-    .routeMapDetail * { max-width:100%; box-sizing:border-box; }
-    .routeMapEmpty { display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; min-height:260px; color:#64748b; gap:8px; padding:24px; }
-    .routeMapEmptyIcon { width:54px; height:54px; border-radius:18px; background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-size:25px; }
-    .routeDetailHead { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:12px; }
-    .routeDetailVoc { font-size:17px; line-height:1.1; font-weight:1000; color:#0f172a; }
-    .routeDetailRecipient { font-size:11px; color:#64748b; margin-top:4px; }
-    .routeStatusBadge { display:inline-flex; align-items:center; padding:5px 7px; border-radius:999px; font-size:9px; font-weight:1000; white-space:nowrap; }
-    .routeStatusBadge.green { background:#dcfce7; color:#166534; }
-    .routeStatusBadge.red { background:#fee2e2; color:#991b1b; }
-    .routeStatusBadge.blue { background:#dbeafe; color:#1d4ed8; }
-    .routeStatusBadge.orange { background:#ffedd5; color:#9a3412; }
-    .routeDetailGrid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-bottom:10px; }
-    .routeDetailBox { border:1px solid #e2e8f0; border-radius:12px; background:#fff; padding:9px 10px; min-width:0; }
-    .routeDetailLabel { font-size:9px; color:#64748b; font-weight:900; text-transform:uppercase; letter-spacing:.04em; }
-    .routeDetailValue { font-size:12px; color:#0f172a; font-weight:900; margin-top:3px; word-break:break-word; }
-    .routeDetailWide { grid-column:1/-1; }
-    .routeDetailTags { display:flex; gap:5px; flex-wrap:wrap; margin:8px 0 10px; }
-    .routeDetailTag { padding:4px 7px; border-radius:999px; border:1px solid #cbd5e1; background:#fff; color:#475569; font-size:9px; font-weight:900; }
-    .routeDetailActions { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:10px; }
-    .routeDetailAction { border:1px solid #cbd5e1; border-radius:10px; background:#fff; padding:8px; font-size:10px; color:#334155; font-weight:900; cursor:pointer; }
-    .routeDetailAction.primary { background:#2563eb; border-color:#2563eb; color:#fff; grid-column:1/-1; }
-    .routePlanner { border-top:1px solid #e2e8f0; background:#fff; padding:11px 12px; }
-    .routePlannerHead { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:7px; }
-    .routePlannerTitle { font-size:10px; font-weight:1000; color:#0f172a; text-transform:uppercase; letter-spacing:.05em; }
-    .routeStops { display:flex; gap:5px; overflow-x:auto; padding-bottom:5px; scrollbar-width:thin; }
-    .routeStop { flex:0 0 auto; display:flex; align-items:center; gap:5px; border:1px solid #dbe3ee; background:#f8fafc; padding:5px 7px; border-radius:9px; font-size:9px; font-weight:900; color:#334155; max-width:160px; }
-    .routeStopNum { width:18px; height:18px; border-radius:999px; background:#0f172a; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:9px; flex:0 0 18px; }
-    .routeStopText { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .routePlannerMetrics { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:7px; }
-    .routePlannerMetric { background:#f8fafc; border:1px solid #e2e8f0; border-radius:9px; padding:7px 8px; }
-    .routePlannerMetric span { display:block; font-size:8px; color:#64748b; text-transform:uppercase; font-weight:900; }
-    .routePlannerMetric strong { display:block; font-size:13px; margin-top:2px; color:#0f172a; }
-    .routeMapMarker { width:28px; height:28px; border-radius:50% 50% 50% 6px; transform:rotate(-45deg); border:2px solid #fff; box-shadow:0 3px 9px rgba(15,23,42,.34); display:flex; align-items:center; justify-content:center; }
-    .routeMapMarkerInner { transform:rotate(45deg); width:17px; height:17px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:8px; font-weight:1000; border:1px solid rgba(255,255,255,.75); }
-    .routeMapMarker.isProgramado { background:#16a34a; } .routeMapMarker.isProgramado .routeMapMarkerInner { background:#15803d; }
-    .routeMapMarker.isNaoProgramado { background:#dc2626; } .routeMapMarker.isNaoProgramado .routeMapMarkerInner { background:#b91c1c; }
-    .routeMapMarker.isCarregado { background:#2563eb; } .routeMapMarker.isCarregado .routeMapMarkerInner { background:#1d4ed8; }
-    .routeMapMarker.isRoute { outline:4px solid rgba(245,158,11,.38); background:#f59e0b; }
-    .routeMapLabel { background:rgba(15,23,42,.90)!important; color:#fff!important; border:0!important; border-radius:7px!important; box-shadow:0 3px 9px rgba(15,23,42,.20)!important; font-size:9px!important; font-weight:900!important; padding:4px 6px!important; }
-    .routeMapLabel:before { display:none!important; }
-    .routeMapLegend { position:absolute; left:10px; bottom:10px; z-index:450; display:flex; gap:5px; flex-wrap:wrap; max-width:calc(100% - 20px); }
-    .routeMapLegendItem { display:flex; align-items:center; gap:5px; background:rgba(255,255,255,.94); border:1px solid #e2e8f0; border-radius:999px; padding:5px 7px; font-size:9px; color:#475569; font-weight:900; box-shadow:0 3px 10px rgba(15,23,42,.08); }
-    .routeMapDot { width:8px; height:8px; border-radius:50%; }
-    @media (max-width:1150px) {
-      .routeMapMain { grid-template-columns:1fr; }
-      .routeMapSidebar { border-left:0; border-top:1px solid #e2e8f0; width:100%; min-width:0; max-width:none; max-height:none; }
-      #painelProgLeafletMap { height:520px; }
-      .routeMapKpis { grid-template-columns:repeat(3,minmax(0,1fr)); }
-    }
-    @media (max-width:650px) {
-      .routeMapKpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
-      #painelProgLeafletMap { height:440px; }
-      .routeDetailGrid { grid-template-columns:1fr; }
-      .routeDetailWide { grid-column:auto; }
-    }
 
-  </style>
+    #painelProgAgrupamentoSelect { display:none !important; }
+    /* ===== Painel de Programação - Mapa Leaflet ===== */
+    .painelProgMapShell {
+      background:#fff; border:1px solid rgba(15,23,42,.10); border-radius:16px;
+      box-shadow:var(--shadowSoft); overflow:hidden; min-width:0;
+    }
+    .painelProgMapToolbar {
+      display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      padding:10px 12px; border-bottom:1px solid #e5e7eb; background:#f8fafc;
+    }
+    .painelProgMapToolbarLeft,.painelProgMapToolbarRight{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .painelProgMapMeta{font-size:12px;color:#475569;font-weight:700}
+    .painelProgMapBtn{padding:8px 10px!important;font-size:11px!important;min-height:34px}
+    #painelProgMap { width:100%; height:min(68vh,720px); min-height:520px; background:#e2e8f0; }
+    .painelProgMapStatusBar {
+      display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; padding:10px 12px;
+      border-top:1px solid #e5e7eb; background:#fff;
+    }
+    .painelProgMapStat{padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc}
+    .painelProgMapStat b{display:block;font-size:15px;color:#0f172a}.painelProgMapStat span{font-size:10px;color:#64748b;font-weight:800;text-transform:uppercase}
+    .painelProgGeoWarning { margin:10px 12px 12px; border:1px solid #fed7aa; background:#fff7ed; border-radius:12px; overflow:hidden; }
+    .painelProgGeoWarningHead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 10px;font-size:12px;font-weight:900;color:#9a3412;cursor:pointer}
+    .painelProgGeoWarningList{display:none;max-height:180px;overflow:auto;border-top:1px solid #fed7aa;background:#fff}
+    .painelProgGeoWarning.open .painelProgGeoWarningList{display:block}
+    .painelProgGeoWarningRow{display:grid;grid-template-columns:minmax(130px,.8fr) minmax(110px,.7fr) 1.5fr;gap:8px;padding:7px 10px;border-bottom:1px solid #ffedd5;font-size:11px;color:#7c2d12}
+    .painelProgGeoWarningRow:last-child{border-bottom:none}
+    .painelProgLeafletTooltip{min-width:260px;max-width:340px;font-size:11px;line-height:1.35;color:#0f172a}
+    .painelProgLeafletTooltip .ttl{font-size:13px;font-weight:1000;margin-bottom:6px}.painelProgLeafletTooltip .row{margin:2px 0}.painelProgLeafletTooltip .sep{border-top:1px solid #e5e7eb;margin:6px 0}
+    .painelProgMarkerWrap{background:transparent!important;border:none!important}
+    .painelProgMarker{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(15,23,42,.35);display:flex;align-items:center;justify-content:center;position:relative}
+    .painelProgMarker>span{transform:rotate(45deg);font-size:10px;font-weight:1000;color:#fff}
+    .painelProgMarker.programado{background:#16a34a}.painelProgMarker.naoProgramado{background:#dc2626}.painelProgMarker.carregadoHoje{background:#2563eb}.painelProgMarker.carregadoOntem{background:#ea580c}
+    .painelProgMarker.selected{outline:4px solid rgba(37,99,235,.35);box-shadow:0 0 0 3px #1d4ed8,0 4px 12px rgba(15,23,42,.4)}
+    .painelProgMarker.spot:after{content:'S';position:absolute;right:-8px;top:-9px;width:15px;height:15px;border-radius:999px;background:#f59e0b;color:#fff;font-size:8px;font-weight:1000;display:flex;align-items:center;justify-content:center;transform:rotate(45deg);border:1px solid #fff}
+    .painelProgMarker.expresso:before{content:'EX';position:absolute;left:-10px;top:-9px;min-width:18px;height:15px;border-radius:999px;background:#7c3aed;color:#fff;font-size:7px;font-weight:1000;display:flex;align-items:center;justify-content:center;transform:rotate(45deg);border:1px solid #fff;padding:0 2px}
+    .painelProgRouteInfo{font-size:11px;color:#334155;font-weight:700}
+    .painelProgRouteError{color:#b91c1c!important}
+    @media(max-width:900px){#painelProgMap{height:62vh;min-height:430px}.painelProgMapStatusBar{grid-template-columns:repeat(2,minmax(0,1fr))}.painelProgGeoWarningRow{grid-template-columns:1fr}.painelProgMapToolbar{align-items:flex-start}}
+</style>
 </head>
 
 <body>
@@ -4071,10 +4016,6 @@
             title="Gerar PDF no padrão do relatório de carregamento com os cards selecionados e os filtros atuais"
             onclick="gerarRelatorioPDFCardsSelecionadosPainelProgramacao()"
           >🧾 GERAR PDF</button>
-          <div class="painelProgViewSwitch" aria-label="Visualização do Painel de Programação">
-            <button class="painelProgViewBtn" id="btnPainelProgViewCards" type="button" onclick="setPainelProgVisualizacao('cards')">▦ Cards</button>
-            <button class="painelProgViewBtn active" id="btnPainelProgViewMap" type="button" onclick="setPainelProgVisualizacao('mapa')">🗺️ Mapa</button>
-          </div>
           <button class="btn secondary" type="button" onclick="renderPainelProgramacaoRapido(false, true)">🔄 Atualizar</button>
           <button class="btn secondary" type="button" onclick="voltarPainelProgramacaoPrincipal()">⬅ Voltar</button>
         </div>
@@ -4083,7 +4024,7 @@
       <div class="painelProgFilterBar">
         <input class="filtersCompactInput" id="painelProgSearchInput" placeholder="🔎 Filtrar por vocativo, destinatário, cliente, destino, UF, responsável ou ID..." type="text" />
 
-        <select class="filtersCompactInput" id="painelProgAgrupamentoSelect" title="Organização dos cards">
+        <select class="filtersCompactInput" id="painelProgAgrupamentoSelect" title="Organização mantida para compatibilidade dos filtros; o mapa sempre exibe os pontos filtrados">
           <option value="nenhum">A-Z Vocativo</option>
           <option value="destinatario">Agrupar por Destinatário</option>
           <option value="responsavel">Agrupar por Responsável</option>
@@ -4264,55 +4205,7 @@
 
       <div id="painelProgramacaoResumo" class="painelProgKpiGrid"></div>
       <div class="painelProgMainLayout">
-        <div id="painelProgMapArea">
-          <div class="routeMapShell">
-            <div class="routeMapHeader">
-              <div>
-                <div class="routeMapTitle">Mapa operacional de roteirização</div>
-                <div class="routeMapSub" id="painelProgMapStatus">Os pontos são posicionados pelo CEP Destino da base PVD filtrada.</div>
-              </div>
-              <div class="routeMapHeaderActions">
-                <button class="routeMapTinyBtn" id="btnRouteLabels" type="button" onclick="togglePainelProgMapLabels()">Vocativos</button>
-                <button class="routeMapTinyBtn" id="btnRouteMode" type="button" onclick="togglePainelProgRouteMode()">＋ Montar rota</button>
-                <button class="routeMapTinyBtn primary" id="btnRouteCalc" type="button" onclick="calcularRotaPainelProgramacao()">Calcular distância</button>
-                <button class="routeMapTinyBtn danger" type="button" onclick="limparRotaPainelProgramacao()">Limpar</button>
-              </div>
-            </div>
-            <div class="routeMapKpis">
-              <div class="routeMapKpi"><div class="routeMapKpiLabel">Pontos no mapa</div><div class="routeMapKpiValue" id="routeKpiPontos">0</div></div>
-              <div class="routeMapKpi"><div class="routeMapKpiLabel">Programados</div><div class="routeMapKpiValue" id="routeKpiProgramados">0</div></div>
-              <div class="routeMapKpi"><div class="routeMapKpiLabel">Não programados</div><div class="routeMapKpiValue" id="routeKpiNaoProgramados">0</div></div>
-              <div class="routeMapKpi"><div class="routeMapKpiLabel">Peso visível</div><div class="routeMapKpiValue" id="routeKpiPeso">0 kg</div></div>
-              <div class="routeMapKpi"><div class="routeMapKpiLabel">Sem localização</div><div class="routeMapKpiValue" id="routeKpiSemLocal">0</div></div>
-            </div>
-            <div class="routeMapMain">
-              <div class="routeMapCanvasWrap">
-                <div id="painelProgLeafletMap"></div>
-                <div class="routeMapLoading" id="painelProgMapLoading" style="display:none;">Localizando destinos...</div>
-                <div class="routeMapLegend">
-                  <div class="routeMapLegendItem"><span class="routeMapDot" style="background:#16a34a"></span>Programado</div>
-                  <div class="routeMapLegendItem"><span class="routeMapDot" style="background:#dc2626"></span>Não programado</div>
-                  <div class="routeMapLegendItem"><span class="routeMapDot" style="background:#2563eb"></span>Carregado hoje</div>
-                  <div class="routeMapLegendItem"><span class="routeMapDot" style="background:#f59e0b"></span>Na rota</div>
-                </div>
-              </div>
-              <aside class="routeMapSidebar">
-                <div class="routeMapDetail" id="painelProgMapDetail">
-                  <div class="routeMapEmpty"><div class="routeMapEmptyIcon">⌖</div><b>Selecione um destino</b><span>Clique em um ponto para ver as informações do card e adicioná-lo à rota.</span></div>
-                </div>
-                <div class="routePlanner">
-                  <div class="routePlannerHead"><div class="routePlannerTitle">Planejamento de rota</div><span id="routeStopsCount" style="font-size:9px;color:#64748b;font-weight:900;">0 parada(s)</span></div>
-                  <div class="routeStops" id="routeStopsList"><span style="font-size:9px;color:#94a3b8;">Clique em “Montar rota” e depois selecione 2 clientes.</span></div>
-                  <div class="routePlannerMetrics">
-                    <div class="routePlannerMetric"><span>Distância</span><strong id="routeMetricDistance">0 km</strong></div>
-                    <div class="routePlannerMetric"><span>Tempo base</span><strong id="routeMetricDuration">0 min</strong></div>
-                  </div>
-                </div>
-              </aside>
-            </div>
-          </div>
-        </div>
-        <div id="painelProgramacaoCards" class="painelProgCardsArea" style="display:none;"></div>
+        <div id="painelProgramacaoCards" class="painelProgCardsArea"></div>
         <div id="painelProgResumoSideHost" class="painelProgResumoSideHost"></div>
       </div>
     </div>
@@ -4424,59 +4317,23 @@
     };
 
 
-    const ORS_API_KEY = "5b3ce3597851110001cf62489c210549016b487db0ad9707f9a53bcb";
-    const ORS_BASE_URL = "https://api.heigit.org/openrouteservice";
-    const ORS_GEOCODE_BASE_URL = "https://api.heigit.org/pelias/v1";
-    const FILIAIS_ORS = [
-      { cidade: "Maceió", uf: "AL" },
-      { cidade: "Manaus", uf: "AM" },
-      { cidade: "Açailândia", uf: "MA" },
-      { cidade: "Ananindeua", uf: "PA" },
-      { cidade: "Aparecida de Goiânia", uf: "GO" },
-      { cidade: "Araquari", uf: "SC" },
-      { cidade: "Camaçari", uf: "BA" },
-      { cidade: "Canoas", uf: "RS" },
-      { cidade: "Contagem", uf: "MG" },
-      { cidade: "Corumbá", uf: "MS" },
-      { cidade: "Curitiba", uf: "PR" },
-      { cidade: "Dourados", uf: "MS" },
-      { cidade: "Cabo de Santo Agostinho", uf: "PE" },
-      { cidade: "Parauapebas", uf: "PA" },
-      { cidade: "Piracicaba", uf: "SP" },
-      { cidade: "Ribeirão Preto", uf: "SP" },
-      { cidade: "Rio de Janeiro", uf: "RJ" },
-      { cidade: "São Luís", uf: "MA" },
-      { cidade: "São Paulo", uf: "SP" },
-      { cidade: "Três Lagoas", uf: "MS" },
-      { cidade: "Várzea Grande", uf: "MT" },
-      { cidade: "Serra", uf: "ES" },
-      { cidade: "Primavera do Leste", uf: "MT" }
-    ].map((f, index) => ({
-      id: `filial_${index + 1}`,
-      cidade: f.cidade,
-      uf: (f.uf || "").toUpperCase(),
-      nome: `${f.cidade} - ${String(f.uf || "").toUpperCase()}`
-    }));
+    // Mapa / geocodificação / roteamento
+    // Leaflet cuida apenas da visualização. BrasilAPI CEP v2 fornece coordenadas; OSRM calcula a rota rodoviária.
+    const PAINEL_PROG_CEP_API_BASE = "https://brasilapi.com.br/api/cep/v2";
+    const PAINEL_PROG_OSRM_BASE = "https://router.project-osrm.org";
+    const PAINEL_PROG_CEP_CACHE_KEY = "painelProgCepGeoCache_v1";
 
-    const CAPITAIS_UF = {
-      AC: "Rio Branco - AC", AL: "Maceió - AL", AP: "Macapá - AP", AM: "Manaus - AM", BA: "Salvador - BA",
-      CE: "Fortaleza - CE", DF: "Brasília - DF", ES: "Vitória - ES", GO: "Goiânia - GO", MA: "São Luís - MA",
-      MT: "Cuiabá - MT", MS: "Campo Grande - MS", MG: "Belo Horizonte - MG", PA: "Belém - PA", PB: "João Pessoa - PB",
-      PR: "Curitiba - PR", PE: "Recife - PE", PI: "Teresina - PI", RJ: "Rio de Janeiro - RJ", RN: "Natal - RN",
-      RS: "Porto Alegre - RS", RO: "Porto Velho - RO", RR: "Boa Vista - RR", SC: "Florianópolis - SC", SP: "São Paulo - SP",
-      SE: "Aracaju - SE", TO: "Palmas - TO"
+    window.__painelProgMapState = window.__painelProgMapState || {
+      map: null,
+      cluster: null,
+      markers: new Map(),
+      localizacoes: new Map(),
+      pendencias: new Map(),
+      routeLayer: null,
+      routeResult: null,
+      renderSeq: 0,
+      cepCache: null
     };
-
-    window.__orsRouteState = window.__orsRouteState || {
-      geocodeCache: new Map(),
-      matrixCache: new Map(),
-      directionsCache: new Map(),
-      branchCoordsPromise: null,
-      stateChoiceCache: new Map(),
-      lastRenderSignature: "",
-      lastResults: null
-    };
-
 
     window.statusHojeServidor = window.statusHojeServidor || {};
     window.obsHojeServidor = window.obsHojeServidor || {};
@@ -7592,7 +7449,6 @@
 
       document.getElementById("btnAlmoxPendentes").disabled = false;
       document.getElementById("btnPainelProgramacaoRapido") && (document.getElementById("btnPainelProgramacaoRapido").disabled = false);
-      document.getElementById("btnCalcularFilialMaisProxima") && (document.getElementById("btnCalcularFilialMaisProxima").disabled = false);
     }
 
     function exportarExcel() {
@@ -9265,7 +9121,7 @@ return null;
     async function listarAlmoxPendentes(renderSeq = ++sequenciaRenderAnalise) {
       const viewportState = capturarEstadoViewportAnalise();
       abrirPaginaAnalise();
-      limparResultadoRotas();
+      limparRotaMapaPainelProgramacao();
 
       const listaElLoading = document.getElementById("almoxList");
       if (listaElLoading && !viewportState.tinhaListaRenderizada) {
@@ -11666,6 +11522,7 @@ return null;
       const destinatarios = new Set();
       const destinos = new Set();
       const ufs = new Set();
+      const cepsDestino = new Set();
       const bpsNotas = new Set();
       const onusNotas = new Set();
       const prioridadesNotas = new Set();
@@ -11689,6 +11546,10 @@ return null;
         if (destino) destinos.add(destino);
         const uf = String(n.uf || "").trim().toUpperCase();
         if (uf) ufs.add(uf);
+        const cepRaw = String(getFieldValue(n?._raw || n || {}, ["CEP Destino", "CEP DESTINO", "CEP_DESTINO", "Cep Destino", "CEP DO DESTINO", "CEP"]) || "").trim();
+        let cepNormalizado = cepRaw.replace(/\D/g, "");
+        if (cepNormalizado.length === 7) cepNormalizado = cepNormalizado.padStart(8, "0");
+        if (cepNormalizado) cepsDestino.add(cepNormalizado);
 
         const peso = Number.isFinite(Number(n?._pesoNum)) ? Number(n._pesoNum) : parsePesoPVD(n.peso);
         if (peso) pesoFiltrado += peso;
@@ -11844,6 +11705,8 @@ return null;
         destinosNorm: Array.from(destinos).map(d => normalizar(d)),
         ufs: Array.from(ufs).filter(Boolean).sort((a, b) => a.localeCompare(b, "pt-BR")),
         ufsNorm: Array.from(ufs).map(u => normalizar(u)),
+        cepsDestino: Array.from(cepsDestino).filter(Boolean).sort(),
+        cepDestino: Array.from(cepsDestino).filter(Boolean).length === 1 ? Array.from(cepsDestino)[0] : "",
         statusVeiculo,
         tipoEmbarque,
         datasEmbarqueResumo,
@@ -11902,6 +11765,7 @@ return null;
           responsavelInfo.nome,
           Array.from(destinos).join(" "),
           Array.from(ufs).join(" "),
+          Array.from(cepsDestino).join(" "),
           janelaCarregamentoTexto,
           janelaEntregaTexto,
           status.temCarregadoHoje ? "carregado hoje" : "",
@@ -12382,7 +12246,7 @@ return null;
       });
 
       const kpis = [
-        ["Cards", formatarNumeroPainelProgramacao(vocativos.size, 0)],
+        ["Vocativos", formatarNumeroPainelProgramacao(vocativos.size, 0)],
         ["Programados", formatarNumeroPainelProgramacao(programadosSet.size, 0)],
         ["Não programados", formatarNumeroPainelProgramacao(naoProgramadosSet.size, 0)],
         ["Carregados hoje", formatarNumeroPainelProgramacao(carregadosHojeSet.size, 0)],
@@ -12438,6 +12302,7 @@ return null;
         const chave = card.getAttribute("data-painel-prog-key") || "";
         card.classList.toggle("isSelected", painelProgCardsSelecionados.has(chave));
       });
+      if (typeof atualizarMarcadoresSelecaoPainelProgramacao === "function") atualizarMarcadoresSelecaoPainelProgramacao();
     }
 
     function fecharPopupPainelProgramacao(ev) {
@@ -13855,13 +13720,7 @@ return null;
           <div class="print-footer">Impresso em: ${escRelatorioCarregamentoPainelProgramacao(fmtAgoraRelatorioCarregamentoPainelProgramacao())}</div>
         </article></section>
         <script>window.addEventListener('load',function(){setTimeout(function(){window.print();},180);});<\/script>
-      
-    document.addEventListener("DOMContentLoaded", () => {
-      const page = document.getElementById("paginaPainelProgramacao");
-      if (page) setPainelProgVisualizacao("mapa");
-    });
-
-</body></html>`;
+      </body></html>`;
     }
 
     function gerarRelatorioPDFCardsSelecionadosPainelProgramacao() {
@@ -14363,65 +14222,308 @@ return null;
       return { icon: "🏭", label: "VOCATIVOS" };
     }
 
-    function renderCardsPainelProgramacao(dados) {
-      const cardsEl = document.getElementById("painelProgramacaoCards");
-      if (!cardsEl) return;
-      if (!dados.length) {
-        painelProgCardsSelecionados.clear();
-        renderPopupPainelProgramacao();
-        cardsEl.innerHTML = `<div class="painelProgEmptyState">Nenhum vocativo encontrado para os filtros selecionados.</div>`;
-        iniciarSelosOverlayPainelProgramacao();
-        agendarSincronizacaoSelosOverlayPainelProgramacao();
-        return;
+    function normalizarCepPainelProgramacao(valor) {
+      let cep = String(valor || "").replace(/\D/g, "");
+      if (cep.length === 7) cep = cep.padStart(8, "0");
+      return cep.length === 8 ? cep : "";
+    }
+
+    function carregarCacheCepPainelProgramacao() {
+      const st = window.__painelProgMapState;
+      if (st.cepCache instanceof Map) return st.cepCache;
+      let obj = {};
+      try { obj = JSON.parse(localStorage.getItem(PAINEL_PROG_CEP_CACHE_KEY) || "{}"); } catch (_) { obj = {}; }
+      st.cepCache = new Map(Object.entries(obj || {}));
+      return st.cepCache;
+    }
+
+    function salvarCacheCepPainelProgramacao() {
+      const st = window.__painelProgMapState;
+      try {
+        const obj = Object.fromEntries(st.cepCache instanceof Map ? st.cepCache.entries() : []);
+        localStorage.setItem(PAINEL_PROG_CEP_CACHE_KEY, JSON.stringify(obj));
+      } catch (_) {}
+    }
+
+    function coordenadaValidaBrasilPainelProgramacao(lat, lon) {
+      lat = Number(lat); lon = Number(lon);
+      return Number.isFinite(lat) && Number.isFinite(lon) && lat >= -34.5 && lat <= 6.5 && lon >= -74.5 && lon <= -32;
+    }
+
+    async function geocodificarCepPainelProgramacao(item, forcar = false) {
+      const ceps = Array.isArray(item?.cepsDestino) ? Array.from(new Set(item.cepsDestino.map(normalizarCepPainelProgramacao).filter(Boolean))) : [];
+      if (!ceps.length) return { ok:false, motivo:"CEP Destino ausente ou inválido na PVD", tipo:"sem_cep" };
+      if (ceps.length > 1) return { ok:false, motivo:`Mais de um CEP Destino no mesmo vocativo/destinatário: ${ceps.join(" / ")}`, tipo:"multiplos_ceps" };
+      const cep = ceps[0];
+      const cache = carregarCacheCepPainelProgramacao();
+      if (!forcar && cache.has(cep)) {
+        const cached = cache.get(cep);
+        if (cached?.ok && coordenadaValidaBrasilPainelProgramacao(cached.lat, cached.lon)) {
+          const ufEsperada = (Array.isArray(item?.ufs) && item.ufs.length === 1) ? String(item.ufs[0] || "").toUpperCase() : "";
+          if (!ufEsperada || !cached.uf || cached.uf === ufEsperada) return { ...cached, cache:true };
+        }
       }
 
-      const modoAgrupamento = getPainelProgAgrupamentoAtual();
-      const ordenados = ordenarPainelProgPorVocativo(dados);
+      const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+      const timer = ctrl ? setTimeout(() => ctrl.abort(), 9000) : null;
+      try {
+        const resp = await fetch(`${PAINEL_PROG_CEP_API_BASE}/${encodeURIComponent(cep)}`, { signal: ctrl?.signal, cache:"force-cache" });
+        if (!resp.ok) {
+          const resultado = { ok:false, cep, motivo: resp.status === 404 ? "CEP não encontrado pela BrasilAPI" : `Falha ao consultar CEP (HTTP ${resp.status})`, tipo:"api_cep" };
+          cache.set(cep, resultado); salvarCacheCepPainelProgramacao(); return resultado;
+        }
+        const json = await resp.json();
+        const coords = json?.location?.coordinates || {};
+        const lat = Number(coords.latitude), lon = Number(coords.longitude);
+        if (!coordenadaValidaBrasilPainelProgramacao(lat, lon)) {
+          const resultado = { ok:false, cep, motivo:"CEP encontrado, mas sem coordenada geográfica válida", tipo:"sem_coordenada" };
+          cache.set(cep, resultado); salvarCacheCepPainelProgramacao(); return resultado;
+        }
+        const uf = String(json?.state || "").trim().toUpperCase();
+        const ufEsperada = (Array.isArray(item?.ufs) && item.ufs.length === 1) ? String(item.ufs[0] || "").toUpperCase() : "";
+        if (ufEsperada && uf && uf !== ufEsperada) {
+          const resultado = { ok:false, cep, motivo:`UF do CEP (${uf}) diverge da UF Destino da PVD (${ufEsperada})`, tipo:"uf_divergente" };
+          cache.set(cep, resultado); salvarCacheCepPainelProgramacao(); return resultado;
+        }
+        const resultado = { ok:true, cep, lat, lon, uf, cidade:String(json?.city || ""), bairro:String(json?.neighborhood || ""), rua:String(json?.street || ""), provider:String(json?.service || "") };
+        cache.set(cep, resultado); salvarCacheCepPainelProgramacao(); return resultado;
+      } catch (err) {
+        return { ok:false, cep, motivo: err?.name === "AbortError" ? "Tempo excedido ao consultar o CEP" : "Falha de rede ao consultar o CEP", tipo:"rede" };
+      } finally { if (timer) clearTimeout(timer); }
+    }
 
-      if (modoAgrupamento === "nenhum") {
-        cardsEl.innerHTML = `
-          <div class="painelProgCardsGrid">
-            ${ordenados.map(renderCardPainelProgramacao).join("")}
-          </div>
-        `;
-        iniciarSelosOverlayPainelProgramacao();
-        agendarSincronizacaoSelosOverlayPainelProgramacao();
-        return;
+    function garantirEstruturaMapaPainelProgramacao() {
+      const host = document.getElementById("painelProgramacaoCards");
+      if (!host) return null;
+      const st = window.__painelProgMapState;
+      // Se o host foi recriado por uma atualização, descarte a instância Leaflet ligada ao DOM antigo.
+      if (!document.getElementById("painelProgMap") && st?.map) {
+        try { st.map.remove(); } catch (_) {}
+        st.map = null; st.cluster = null; st.markers = new Map(); st.localizacoes = new Map(); st.pendencias = new Map(); st.routeLayer = null; st.routeResult = null;
       }
+      if (!document.getElementById("painelProgMap")) {
+        host.innerHTML = `
+          <div class="painelProgMapShell">
+            <div class="painelProgMapToolbar">
+              <div class="painelProgMapToolbarLeft">
+                <button class="btn painelProgMapBtn" type="button" onclick="calcularRotaMapaPainelProgramacao()">🛣️ Calcular rota</button>
+                <button class="btn secondary painelProgMapBtn" type="button" onclick="limparRotaMapaPainelProgramacao()">Limpar rota</button>
+                <button class="btn secondary painelProgMapBtn" type="button" onclick="ajustarMapaAosPontosPainelProgramacao()">◎ Enquadrar pontos</button>
+                <button class="btn secondary painelProgMapBtn" type="button" onclick="reprocessarCepsPendentesPainelProgramacao()">↻ Reprocessar CEPs</button>
+              </div>
+              <div class="painelProgMapToolbarRight">
+                <span id="painelProgRouteInfo" class="painelProgRouteInfo">Selecione 2 ou mais vocativos para calcular a rota.</span>
+              </div>
+            </div>
+            <div id="painelProgMap"></div>
+            <div id="painelProgMapStatusBar" class="painelProgMapStatusBar"></div>
+            <div id="painelProgGeoWarningHost"></div>
+          </div>`;
+      }
+      if (!window.L) {
+        host.innerHTML = `<div class="painelProgEmptyState" style="border-color:#fecaca;color:#991b1b;background:#fef2f2;">Não foi possível carregar a biblioteca Leaflet. Verifique a conexão com a internet e recarregue a página.</div>`;
+        return null;
+      }
+      if (!st.map) {
+        st.map = L.map("painelProgMap", { preferCanvas:true, zoomControl:true }).setView([-14.235, -51.9253], 4);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom:19,
+          attribution:'&copy; OpenStreetMap contributors'
+        }).addTo(st.map);
+        st.cluster = typeof L.markerClusterGroup === "function" ? L.markerClusterGroup({ chunkedLoading:true, spiderfyOnMaxZoom:true, showCoverageOnHover:false, maxClusterRadius:45 }) : L.layerGroup();
+        st.cluster.addTo(st.map);
+        setTimeout(() => st.map.invalidateSize(), 0);
+      }
+      return st;
+    }
 
-      const grupos = new Map();
-      ordenados.forEach(item => {
-        const grupo = getGrupoPainelProgramacao(item, modoAgrupamento);
-        const chave = normalizar(grupo.label) || grupo.label;
-        if (!grupos.has(chave)) grupos.set(chave, { ...grupo, itens: [] });
-        grupos.get(chave).itens.push(item);
+    function getClasseMarkerPainelProgramacao(item) {
+      if (item?.temCarregadoHoje) return "carregadoHoje";
+      if (item?.temCarregadoOntem) return "carregadoOntem";
+      return item?.temProgramado ? "programado" : "naoProgramado";
+    }
+
+    function criarIconeMarkerPainelProgramacao(item) {
+      const chave = String(item?.cardKey || "");
+      const selecionado = painelProgCardsSelecionados.has(chave) ? " selected" : "";
+      const spot = item?.temSpot ? " spot" : "";
+      const expresso = item?.temExpresso ? " expresso" : "";
+      const letra = String(item?.vocativo || "?").trim().slice(0,2).toUpperCase();
+      return L.divIcon({
+        className:"painelProgMarkerWrap",
+        html:`<div class="painelProgMarker ${getClasseMarkerPainelProgramacao(item)}${selecionado}${spot}${expresso}"><span>${getTextoPainelProgramacao(letra)}</span></div>`,
+        iconSize:[34,42], iconAnchor:[17,38], popupAnchor:[0,-36], tooltipAnchor:[0,-30]
       });
+    }
 
-      const ordemResponsavel = { julio: 1, lucas: 2, igor: 3 };
-      const html = Array.from(grupos.values())
-        .sort((a, b) => {
-          if (modoAgrupamento === "responsavel") {
-            const ao = ordemResponsavel[String(a.responsavelKey || "")] || 99;
-            const bo = ordemResponsavel[String(b.responsavelKey || "")] || 99;
-            if (ao !== bo) return ao - bo;
-          }
-          return String(a.label || "").localeCompare(String(b.label || ""), "pt-BR");
-        })
-        .map(grupo => `
-          <div class="painelProgClienteGrupo">
-            <div class="painelProgClienteHeader">
-              <div class="painelProgClienteTitle">${grupo.icon} ${getTextoPainelProgramacao(grupo.label)}</div>
-              <div class="painelProgHint">${grupo.itens.length} card(s) | ${new Set(grupo.itens.map(i => i.vocNorm)).size} vocativo(s)</div>
-            </div>
-            <div class="painelProgCardsGrid">
-              ${grupo.itens.map(renderCardPainelProgramacao).join("")}
-            </div>
-          </div>
-        `).join("");
+    function renderTooltipMapaPainelProgramacao(item, geo) {
+      const janelaCarga = normalizar(item?.janelaCarregamentoTexto) === "NAO CADASTRADO" ? "" : (item?.janelaCarregamentoTexto || "-");
+      const janelaEntrega = normalizar(item?.janelaEntregaTexto) === "NAO CADASTRADO" ? "" : (item?.janelaEntregaTexto || "-");
+      const ultimo = item?.ultimoVeiculo;
+      const cepFmt = geo?.cep ? `${geo.cep.slice(0,5)}-${geo.cep.slice(5)}` : "-";
+      const local = [geo?.cidade, geo?.uf].filter(Boolean).join(" - ");
+      return `<div class="painelProgLeafletTooltip">
+        <div class="ttl">${getTextoPainelProgramacao(item?.vocativo || "-")}</div>
+        <div class="row"><b>Status:</b> ${item?.temProgramado ? "PROGRAMADO" : "NÃO PROGRAMADO"}${item?.temCarregadoHoje ? " | CARREGADO HOJE" : ""}${item?.temCarregadoOntem ? " | CARREGADO ONTEM" : ""}</div>
+        <div class="row"><b>Embarque:</b> ${getTextoPainelProgramacao(item?.temProgramado ? (item?.tipoEmbarque || "-") : "-")}</div>
+        <div class="row"><b>Programador:</b> ${getTextoPainelProgramacao(item?.responsavel || "-")}</div>
+        <div class="row"><b>Peso Total PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.pesoTotalPVD,2))}</div>
+        <div class="row"><b>Total Notas PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.totalNotasPVD,0))}</div>
+        <div class="row"><b>Entrada em atraso:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.entradaAtraso,0))}</div>
+        <div class="row"><b>Notas &lt;= D-1:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.notasD1,0))}</div>
+        <div class="sep"></div>
+        <div class="row"><b>CEP Destino:</b> ${cepFmt}${local ? ` | ${getTextoPainelProgramacao(local)}` : ""}</div>
+        <div class="row"><b>Carga:</b> ${getTextoPainelProgramacao(janelaCarga)}</div>
+        <div class="row"><b>Entrega:</b> ${getTextoPainelProgramacao(janelaEntrega)}</div>
+        <div class="row"><b>ID vinculado:</b> ${getTextoPainelProgramacao(item?.idVinculado || "-")}</div>
+        <div class="row"><b>Último veículo:</b> ${getTextoPainelProgramacao(ultimo?.id || "-")}${ultimo?.dtPrev ? ` | Prev. ${getTextoPainelProgramacao(formatarData(ultimo.dtPrev))}` : ""}</div>
+        ${item?.temSpot ? '<div class="row"><b>SPOT</b></div>' : ""}${item?.temExpresso ? '<div class="row"><b>EXPRESSO</b></div>' : ""}
+      </div>`;
+    }
 
-      cardsEl.innerHTML = html;
-      iniciarSelosOverlayPainelProgramacao();
-      agendarSincronizacaoSelosOverlayPainelProgramacao();
+    function selecionarMarcadorPainelProgramacao(chave, ev) {
+      if (ev?.originalEvent) L.DomEvent.stopPropagation(ev.originalEvent);
+      chave = String(chave || "").trim();
+      if (!chave) return;
+      if (painelProgCardsSelecionados.has(chave)) painelProgCardsSelecionados.delete(chave);
+      else painelProgCardsSelecionados.add(chave);
+      atualizarSelecaoVisualPainelProgramacao();
+      renderPopupPainelProgramacao();
+      atualizarResumoMapaPainelProgramacao();
+    }
+
+    function atualizarMarcadoresSelecaoPainelProgramacao() {
+      const st = window.__painelProgMapState;
+      if (!(st?.markers instanceof Map)) return;
+      st.markers.forEach((marker, chave) => {
+        const item = painelProgDadosAtuaisPorKey.get(chave);
+        if (item && marker?.setIcon) marker.setIcon(criarIconeMarkerPainelProgramacao(item));
+      });
+    }
+
+    function atualizarResumoMapaPainelProgramacao() {
+      const st = window.__painelProgMapState;
+      const total = painelProgDadosAtuais?.length || 0;
+      const localizados = st?.localizacoes?.size || 0;
+      const pendencias = st?.pendencias?.size || 0;
+      const selecionados = painelProgCardsSelecionados?.size || 0;
+      const status = document.getElementById("painelProgMapStatusBar");
+      if (status) status.innerHTML = [
+        ["Pontos filtrados", total], ["Localizados", localizados], ["Pendências CEP", pendencias], ["Selecionados", selecionados]
+      ].map(([l,v])=>`<div class="painelProgMapStat"><b>${getTextoPainelProgramacao(v)}</b><span>${getTextoPainelProgramacao(l)}</span></div>`).join("");
+      const info = document.getElementById("painelProgRouteInfo");
+      if (info && !st?.routeResult) info.textContent = selecionados >= 2 ? `${selecionados} selecionados — clique em Calcular rota.` : "Selecione 2 ou mais vocativos para calcular a rota.";
+    }
+
+    function renderPendenciasMapaPainelProgramacao() {
+      const st = window.__painelProgMapState;
+      const host = document.getElementById("painelProgGeoWarningHost");
+      if (!host) return;
+      const lista = Array.from(st?.pendencias?.entries?.() || []);
+      if (!lista.length) { host.innerHTML = ""; return; }
+      host.innerHTML = `<div class="painelProgGeoWarning" id="painelProgGeoWarning">
+        <div class="painelProgGeoWarningHead" onclick="document.getElementById('painelProgGeoWarning')?.classList.toggle('open')">
+          <span>⚠️ ${lista.length} ponto(s) sem localização segura — não entram no cálculo de rota</span><span>Ver detalhes ▾</span>
+        </div>
+        <div class="painelProgGeoWarningList">${lista.map(([chave,p]) => `<div class="painelProgGeoWarningRow" data-pending-key="${getTextoPainelProgramacao(chave)}" style="cursor:pointer" title="Clique para abrir este vocativo no painel lateral"><b>${getTextoPainelProgramacao(p.item?.vocativo || chave)}</b><span>${getTextoPainelProgramacao((p.item?.cepsDestino || []).join(" / ") || "SEM CEP")}</span><span>${getTextoPainelProgramacao(p.geo?.motivo || "Localização indisponível")}</span></div>`).join("")}</div>
+      </div>`;
+      host.querySelectorAll("[data-pending-key]").forEach(el => el.addEventListener("click", ev => {
+        ev.stopPropagation();
+        const chave = String(el.getAttribute("data-pending-key") || "").trim();
+        if (!chave) return;
+        if (!painelProgCardsSelecionados.has(chave)) painelProgCardsSelecionados.add(chave);
+        atualizarSelecaoVisualPainelProgramacao(); renderPopupPainelProgramacao(); atualizarResumoMapaPainelProgramacao();
+      }));
+    }
+
+    async function renderMapaPainelProgramacao(dados, {forcarGeocode=false} = {}) {
+      const st = garantirEstruturaMapaPainelProgramacao();
+      if (!st) return;
+      const seq = ++st.renderSeq;
+      st.cluster.clearLayers(); st.markers.clear(); st.localizacoes.clear(); st.pendencias.clear();
+      limparRotaMapaPainelProgramacao(false);
+      atualizarResumoMapaPainelProgramacao();
+      const lista = ordenarPainelProgPorVocativo(dados || []);
+      if (!lista.length) { renderPendenciasMapaPainelProgramacao(); return; }
+
+      // Limite de concorrência simples: evita disparar centenas de consultas simultâneas.
+      const fila = [...lista];
+      const worker = async () => {
+        while (fila.length && st.renderSeq === seq) {
+          const item = fila.shift();
+          const geo = await geocodificarCepPainelProgramacao(item, forcarGeocode);
+          if (st.renderSeq !== seq) return;
+          const chave = String(item?.cardKey || "").trim();
+          if (!chave) continue;
+          if (!geo?.ok) { st.pendencias.set(chave,{item,geo}); atualizarResumoMapaPainelProgramacao(); continue; }
+          st.localizacoes.set(chave,{item,geo});
+          const marker = L.marker([geo.lat,geo.lon], { icon:criarIconeMarkerPainelProgramacao(item), keyboard:true, title:String(item?.vocativo || "") });
+          marker.bindTooltip(renderTooltipMapaPainelProgramacao(item,geo), { direction:"top", sticky:true, opacity:.98, className:"painelProgMapTooltip" });
+          marker.on("click", ev => selecionarMarcadorPainelProgramacao(chave,ev));
+          st.markers.set(chave,marker); st.cluster.addLayer(marker); atualizarResumoMapaPainelProgramacao();
+        }
+      };
+      await Promise.all(Array.from({length:Math.min(4,lista.length)},()=>worker()));
+      if (st.renderSeq !== seq) return;
+      renderPendenciasMapaPainelProgramacao(); atualizarResumoMapaPainelProgramacao();
+      ajustarMapaAosPontosPainelProgramacao();
+      setTimeout(()=>st.map?.invalidateSize(),0);
+    }
+
+    function renderCardsPainelProgramacao(dados) {
+      renderMapaPainelProgramacao(dados).catch(err => {
+        console.error("Erro ao renderizar mapa do Painel de Programação:",err);
+        const host=document.getElementById("painelProgramacaoCards");
+        if(host) host.innerHTML=`<div class="painelProgEmptyState" style="border-color:#fecaca;color:#991b1b;background:#fef2f2;">Não foi possível montar o mapa.<br><span style="font-size:11px;">${getTextoPainelProgramacao(err?.message || err)}</span></div>`;
+      });
+    }
+
+    function ajustarMapaAosPontosPainelProgramacao() {
+      const st=window.__painelProgMapState;
+      if(!st?.map || !st?.markers?.size) return;
+      const pontos=[]; st.markers.forEach(m=>{const ll=m.getLatLng?.(); if(ll) pontos.push(ll);});
+      if(!pontos.length) return;
+      if(pontos.length===1) st.map.setView(pontos[0],12); else st.map.fitBounds(L.latLngBounds(pontos),{padding:[28,28],maxZoom:12});
+    }
+
+    function limparRotaMapaPainelProgramacao(atualizarTexto=true) {
+      const st=window.__painelProgMapState;
+      if(st?.routeLayer && st?.map){ try{st.map.removeLayer(st.routeLayer);}catch(_){} }
+      if(st){st.routeLayer=null;st.routeResult=null;}
+      if(atualizarTexto){const el=document.getElementById("painelProgRouteInfo"); if(el){el.classList.remove("painelProgRouteError");el.textContent=(painelProgCardsSelecionados?.size||0)>=2?`${painelProgCardsSelecionados.size} selecionados — clique em Calcular rota.`:"Selecione 2 ou mais vocativos para calcular a rota.";}}
+    }
+
+    function formatKmBR(meters) { const km=Number(meters||0)/1000; return `${km.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km`; }
+    function formatDurationBR(seconds) { const totalMin=Math.round(Number(seconds||0)/60),h=Math.floor(totalMin/60),m=totalMin%60; return h<=0?`${m} min`:(m===0?`${h}h`:`${h}h ${m}min`); }
+
+    async function calcularRotaMapaPainelProgramacao() {
+      const st=garantirEstruturaMapaPainelProgramacao(); if(!st) return;
+      const chaves=Array.from(painelProgCardsSelecionados||[]);
+      const info=document.getElementById("painelProgRouteInfo");
+      const faltantes=chaves.filter(k=>!st.localizacoes.has(k));
+      if(chaves.length<2){ if(info){info.classList.add("painelProgRouteError");info.textContent="Selecione pelo menos 2 vocativos localizados.";} return; }
+      if(faltantes.length){ if(info){info.classList.add("painelProgRouteError");info.textContent=`A rota não foi calculada: ${faltantes.length} selecionado(s) sem localização segura.`;} return; }
+      const pontos=chaves.map(k=>st.localizacoes.get(k));
+      const coords=pontos.map(p=>`${Number(p.geo.lon).toFixed(6)},${Number(p.geo.lat).toFixed(6)}`).join(";");
+      if(info){info.classList.remove("painelProgRouteError");info.textContent="Calculando rota rodoviária...";}
+      try{
+        const resp=await fetch(`${PAINEL_PROG_OSRM_BASE}/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`,{cache:"no-store"});
+        const json=await resp.json().catch(()=>({}));
+        if(!resp.ok || json?.code!=="Ok" || !json?.routes?.length) throw new Error(json?.message || (json?.code==="NoRoute"?"Não existe rota rodoviária entre os pontos selecionados.":`Falha OSRM (${json?.code || resp.status})`));
+        limparRotaMapaPainelProgramacao(false);
+        const rota=json.routes[0];
+        st.routeLayer=L.geoJSON(rota.geometry,{style:{weight:6,opacity:.82}}).addTo(st.map);
+        st.routeResult={distance:rota.distance,duration:rota.duration,chaves:[...chaves]};
+        const bounds=st.routeLayer.getBounds?.(); if(bounds?.isValid?.()) st.map.fitBounds(bounds,{padding:[30,30]});
+        if(info){info.classList.remove("painelProgRouteError");info.textContent=`${chaves.length} paradas | ${formatKmBR(rota.distance)} | ${formatDurationBR(rota.duration)}`;}
+      }catch(err){console.error("Erro OSRM:",err);if(info){info.classList.add("painelProgRouteError");info.textContent=`Não foi possível calcular a rota: ${String(err?.message || err)}`;}}
+    }
+
+    async function reprocessarCepsPendentesPainelProgramacao() {
+      const cache=carregarCacheCepPainelProgramacao();
+      Array.from(window.__painelProgMapState?.pendencias?.values?.()||[]).forEach(p=>{(p?.item?.cepsDestino||[]).map(normalizarCepPainelProgramacao).filter(Boolean).forEach(cep=>cache.delete(cep));});
+      salvarCacheCepPainelProgramacao();
+      await renderMapaPainelProgramacao(painelProgDadosAtuais||[],{forcarGeocode:true});
     }
 
     function renderPainelProgramacaoComBaseAtual(rolarTopo = false) {
@@ -14435,7 +14537,7 @@ return null;
       if (baseEl) {
         const vocativosFiltrados = new Set(filtrados.map(i => i.vocNorm).filter(Boolean)).size;
         const vocativosBase = new Set(dados.map(i => i.vocNorm).filter(Boolean)).size;
-        baseEl.textContent = `Base exibida: ${vocativosFiltrados} de ${vocativosBase} vocativo(s) | ${filtrados.length} card(s) | Organização: ${getPainelProgNomeAgrupamento()} | ${getResumoStatusJanelasGoogle()}`;
+        baseEl.textContent = `Base exibida: ${vocativosFiltrados} de ${vocativosBase} vocativo(s) | ${filtrados.length} ponto(s) | Mapa por CEP Destino | ${getResumoStatusJanelasGoogle()}`;
       }
 
       renderResumoPainelProgramacao(filtrados);
@@ -14490,12 +14592,11 @@ return null;
         if (baseEl) {
           const vocativosFiltrados = new Set(filtrados.map(i => i.vocNorm).filter(Boolean)).size;
           const vocativosBase = new Set(dados.map(i => i.vocNorm).filter(Boolean)).size;
-          baseEl.textContent = `Base exibida: ${vocativosFiltrados} de ${vocativosBase} vocativo(s) | ${filtrados.length} card(s) | Organização: ${getPainelProgNomeAgrupamento()} | ${getResumoStatusJanelasGoogle()}`;
+          baseEl.textContent = `Base exibida: ${vocativosFiltrados} de ${vocativosBase} vocativo(s) | ${filtrados.length} ponto(s) | Mapa por CEP Destino | ${getResumoStatusJanelasGoogle()}`;
         }
         renderResumoPainelProgramacao(filtrados);
         renderCardsPainelProgramacao(filtrados);
         renderPopupPainelProgramacao();
-        if (painelProgVisualizacaoAtual === "mapa") agendarRenderMapaPainelProgramacao(true);
 
         // Se a planilha de janelas ainda estava em rede, atualiza somente os dados/DOM
         // quando ela terminar, sem refazer o processamento pesado do PVD.
@@ -14557,7 +14658,7 @@ return null;
 
     btnExportarCSV.onclick = exportarExcel;
 
-    btnLimpar.addEventListener("click", limparResultadoRotas);
+    btnLimpar.addEventListener("click", limparRotaMapaPainelProgramacao);
 
     dateFilter.onchange = aplicarFiltrosEBusca;
 
@@ -14642,1115 +14743,6 @@ return null;
     }
 
 
-
-    function renderRouteSuggestionsPlaceholder(html = "") {
-      const el = document.getElementById("routeSuggestions");
-      if (!el) return;
-      el.innerHTML = html;
-    }
-
-    function limparResultadoRotas() {
-      const el = document.getElementById("routeSuggestions");
-      if (el) el.innerHTML = "";
-      if (window.__orsRouteState) {
-        window.__orsRouteState.lastRenderSignature = "";
-        window.__orsRouteState.lastResults = null;
-      }
-    }
-
-    function formatKmBR(meters) {
-      const km = Number(meters || 0) / 1000;
-      return `${km.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
-    }
-
-    function formatDurationBR(seconds) {
-      const totalMin = Math.round(Number(seconds || 0) / 60);
-      const h = Math.floor(totalMin / 60);
-      const m = totalMin % 60;
-      if (h <= 0) return `${m} min`;
-      if (m === 0) return `${h}h`;
-      return `${h}h ${m}min`;
-    }
-
-    function getRouteAssinaturaContexto() {
-      const ctx = getContextoFiltrosPopup();
-      return buildPerfCacheKey([
-        "rotas",
-        JSON.stringify(ctx.modosDataLimite || []),
-        JSON.stringify(ctx.modosCriticidade || []),
-        JSON.stringify(ctx.modosMigracao || []),
-        JSON.stringify(ctx.modosEntradaNF || []),
-        JSON.stringify(ctx.modosObservacao || []),
-        JSON.stringify(ctx.filtroVeiculo || []),
-        ctx.termoDestino || "",
-        ctx.termoUFDestino || "",
-        ctx.termoNota || "",
-        ctx.termoOEF || "",
-        Array.from(ctx.clientesSelecionadosNorm || []).sort().join(","),
-        (datasSelecionadasPopup || []).map(d => d?.toISOString?.().slice(0, 10) || "").join(","),
-        filtroPrazoConsolidacaoAtivo || ""
-      ]);
-    }
-
-    async function getGeocodeORS(local) {
-      const estado = window.__orsRouteState;
-      const key = normalizar(local || "");
-      if (!key) return null;
-      if (estado.geocodeCache.has(key)) return estado.geocodeCache.get(key);
-
-      const url = `${ORS_GEOCODE_BASE_URL}/search?api_key=${encodeURIComponent(ORS_API_KEY)}&text=${encodeURIComponent(local)}&size=1&boundary.country=BR`;
-      const resp = await fetch(url);
-      if (!resp.ok) throw new Error(`Falha ao geocodificar ${local}: ${resp.status}`);
-      const json = await resp.json();
-      const feat = json?.features?.[0];
-      const coords = Array.isArray(feat?.geometry?.coordinates) ? feat.geometry.coordinates : null;
-      const result = coords && coords.length >= 2 ? { lon: Number(coords[0]), lat: Number(coords[1]), label: feat?.properties?.label || local } : null;
-      estado.geocodeCache.set(key, result);
-      return result;
-    }
-
-    async function getGeocodeDestinoComFallback(destino, uf) {
-      const principal = await getGeocodeORS(`${destino} - ${uf}, Brasil`);
-      if (principal) return { ...principal, origem: "cidade" };
-      const capital = CAPITAIS_UF[(uf || "").toUpperCase()];
-      if (!capital) return null;
-      const fallback = await getGeocodeORS(`${capital}, Brasil`);
-      return fallback ? { ...fallback, origem: "capital" } : null;
-    }
-
-    async function garantirCoordenadasFiliais() {
-      const estado = window.__orsRouteState;
-      if (estado.branchCoordsPromise) return estado.branchCoordsPromise;
-      estado.branchCoordsPromise = (async () => {
-        const itens = [];
-        for (const filial of FILIAIS_ORS) {
-          const geo = await getGeocodeORS(`${filial.cidade} - ${filial.uf}, Brasil`);
-          if (geo) itens.push({ ...filial, ...geo });
-        }
-        return itens;
-      })();
-      return estado.branchCoordsPromise;
-    }
-
-    async function postORSMatrix(locations) {
-      const estado = window.__orsRouteState;
-      const key = JSON.stringify(locations.map(([lon, lat]) => [Number(lon).toFixed(6), Number(lat).toFixed(6)]));
-      if (estado.matrixCache.has(key)) return estado.matrixCache.get(key);
-      const resp = await fetch(`${ORS_BASE_URL}/v2/matrix/driving-car`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": ORS_API_KEY
-        },
-        body: JSON.stringify({
-          locations,
-          metrics: ["distance", "duration"]
-        })
-      });
-      if (!resp.ok) throw new Error(`Falha ao consultar matriz ORS: ${resp.status}`);
-      const json = await resp.json();
-      estado.matrixCache.set(key, json);
-      return json;
-    }
-
-    async function getORSDirectionsResumo(origem, destino) {
-      const estado = window.__orsRouteState;
-      const key = JSON.stringify([
-        [Number(origem.lon).toFixed(6), Number(origem.lat).toFixed(6)],
-        [Number(destino.lon).toFixed(6), Number(destino.lat).toFixed(6)]
-      ]);
-      if (estado.directionsCache.has(key)) return estado.directionsCache.get(key);
-      const resp = await fetch(`${ORS_BASE_URL}/v2/directions/driving-car/json`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": ORS_API_KEY
-        },
-        body: JSON.stringify({
-          coordinates: [
-            [origem.lon, origem.lat],
-            [destino.lon, destino.lat]
-          ]
-        })
-      });
-      if (!resp.ok) throw new Error(`Falha ao consultar rota ORS: ${resp.status}`);
-      const json = await resp.json();
-      const resumo = json?.routes?.[0]?.summary || null;
-      estado.directionsCache.set(key, resumo);
-      return resumo;
-    }
-
-    async function determinarUFBaseMaisProxima(ufDestino, capitaisFiliaisCoords) {
-      const uf = String(ufDestino || "").toUpperCase();
-      if (!uf) return null;
-      const ufsFiliais = [...new Set(FILIAIS_ORS.map(f => f.uf).filter(Boolean))];
-      if (ufsFiliais.includes(uf)) return uf;
-
-      const estado = window.__orsRouteState;
-      if (estado.stateChoiceCache.has(uf)) return estado.stateChoiceCache.get(uf);
-
-      const capitalDestinoNome = CAPITAIS_UF[uf];
-      if (!capitalDestinoNome) return null;
-      const capitalDestino = await getGeocodeORS(`${capitalDestinoNome}, Brasil`);
-      if (!capitalDestino) return null;
-
-      const locations = [[capitalDestino.lon, capitalDestino.lat], ...capitaisFiliaisCoords.map(c => [c.lon, c.lat])];
-      const matrix = await postORSMatrix(locations);
-      const distances = matrix?.distances?.[0] || [];
-      let bestUf = null;
-      let bestDistance = Infinity;
-      capitaisFiliaisCoords.forEach((item, idx) => {
-        const dist = Number(distances[idx + 1]);
-        if (Number.isFinite(dist) && dist < bestDistance) {
-          bestDistance = dist;
-          bestUf = item.uf;
-        }
-      });
-      estado.stateChoiceCache.set(uf, bestUf);
-      return bestUf;
-    }
-
-    async function coletarVocativosFiltradosParaRotas() {
-      const cacheAnalise = await prepararCacheAnaliseProgramacao();
-      const ctx = getContextoFiltrosPopup();
-      const vocativos = [];
-
-      Object.entries(cacheAnalise.almoxPendBase || {}).forEach(([almox, info]) => {
-        const veiculos = filtrarVeiculosAtivosVocativo(normalizar(almox), cacheAnalise.almoxUltimoVeiculo?.[almox] || []);
-        if (!vocativoPassaFiltroVeiculo(almox, veiculos, ctx.filtroVeiculo, ctx.hoje)) return;
-
-        const notas = (info?.notas || []).filter(n => notaPassaContexto(n, ctx));
-        if (!notas.length) return;
-
-        const mapaDestinos = new Map();
-        notas.forEach(n => {
-          const destino = String(n.destino || "").trim();
-          const uf = String(n.uf || "").trim().toUpperCase();
-          if (!destino || !uf) return;
-          const key = `${normalizar(destino)}||${uf}`;
-          if (!mapaDestinos.has(key)) {
-            mapaDestinos.set(key, {
-              destino,
-              uf,
-              totalNotas: 0,
-              notas: [],
-              clientes: new Set()
-            });
-          }
-          const item = mapaDestinos.get(key);
-          item.totalNotas += 1;
-          item.notas.push(String(n.nota || "").trim());
-          if (n.cliente) item.clientes.add(String(n.cliente).trim());
-        });
-
-        const destinos = Array.from(mapaDestinos.values()).map(item => ({
-          destino: item.destino,
-          uf: item.uf,
-          totalNotas: item.totalNotas,
-          notasPreview: item.notas.filter(Boolean).slice(0, 5),
-          clientesPreview: Array.from(item.clientes).filter(Boolean).slice(0, 3)
-        }));
-
-        if (!destinos.length) return;
-
-        vocativos.push({
-          vocativo: almox,
-          vocativoNorm: normalizar(almox),
-          totalNotasFiltradas: notas.length,
-          totalDestinos: destinos.length,
-          destinos
-        });
-      });
-
-      vocativos.sort((a, b) => a.vocativo.localeCompare(b.vocativo, "pt-BR"));
-      return vocativos;
-    }
-
-    async function calcularMelhorFilialPorDestino(destinoItem, filiaisCoords, capitaisFiliaisCoords) {
-      const ufBase = await determinarUFBaseMaisProxima(destinoItem.uf, capitaisFiliaisCoords);
-      if (!ufBase) {
-        return {
-          ...destinoItem,
-          erro: "UF base não localizada para cálculo."
-        };
-      }
-
-      const destinoGeo = await getGeocodeDestinoComFallback(destinoItem.destino, destinoItem.uf);
-      if (!destinoGeo) {
-        return {
-          ...destinoItem,
-          ufBase,
-          erro: "Destino não geocodificado no ORS."
-        };
-      }
-
-      const candidatas = filiaisCoords.filter(f => f.uf === ufBase);
-      if (!candidatas.length) {
-        return {
-          ...destinoItem,
-          ufBase,
-          erro: "Nenhuma filial encontrada para a UF base calculada."
-        };
-      }
-
-      let melhor = candidatas[0];
-      let distance = null;
-      let duration = null;
-
-      if (candidatas.length === 1) {
-        const resumo = await getORSDirectionsResumo(candidatas[0], destinoGeo);
-        distance = resumo?.distance ?? null;
-        duration = resumo?.duration ?? null;
-      } else {
-        const locations = [[destinoGeo.lon, destinoGeo.lat], ...candidatas.map(f => [f.lon, f.lat])];
-        const matrix = await postORSMatrix(locations);
-        const distances = matrix?.distances?.[0] || [];
-        const durations = matrix?.durations?.[0] || [];
-        let bestIdx = 0;
-        let bestDistance = Infinity;
-        candidatas.forEach((f, idx) => {
-          const dist = Number(distances[idx + 1]);
-          if (Number.isFinite(dist) && dist < bestDistance) {
-            bestDistance = dist;
-            bestIdx = idx;
-          }
-        });
-        melhor = candidatas[bestIdx] || candidatas[0];
-        distance = Number.isFinite(Number(distances[bestIdx + 1])) ? Number(distances[bestIdx + 1]) : null;
-        duration = Number.isFinite(Number(durations[bestIdx + 1])) ? Number(durations[bestIdx + 1]) : null;
-      }
-
-      return {
-        ...destinoItem,
-        ufBase,
-        destinoGeoOrigem: destinoGeo.origem,
-        filial: melhor.nome,
-        filialCidade: melhor.cidade,
-        filialUF: melhor.uf,
-        distancia: distance,
-        duracao: duration,
-        criterioEstado: melhor.uf === destinoItem.uf ? "Mesmo estado do destino" : `UF mais próxima calculada: ${ufBase}`
-      };
-    }
-
-    function renderizarResultadoFiliaisMaisProximas(vocativos, assinatura) {
-      const el = document.getElementById("routeSuggestions");
-      if (!el) return;
-
-      const totalDestinos = vocativos.reduce((acc, v) => acc + (v.resultados?.length || 0), 0);
-      const totalComRota = vocativos.reduce((acc, v) => acc + (v.resultados?.filter(r => !r.erro).length || 0), 0);
-      const mapaFiliais = new Map();
-      const semFilial = [];
-
-      vocativos.forEach(v => {
-        (v.resultados || []).forEach(r => {
-          if (r.erro || !r.filial) {
-            semFilial.push({ vocativo: v.vocativo, ...r });
-            return;
-          }
-          const chave = `${r.filial}||${r.filialUF || ""}`;
-          if (!mapaFiliais.has(chave)) {
-            mapaFiliais.set(chave, {
-              filial: r.filial,
-              filialUF: r.filialUF || "",
-              filialCidade: r.filialCidade || r.filial || "",
-              itens: [],
-              vocativosSet: new Set(),
-              totalNotas: 0,
-              distanciaTotal: 0,
-              distanciasValidas: 0,
-              rotasCapital: 0
-            });
-          }
-          const grupo = mapaFiliais.get(chave);
-          grupo.itens.push({ vocativo: v.vocativo, totalNotasFiltradasVocativo: v.totalNotasFiltradas, ...r });
-          grupo.vocativosSet.add(v.vocativo);
-          grupo.totalNotas += Number(r.totalNotas || 0);
-          if (Number.isFinite(Number(r.distancia))) {
-            grupo.distanciaTotal += Number(r.distancia);
-            grupo.distanciasValidas += 1;
-          }
-          if (r.destinoGeoOrigem === "capital") grupo.rotasCapital += 1;
-        });
-      });
-
-      const gruposFiliais = Array.from(mapaFiliais.values()).sort((a, b) => {
-        if (b.vocativosSet.size !== a.vocativosSet.size) return b.vocativosSet.size - a.vocativosSet.size;
-        if (b.totalNotas !== a.totalNotas) return b.totalNotas - a.totalNotas;
-        return String(a.filial).localeCompare(String(b.filial), 'pt-BR');
-      });
-
-      const cards = gruposFiliais.map(g => {
-        const vocativosLista = Array.from(g.vocativosSet).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR'));
-        const mediaKm = g.distanciasValidas ? (g.distanciaTotal / g.distanciasValidas) : null;
-        const rows = g.itens
-          .slice()
-          .sort((a, b) => {
-            const da = Number.isFinite(Number(a.distancia)) ? Number(a.distancia) : Infinity;
-            const db = Number.isFinite(Number(b.distancia)) ? Number(b.distancia) : Infinity;
-            if (da !== db) return da - db;
-            return String(a.vocativo).localeCompare(String(b.vocativo), 'pt-BR');
-          })
-          .map(r => `
-            <tr>
-              <td>${r.vocativo || ""}</td>
-              <td>${r.destino || ""}</td>
-              <td>${r.uf || ""}</td>
-              <td>${r.totalNotas || 0}</td>
-              <td>${r.criterioEstado || '<span class="routeMuted">-</span>'}</td>
-              <td>${r.distancia != null ? formatKmBR(r.distancia) : '<span class="routeMuted">-</span>'}</td>
-              <td>${r.duracao != null ? formatDurationBR(r.duracao) : '<span class="routeMuted">-</span>'}</td>
-              <td>${r.clientesPreview?.length ? r.clientesPreview.join(", ") : '<span class="routeMuted">-</span>'}</td>
-              <td>${r.notasPreview?.length ? r.notasPreview.join(", ") : '<span class="routeMuted">-</span>'}</td>
-              <td>${r.destinoGeoOrigem === "capital" ? '<span class="routeTag">Aproximação pela capital</span>' : '<span class="routeTag">Rota calculada</span>'}</td>
-            </tr>
-          `).join("");
-
-        return `
-          <div class="routeVocativoCard">
-            <div class="routeVocativoHeader">
-              <div>
-                <p class="routeVocativoTitle">🏭 ${g.filial}${g.filialUF ? ` - ${g.filialUF}` : ""}</p>
-                <p class="routeVocativoMeta">${vocativosLista.length} vocativo(s) • ${g.itens.length} destino(s) vinculado(s) • ${g.totalNotas} nota(s)</p>
-              </div>
-              <span class="routeTag">${mediaKm != null ? `Média ${formatKmBR(mediaKm)}` : `${g.itens.length} rota(s)`}</span>
-            </div>
-            <div style="margin:8px 0 10px 0; display:flex; flex-wrap:wrap; gap:6px;">
-              ${vocativosLista.map(voc => `<span class="routeTag">${voc}</span>`).join("") || '<span class="routeMuted">Sem vocativos</span>'}
-            </div>
-            <div class="routeTableWrap">
-              <table class="routeTable">
-                <thead>
-                  <tr>
-                    <th>Vocativo</th>
-                    <th>Destino</th>
-                    <th>UF</th>
-                    <th>Notas</th>
-                    <th>Critério UF</th>
-                    <th>Distância</th>
-                    <th>Tempo</th>
-                    <th>Clientes</th>
-                    <th>Notas exemplo</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>${rows}</tbody>
-              </table>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      const cardSemFilial = semFilial.length ? `
-        <div class="routeVocativoCard" style="border:1px solid #fecaca; background:#fff7f7;">
-          <div class="routeVocativoHeader">
-            <div>
-              <p class="routeVocativoTitle">⚠️ Destinos sem cálculo concluído</p>
-              <p class="routeVocativoMeta">${semFilial.length} destino(s) com erro ou sem filial sugerida.</p>
-            </div>
-            <span class="routeTag">Revisar</span>
-          </div>
-          <div class="routeTableWrap">
-            <table class="routeTable">
-              <thead>
-                <tr>
-                  <th>Vocativo</th>
-                  <th>Destino</th>
-                  <th>UF</th>
-                  <th>Motivo</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${semFilial.map(r => `
-                  <tr>
-                    <td>${r.vocativo || ""}</td>
-                    <td>${r.destino || ""}</td>
-                    <td>${r.uf || ""}</td>
-                    <td><span style="color:#b91c1c; font-weight:800;">${r.erro || 'Sem filial sugerida'}</span></td>
-                  </tr>
-                `).join("")}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ` : "";
-
-      el.innerHTML = `
-        <div class="routePanel" data-route-signature="${assinatura}">
-          <div class="routePanelHeader">
-            <div>
-              <p class="routePanelTitle">🗺️ Agrupamento por filial mais próxima</p>
-              <p class="routePanelSub">Cálculo sob demanda usando ORS, agrupando todos os vocativos filtrados pela filial sugerida mais próxima.</p>
-            </div>
-            <span class="routeTag">Base atual: ${vocativos.length} vocativo(s)</span>
-          </div>
-          <div class="routePanelGrid">
-            <div class="routeStat"><div class="routeStatLabel">Vocativos analisados</div><div class="routeStatValue">${vocativos.length}</div></div>
-            <div class="routeStat"><div class="routeStatLabel">Destinos distintos</div><div class="routeStatValue">${totalDestinos}</div></div>
-            <div class="routeStat"><div class="routeStatLabel">Filiais sugeridas</div><div class="routeStatValue">${gruposFiliais.length}</div></div>
-            <div class="routeStat"><div class="routeStatLabel">Rotas válidas</div><div class="routeStatValue">${totalComRota}</div></div>
-          </div>
-          ${cards || '<div class="fleetEmptyState">Nenhum destino elegível encontrado nos filtros atuais.</div>'}
-          ${cardSemFilial}
-        </div>
-      `;
-    }
-
-    async function calcularFiliaisMaisProximasVisiveis() {
-      const btn = document.getElementById("btnCalcularFilialMaisProxima");
-      const assinatura = getRouteAssinaturaContexto();
-      const estado = window.__orsRouteState;
-
-      if (estado.lastRenderSignature === assinatura && Array.isArray(estado.lastResults)) {
-        renderizarResultadoFiliaisMaisProximas(estado.lastResults, assinatura);
-        return;
-      }
-
-      lockButton(btn, true, "🗺️ Calculando...");
-      renderRouteSuggestionsPlaceholder('<div class="routePanel"><div class="status">Calculando filiais mais próximas para os vocativos filtrados...</div></div>');
-
-      try {
-        const vocativos = await coletarVocativosFiltradosParaRotas();
-        if (!vocativos.length) {
-          renderRouteSuggestionsPlaceholder('<div class="fleetEmptyState">Nenhum vocativo filtrado com destino/UF disponível para cálculo.</div>');
-          return;
-        }
-
-        const filiaisCoords = await garantirCoordenadasFiliais();
-        const ufsFiliais = [...new Set(filiaisCoords.map(f => f.uf))];
-        const capitaisFiliaisCoords = [];
-        for (const uf of ufsFiliais) {
-          const nomeCapital = CAPITAIS_UF[uf];
-          if (!nomeCapital) continue;
-          const geo = await getGeocodeORS(`${nomeCapital}, Brasil`);
-          if (geo) capitaisFiliaisCoords.push({ uf, ...geo });
-        }
-
-        for (const vocativo of vocativos) {
-          const resultados = [];
-          for (const destino of vocativo.destinos) {
-            const resultado = await calcularMelhorFilialPorDestino(destino, filiaisCoords, capitaisFiliaisCoords);
-            resultados.push({ ...resultado, clientesPreview: destino.clientesPreview, notasPreview: destino.notasPreview });
-          }
-          resultados.sort((a, b) => {
-            const da = Number.isFinite(Number(a.distancia)) ? Number(a.distancia) : Infinity;
-            const db = Number.isFinite(Number(b.distancia)) ? Number(b.distancia) : Infinity;
-            return da - db;
-          });
-          vocativo.resultados = resultados;
-        }
-
-        estado.lastRenderSignature = assinatura;
-        estado.lastResults = vocativos;
-        renderizarResultadoFiliaisMaisProximas(vocativos, assinatura);
-      } catch (err) {
-        console.error("Erro ao calcular filiais mais próximas:", err);
-        renderRouteSuggestionsPlaceholder(`<div class="card" style="margin-top:12px; border:1px solid #fecaca; background:#fef2f2; color:#991b1b;">❌ Erro ao calcular filiais mais próximas: ${String(err && err.message ? err.message : err)}</div>`);
-      } finally {
-        lockButton(btn, false);
-      }
-    }
-
-
-    // ============================================================
-    // MAPA / ROTEIRIZAÇÃO — PAINEL DE PROGRAMAÇÃO
-    // Leaflet + OpenFreeMap (visual) + OSRM público (rota sob demanda entre 2 pontos)
-    // Geolocalização dos clientes: AwesomeAPI CEP -> latitude/longitude, com cache persistente.
-    // O mapa não usa OpenRouteService para posicionar os cards.
-    // ============================================================
-    const PAINEL_PROG_MAP_DEFAULT_CENTER = [-14.2350, -51.9253];
-    const PAINEL_PROG_MAP_DEFAULT_ZOOM = 4;
-    const PAINEL_PROG_ROUTE_MAX_STOPS = 2;
-    let painelProgVisualizacaoAtual = "mapa";
-    let painelProgLeafletMap = null;
-    let painelProgMapLibreBaseLayer = null;
-    let painelProgLeafletMarkers = new Map();
-    let painelProgLeafletLayer = null;
-    let painelProgRouteLayer = null;
-    let painelProgMapLabelsVisible = false;
-    let painelProgRouteMode = false;
-    let painelProgRouteStops = [];
-    let painelProgMapRenderToken = 0;
-    let painelProgMapRenderTimer = null;
-    let painelProgMapPontosAtuais = [];
-    let painelProgMapSelectedKey = "";
-    let painelProgMapSignatureRenderizada = "";
-    let painelProgMapRenderConcluido = false;
-    let painelProgGeoCacheMem = null;
-    let painelProgCepInfoCache = new Map();
-    let painelProgCepInfoRowsRef = null;
-
-    function setPainelProgVisualizacao(modo) {
-      const view = modo === "cards" ? "cards" : "mapa";
-      painelProgVisualizacaoAtual = view;
-      const mapArea = document.getElementById("painelProgMapArea");
-      const cardsArea = document.getElementById("painelProgramacaoCards");
-      const btnCards = document.getElementById("btnPainelProgViewCards");
-      const btnMap = document.getElementById("btnPainelProgViewMap");
-      const mainLayout = document.querySelector("#paginaPainelProgramacao .painelProgMainLayout");
-      mainLayout?.classList.toggle("isMapView", view === "mapa");
-      if (mapArea) mapArea.style.display = view === "mapa" ? "block" : "none";
-      if (cardsArea) cardsArea.style.display = view === "cards" ? "block" : "none";
-      btnCards?.classList.toggle("active", view === "cards");
-      btnMap?.classList.toggle("active", view === "mapa");
-      if (view === "mapa") {
-        requestAnimationFrame(() => {
-          garantirMapaPainelProgramacao();
-          redimensionarMapaPainelProgramacao();
-          setTimeout(() => redimensionarMapaPainelProgramacao(), 120);
-          agendarRenderMapaPainelProgramacao(false);
-        });
-      }
-    }
-
-    function redimensionarMapaPainelProgramacao() {
-      try { painelProgLeafletMap?.invalidateSize?.({ pan:false, debounceMoveend:true }); } catch (_) {}
-      try { painelProgMapLibreBaseLayer?.getMaplibreMap?.()?.resize?.(); } catch (_) {}
-    }
-
-    function garantirMapaPainelProgramacao() {
-      const el = document.getElementById("painelProgLeafletMap");
-      if (!el || typeof L === "undefined") return null;
-      if (painelProgLeafletMap) return painelProgLeafletMap;
-
-      painelProgLeafletMap = L.map(el, {
-        zoomControl:true,
-        preferCanvas:true,
-        minZoom:1,
-        maxBounds:[[-85,-Infinity],[85,Infinity]],
-        maxBoundsViscosity:1
-      }).setView(PAINEL_PROG_MAP_DEFAULT_CENTER, Math.max(1, PAINEL_PROG_MAP_DEFAULT_ZOOM));
-
-      // OpenFreeMap usa dados do OpenStreetMap, mas não depende dos servidores
-      // públicos tile.openstreetmap.org. Isso também permite testar o HTML via file://.
-      let streets = null;
-      let light = null;
-      if (typeof L.maplibreGL === "function") {
-        streets = L.maplibreGL({ style:"https://tiles.openfreemap.org/styles/liberty" });
-        light = L.maplibreGL({ style:"https://tiles.openfreemap.org/styles/positron" });
-        streets.addTo(painelProgLeafletMap);
-        painelProgMapLibreBaseLayer = streets;
-        painelProgLeafletMap.on("baselayerchange", (ev) => {
-          painelProgMapLibreBaseLayer = ev?.layer || painelProgMapLibreBaseLayer;
-          setTimeout(() => redimensionarMapaPainelProgramacao(), 30);
-        });
-        L.control.layers({ "Ruas": streets, "Claro": light }, null, { position:"topright", collapsed:true }).addTo(painelProgLeafletMap);
-        painelProgLeafletMap.attributionControl.addAttribution('OpenFreeMap &copy; OpenMapTiles Data from OpenStreetMap');
-      } else {
-        console.warn("MapLibre GL Leaflet não carregou; mapa base indisponível.");
-      }
-      painelProgLeafletLayer = L.layerGroup().addTo(painelProgLeafletMap);
-      painelProgRouteLayer = L.layerGroup().addTo(painelProgLeafletMap);
-      try {
-        const ro = new ResizeObserver(() => redimensionarMapaPainelProgramacao());
-        ro.observe(el);
-        window.__painelProgMapResizeObserver = ro;
-      } catch (_) {}
-      setTimeout(() => redimensionarMapaPainelProgramacao(), 0);
-      setTimeout(() => redimensionarMapaPainelProgramacao(), 150);
-      return painelProgLeafletMap;
-    }
-
-    function getCepPainelProgramacaoNota(nota) {
-      const raw = nota?._raw || nota || {};
-      const v = getFieldValue(raw, ["CEP Destino", "CEP DESTINO", "Cep Destino", "CEP", "cep"]);
-      const digits = String(v ?? "").replace(/\D/g, "");
-      return digits.length === 8 ? digits : "";
-    }
-
-    function getCepPredominantePainelProgramacao(item) {
-      if (painelProgCepInfoRowsRef !== detalhadoRows) {
-        painelProgCepInfoRowsRef = detalhadoRows;
-        painelProgCepInfoCache.clear();
-      }
-      const cacheKeyCard = String(item?.cardKey || "");
-      if (cacheKeyCard && painelProgCepInfoCache.has(cacheKeyCard)) return painelProgCepInfoCache.get(cacheKeyCard);
-
-      const destinatarioNorm = String(item?.destinatarioNorm || "");
-      const vocNorm = String(item?.vocNorm || normalizar(item?.vocativo || ""));
-      const contagem = new Map();
-
-      const adicionarCep = (valor) => {
-        const digits = String(valor ?? "").replace(/\D/g, "");
-        if (digits.length !== 8) return;
-        contagem.set(digits, (contagem.get(digits) || 0) + 1);
-      };
-
-      // Fonte principal: as mesmas notas já processadas pelo Painel de Programação.
-      const notas = Array.isArray(item?.notasFonteRelatorioPVD) ? item.notasFonteRelatorioPVD : [];
-      notas.forEach(nota => {
-        const destinatarioNota = normalizar(nota?.destinatario || getFieldValue(nota?._raw || nota || {}, ["Destinatario", "DESTINATARIO", "Destinatário"]));
-        if (destinatarioNorm && destinatarioNota && destinatarioNota !== destinatarioNorm) return;
-        adicionarCep(getCepPainelProgramacaoNota(nota));
-      });
-
-      // Fallback robusto: consulta diretamente a base PVD original caso o objeto
-      // resumido do card não tenha carregado o CEP. Isso evita declarar o card
-      // "sem localização" quando a coluna CEP Destino existe no relatório.
-      if (!contagem.size && Array.isArray(detalhadoRows)) {
-        detalhadoRows.forEach(raw => {
-          const almox = normalizar(getFieldValue(raw, ["Almoxarifado", "ALMOXARIFADO", "almoxarifado"]));
-          if (vocNorm && almox !== vocNorm) return;
-          const dest = normalizar(getFieldValue(raw, ["Destinatario", "DESTINATARIO", "Destinatário"]));
-          if (destinatarioNorm && dest && dest !== destinatarioNorm) return;
-          adicionarCep(getFieldValue(raw, ["CEP Destino", "CEP DESTINO", "Cep Destino", "CEP", "cep"]));
-        });
-      }
-
-      const ordenados = Array.from(contagem.entries()).sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]));
-      const info = {
-        cep: ordenados[0]?.[0] || "",
-        ceps: ordenados.map(([cep,qtd]) => ({cep,qtd})),
-        totalCeps: ordenados.length
-      };
-      if (cacheKeyCard) painelProgCepInfoCache.set(cacheKeyCard, info);
-      return info;
-    }
-
-    function getRouteGeoCacheStorage() {
-      if (painelProgGeoCacheMem && typeof painelProgGeoCacheMem === "object") return painelProgGeoCacheMem;
-      try {
-        // Nova chave: invalida coordenadas das versões anteriores que usavam geocodificação textual.
-        const raw = localStorage.getItem("gira_route_geo_cep_v4_awesome");
-        const parsed = raw ? JSON.parse(raw) : {};
-        painelProgGeoCacheMem = parsed && typeof parsed === "object" ? parsed : {};
-      } catch (_) {
-        painelProgGeoCacheMem = {};
-      }
-      return painelProgGeoCacheMem;
-    }
-
-    function saveRouteGeoCacheStorage(cache) {
-      try {
-        painelProgGeoCacheMem = cache && typeof cache === "object" ? cache : {};
-        const entries = Object.entries(painelProgGeoCacheMem).slice(-1500);
-        localStorage.setItem("gira_route_geo_cep_v4_awesome", JSON.stringify(Object.fromEntries(entries)));
-      } catch (_) {}
-    }
-
-    function getDestinoUfGeoPainelProgramacao(item) {
-      const destino = Array.isArray(item?.destinos) ? String(item.destinos[0] || "").trim() : "";
-      const uf = Array.isArray(item?.ufs) ? String(item.ufs[0] || "").trim().toUpperCase() : "";
-      return { destino, uf };
-    }
-
-    function getChaveGeoPainelProgramacao(cep, item) {
-      const digits = String(cep || "").replace(/\D/g, "");
-      return digits.length === 8 ? `CEP:${digits}` : "";
-    }
-
-    function coordenadaValidaBrasilPainelProgramacao(lat, lon) {
-      lat = Number(lat); lon = Number(lon);
-      return Number.isFinite(lat) && Number.isFinite(lon)
-        && lat >= -35.5 && lat <= 6.5
-        && lon >= -75.5 && lon <= -31.0;
-    }
-
-    async function consultarAwesomeApiCepPainelProgramacao(digits, item) {
-      if (!/^\d{8}$/.test(String(digits || ""))) return null;
-      const resp = await fetch(`https://cep.awesomeapi.com.br/json/${digits}`, { cache:"force-cache" });
-      if (!resp.ok) return null;
-      const json = await resp.json();
-      const lat = Number(json?.lat);
-      const lon = Number(json?.lng);
-      if (!coordenadaValidaBrasilPainelProgramacao(lat, lon)) return null;
-
-      // Segurança adicional: não aceita um CEP geolocalizado em UF diferente da UF do card.
-      const { uf: ufEsperada } = getDestinoUfGeoPainelProgramacao(item);
-      const ufApi = String(json?.state || "").trim().toUpperCase();
-      if (ufEsperada && ufApi && ufEsperada !== ufApi) return null;
-
-      return {
-        lat,
-        lon,
-        label:[json?.address, json?.district, json?.city, json?.state, digits].filter(Boolean).join(", "),
-        source:"awesomeapi-cep",
-        apiCep:String(json?.cep || digits).replace(/\D/g,""),
-        apiUf:ufApi,
-        apiCidade:String(json?.city || "").trim()
-      };
-    }
-
-    async function getGeocodeCEPPainelProgramacao(cep, item) {
-      const digits = String(cep || "").replace(/\D/g, "");
-      const cacheKey = getChaveGeoPainelProgramacao(digits, item);
-      if (!cacheKey) return null;
-
-      const cache = getRouteGeoCacheStorage();
-      const cached = cache[cacheKey];
-      if (cached && coordenadaValidaBrasilPainelProgramacao(cached.lat, cached.lon)) {
-        const { uf } = getDestinoUfGeoPainelProgramacao(item);
-        if (!uf || !cached.apiUf || cached.apiUf === uf) return cached;
-        delete cache[cacheKey];
-      }
-
-      try {
-        const result = await consultarAwesomeApiCepPainelProgramacao(digits, item);
-        if (result) {
-          cache[cacheKey] = { ...result, savedAt:Date.now() };
-          saveRouteGeoCacheStorage(cache);
-          return result;
-        }
-      } catch (err) {
-        console.warn("Falha ao localizar CEP na AwesomeAPI:", digits, err);
-      }
-      // Sem fallback textual: é preferível declarar sem localização a colocar um cliente em cidade/posição errada.
-      return null;
-    }
-
-    function getAssinaturaMapaPainelProgramacao(dados) {
-      return (Array.isArray(dados) ? dados : []).map(item => {
-        const cep = getCepPredominantePainelProgramacao(item).cep || "";
-        return [
-          String(item?.cardKey || ""), cep,
-          item?.temProgramado ? 1 : 0,
-          item?.temNaoProgramado ? 1 : 0,
-          item?.temCarregadoHoje ? 1 : 0,
-          Number(item?.pesoTotalPVD || 0),
-          Number(item?.totalNotasPVD || 0)
-        ].join(":");
-      }).join("|");
-    }
-
-    function montarPontosMapaPainelProgramacao(dados) {
-      return (Array.isArray(dados) ? dados : []).map(item => {
-        const cepInfo = getCepPredominantePainelProgramacao(item);
-        return {
-          key:String(item?.cardKey || ""), item, cep:cepInfo.cep, ceps:cepInfo.ceps, totalCeps:cepInfo.totalCeps,
-          lat:null, lon:null, geoSource:"", geoLabel:""
-        };
-      });
-    }
-
-    function formatCepPainelProgramacao(cep) {
-      const d = String(cep || "").replace(/\D/g, "");
-      return d.length === 8 ? `${d.slice(0,5)}-${d.slice(5)}` : (cep || "-");
-    }
-
-    function getMarkerClassPainelProgramacao(item, inRoute=false) {
-      const base = item?.temCarregadoHoje ? "isCarregado" : (item?.temProgramado ? "isProgramado" : "isNaoProgramado");
-      return `${base}${inRoute ? " isRoute" : ""}`;
-    }
-
-    function createMarkerIconPainelProgramacao(ponto) {
-      const routeIndex = painelProgRouteStops.findIndex(s => s.key === ponto.key);
-      const inRoute = routeIndex >= 0;
-      const text = inRoute ? String(routeIndex + 1) : "•";
-      const cls = getMarkerClassPainelProgramacao(ponto.item, inRoute);
-      return L.divIcon({
-        className:"",
-        html:`<div class="routeMapMarker ${cls}"><div class="routeMapMarkerInner">${text}</div></div>`,
-        iconSize:[32,36], iconAnchor:[16,34], popupAnchor:[0,-31]
-      });
-    }
-
-    function getStatusTextoMapaPainelProgramacao(item) {
-      if (item?.temCarregadoHoje) return {text:"CARREGADO HOJE", cls:"blue"};
-      if (item?.temProgramado) return {text:"PROGRAMADO", cls:"green"};
-      return {text:"NÃO PROGRAMADO", cls:"red"};
-    }
-
-    function getDestinoResumoMapaPainelProgramacao(item) {
-      const dest = Array.isArray(item?.destinos) ? item.destinos.filter(Boolean).join(" / ") : "";
-      const uf = Array.isArray(item?.ufs) ? item.ufs.filter(Boolean).join(" / ") : "";
-      return [dest,uf].filter(Boolean).join(" - ") || "-";
-    }
-
-    function getNotasCardPainelProgramacao(item) {
-      const notas = Array.isArray(item?.notasFonteRelatorioPVD) ? item.notasFonteRelatorioPVD : [];
-      const destinatarioNorm = String(item?.destinatarioNorm || "");
-      return notas.filter(n => !destinatarioNorm || normalizar(n?.destinatario || "") === destinatarioNorm);
-    }
-
-    function selecionarPontoMapaPainelProgramacao(key, centralizar=true) {
-      const ponto = painelProgMapPontosAtuais.find(p => p.key === key);
-      if (!ponto) return;
-      painelProgMapSelectedKey = key;
-      renderDetalheMapaPainelProgramacao(ponto);
-      if (centralizar && painelProgLeafletMap && Number.isFinite(ponto.lat) && Number.isFinite(ponto.lon)) {
-        painelProgLeafletMap.flyTo([ponto.lat,ponto.lon], Math.max(painelProgLeafletMap.getZoom(), 11), {duration:.45});
-      }
-      if (painelProgRouteMode) adicionarPontoRotaPainelProgramacao(key);
-    }
-
-    function renderDetalheMapaPainelProgramacao(ponto) {
-      const el = document.getElementById("painelProgMapDetail");
-      if (!el || !ponto) return;
-      const item = ponto.item || {};
-      const status = getStatusTextoMapaPainelProgramacao(item);
-      const notas = getNotasCardPainelProgramacao(item);
-      const prioridades = Array.isArray(item.prioridadesPVD) ? item.prioridadesPVD.filter(Boolean) : [];
-      const cepExtra = ponto.totalCeps > 1 ? `<div class="routeDetailTag" title="CEPs encontrados neste card">${ponto.totalCeps} CEPs no card</div>` : "";
-      const geoFallback = ponto.geoSource === "awesomeapi-cep" ? `<div class="routeDetailTag" style="border-color:#22c55e;color:#166534;background:#f0fdf4;">Posição pelo CEP</div>` : "";
-      const routeAdded = painelProgRouteStops.some(s => s.key === ponto.key);
-      const jCarga = normalizar(item.janelaCarregamentoTexto) === "NAO CADASTRADO" ? "-" : (item.janelaCarregamentoTexto || "-");
-      const jEntrega = normalizar(item.janelaEntregaTexto) === "NAO CADASTRADO" ? "-" : (item.janelaEntregaTexto || "-");
-      el.innerHTML = `
-        <div class="routeDetailHead">
-          <div><div class="routeDetailVoc">${getTextoPainelProgramacao(item.vocativo || "-")}</div><div class="routeDetailRecipient">${getTextoPainelProgramacao(item.destinatarioResumo || "-")}</div></div>
-          <span class="routeStatusBadge ${status.cls}">${status.text}</span>
-        </div>
-        <div class="routeDetailTags">
-          ${item.temExpresso ? '<span class="routeDetailTag" style="border-color:#f97316;color:#c2410c;">EXPRESSO</span>' : ''}
-          ${item.temSpot ? '<span class="routeDetailTag" style="border-color:#a855f7;color:#7e22ce;">SPOT</span>' : ''}
-          ${item.temQuimico ? '<span class="routeDetailTag" style="border-color:#0ea5e9;color:#0369a1;">QUÍMICO</span>' : ''}
-          ${prioridades.slice(0,3).map(p => `<span class="routeDetailTag">${getTextoPainelProgramacao(p)}</span>`).join("")}
-          ${cepExtra}${geoFallback}
-        </div>
-        <div class="routeDetailGrid">
-          <div class="routeDetailBox routeDetailWide"><div class="routeDetailLabel">Destino</div><div class="routeDetailValue">${getTextoPainelProgramacao(getDestinoResumoMapaPainelProgramacao(item))}</div></div>
-          <div class="routeDetailBox"><div class="routeDetailLabel">CEP</div><div class="routeDetailValue">${formatCepPainelProgramacao(ponto.cep)}</div></div>
-          <div class="routeDetailBox"><div class="routeDetailLabel">Programador</div><div class="routeDetailValue">${getTextoPainelProgramacao(item.responsavel || "-")}</div></div>
-          <div class="routeDetailBox"><div class="routeDetailLabel">Embarque</div><div class="routeDetailValue">${getTextoPainelProgramacao(item.temProgramado ? (item.tipoEmbarque || "-") : "-")}</div></div>
-          <div class="routeDetailBox"><div class="routeDetailLabel">ID vinculado</div><div class="routeDetailValue">${getTextoPainelProgramacao(item.idVinculado || "-")}</div></div>
-          <div class="routeDetailBox"><div class="routeDetailLabel">Peso total PVD</div><div class="routeDetailValue">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.pesoTotalPVD,2))} kg</div></div>
-          <div class="routeDetailBox"><div class="routeDetailLabel">Notas PVD</div><div class="routeDetailValue">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.totalNotasPVD,0))}</div></div>
-          <div class="routeDetailBox"><div class="routeDetailLabel">Entrada em atraso</div><div class="routeDetailValue">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.entradaAtraso,0))}</div></div>
-          <div class="routeDetailBox"><div class="routeDetailLabel">Notas ≤ D-1</div><div class="routeDetailValue">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.notasD1,0))}</div></div>
-          <div class="routeDetailBox routeDetailWide"><div class="routeDetailLabel">Janela carga</div><div class="routeDetailValue">${getTextoPainelProgramacao(jCarga)}</div></div>
-          <div class="routeDetailBox routeDetailWide"><div class="routeDetailLabel">Janela entrega</div><div class="routeDetailValue">${getTextoPainelProgramacao(jEntrega)}</div></div>
-          <div class="routeDetailBox routeDetailWide"><div class="routeDetailLabel">Último veículo localizado</div><div class="routeDetailValue">${getTextoPainelProgramacao(item.ultimoVeiculo?.id || item.ultimoVeiculo?.ID || item.ultimoVeiculo?.placa || item.ultimoVeiculo?.['PLACA'] || "-")}</div></div>
-          <div class="routeDetailBox routeDetailWide"><div class="routeDetailLabel">Notas deste card</div><div class="routeDetailValue">${notas.map(n => getTextoPainelProgramacao(n.nota || n.numeroOEF || "")).filter(Boolean).slice(0,8).join(", ") || "-"}${notas.length>8 ? ` +${notas.length-8}` : ""}</div></div>
-        </div>
-        <div class="routeDetailActions">
-          <button class="routeDetailAction primary" type="button" onclick="adicionarPontoRotaPainelProgramacao('${escapeHtmlAttr(ponto.key)}')">${routeAdded ? '✓ Já está na rota' : '＋ Adicionar à rota'}</button>
-          <button class="routeDetailAction" type="button" onclick="abrirUltimosVeiculosPainelProgramacao('${escapeHtmlAttr(ponto.key)}', event)">🚚 Últimos veículos</button>
-          <button class="routeDetailAction" type="button" onclick="abrirRelatorioVocativoPainelProgramacao('${escapeHtmlAttr(ponto.key)}', event)">🧾 Relatório</button>
-        </div>`;
-    }
-
-    function atualizarKpisMapaPainelProgramacao(pontos, semLocal) {
-      const loc = pontos.filter(p => Number.isFinite(p.lat) && Number.isFinite(p.lon));
-      const prog = loc.filter(p => p.item?.temProgramado).length;
-      const nao = loc.filter(p => p.item?.temNaoProgramado).length;
-      const peso = loc.reduce((a,p) => a + (Number(p.item?.pesoTotalPVD) || 0), 0);
-      const set = (id,v) => { const e=document.getElementById(id); if(e)e.textContent=v; };
-      set("routeKpiPontos",loc.length); set("routeKpiProgramados",prog); set("routeKpiNaoProgramados",nao);
-      set("routeKpiPeso",`${formatarNumeroPainelProgramacao(peso,0)} kg`); set("routeKpiSemLocal",semLocal);
-    }
-
-    async function renderMapaPainelProgramacao(forceFit=false, forceRebuild=false) {
-      if (painelProgVisualizacaoAtual !== "mapa") return;
-      const map = garantirMapaPainelProgramacao();
-      if (!map || !painelProgLeafletLayer) return;
-      const dados = Array.isArray(painelProgDadosAtuais) ? painelProgDadosAtuais : [];
-      const assinaturaAtual = getAssinaturaMapaPainelProgramacao(dados);
-
-      // Ao alternar Cards/Mapa ou sair e voltar para esta página, não refaz
-      // geocodificação, markers nem fitBounds quando a base não mudou.
-      if (!forceRebuild && painelProgMapRenderConcluido && assinaturaAtual === painelProgMapSignatureRenderizada) {
-        redimensionarMapaPainelProgramacao();
-        const semLocalAtual = painelProgMapPontosAtuais.filter(p => !Number.isFinite(p.lat) || !Number.isFinite(p.lon)).length;
-        atualizarKpisMapaPainelProgramacao(painelProgMapPontosAtuais, semLocalAtual);
-        const status = document.getElementById("painelProgMapStatus");
-        const locAtual = painelProgMapPontosAtuais.length - semLocalAtual;
-        if (status) status.textContent = `${locAtual} ponto(s) localizado(s) • ${semLocalAtual} sem localização • mapa mantido em memória.`;
-        return;
-      }
-
-      const token = ++painelProgMapRenderToken;
-      painelProgMapRenderConcluido = false;
-      painelProgMapSignatureRenderizada = assinaturaAtual;
-      const pontos = montarPontosMapaPainelProgramacao(dados);
-      painelProgMapPontosAtuais = pontos;
-      const loading = document.getElementById("painelProgMapLoading");
-      const status = document.getElementById("painelProgMapStatus");
-
-      painelProgLeafletLayer.clearLayers();
-      painelProgLeafletMarkers.clear();
-      if (loading) {
-        loading.style.display = "block";
-        loading.textContent = `Preparando destinos... 0/${pontos.length}`;
-      }
-      if (status) status.textContent = `Localizando ${pontos.length} card(s) pelos CEPs da base filtrada...`;
-
-      let semLocal = 0;
-      const bounds = [];
-      const renderizados = new Set();
-
-      const adicionarMarcador = (ponto) => {
-        if (!ponto || renderizados.has(ponto.key) || !Number.isFinite(ponto.lat) || !Number.isFinite(ponto.lon)) return;
-        const marker = L.marker([ponto.lat,ponto.lon], {icon:createMarkerIconPainelProgramacao(ponto), keyboard:true, riseOnHover:true});
-        marker.on("click", () => selecionarPontoMapaPainelProgramacao(ponto.key, false));
-        if (painelProgMapLabelsVisible) marker.bindTooltip(String(ponto.item?.vocativo || ""), {permanent:true,direction:"top",offset:[0,-27],className:"routeMapLabel"});
-        marker.addTo(painelProgLeafletLayer);
-        painelProgLeafletMarkers.set(ponto.key, marker);
-        renderizados.add(ponto.key);
-        bounds.push([ponto.lat,ponto.lon]);
-      };
-
-      // Agrupa por CEP; quando o CEP não estiver disponível, agrupa por Cidade/UF.
-      // Assim vários cards do mesmo destino fazem somente uma consulta.
-      const porDestinoGeo = new Map();
-      pontos.forEach(p => {
-        const geoKey = getChaveGeoPainelProgramacao(p.cep, p.item);
-        if (!geoKey) {
-          semLocal++;
-          return;
-        }
-        if (!porDestinoGeo.has(geoKey)) porDestinoGeo.set(geoKey, []);
-        porDestinoGeo.get(geoKey).push(p);
-      });
-      const grupos = Array.from(porDestinoGeo.entries());
-      let cardsProcessados = semLocal;
-      const CONCORRENCIA_CEP = 6;
-
-      for (let inicio=0; inicio<grupos.length; inicio += CONCORRENCIA_CEP) {
-        if (token !== painelProgMapRenderToken) return;
-        const lote = grupos.slice(inicio, inicio + CONCORRENCIA_CEP);
-        const resultados = await Promise.all(lote.map(async ([, grupo]) => {
-          const cep = grupo[0]?.cep || "";
-          const geo = await getGeocodeCEPPainelProgramacao(cep, grupo[0]?.item);
-          return { grupo, geo };
-        }));
-        if (token !== painelProgMapRenderToken) return;
-
-        resultados.forEach(({grupo, geo}) => {
-          if (!geo) {
-            semLocal += grupo.length;
-          } else {
-            grupo.forEach(ponto => {
-              ponto.lat = Number(geo.lat);
-              ponto.lon = Number(geo.lon);
-              ponto.geoSource = geo.source || "awesomeapi-cep";
-              ponto.geoLabel = geo.label || "";
-              adicionarMarcador(ponto);
-            });
-          }
-          cardsProcessados += grupo.length;
-        });
-
-        atualizarKpisMapaPainelProgramacao(pontos,semLocal);
-        if (loading) loading.textContent = `Localizando CEPs... ${Math.min(cardsProcessados,pontos.length)}/${pontos.length}`;
-        if (status) status.textContent = `${renderizados.size} ponto(s) localizado(s) • ${semLocal} sem localização • carregando...`;
-        if (bounds.length) {
-          try { map.fitBounds(bounds,{padding:[35,35],maxZoom:12}); } catch (_) {}
-        }
-        await new Promise(resolve => setTimeout(resolve, 0));
-      }
-      if (token !== painelProgMapRenderToken) return;
-
-      atualizarKpisMapaPainelProgramacao(pontos,semLocal);
-      atualizarMarcadoresRotaPainelProgramacao();
-      if (loading) loading.style.display = "none";
-      if (status) status.textContent = `${bounds.length} ponto(s) localizado(s) • ${semLocal} sem localização • clique em um ponto para detalhes.`;
-      if ((forceFit || !painelProgMapSelectedKey) && bounds.length) {
-        try { map.fitBounds(bounds,{padding:[35,35],maxZoom:12}); } catch (_) {}
-      }
-      if (!bounds.length) map.setView(PAINEL_PROG_MAP_DEFAULT_CENTER, PAINEL_PROG_MAP_DEFAULT_ZOOM);
-      if (painelProgMapSelectedKey) {
-        const selected = pontos.find(p => p.key===painelProgMapSelectedKey);
-        if (selected) renderDetalheMapaPainelProgramacao(selected);
-      }
-      painelProgMapRenderConcluido = true;
-      setTimeout(() => redimensionarMapaPainelProgramacao(), 50);
-      setTimeout(() => redimensionarMapaPainelProgramacao(), 220);
-    }
-
-    function agendarRenderMapaPainelProgramacao(forceFit=false, forceRebuild=false) {
-      clearTimeout(painelProgMapRenderTimer);
-      painelProgMapRenderTimer = setTimeout(() => renderMapaPainelProgramacao(forceFit, forceRebuild), 80);
-    }
-
-    function forcarAtualizacaoMapaPainelProgramacao() {
-      painelProgMapRenderConcluido = false;
-      agendarRenderMapaPainelProgramacao(true, true);
-    }
-
-    function togglePainelProgMapLabels() {
-      painelProgMapLabelsVisible = !painelProgMapLabelsVisible;
-      document.getElementById("btnRouteLabels")?.classList.toggle("active",painelProgMapLabelsVisible);
-      painelProgLeafletMarkers.forEach((marker, key) => {
-        const ponto = painelProgMapPontosAtuais.find(p => p.key === key);
-        if (!marker || !ponto) return;
-        try { marker.unbindTooltip(); } catch (_) {}
-        if (painelProgMapLabelsVisible) {
-          marker.bindTooltip(String(ponto.item?.vocativo || ""), {permanent:true,direction:"top",offset:[0,-27],className:"routeMapLabel"});
-          try { marker.openTooltip(); } catch (_) {}
-        }
-      });
-    }
-
-    function togglePainelProgRouteMode() {
-      painelProgRouteMode = !painelProgRouteMode;
-      const btn=document.getElementById("btnRouteMode");
-      btn?.classList.toggle("active",painelProgRouteMode);
-      if(btn) btn.textContent = painelProgRouteMode ? "✓ Selecionando rota" : "＋ Montar rota";
-    }
-
-    function adicionarPontoRotaPainelProgramacao(key) {
-      const ponto = painelProgMapPontosAtuais.find(p => p.key===key && Number.isFinite(p.lat) && Number.isFinite(p.lon));
-      if (!ponto) return;
-      const idx = painelProgRouteStops.findIndex(s => s.key===key);
-      if (idx >= 0) {
-        painelProgRouteStops.splice(idx,1);
-      } else {
-        if (painelProgRouteStops.length >= PAINEL_PROG_ROUTE_MAX_STOPS) {
-          // Para manter o fluxo simples A -> B, ao clicar em um terceiro ponto reiniciamos a seleção por ele.
-          painelProgRouteStops = [];
-        }
-        painelProgRouteStops.push({key:ponto.key,lat:ponto.lat,lon:ponto.lon,vocativo:ponto.item?.vocativo||"",destino:getDestinoResumoMapaPainelProgramacao(ponto.item),peso:Number(ponto.item?.pesoTotalPVD)||0});
-      }
-      limparLinhaRotaPainelProgramacao();
-      renderRouteStopsPainelProgramacao();
-      atualizarMarcadoresRotaPainelProgramacao();
-      if (painelProgMapSelectedKey===key) renderDetalheMapaPainelProgramacao(ponto);
-      if (painelProgRouteStops.length === 2) calcularRotaPainelProgramacao(true);
-    }
-
-    function removerStopRotaPainelProgramacao(index) {
-      painelProgRouteStops.splice(index,1); limparLinhaRotaPainelProgramacao(); renderRouteStopsPainelProgramacao(); atualizarMarcadoresRotaPainelProgramacao();
-    }
-
-    function renderRouteStopsPainelProgramacao() {
-      const list=document.getElementById("routeStopsList"), count=document.getElementById("routeStopsCount");
-      if(count) count.textContent=`${painelProgRouteStops.length} parada(s)`;
-      if(!list) return;
-      if(!painelProgRouteStops.length){ list.innerHTML='<span style="font-size:9px;color:#94a3b8;">Clique em “Montar rota” e depois selecione 2 clientes.</span>'; return; }
-      list.innerHTML=painelProgRouteStops.map((s,i)=>`<button class="routeStop" type="button" title="Clique para remover" onclick="removerStopRotaPainelProgramacao(${i})"><span class="routeStopNum">${i+1}</span><span class="routeStopText">${getTextoPainelProgramacao(s.vocativo)}</span> ×</button>`).join("");
-    }
-
-    function atualizarMarcadoresRotaPainelProgramacao() {
-      painelProgMapPontosAtuais.forEach(p => {
-        const marker=painelProgLeafletMarkers.get(p.key); if(marker) marker.setIcon(createMarkerIconPainelProgramacao(p));
-      });
-    }
-
-    function limparLinhaRotaPainelProgramacao() {
-      painelProgRouteLayer?.clearLayers?.();
-      const d=document.getElementById("routeMetricDistance"),t=document.getElementById("routeMetricDuration"); if(d)d.textContent="0 km"; if(t)t.textContent="0 min";
-    }
-
-    function limparRotaPainelProgramacao() {
-      painelProgRouteStops=[]; limparLinhaRotaPainelProgramacao(); renderRouteStopsPainelProgramacao(); atualizarMarcadoresRotaPainelProgramacao();
-      if(painelProgMapSelectedKey){const p=painelProgMapPontosAtuais.find(x=>x.key===painelProgMapSelectedKey);if(p)renderDetalheMapaPainelProgramacao(p);}
-    }
-
-    function formatRouteDurationPainelProgramacao(seconds) {
-      const min=Math.round((Number(seconds)||0)/60); if(min<60)return `${min} min`; const h=Math.floor(min/60),m=min%60; return `${h}h ${String(m).padStart(2,"0")}min`;
-    }
-
-    async function calcularRotaPainelProgramacao(auto=false) {
-      if(painelProgRouteStops.length<2){ if(!auto) alert("Selecione 2 pontos para calcular a distância rodoviária."); return; }
-      const btn=document.getElementById("btnRouteCalc"); const old=btn?.textContent; if(btn){btn.disabled=true;btn.textContent="Calculando...";}
-      try {
-        const coords=painelProgRouteStops.map(s=>`${Number(s.lon).toFixed(6)},${Number(s.lat).toFixed(6)}`).join(";");
-        const url=`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`;
-        const resp=await fetch(url); if(!resp.ok) throw new Error(`OSRM retornou HTTP ${resp.status}`);
-        const json=await resp.json(); if(json?.code!=="Ok"||!json?.routes?.length)throw new Error(json?.message||"Nenhuma rota encontrada.");
-        const rota=json.routes[0], geom=rota.geometry;
-        painelProgRouteLayer?.clearLayers?.();
-        if(geom) {
-          const layer=L.geoJSON(geom,{style:{weight:5,opacity:.86}}).addTo(painelProgRouteLayer);
-          try { painelProgLeafletMap.fitBounds(layer.getBounds(),{padding:[30,30]}); } catch(_){}
-        }
-        const d=document.getElementById("routeMetricDistance"),t=document.getElementById("routeMetricDuration");
-        if(d)d.textContent=`${(Number(rota.distance||0)/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km`;
-        if(t)t.textContent=formatRouteDurationPainelProgramacao(rota.duration);
-      } catch(err) {
-        console.error("Erro ao calcular rota OSRM:",err); if(!auto) alert(`Não foi possível calcular a distância neste momento. ${err?.message||err}`);
-      } finally { if(btn){btn.disabled=false;btn.textContent=old||"Calcular distância";} }
-    }
 
     async function salvarObservacoes() {
       if (savingAll) return;
@@ -18607,9 +17599,6 @@ Deixe em branco e confirme para desvincular o ID atual.`,
           <button class="btn secondary" id="btnRelatorioExcelSimplificado" type="button">
             🧾 Excel Simplificado
           </button>
-          <button class="btn secondary" disabled id="btnCalcularFilialMaisProxima" type="button">
-            🗺️ Filial mais próxima
-          </button>
           <button class="btn" id="btnSalvarTudo" type="button">
             💾 Salvar tudo
           </button>
@@ -18788,7 +17777,6 @@ Deixe em branco e confirme para desvincular o ID atual.`,
         </div>
       </div>
       <div id="resumoAnalise" style="margin-top:10px; width:100%;"></div>
-      <div id="routeSuggestions" style="margin-top:10px; width:100%;"></div>
       <div id="almoxList" style="margin-top:10px; font-size:13px;"></div>
     </div>
   </div>
@@ -18865,11 +17853,6 @@ Deixe em branco e confirme para desvincular o ID atual.`,
         ]).catch(() => {});
       }, 0);
 
-      const btnFilialMaisProxima = document.getElementById("btnCalcularFilialMaisProxima");
-      if (btnFilialMaisProxima && !btnFilialMaisProxima.dataset.listenerAttached) {
-        btnFilialMaisProxima.addEventListener("click", calcularFiliaisMaisProximasVisiveis);
-        btnFilialMaisProxima.dataset.listenerAttached = "true";
-      }
     });
   </script>
 
