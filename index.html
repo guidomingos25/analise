@@ -4153,7 +4153,7 @@
     .painelProgProximidadeGrupoHead b { font-size:9px; color:#1e3a8a; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .painelProgProximidadeGrupoHead span { font-size:8px; color:#475569; font-weight:900; white-space:nowrap; }
     .painelProgProximidadeLista { max-height:145px; overflow:auto; background:#fff; }
-    .painelProgProximidadeLinha { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; padding:4px 7px; border-top:1px solid #f1f5f9; font-size:8.5px; line-height:1.15; }
+    .painelProgProximidadeLinha { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:6px; align-items:center; padding:4px 7px; border-top:1px solid #f1f5f9; font-size:8.5px; line-height:1.15; }
     .painelProgProximidadeLinha[data-card-key] { cursor:pointer; user-select:none; transition:background .10s ease, box-shadow .10s ease; }
     .painelProgProximidadeLinha[data-card-key]:hover { background:#eff6ff; }
     .painelProgProximidadeLinha[data-card-key]:focus-visible { outline:2px solid #2563eb; outline-offset:-2px; }
@@ -4162,6 +4162,9 @@
     .painelProgProximidadeLinha:first-child { border-top:none; }
     .painelProgProximidadeLinha b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#0f172a; }
     .painelProgProximidadeLinha span { white-space:nowrap; color:#475569; font-weight:900; }
+    .painelProgProximidadeStatus { display:inline-flex; align-items:center; justify-content:center; min-width:74px; padding:2px 5px; border-radius:999px; font-size:7.5px; font-weight:1000; line-height:1; border:1px solid transparent; }
+    .painelProgProximidadeStatus.programado { background:#dcfce7; color:#166534; border-color:#86efac; }
+    .painelProgProximidadeStatus.naoProgramado { background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
 
     @media(max-width:900px){ #painelProgMap{height:57vh;min-height:440px}.painelProgMapStatusBar{grid-template-columns:repeat(2,minmax(0,1fr))}.painelProgGeoWarningRow{grid-template-columns:1fr}.painelProgMapToolbar{align-items:flex-start}.painelProgMapCityBox{border-left:0;padding-left:0;width:100%;flex-wrap:wrap}.painelProgMapCityInput{flex:1;max-width:none}.painelProgExtraCitiesList{max-width:100%;width:100%;padding-top:2px} }
 </style>
@@ -16041,7 +16044,9 @@ return null;
             label:String(loc.item?.vocativo || chave),
             lat:Number(loc.geo.lat),
             lon:Number(loc.geo.lon),
-            tipo:"vocativo"
+            tipo:"vocativo",
+            programado:!!loc.item?.temProgramado,
+            statusProgramacao:loc.item?.temProgramado ? "PROGRAMADO" : "NÃO PROGRAMADO"
           });
         });
         extrasSelecionados.forEach(extra => {
@@ -16063,7 +16068,9 @@ return null;
             label:String(loc.item?.vocativo || chave),
             lat:Number(loc.geo.lat),
             lon:Number(loc.geo.lon),
-            tipo:"vocativo"
+            tipo:"vocativo",
+            programado:!!loc.item?.temProgramado,
+            statusProgramacao:loc.item?.temProgramado ? "PROGRAMADO" : "NÃO PROGRAMADO"
           });
         });
       }
@@ -16114,7 +16121,7 @@ return null;
       const haSelecao = (painelProgCardsSelecionados?.size || 0) > 0 || getCidadesExtrasSelecionadasPainelProgramacao().length > 0;
       const escopo = haSelecao ? "selecionado(s)" : "filtrado(s)";
 
-      panel.innerHTML = `<div class="painelProgProximidadeTop"><div><div class="painelProgProximidadeTitle">Armazém mais próximo</div><div class="painelProgProximidadeSub">${totalDistribuido} destino(s) ${escopo} comparado(s) com ${armazens.length} filial(is) disponível(is) dentro dos filtros. Clique em um vocativo para selecionar/desmarcar exatamente como no mapa. Distância geográfica para classificação; rota rodoviária continua sendo calculada pelo OSRM.</div></div><button class="painelProgProximidadeClose" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Fechar e limpar todas as seleções">×</button></div><div class="painelProgProximidadeGrid">${gruposComDestino.map((g,i)=>`<div class="painelProgProximidadeGrupo"><div class="painelProgProximidadeGrupoHead"><b>${getTextoPainelProgramacao(g.base.label)}</b><span>${g.itens.length} destino(s)</span></div><div class="painelProgProximidadeLista">${g.itens.map(it=>`<div class="painelProgProximidadeLinha${it.chave && painelProgCardsSelecionados?.has?.(it.chave) ? " isSelected" : ""}"${it.chave ? ` data-card-key="${escapeHtmlAttr(it.chave)}" role="button" tabindex="0" aria-pressed="${painelProgCardsSelecionados?.has?.(it.chave) ? "true" : "false"}"` : ""}><b title="${getTextoPainelProgramacao(it.label)}">${getTextoPainelProgramacao(it.label)}</b><span>${it.km.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km</span></div>`).join("")}</div></div>`).join("")}</div>`;
+      panel.innerHTML = `<div class="painelProgProximidadeTop"><div><div class="painelProgProximidadeTitle">Armazém mais próximo</div><div class="painelProgProximidadeSub">${totalDistribuido} destino(s) ${escopo} comparado(s) com ${armazens.length} filial(is) disponível(is) dentro dos filtros. Clique em um vocativo para selecionar/desmarcar exatamente como no mapa. Distância geográfica para classificação; rota rodoviária continua sendo calculada pelo OSRM.</div></div><button class="painelProgProximidadeClose" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Fechar e limpar todas as seleções">×</button></div><div class="painelProgProximidadeGrid">${gruposComDestino.map((g,i)=>`<div class="painelProgProximidadeGrupo"><div class="painelProgProximidadeGrupoHead"><b>${getTextoPainelProgramacao(g.base.label)}</b><span>${g.itens.length} destino(s)</span></div><div class="painelProgProximidadeLista">${g.itens.map(it=>`<div class="painelProgProximidadeLinha${it.chave && painelProgCardsSelecionados?.has?.(it.chave) ? " isSelected" : ""}"${it.chave ? ` data-card-key="${escapeHtmlAttr(it.chave)}" role="button" tabindex="0" aria-pressed="${painelProgCardsSelecionados?.has?.(it.chave) ? "true" : "false"}"` : ""}><b title="${getTextoPainelProgramacao(it.label)}">${getTextoPainelProgramacao(it.label)}</b>${it.tipo === "vocativo" ? `<span class="painelProgProximidadeStatus ${it.programado ? "programado" : "naoProgramado"}">${it.programado ? "Programado" : "Não programado"}</span>` : `<span></span>`}<span>${it.km.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km</span></div>`).join("")}</div></div>`).join("")}</div>`;
       panel.classList.add("open");
 
       panel.onclick = (ev) => {
