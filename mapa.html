@@ -14645,7 +14645,7 @@ return null;
       if (!document.getElementById("painelProgMap")) {
         host.innerHTML = `<div class="painelProgMapShell"><div class="painelProgMapToolbar"><div class="painelProgMapToolbarLeft">
           <button class="btn painelProgMapBtn" type="button" onclick="calcularRotaMapaPainelProgramacao()">🛣️ Calcular rota</button>
-          <button class="btn secondary painelProgMapBtn" type="button" onclick="calcularRotaMapaPainelProgramacao(true)" title="Calcular a rota partindo de São Paulo — CEP 02174-010">📍 De SP</button>
+          <button class="btn painelProgMapBtn" type="button" onclick="calcularRotaMapaPainelProgramacao(true)" title="Calcular a rota partindo de São Paulo — CEP 02174-010">📍 De SP</button>
           <button class="btn secondary painelProgMapBtn" type="button" onclick="limparRotaMapaPainelProgramacao()">Limpar rota</button>
           <button class="btn secondary painelProgMapBtn" type="button" onclick="ajustarMapaAosPontosPainelProgramacao()">◎ Enquadrar pontos</button>
           <button class="btn secondary painelProgMapBtn" type="button" onclick="reprocessarCepsPendentesPainelProgramacao()">↻ Reprocessar CEPs</button>
@@ -14674,11 +14674,65 @@ return null;
       const chave=String(item?.cardKey||""),sel=painelProgCardsSelecionados.has(chave)?" selected":"",spot=item?.temSpot?" spot":"",ex=item?.temExpresso?" expresso":"",letra=String(item?.vocativo||"?").trim().slice(0,2).toUpperCase();
       return L.divIcon({className:"painelProgMarkerWrap",html:`<div class="painelProgMarker ${getClasseMarkerPainelProgramacao(item)}${sel}${spot}${ex}"><span>${getTextoPainelProgramacao(letra)}</span></div>`,iconSize:[34,42],iconAnchor:[17,38],tooltipAnchor:[0,-30]});
     }
+    function getZonaSaoPauloPainelProgramacao(geo) {
+      const cidadeNorm = normalizar(String(geo?.cidade || ""));
+      const uf = String(geo?.uf || "").trim().toUpperCase();
+      if (uf !== "SP" || cidadeNorm !== "SAO PAULO") return "";
+
+      const bairroNorm = normalizar(String(geo?.bairro || ""));
+      const ruaNorm = normalizar(String(geo?.rua || ""));
+      const localNorm = `${bairroNorm} ${ruaNorm}`;
+
+      // Ajustes por bairros/distritos conhecidos quando a faixa postal cruza a percepção operacional da cidade.
+      const zonaSul = [
+        "CAMPO LIMPO","CAPAO REDONDO","VILA ANDRADE","JARDIM SAO LUIS","JARDIM ANGELA",
+        "SOCORRO","GRAJAU","PARELHEIROS","MARSILAC","CIDADE DUTRA","SANTO AMARO","CAMPO GRANDE",
+        "JABAQUARA","SAUDE","VILA MARIANA","MOEMA","ITAIM BIBI","BROOKLIN","CAMPO BELO",
+        "PEDREIRA","CIDADE ADEMAR","SACOMA","IPIRANGA","VILA PRUDENTE"
+      ];
+      const zonaNorte = [
+        "SANTANA","TUCURUVI","JACANA","TREMEMBE","MANDAQUI","IMIRIM","CASA VERDE",
+        "CACHOEIRINHA","BRASILANDIA","FREGUESIA DO O","VILA MARIA","VILA GUILHERME","VILA MEDEIROS",
+        "PARQUE NOVO MUNDO","JARDIM JAPAO"
+      ];
+      const zonaLeste = [
+        "MOOCA","TATUAPE","PENHA","ITAQUERA","SAO MATEUS","GUAIANASES","SAO MIGUEL PAULISTA",
+        "ITAIM PAULISTA","ERMELINO MATARAZZO","CANGAIBA","VILA MATILDE","ARICANDUVA","CARRAO",
+        "SAPOPEMBA","SAO LUCAS","VILA FORMOSA","ARTUR ALVIM","CIDADE PATRIARCA","VILA EMA"
+      ];
+      const zonaOeste = [
+        "LAPA","PERDIZES","PINHEIROS","BUTANTA","MORUMBI","VILA LEOPOLDINA","JAGUARE",
+        "ALTO DE PINHEIROS","VILA MADALENA","RIO PEQUENO","JARDIM BONFIGLIOLI","PIRITUBA","JARAGUA",
+        "PERUS","VILA SONIA"
+      ];
+      const centro = [
+        "SE","REPUBLICA","BELA VISTA","LIBERDADE","CAMBUCI","CONSOLACAO","SANTA CECILIA",
+        "BOM RETIRO","LUZ","HIGIENOPOLIS","ACLIMACAO","JARDINS","CERQUEIRA CESAR"
+      ];
+      const tem = arr => arr.some(v => localNorm.includes(v));
+      if (tem(centro)) return "Centro";
+      if (tem(zonaNorte)) return "Zona Norte";
+      if (tem(zonaLeste)) return "Zona Leste";
+      if (tem(zonaSul)) return "Zona Sul";
+      if (tem(zonaOeste)) return "Zona Oeste";
+
+      const cep = String(geo?.cep || "").replace(/\D/g, "");
+      if (cep.length !== 8) return "";
+      const cinco = Number(cep.slice(0,5));
+      if (cinco >= 1000 && cinco <= 1599) return "Centro";
+      if (cinco >= 2000 && cinco <= 2999) return "Zona Norte";
+      if ((cinco >= 3000 && cinco <= 3999) || (cinco >= 8000 && cinco <= 8499)) return "Zona Leste";
+      if ((cinco >= 4000 && cinco <= 4999) || (cinco >= 5700 && cinco <= 5999)) return "Zona Sul";
+      if (cinco >= 5000 && cinco <= 5699) return "Zona Oeste";
+      return "";
+    }
+
     function renderTooltipMapaPainelProgramacao(item,geo){
       const jc=normalizar(item?.janelaCarregamentoTexto)==="NAO CADASTRADO"?"":(item?.janelaCarregamentoTexto||"-"),je=normalizar(item?.janelaEntregaTexto)==="NAO CADASTRADO"?"":(item?.janelaEntregaTexto||"-"),u=item?.ultimoVeiculo,cep=geo?.cep?`${geo.cep.slice(0,5)}-${geo.cep.slice(5)}`:"-",local=[geo?.cidade,geo?.uf].filter(Boolean).join(" - ");
       const enderecoPartes=[geo?.rua,geo?.bairro].map(v=>String(v||"").trim()).filter(Boolean);
       const enderecoCep=enderecoPartes.length?`${enderecoPartes.join(" — ")}${local?` | ${local}`:""}`:(local||"Endereço detalhado não retornado para este CEP");
-      return `<div class="painelProgLeafletTooltip"><div class="ttl">${getTextoPainelProgramacao(item?.vocativo||"-")}</div><div class="row"><b>Status:</b> ${item?.temProgramado?"PROGRAMADO":"NÃO PROGRAMADO"}${item?.temCarregadoHoje?" | CARREGADO HOJE":""}${item?.temCarregadoOntem?" | CARREGADO ONTEM":""}</div><div class="row"><b>Embarque:</b> ${getTextoPainelProgramacao(item?.temProgramado?(item?.tipoEmbarque||"-"):"-")}</div><div class="row"><b>Programador:</b> ${getTextoPainelProgramacao(item?.responsavel||"-")}</div><div class="row"><b>Peso Total PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.pesoTotalPVD,2))}</div><div class="row"><b>Total Notas PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.totalNotasPVD,0))}</div><div class="row"><b>Entrada em atraso:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.entradaAtraso,0))}</div><div class="row"><b>Notas &lt;= D-1:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.notasD1,0))}</div><div class="sep"></div><div class="row"><b>CEP Destino:</b> ${cep}${local?` | ${getTextoPainelProgramacao(local)}`:""}</div><div class="row"><b>Endereço do CEP:</b> ${getTextoPainelProgramacao(enderecoCep)}</div><div class="row"><b>Carga:</b> ${getTextoPainelProgramacao(jc)}</div><div class="row"><b>Entrega:</b> ${getTextoPainelProgramacao(je)}</div>${u?`<div class="sep"></div><div class="row"><b>Último veículo:</b> ${getTextoPainelProgramacao(u.id||"-")}</div><div class="row"><b>Previsão:</b> ${getTextoPainelProgramacao(u.previsaoTexto||u.previsao||"-")}</div><div class="row"><b>Destino:</b> ${getTextoPainelProgramacao(u.destinos||"-")}</div>`:""}</div>`;
+      const zonaSp=getZonaSaoPauloPainelProgramacao(geo);
+      return `<div class="painelProgLeafletTooltip"><div class="ttl">${getTextoPainelProgramacao(item?.vocativo||"-")}</div><div class="row"><b>Status:</b> ${item?.temProgramado?"PROGRAMADO":"NÃO PROGRAMADO"}${item?.temCarregadoHoje?" | CARREGADO HOJE":""}${item?.temCarregadoOntem?" | CARREGADO ONTEM":""}</div><div class="row"><b>Embarque:</b> ${getTextoPainelProgramacao(item?.temProgramado?(item?.tipoEmbarque||"-"):"-")}</div><div class="row"><b>Programador:</b> ${getTextoPainelProgramacao(item?.responsavel||"-")}</div><div class="row"><b>Peso Total PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.pesoTotalPVD,2))}</div><div class="row"><b>Total Notas PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.totalNotasPVD,0))}</div><div class="row"><b>Entrada em atraso:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.entradaAtraso,0))}</div><div class="row"><b>Notas &lt;= D-1:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.notasD1,0))}</div><div class="sep"></div><div class="row"><b>CEP Destino:</b> ${cep}${local?` | ${getTextoPainelProgramacao(local)}`:""}</div><div class="row"><b>Endereço do CEP:</b> ${getTextoPainelProgramacao(enderecoCep)}</div>${zonaSp?`<div class="row"><b>Zona (aprox.):</b> ${getTextoPainelProgramacao(zonaSp)}</div>`:""}<div class="row"><b>Carga:</b> ${getTextoPainelProgramacao(jc)}</div><div class="row"><b>Entrega:</b> ${getTextoPainelProgramacao(je)}</div>${u?`<div class="sep"></div><div class="row"><b>Último veículo:</b> ${getTextoPainelProgramacao(u.id||"-")}</div><div class="row"><b>Previsão:</b> ${getTextoPainelProgramacao(u.previsaoTexto||u.previsao||"-")}</div><div class="row"><b>Destino:</b> ${getTextoPainelProgramacao(u.destinos||"-")}</div>`:""}</div>`;
     }
 
     function garantirHoverFlutuanteMapaPainelProgramacao() {
