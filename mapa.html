@@ -12732,6 +12732,9 @@ return null;
         window.__painelProgMapState.selectionSource = null;
         window.__painelProgMapState.mapFilterSelectedOnly = false;
         window.__painelProgMapState.cardFilterSelectedOnly = false;
+        if (window.__painelProgMapState.filiaisSelecionadas instanceof Set) window.__painelProgMapState.filiaisSelecionadas.clear();
+        atualizarIconesFiliaisPainelProgramacao();
+        limparProximidadePainelProgramacao();
       }
       renderCardsPainelProgramacao(painelProgDadosAtuais || []);
       if (typeof atualizarMapaComSelecaoPainelProgramacao === "function") atualizarMapaComSelecaoPainelProgramacao(true);
@@ -15114,15 +15117,65 @@ return null;
       }
     }
 
+    function getUfsFiliaisPermitidasPelosFiltrosPainelProgramacao() {
+      const todos = new Set(PAINEL_PROG_FILIAIS_DELLA_VOLPE.map(f => normalizar(String(f.uf || ""))).filter(Boolean));
+      const ufRestritiva = typeof filtroDinamicoRestritivoRelatorioPainelProgramacao === "function"
+        ? filtroDinamicoRestritivoRelatorioPainelProgramacao("uf")
+        : false;
+
+      if (ufRestritiva) {
+        return new Set(Array.from(painelProgUfsSelecionados || []).map(v => normalizar(String(v || ""))).filter(Boolean));
+      }
+
+      const baseTotal = Number((painelProgDadosBase || []).length || (painelProgDadosBaseCompleta || []).length || 0);
+      const atualTotal = Number((painelProgDadosAtuais || []).length || 0);
+      const haRecortePorOutrosFiltros = baseTotal > 0 && atualTotal < baseTotal;
+      if (!haRecortePorOutrosFiltros) return todos;
+
+      const ufs = new Set();
+      (painelProgDadosAtuais || []).forEach(item => {
+        (Array.isArray(item?.ufs) ? item.ufs : []).forEach(uf => {
+          const n = normalizar(String(uf || ""));
+          if (n) ufs.add(n);
+        });
+      });
+      return ufs;
+    }
+
     function garantirFiliaisNoClusterPainelProgramacao() {
       const st = window.__painelProgMapState;
       if (!st?.cluster || !(st.filialMarkers instanceof Map)) return;
-      st.filialMarkers.forEach(marker => {
+      if (!(st.filiaisSelecionadas instanceof Set)) st.filiaisSelecionadas = new Set();
+
+      const permitidas = getUfsFiliaisPermitidasPelosFiltrosPainelProgramacao();
+      const idsVisiveis = new Set();
+
+      st.filialMarkers.forEach((marker,id) => {
+        const filial = st.filialLocalizacoes?.get?.(id);
+        const ufNorm = normalizar(String(filial?.uf || ""));
+        const visivel = !!filial && permitidas.has(ufNorm);
         try {
-          if (typeof st.cluster.hasLayer === "function" && st.cluster.hasLayer(marker)) return;
-          st.cluster.addLayer(marker);
+          const noCluster = typeof st.cluster.hasLayer === "function" && st.cluster.hasLayer(marker);
+          if (visivel) {
+            idsVisiveis.add(id);
+            if (!noCluster) st.cluster.addLayer(marker);
+          } else if (noCluster) {
+            st.cluster.removeLayer(marker);
+          }
         } catch (_) {}
       });
+
+      let mudouSelecao = false;
+      Array.from(st.filiaisSelecionadas).forEach(id => {
+        if (!idsVisiveis.has(id)) {
+          st.filiaisSelecionadas.delete(id);
+          mudouSelecao = true;
+        }
+      });
+      if (mudouSelecao) {
+        atualizarIconesFiliaisPainelProgramacao();
+        limparProximidadePainelProgramacao();
+      }
     }
 
     async function carregarFiliaisDellaVolpePainelProgramacao() {
@@ -15391,7 +15444,7 @@ return null;
             <input id="painelProgCidadeExtra" class="painelProgMapCityInput" placeholder="Cidade ou CEP (ex.: 01001-000)" type="text" onkeydown="if(event.key==='Enter'){event.preventDefault();geocodificarCidadeExtraPainelProgramacao();}">
             <input id="painelProgUfExtra" class="painelProgMapUfInput" placeholder="UF" maxlength="2" type="text" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,2)" onkeydown="if(event.key==='Enter'){event.preventDefault();geocodificarCidadeExtraPainelProgramacao();}">
             <button class="btn secondary painelProgMapBtn" type="button" onclick="geocodificarCidadeExtraPainelProgramacao()">+ Adicionar destino</button>
-            <button class="btn secondary painelProgMapBtn" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Limpar seleção de todos os cards e pontos" aria-label="Limpar seleção de todos os cards e pontos">⊘</button>
+            <button class="btn secondary painelProgMapBtn" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Limpar seleção de cards, pontos, destinos e filiais" aria-label="Limpar seleção de cards, pontos, destinos e filiais">⊘</button>
             <button id="btnPainelProgToggleMapa" class="btn secondary painelProgMapBtn painelProgMapToggleBtn" type="button" onclick="toggleVisibilidadeMapaPainelProgramacao(event)" title="Ocultar mapa" aria-label="Ocultar ou reexibir mapa">▣</button>
             <div id="painelProgExtraCitiesList" class="painelProgExtraCitiesList"></div>
           </div>
@@ -15670,12 +15723,14 @@ return null;
         st.mapFilterSelectedOnly = false;
         st.cardFilterSelectedOnly = false;
         st.routeOrder = [];
+        if (st.filiaisSelecionadas instanceof Set) st.filiaisSelecionadas.clear();
       }
       limparRotaMapaPainelProgramacao(false);
       renderCardsPainelProgramacao(painelProgDadosAtuais || []);
       atualizarSelecaoVisualPainelProgramacao();
       renderPopupPainelProgramacao();
       atualizarMarcadoresDestinosExtrasPainelProgramacao();
+      atualizarIconesFiliaisPainelProgramacao();
       renderListaCidadesExtrasPainelProgramacao();
       atualizarResumoMapaPainelProgramacao();
       renderOrdemRotaPainelProgramacao();
@@ -15754,7 +15809,7 @@ return null;
     async function renderMapaPainelProgramacao(dados,{forcarGeocode=false}={}){
       limparProximidadePainelProgramacao();
       const st=garantirEstruturaMapaPainelProgramacao(); if(!st)return; const seq=++st.renderSeq; st.dadosFiltrados=[...(dados||[])]; st.cluster.clearLayers();st.markers.clear();st.localizacoes.clear();st.pendencias.clear();sincronizarModoSelecaoPainelProgramacao(); limparRotaMapaPainelProgramacao(false); atualizarResumoMapaPainelProgramacao();
-      const fila=ordenarPainelProgPorVocativo(dados||[]); if(!fila.length){renderPendenciasMapaPainelProgramacao();return;}
+      const fila=ordenarPainelProgPorVocativo(dados||[]); if(!fila.length){renderPendenciasMapaPainelProgramacao();garantirFiliaisNoClusterPainelProgramacao();return;}
       const worker=async()=>{while(fila.length&&st.renderSeq===seq){const item=fila.shift(),geo=await geocodificarCepPainelProgramacao(item,forcarGeocode);if(st.renderSeq!==seq)return;const chave=String(item?.cardKey||"").trim();if(!chave)continue;if(!geo?.ok){st.pendencias.set(chave,{item,geo});atualizarResumoMapaPainelProgramacao();continue;}st.localizacoes.set(chave,{item,geo});const marker=L.marker([geo.lat,geo.lon],{icon:criarIconeMarkerPainelProgramacao(item),keyboard:true,title:String(item?.vocativo||"")});marker._painelProgKey=chave;const hoverHtml=renderTooltipMapaPainelProgramacao(item,geo);marker.on("mouseover",()=>mostrarHoverFlutuanteMapaPainelProgramacao(marker,hoverHtml));marker.on("mouseout",()=>ocultarHoverFlutuanteMapaPainelProgramacao());marker.on("click",(ev)=>{
         suprimirCliqueEstadoMapaPainelProgramacao(260);
         ocultarHoverFlutuanteMapaPainelProgramacao();
@@ -15840,7 +15895,7 @@ return null;
       });
       grupos.forEach(g => g.itens.sort((a,b)=>a.km-b.km || a.label.localeCompare(b.label,"pt-BR")));
       const totalDistribuido = grupos.reduce((s,g)=>s+g.itens.length,0);
-      panel.innerHTML = `<div class="painelProgProximidadeTop"><div><div class="painelProgProximidadeTitle">Destinos mais próximos</div><div class="painelProgProximidadeSub">${totalDistribuido} destino(s) filtrado(s) distribuídos por proximidade geográfica. A rota rodoviária continua sendo calculada pelo OSRM.</div></div><button class="painelProgProximidadeClose" type="button" onclick="limparProximidadePainelProgramacao()" title="Fechar">×</button></div><div class="painelProgProximidadeGrid">${grupos.map((g,i)=>`<div class="painelProgProximidadeGrupo"><div class="painelProgProximidadeGrupoHead"><b>${i+1}. ${getTextoPainelProgramacao(g.base.label)}</b><span>${g.itens.length} destino(s)</span></div><div class="painelProgProximidadeLista">${g.itens.length?g.itens.map(it=>`<div class="painelProgProximidadeLinha"><b title="${getTextoPainelProgramacao(it.label)}">${getTextoPainelProgramacao(it.label)}</b><span>${it.km.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km</span></div>`).join(""):`<div class="painelProgProximidadeLinha"><b>Nenhum destino</b><span>—</span></div>`}</div></div>`).join("")}</div>`;
+      panel.innerHTML = `<div class="painelProgProximidadeTop"><div><div class="painelProgProximidadeTitle">Destinos mais próximos</div><div class="painelProgProximidadeSub">${totalDistribuido} destino(s) filtrado(s) distribuídos por proximidade geográfica. A rota rodoviária continua sendo calculada pelo OSRM.</div></div><button class="painelProgProximidadeClose" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Fechar e limpar todas as seleções">×</button></div><div class="painelProgProximidadeGrid">${grupos.map((g,i)=>`<div class="painelProgProximidadeGrupo"><div class="painelProgProximidadeGrupoHead"><b>${i+1}. ${getTextoPainelProgramacao(g.base.label)}</b><span>${g.itens.length} destino(s)</span></div><div class="painelProgProximidadeLista">${g.itens.length?g.itens.map(it=>`<div class="painelProgProximidadeLinha"><b title="${getTextoPainelProgramacao(it.label)}">${getTextoPainelProgramacao(it.label)}</b><span>${it.km.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km</span></div>`).join(""):`<div class="painelProgProximidadeLinha"><b>Nenhum destino</b><span>—</span></div>`}</div></div>`).join("")}</div>`;
       panel.classList.add("open");
       if(info){ info.classList.remove("painelProgRouteError"); info.textContent=`Proximidade calculada para ${totalDistribuido} destino(s) usando ${bases.length} ponto(s)-base.`; }
     }
