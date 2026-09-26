@@ -4154,6 +4154,11 @@
     .painelProgProximidadeGrupoHead span { font-size:8px; color:#475569; font-weight:900; white-space:nowrap; }
     .painelProgProximidadeLista { max-height:145px; overflow:auto; background:#fff; }
     .painelProgProximidadeLinha { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; padding:4px 7px; border-top:1px solid #f1f5f9; font-size:8.5px; line-height:1.15; }
+    .painelProgProximidadeLinha[data-card-key] { cursor:pointer; user-select:none; transition:background .10s ease, box-shadow .10s ease; }
+    .painelProgProximidadeLinha[data-card-key]:hover { background:#eff6ff; }
+    .painelProgProximidadeLinha[data-card-key]:focus-visible { outline:2px solid #2563eb; outline-offset:-2px; }
+    .painelProgProximidadeLinha.isSelected { background:rgba(37,99,235,.14); box-shadow:inset 3px 0 0 #2563eb; }
+    .painelProgProximidadeLinha.isSelected b { color:#1d4ed8; }
     .painelProgProximidadeLinha:first-child { border-top:none; }
     .painelProgProximidadeLinha b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#0f172a; }
     .painelProgProximidadeLinha span { white-space:nowrap; color:#475569; font-weight:900; }
@@ -15921,6 +15926,7 @@ return null;
       // Importante: não reconstruir o MarkerCluster aqui. Isso mantém o agrupamento
       // aberto enquanto o usuário seleciona vários vocativos do mesmo cluster.
       atualizarMapaAposSelecaoSemFecharClusterPainelProgramacao(chave);
+      atualizarSelecaoListaProximidadePainelProgramacao();
     }
 
     function atualizarResumoMapaPainelProgramacao(){
@@ -15984,6 +15990,28 @@ return null;
     function limparProximidadePainelProgramacao(){
       const el = document.getElementById("painelProgProximidadePanel");
       if(el){ el.classList.remove("open"); el.innerHTML = ""; }
+    }
+    function atualizarSelecaoListaProximidadePainelProgramacao(){
+      const panel = document.getElementById("painelProgProximidadePanel");
+      if(!panel?.classList?.contains("open")) return;
+      panel.querySelectorAll(".painelProgProximidadeLinha[data-card-key]").forEach(row => {
+        const chave = String(row.getAttribute("data-card-key") || "").trim();
+        const selecionado = !!(chave && painelProgCardsSelecionados?.has?.(chave));
+        row.classList.toggle("isSelected", selecionado);
+        row.setAttribute("aria-pressed", selecionado ? "true" : "false");
+        row.title = selecionado ? "Vocativo selecionado — clique para retirar da seleção" : "Clique para selecionar este vocativo";
+      });
+    }
+
+    function selecionarVocativoListaProximidadePainelProgramacao(chave){
+      chave = String(chave || "").trim();
+      if(!chave) return;
+      const st = window.__painelProgMapState;
+      if(!st?.localizacoes?.has?.(chave)) return;
+
+      // Usa exatamente o mesmo fluxo do clique no pin do mapa.
+      selecionarMarcadorPainelProgramacao(chave);
+      atualizarSelecaoListaProximidadePainelProgramacao();
     }
     function getArmazensBaseProximidadePainelProgramacao(){
       return getFiliaisVisiveisPainelProgramacao().map(filial => ({
@@ -16086,8 +16114,22 @@ return null;
       const haSelecao = (painelProgCardsSelecionados?.size || 0) > 0 || getCidadesExtrasSelecionadasPainelProgramacao().length > 0;
       const escopo = haSelecao ? "selecionado(s)" : "filtrado(s)";
 
-      panel.innerHTML = `<div class="painelProgProximidadeTop"><div><div class="painelProgProximidadeTitle">Armazém mais próximo</div><div class="painelProgProximidadeSub">${totalDistribuido} destino(s) ${escopo} comparado(s) com ${armazens.length} filial(is) disponível(is) dentro dos filtros. Distância geográfica para classificação; rota rodoviária continua sendo calculada pelo OSRM.</div></div><button class="painelProgProximidadeClose" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Fechar e limpar todas as seleções">×</button></div><div class="painelProgProximidadeGrid">${gruposComDestino.map((g,i)=>`<div class="painelProgProximidadeGrupo"><div class="painelProgProximidadeGrupoHead"><b>${getTextoPainelProgramacao(g.base.label)}</b><span>${g.itens.length} destino(s)</span></div><div class="painelProgProximidadeLista">${g.itens.map(it=>`<div class="painelProgProximidadeLinha"><b title="${getTextoPainelProgramacao(it.label)}">${getTextoPainelProgramacao(it.label)}</b><span>${it.km.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km</span></div>`).join("")}</div></div>`).join("")}</div>`;
+      panel.innerHTML = `<div class="painelProgProximidadeTop"><div><div class="painelProgProximidadeTitle">Armazém mais próximo</div><div class="painelProgProximidadeSub">${totalDistribuido} destino(s) ${escopo} comparado(s) com ${armazens.length} filial(is) disponível(is) dentro dos filtros. Clique em um vocativo para selecionar/desmarcar exatamente como no mapa. Distância geográfica para classificação; rota rodoviária continua sendo calculada pelo OSRM.</div></div><button class="painelProgProximidadeClose" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Fechar e limpar todas as seleções">×</button></div><div class="painelProgProximidadeGrid">${gruposComDestino.map((g,i)=>`<div class="painelProgProximidadeGrupo"><div class="painelProgProximidadeGrupoHead"><b>${getTextoPainelProgramacao(g.base.label)}</b><span>${g.itens.length} destino(s)</span></div><div class="painelProgProximidadeLista">${g.itens.map(it=>`<div class="painelProgProximidadeLinha${it.chave && painelProgCardsSelecionados?.has?.(it.chave) ? " isSelected" : ""}"${it.chave ? ` data-card-key="${escapeHtmlAttr(it.chave)}" role="button" tabindex="0" aria-pressed="${painelProgCardsSelecionados?.has?.(it.chave) ? "true" : "false"}"` : ""}><b title="${getTextoPainelProgramacao(it.label)}">${getTextoPainelProgramacao(it.label)}</b><span>${it.km.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km</span></div>`).join("")}</div></div>`).join("")}</div>`;
       panel.classList.add("open");
+
+      panel.onclick = (ev) => {
+        const row = ev.target?.closest?.(".painelProgProximidadeLinha[data-card-key]");
+        if(!row || !panel.contains(row)) return;
+        selecionarVocativoListaProximidadePainelProgramacao(row.getAttribute("data-card-key"));
+      };
+      panel.onkeydown = (ev) => {
+        if(ev.key !== "Enter" && ev.key !== " ") return;
+        const row = ev.target?.closest?.(".painelProgProximidadeLinha[data-card-key]");
+        if(!row || !panel.contains(row)) return;
+        ev.preventDefault();
+        selecionarVocativoListaProximidadePainelProgramacao(row.getAttribute("data-card-key"));
+      };
+      atualizarSelecaoListaProximidadePainelProgramacao();
 
       if(info){
         info.classList.remove("painelProgRouteError");
