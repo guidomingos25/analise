@@ -4110,6 +4110,9 @@
     .painelProgClusterHover .clusterList { display:flex; flex-direction:column; gap:0; border:1px solid #e2e8f0; border-radius:7px; overflow:hidden; background:#fff; }
     .painelProgClusterHover .clusterRow { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:3px 5px; border-bottom:1px solid #eef2f7; font-size:8px; line-height:1.05; min-height:15px; }
     .painelProgClusterHover .clusterRow:last-child { border-bottom:0; }
+    .painelProgClusterHover .clusterRow.isSelected { background:rgba(37,99,235,.14); }
+    .painelProgClusterHover .clusterRow.isSelected .clusterVoc { color:#1d4ed8; }
+    .painelProgClusterHover .clusterRow.isSelected .clusterNotas { color:#1e40af; }
     .painelProgClusterHover .clusterVoc { font-weight:900; color:#0f172a; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .painelProgClusterHover .clusterNotas { flex:0 0 auto; font-weight:900; color:#1d4ed8; white-space:nowrap; font-size:8px; }
     .painelProgRouteResultBar { border-bottom:1px solid #e5e7eb; background:#f8fafc; }
@@ -15732,8 +15735,11 @@ return null;
         const vocativo = String(item?.vocativo || chave || "Vocativo").trim();
         const key = normalizar(vocativo) || vocativo;
         const notas = Number(item?.totalNotasPVD || 0);
-        if (!porVocativo.has(key)) porVocativo.set(key, { vocativo, notas: 0 });
-        porVocativo.get(key).notas += Number.isFinite(notas) ? notas : 0;
+        const selecionado = !!(chave && painelProgCardsSelecionados?.has?.(chave));
+        if (!porVocativo.has(key)) porVocativo.set(key, { vocativo, notas: 0, selecionado: false });
+        const row = porVocativo.get(key);
+        row.notas += Number.isFinite(notas) ? notas : 0;
+        row.selecionado = row.selecionado || selecionado;
       });
 
       const linhas = Array.from(porVocativo.values())
@@ -15743,7 +15749,7 @@ return null;
       return `<div class="painelProgLeafletTooltip painelProgClusterHover">
         <div class="ttl">${getTextoPainelProgramacao(linhas.length)} vocativo(s) agrupado(s)</div>
         <div class="clusterSummary">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(totalNotas,0))} nota(s) no agrupamento</div>
-        <div class="clusterList">${linhas.map(x => `<div class="clusterRow"><span class="clusterVoc">${getTextoPainelProgramacao(x.vocativo)}</span><span class="clusterNotas">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(x.notas,0))} nota(s)</span></div>`).join("")}</div>
+        <div class="clusterList">${linhas.map(x => `<div class="clusterRow${x.selecionado ? ' isSelected' : ''}"><span class="clusterVoc">${getTextoPainelProgramacao(x.vocativo)}</span><span class="clusterNotas">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(x.notas,0))} nota(s)</span></div>`).join("")}</div>
       </div>`;
     }
 
