@@ -4021,14 +4021,16 @@
     .painelProgExtraCityChip button { width:20px; height:20px; border:0; border-radius:999px; background:#fff; color:#6d28d9; cursor:pointer; font-weight:900; line-height:20px; padding:0; }
     .painelProgFloatingHover { position:fixed; z-index:12000; display:none; width:min(340px,calc(100vw - 24px)); max-height:min(70vh,520px); overflow:auto; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; box-shadow:0 14px 36px rgba(15,23,42,.28); pointer-events:none; }
     .painelProgFloatingHover.open { display:block; }
-    .painelProgFloatingHover.clusterInteractive { pointer-events:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
-    .painelProgFloatingHover.clusterInteractive .painelProgClusterHover { pointer-events:auto; }
-    .painelProgClusterHover .clusterSummary { font-size:10px; color:#64748b; margin:2px 0 8px; font-weight:700; }
-    .painelProgClusterHover .clusterList { display:flex; flex-direction:column; gap:0; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#fff; }
-    .painelProgClusterHover .clusterRow { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:7px 8px; border-bottom:1px solid #eef2f7; font-size:11px; line-height:1.2; }
+    /* Hover de cluster: compacto e somente informativo, igual ao hover dos pontos individuais. */
+    .painelProgFloatingHover.clusterInteractive { pointer-events:none; width:min(300px,calc(100vw - 24px)); max-height:min(82vh,620px); overflow:hidden; padding:8px 9px; }
+    .painelProgFloatingHover.clusterInteractive .painelProgClusterHover { pointer-events:none; }
+    .painelProgClusterHover .ttl { font-size:10px; line-height:1.15; margin-bottom:2px; }
+    .painelProgClusterHover .clusterSummary { font-size:8px; color:#64748b; margin:1px 0 5px; font-weight:700; line-height:1.1; }
+    .painelProgClusterHover .clusterList { display:flex; flex-direction:column; gap:0; border:1px solid #e2e8f0; border-radius:7px; overflow:hidden; background:#fff; }
+    .painelProgClusterHover .clusterRow { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:3px 5px; border-bottom:1px solid #eef2f7; font-size:8px; line-height:1.05; min-height:15px; }
     .painelProgClusterHover .clusterRow:last-child { border-bottom:0; }
     .painelProgClusterHover .clusterVoc { font-weight:900; color:#0f172a; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .painelProgClusterHover .clusterNotas { flex:0 0 auto; font-weight:900; color:#1d4ed8; white-space:nowrap; }
+    .painelProgClusterHover .clusterNotas { flex:0 0 auto; font-weight:900; color:#1d4ed8; white-space:nowrap; font-size:8px; }
     .painelProgRouteResultBar { border-bottom:1px solid #e5e7eb; background:#f8fafc; }
     .painelProgRouteInfo { display:block; font-size:11px; color:#334155; font-weight:700; padding:7px 12px; line-height:1.35; white-space:normal; overflow-wrap:anywhere; }
     .painelProgRouteInfo:empty { display:none; }
@@ -14880,7 +14882,7 @@ return null;
         const linha = L.geoJSON(geojson, {
           pane:"painelProgStateBordersPane",
           interactive:false,
-          style:()=>({ color:"#1e3a8a", weight:2.2, opacity:.92, fill:false, lineCap:"round", lineJoin:"round" })
+          style:()=>({ color:"#475569", weight:2.2, opacity:.94, fill:false, lineCap:"round", lineJoin:"round" })
         });
         st.stateBordersLayer = L.layerGroup([halo, linha]).addTo(st.map);
         st.stateBordersLoaded = true;
@@ -14933,7 +14935,7 @@ return null;
             const html = renderTooltipClusterMapaPainelProgramacao(ev?.layer);
             if (html) mostrarHoverClusterMapaPainelProgramacao(ev?.layer, html);
           });
-          st.cluster.on("clustermouseout", () => agendarOcultarHoverClusterMapaPainelProgramacao());
+          st.cluster.on("clustermouseout", () => ocultarHoverFlutuanteMapaPainelProgramacao());
           st.cluster.on("animationend", () => ocultarHoverFlutuanteMapaPainelProgramacao());
         }
         st.cluster.addTo(st.map);
@@ -15090,16 +15092,8 @@ return null;
       cancelarOcultarHoverClusterMapaPainelProgramacao();
       mostrarHoverFlutuanteMapaPainelProgramacao(cluster, html);
       const el = garantirHoverFlutuanteMapaPainelProgramacao();
+      // A classe serve apenas para o layout compacto; o card permanece sem interação.
       el.classList.add("clusterInteractive");
-      if (!el.dataset.clusterScrollBound) {
-        el.dataset.clusterScrollBound = "1";
-        el.addEventListener("mouseenter", cancelarOcultarHoverClusterMapaPainelProgramacao);
-        el.addEventListener("mouseleave", () => {
-          if (el.classList.contains("clusterInteractive")) agendarOcultarHoverClusterMapaPainelProgramacao();
-        });
-        el.addEventListener("wheel", ev => ev.stopPropagation(), { passive:true });
-        el.addEventListener("touchmove", ev => ev.stopPropagation(), { passive:true });
-      }
     }
     function ocultarHoverFlutuanteMapaPainelProgramacao() {
       cancelarOcultarHoverClusterMapaPainelProgramacao();
