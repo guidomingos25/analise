@@ -2650,7 +2650,33 @@
       position: relative;
       cursor: grab;
       padding-left: 34px;
+      padding-right: 27px;
       transition: background .12s ease, box-shadow .12s ease, opacity .12s ease;
+    }
+    .painelProgPopupRouteRemove {
+      position:absolute;
+      top:5px;
+      right:5px;
+      width:17px;
+      height:17px;
+      min-width:17px;
+      padding:0;
+      border:1px solid #fecaca;
+      border-radius:999px;
+      background:#fff;
+      color:#b91c1c;
+      font-size:11px;
+      font-weight:900;
+      line-height:15px;
+      text-align:center;
+      cursor:pointer;
+      z-index:2;
+      box-shadow:none;
+    }
+    .painelProgPopupRouteRemove:hover {
+      background:#fee2e2;
+      border-color:#fca5a5;
+      color:#991b1b;
     }
     .painelProgPopupVocDetail.isRouteSortable:hover {
       background: #f8fafc;
@@ -12880,6 +12906,7 @@ return null;
             const routeTokensJson = getTextoPainelProgramacao(JSON.stringify(item.routeTokens || []));
             return `
               <div class="painelProgPopupVocDetail isRouteSortable" draggable="true" data-route-tokens="${routeTokensJson}" title="Arraste para alterar a ordem de entrega da rota">
+                <button class="painelProgPopupRouteRemove" type="button" title="Retirar este vocativo da seleção e da rota" aria-label="Retirar este vocativo da seleção e da rota" onclick="removerVocativoDaSelecaoRotaPainelProgramacao(this,event)">×</button>
                 <div class="painelProgPopupRouteGrip"><span>⋮⋮</span><span class="painelProgPopupRouteNum">${detalhesPorVocativo.indexOf(item) + 1}</span></div>
                 <div>
                   <div class="painelProgPopupVocName">${getTextoPainelProgramacao(item.vocativo)}</div>
@@ -12985,6 +13012,55 @@ return null;
       `;
       popup.classList.add("open");
       ativarOrdenacaoLateralRotaPainelProgramacao();
+    }
+
+    function removerVocativoDaSelecaoRotaPainelProgramacao(botao, ev) {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      const row = botao?.closest?.(".painelProgPopupVocDetail[data-route-tokens]");
+      if (!row) return;
+      let tokens = [];
+      try { tokens = JSON.parse(row.dataset.routeTokens || "[]"); } catch (_) { tokens = []; }
+      const chaves = tokens
+        .map(token => String(token || ""))
+        .filter(token => token.startsWith("card:"))
+        .map(token => token.slice(5))
+        .filter(Boolean);
+      if (!chaves.length) return;
+
+      chaves.forEach(chave => {
+        painelProgCardsSelecionados.delete(chave);
+        painelProgCardsDatasAbertas.delete(chave);
+        painelProgAlturaCardsDatas.delete(chave);
+      });
+
+      const st = window.__painelProgMapState;
+      if (st) {
+        const removidos = new Set(tokens.map(String));
+        st.routeOrder = Array.isArray(st.routeOrder) ? st.routeOrder.filter(token => !removidos.has(String(token))) : [];
+        if (!painelProgCardsSelecionados.size) {
+          st.mapFilterSelectedOnly = false;
+          st.cardFilterSelectedOnly = false;
+        } else {
+          if (st.mapFilterSelectedOnly) st.mapFilterSelectedOnly = true;
+          if (st.cardFilterSelectedOnly) st.cardFilterSelectedOnly = true;
+        }
+      }
+
+      limparRotaMapaPainelProgramacao(false);
+      sincronizarOrdemRotaPainelProgramacao();
+
+      const dadosCards = (st?.cardFilterSelectedOnly && painelProgCardsSelecionados.size)
+        ? (painelProgDadosAtuais || []).filter(item => painelProgCardsSelecionados.has(String(item?.cardKey || "")))
+        : (painelProgDadosAtuais || []);
+      renderCardsPainelProgramacao(dadosCards);
+      atualizarSelecaoVisualPainelProgramacao();
+      renderPopupPainelProgramacao();
+      atualizarResumoMapaPainelProgramacao();
+      atualizarMapaComSelecaoPainelProgramacao(false);
+      agendarSincronizacaoSelosOverlayPainelProgramacao();
+
+      const info = document.getElementById("painelProgRouteInfo");
+      if (info) { info.classList.remove("painelProgRouteError"); info.textContent = ""; }
     }
 
     function ativarOrdenacaoLateralRotaPainelProgramacao() {
