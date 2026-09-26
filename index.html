@@ -2596,6 +2596,11 @@
       background: #bfdbfe;
     }
 
+    /* Ajuste solicitado: botões da linha lateral com a mesma fonte do Peso. */
+    .painelProgPopupVocDetail .painelProgPopupCopyBtn {
+      font-size: 7.5px;
+    }
+
     .painelProgPopupItemList {
       max-height: 135px;
       overflow: auto;
@@ -2633,7 +2638,7 @@
 
     .painelProgPopupVocDetail {
       display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+      grid-template-columns: minmax(0, 1.18fr) minmax(0, .82fr);
       gap: 6px;
       padding: 6px 8px;
       border-top: 1px solid #f1f5f9;
@@ -4096,64 +4101,6 @@
       .painelProgMapToolbar:not(:has(.painelProgExtraCityChip)) .painelProgMapCityBox { gap:5px; padding-left:6px; }
     }
     @media(max-width:900px){ #painelProgMap{height:57vh;min-height:440px}.painelProgMapStatusBar{grid-template-columns:repeat(2,minmax(0,1fr))}.painelProgGeoWarningRow{grid-template-columns:1fr}.painelProgMapToolbar{align-items:flex-start}.painelProgMapCityBox{border-left:0;padding-left:0;width:100%;flex-wrap:wrap}.painelProgMapCityInput{flex:1;max-width:none}.painelProgExtraCitiesList{max-width:100%;width:100%;padding-top:2px} }
-</style>
-
-<style>
-/* Ajuste final da lista lateral: BP compacto à direita e peso na mesma linha. */
-.painelProgPopupVocDetail.isRouteSortable {
-  padding-right: 5px !important;
-}
-.painelProgPopupVocDetail {
-  grid-template-columns: minmax(0, 1fr) 128px !important;
-  column-gap: 4px !important;
-}
-.painelProgPopupVocDetail > div:first-of-type {
-  min-width: 0 !important;
-  white-space: nowrap;
-}
-.painelProgPopupVocDetail > div:first-of-type .painelProgPopupVocName {
-  white-space: normal;
-}
-.painelProgPopupVocDetail > div:nth-of-type(2) {
-  width: 128px !important;
-  min-width: 128px !important;
-  margin-left: 0 !important;
-}
-.painelProgPopupBpTitle {
-  margin-bottom: 2px !important;
-  padding-right: 42px;
-}
-.painelProgPopupBpRow {
-  width: 100% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  gap: 4px !important;
-  padding: 2px 0 !important;
-}
-.painelProgPopupBpRow span {
-  flex: 0 0 auto !important;
-  white-space: nowrap !important;
-  font-size: 8.5px !important;
-  letter-spacing: -0.02em !important;
-}
-.painelProgPopupBpRow .painelProgPopupCopyBtn {
-  flex: 0 0 auto !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-}
-.painelProgPopupVocPeso {
-  font-size: 7px !important;
-  padding: 2px 3px !important;
-  margin-left: 2px !important;
-  margin-top: 0 !important;
-  white-space: nowrap !important;
-}
-.painelProgPopupVocDetail > div:first-of-type > .painelProgPopupCopyBtn,
-.painelProgPopupVocDetail > div:first-of-type > .painelProgPopupVocPeso {
-  display: inline-flex !important;
-  vertical-align: middle !important;
-}
 </style>
 </head>
 
@@ -13016,27 +12963,27 @@ return null;
               ? bpsOrdenadas.map(bp => {
                   const idxBp = addCopy(bp);
                   return `
-                    <div class="painelProgPopupBpInlineItem">
-                      <span class="painelProgPopupBpNumero">${getTextoPainelProgramacao(bp)}</span>
-                      <button class="painelProgPopupCopyBtn painelProgPopupBpCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idxBp}, event)">Copiar</button>
+                    <div class="painelProgPopupBpRow">
+                      <span>${getTextoPainelProgramacao(bp)}</span>
+                      <button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idxBp}, event)">Copiar</button>
                     </div>
                   `;
                 }).join("")
-              : `<div class="painelProgPopupBpInlineItem"><span class="painelProgPopupBpNumero" style="color:#64748b;font-weight:700;">Sem BP</span></div>`;
+              : `<div class="painelProgPopupBpRow"><span style="color:#64748b;font-weight:700;">Sem BP</span></div>`;
 
             const routeTokensJson = getTextoPainelProgramacao(JSON.stringify(item.routeTokens || []));
             return `
               <div class="painelProgPopupVocDetail isRouteSortable" draggable="true" data-route-tokens="${routeTokensJson}" title="Arraste para alterar a ordem de entrega da rota">
                 <button class="painelProgPopupRouteRemove" type="button" title="Retirar este vocativo da seleção e da rota" aria-label="Retirar este vocativo da seleção e da rota" onclick="removerVocativoDaSelecaoRotaPainelProgramacao(this,event)">×</button>
                 <div class="painelProgPopupRouteGrip"><span>⋮⋮</span><span class="painelProgPopupRouteNum">${detalhesPorVocativo.indexOf(item) + 1}</span></div>
-                <div class="painelProgPopupVocConteudo">
+                <div>
                   <div class="painelProgPopupVocName">${getTextoPainelProgramacao(item.vocativo)}</div>
-                  <div class="painelProgPopupVocLinhaUnica">
-                    <button class="painelProgPopupCopyBtn painelProgPopupVocCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idxVocativo}, event)">Copiar vocativo</button>
-                    <div class="painelProgPopupVocPeso">Peso: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.peso, 2))}</div>
-                    <span class="painelProgPopupBpTitleInline">BP(s)</span>
-                    <div class="painelProgPopupBpInlineList">${bpsHtml}</div>
-                  </div>
+                  <button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idxVocativo}, event)">Copiar vocativo</button>
+                  <div class="painelProgPopupVocPeso">Peso: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.peso, 2))}</div>
+                </div>
+                <div>
+                  <div class="painelProgPopupBpTitle">BP(s)</div>
+                  ${bpsHtml}
                 </div>
               </div>
             `;
@@ -14270,145 +14217,7 @@ return null;
         }
       `;
 
-      return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Relatório de Carregamento</title><style>${estilos}
-
-    /* Ajuste fino da lista lateral: mais espaço para Copiar vocativo + Peso em uma linha. */
-    .painelProgPopupVocDetail {
-      grid-template-columns: minmax(0, 1.34fr) minmax(116px, .66fr);
-      gap: 4px;
-    }
-    .painelProgPopupVocDetail > div:first-of-type {
-      min-width: 0;
-      white-space: normal;
-    }
-    .painelProgPopupVocDetail > div:nth-of-type(2) {
-      min-width: 116px;
-      margin-left: 2px;
-    }
-    .painelProgPopupVocPeso {
-      font-size: 7px;
-      padding: 2px 3px;
-      margin-left: 2px;
-      letter-spacing: -0.01em;
-    }
-    .painelProgPopupBpTitle {
-      margin-bottom: 2px;
-    }
-    .painelProgPopupBpRow {
-      gap: 2px;
-      padding: 2px 0;
-      width: 100%;
-    }
-    .painelProgPopupBpRow span {
-      white-space: nowrap;
-      overflow-wrap: normal;
-      font-size: 9px;
-      letter-spacing: -0.015em;
-    }
-    .painelProgPopupBpRow .painelProgPopupCopyBtn {
-      margin-left: auto;
-      flex: 0 0 auto;
-    }
-    .painelProgPopupVocDetail > div:first-of-type > .painelProgPopupCopyBtn,
-    .painelProgPopupVocDetail > div:first-of-type > .painelProgPopupVocPeso {
-      vertical-align: middle;
-    }
-</style>
-<style>
-/* Layout final da lista lateral: uma linha fixa para Copiar vocativo | Peso | BP | Copiar. */
-.painelProgPopupVocDetail {
-  display:block !important;
-  position:relative !important;
-  padding:6px 28px 6px 34px !important;
-  min-width:0 !important;
-}
-.painelProgPopupVocConteudo { min-width:0 !important; width:100% !important; }
-.painelProgPopupVocName {
-  margin:0 0 4px 0 !important;
-  padding-right:2px !important;
-  white-space:nowrap !important;
-  overflow:hidden !important;
-  text-overflow:ellipsis !important;
-  line-height:1.15 !important;
-}
-.painelProgPopupVocLinhaUnica {
-  display:grid !important;
-  grid-template-columns:max-content max-content max-content minmax(0,1fr) !important;
-  align-items:center !important;
-  column-gap:5px !important;
-  width:100% !important;
-  min-width:0 !important;
-  white-space:nowrap !important;
-}
-.painelProgPopupVocCopyBtn {
-  flex:none !important;
-  margin:0 !important;
-  padding:3px 6px !important;
-  font-size:8px !important;
-}
-.painelProgPopupVocPeso {
-  display:inline-flex !important;
-  align-items:center !important;
-  flex:none !important;
-  margin:0 !important;
-  padding:2px 4px !important;
-  font-size:7.2px !important;
-  line-height:1.1 !important;
-  white-space:nowrap !important;
-}
-.painelProgPopupBpTitleInline {
-  color:#64748b !important;
-  font-size:7px !important;
-  font-weight:1000 !important;
-  text-transform:uppercase !important;
-  line-height:1 !important;
-  white-space:nowrap !important;
-}
-.painelProgPopupBpInlineList {
-  display:flex !important;
-  align-items:center !important;
-  justify-content:flex-end !important;
-  gap:4px !important;
-  min-width:0 !important;
-  overflow-x:auto !important;
-  overflow-y:hidden !important;
-  scrollbar-width:none !important;
-  white-space:nowrap !important;
-}
-.painelProgPopupBpInlineList::-webkit-scrollbar { display:none !important; }
-.painelProgPopupBpInlineItem {
-  display:inline-flex !important;
-  align-items:center !important;
-  gap:3px !important;
-  flex:0 0 auto !important;
-  min-width:0 !important;
-}
-.painelProgPopupBpNumero {
-  color:#0f172a !important;
-  font-size:8px !important;
-  font-weight:900 !important;
-  letter-spacing:-.02em !important;
-  white-space:nowrap !important;
-}
-.painelProgPopupBpCopyBtn {
-  margin:0 !important;
-  padding:3px 6px !important;
-  font-size:8px !important;
-  flex:0 0 auto !important;
-}
-.painelProgPopupRouteRemove {
-  top:5px !important;
-  right:5px !important;
-  z-index:5 !important;
-}
-@media (max-width:520px) {
-  .painelProgPopupVocLinhaUnica { column-gap:3px !important; }
-  .painelProgPopupVocCopyBtn,.painelProgPopupBpCopyBtn { padding-left:4px !important; padding-right:4px !important; }
-  .painelProgPopupVocPeso { font-size:6.8px !important; }
-  .painelProgPopupBpNumero { font-size:7.5px !important; }
-}
-</style>
-</head><body>
+      return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Relatório de Carregamento</title><style>${estilos}</style></head><body>
         <section class="report-wrap"><article class="report-sheet">
           <h1 class="report-title">Relatório de Carregamento - Zona de Entrega: ${escRelatorioCarregamentoPainelProgramacao(zona)}</h1>
           <div class="report-subtitle">Peso Total: ${fmtPesoRelatorioCarregamentoPainelProgramacao(totalKg)} KG - NFs Totais: ${registros.length}</div>
