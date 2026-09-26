@@ -4059,28 +4059,29 @@
     .painelProgExtraMarker.selected { transform:scale(1.12); box-shadow:0 0 0 4px rgba(124,58,237,.25),0 3px 12px rgba(15,23,42,.45); background:#5b21b6; }
 
     .painelProgFilialMarker {
-      width:38px;
-      height:38px;
+      width:24px;
+      height:24px;
       border-radius:50% 50% 50% 0;
       transform:rotate(-45deg);
       background:#facc15;
-      border:3px solid #fff;
-      box-shadow:0 3px 10px rgba(15,23,42,.42);
+      border:2px solid #fff;
+      box-shadow:0 2px 6px rgba(15,23,42,.32);
       display:flex;
       align-items:center;
       justify-content:center;
-      transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+      transition:box-shadow .12s ease, background .12s ease;
     }
     .painelProgFilialMarker>span {
       transform:rotate(45deg);
       color:#713f12;
-      font-size:9px;
+      font-size:7px;
       font-weight:1000;
-      letter-spacing:-.02em;
+      letter-spacing:-.03em;
     }
     .painelProgFilialMarker.selected {
       background:#f59e0b;
-      box-shadow:0 0 0 4px rgba(245,158,11,.28),0 4px 13px rgba(15,23,42,.46);
+      outline:3px solid rgba(245,158,11,.28);
+      box-shadow:0 0 0 2px #d97706,0 3px 9px rgba(15,23,42,.38);
     }
     .painelProgExtraCitiesList { display:flex; align-items:center; flex-wrap:nowrap; gap:6px; flex:1 0 100%; width:100%; min-width:0; max-width:none; padding-top:2px; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; order:20; }
     .painelProgExtraCitiesList:empty { display:none; }
@@ -4551,7 +4552,6 @@
       { id:"curitiba_pr", localidade:"Curitiba - PR", cep:"81170230", uf:"PR", cnpj:"61.139.432/0055-65" },
       { id:"cabo_pe", localidade:"Cabo de Santo Agostinho - PE", cep:"54503410", uf:"PE", cnpj:"61.139.432/0025-40" },
       { id:"parauapebas_pa", localidade:"Parauapebas - PA", cep:"68515000", uf:"PA", cnpj:"61.139.432/0127-74" },
-      { id:"piracicaba_sp", localidade:"Piracicaba - SP", cep:"13420280", uf:"SP", cnpj:"61.139.432/0087-42" },
       { id:"primavera_mt", localidade:"Primavera do Leste - MT", cep:"78850000", uf:"MT", cnpj:"61.139.432/0169-23" },
       { id:"ribeirao_sp", localidade:"Ribeirão Preto - SP", cep:"14061280", uf:"SP", cnpj:"61.139.432/0155-28" },
       { id:"rio_rj", localidade:"Rio de Janeiro - RJ", cep:"21535000", uf:"RJ", cnpj:"61.139.432/0002-53" },
@@ -15052,9 +15052,9 @@ return null;
       return L.divIcon({
         className:"painelProgMarkerWrap",
         html:`<div class="painelProgFilialMarker${sel}"><span>${getTextoPainelProgramacao(sigla)}</span></div>`,
-        iconSize:[42,46],
-        iconAnchor:[21,40],
-        tooltipAnchor:[0,-30]
+        iconSize:[30,34],
+        iconAnchor:[15,29],
+        tooltipAnchor:[0,-22]
       });
     }
 
@@ -15114,13 +15114,27 @@ return null;
       }
     }
 
+    function garantirFiliaisNoClusterPainelProgramacao() {
+      const st = window.__painelProgMapState;
+      if (!st?.cluster || !(st.filialMarkers instanceof Map)) return;
+      st.filialMarkers.forEach(marker => {
+        try {
+          if (typeof st.cluster.hasLayer === "function" && st.cluster.hasLayer(marker)) return;
+          st.cluster.addLayer(marker);
+        } catch (_) {}
+      });
+    }
+
     async function carregarFiliaisDellaVolpePainelProgramacao() {
       const st = window.__painelProgMapState;
       if (!st?.map || st.filiaisCarregando) return;
       if (!(st.filialMarkers instanceof Map)) st.filialMarkers = new Map();
       if (!(st.filialLocalizacoes instanceof Map)) st.filialLocalizacoes = new Map();
       if (!(st.filiaisSelecionadas instanceof Set)) st.filiaisSelecionadas = new Set();
-      if (st.filialMarkers.size === PAINEL_PROG_FILIAIS_DELLA_VOLPE.length) return;
+      if (st.filialMarkers.size === PAINEL_PROG_FILIAIS_DELLA_VOLPE.length) {
+        garantirFiliaisNoClusterPainelProgramacao();
+        return;
+      }
 
       st.filiaisCarregando = true;
       try {
@@ -15128,20 +15142,33 @@ return null;
         resultados.filter(Boolean).forEach(filial => {
           st.filialLocalizacoes.set(filial.id,filial);
           const antigo = st.filialMarkers.get(filial.id);
-          if (antigo) { try{st.map.removeLayer(antigo)}catch(_){} }
+          if (antigo) {
+            try { st.cluster?.removeLayer?.(antigo); } catch (_) {}
+            try { st.map?.removeLayer?.(antigo); } catch (_) {}
+          }
           const marker = L.marker([filial.lat,filial.lon],{
             icon:criarIconeFilialPainelProgramacao(filial),
             title:`Filial Della Volpe — ${filial.localidade}`,
-            zIndexOffset:700
-          }).addTo(st.map);
+            zIndexOffset:120
+          });
+          marker._painelProgTipo = "filial";
+          marker._painelProgFilialId = filial.id;
           const cepFmt = `${filial.cep.slice(0,5)}-${filial.cep.slice(5)}`;
           marker.bindTooltip(
             `<b>Filial Della Volpe</b><br>${getTextoPainelProgramacao(filial.localidade)}<br>CEP: ${cepFmt}<br>CNPJ: ${getTextoPainelProgramacao(filial.cnpj)}${filial.aproximada?'<br><small>Localização aproximada pela cidade</small>':''}<br><small>Clique para usar em Mais próximos</small>`,
             {direction:"top"}
           );
-          marker.on("click",()=>{suprimirCliqueEstadoMapaPainelProgramacao(260);toggleFilialPainelProgramacao(filial.id);});
+          marker.on("click",(ev)=>{
+            suprimirCliqueEstadoMapaPainelProgramacao(260);
+            try {
+              if (ev?.originalEvent && window.L?.DomEvent) L.DomEvent.stopPropagation(ev.originalEvent);
+            } catch (_) {}
+            toggleFilialPainelProgramacao(filial.id);
+          });
           st.filialMarkers.set(filial.id,marker);
+          try { st.cluster?.addLayer?.(marker); } catch (_) {}
         });
+        garantirFiliaisNoClusterPainelProgramacao();
       } finally {
         st.filiaisCarregando = false;
       }
@@ -15719,6 +15746,7 @@ return null;
         const loc=st.localizacoes.get(chave); if(loc) marker.setIcon(criarIconeMarkerPainelProgramacao(loc.item));
         if(!somenteSelecionados || painelProgCardsSelecionados.has(chave)) st.cluster.addLayer(marker);
       });
+      garantirFiliaisNoClusterPainelProgramacao();
       atualizarResumoMapaPainelProgramacao(); limparRotaMapaPainelProgramacao(false);
       if(enquadrar) ajustarMapaAosPontosPainelProgramacao();
       const info=document.getElementById("painelProgRouteInfo"); if(info && !st.routeResult){info.classList.remove("painelProgRouteError"); info.textContent="";}
@@ -15745,7 +15773,7 @@ return null;
       await Promise.all(Array.from({length:Math.min(4,fila.length)},()=>worker())); if(st.renderSeq!==seq)return; renderPendenciasMapaPainelProgramacao(); atualizarMapaComSelecaoPainelProgramacao(false); atualizarMarcadoresDestinosExtrasPainelProgramacao(); renderListaCidadesExtrasPainelProgramacao(); renderOrdemRotaPainelProgramacao(); ajustarMapaAosPontosPainelProgramacao(); setTimeout(()=>st.map?.invalidateSize(),0);
     }
     function ajustarMapaAosPontosPainelProgramacao(){
-      const st=window.__painelProgMapState;if(!st?.map)return;const pts=[];st.cluster?.eachLayer?.(m=>{const ll=m.getLatLng?.();if(ll)pts.push(ll)});getCidadesExtrasPainelProgramacao().forEach(c=>{if(c?.ok)pts.push(L.latLng(c.lat,c.lon));});if(!pts.length && st.filialLocalizacoes instanceof Map){st.filialLocalizacoes.forEach(f=>{if(f?.ok)pts.push(L.latLng(f.lat,f.lon));});}if(!pts.length)return;if(pts.length===1)st.map.setView(pts[0],12);else st.map.fitBounds(L.latLngBounds(pts),{padding:[28,28],maxZoom:12});
+      const st=window.__painelProgMapState;if(!st?.map)return;const pts=[];st.cluster?.eachLayer?.(m=>{if(m?._painelProgTipo==="filial")return;const ll=m.getLatLng?.();if(ll)pts.push(ll)});getCidadesExtrasPainelProgramacao().forEach(c=>{if(c?.ok)pts.push(L.latLng(c.lat,c.lon));});if(!pts.length && st.filialLocalizacoes instanceof Map){st.filialLocalizacoes.forEach(f=>{if(f?.ok)pts.push(L.latLng(f.lat,f.lon));});}if(!pts.length)return;if(pts.length===1)st.map.setView(pts[0],12);else st.map.fitBounds(L.latLngBounds(pts),{padding:[28,28],maxZoom:12});
     }
     function limparRotaMapaPainelProgramacao(atualizarTexto=true){
       const st=window.__painelProgMapState;if(st?.routeLayer&&st?.map){try{st.map.removeLayer(st.routeLayer)}catch(_){}}if(st){st.routeLayer=null;st.routeResult=null;}if(atualizarTexto){const el=document.getElementById("painelProgRouteInfo");if(el){el.classList.remove("painelProgRouteError");el.textContent="Selecione cards ou pontos e clique em Calcular rota.";}}
