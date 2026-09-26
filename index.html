@@ -15122,7 +15122,7 @@ return null;
     function garantirEstruturaMapaPainelProgramacao() {
       const host = document.getElementById("painelProgramacaoMapaHost"); if(!host) return null;
       const st = window.__painelProgMapState;
-      if (!document.getElementById("painelProgMap") && st?.map) { try{st.map.remove()}catch(_){} st.map=null;st.cluster=null;st.markers=new Map();st.localizacoes=new Map();st.pendencias=new Map();st.routeLayer=null;st.routeResult=null;st.extraMarkers=new Map();st.stateBordersLayer=null;st.stateClickLayer=null;st.stateBordersLoaded=false;st.stateBordersLoading=false;st.stateGeoJson=null;st.stateMapClickBound=false;st.suppressStateMapClickUntil=0; }
+      if (!document.getElementById("painelProgMap") && st?.map) { try{st.map.remove()}catch(_){} st.map=null;st.cluster=null;st.markers=new Map();st.localizacoes=new Map();st.pendencias=new Map();st.routeLayer=null;st.routeResult=null;st.extraMarkers=new Map();st.stateBordersLayer=null;st.stateClickLayer=null;st.stateBordersLoaded=false;st.stateBordersLoading=false;st.stateGeoJson=null;st.stateMapClickBound=false;st.suppressStateMapClickUntil=0;st.activeSpiderCluster=null;st.spiderOutsideCloseBound=false; }
       if (!document.getElementById("painelProgMap")) {
         host.innerHTML = `<div class="painelProgMapShell"><div class="painelProgMapToolbar"><div class="painelProgMapToolbarLeft">
           <button class="btn painelProgMapBtn" type="button" onclick="calcularRotaMapaPainelProgramacao()">🛣️ Calcular rota</button>
@@ -15164,6 +15164,42 @@ return null;
           });
           st.cluster.on("clustermouseout", () => ocultarHoverFlutuanteMapaPainelProgramacao());
           st.cluster.on("animationend", () => ocultarHoverFlutuanteMapaPainelProgramacao());
+
+          // Mantém referência do cluster "spiderfied" aberto. Isso permite selecionar
+          // vários vocativos do mesmo agrupamento sem fechá-lo a cada clique.
+          st.cluster.on("spiderfied", (ev) => {
+            st.activeSpiderCluster = ev?.cluster || null;
+          });
+          st.cluster.on("unspiderfied", (ev) => {
+            if (!ev?.cluster || st.activeSpiderCluster === ev.cluster) st.activeSpiderCluster = null;
+          });
+
+          // Fecha o agrupamento somente quando o usuário clicar fora dos marcadores
+          // pertencentes ao cluster atualmente aberto (inclusive fora do mapa).
+          if (!st.spiderOutsideCloseBound) {
+            st.spiderOutsideCloseBound = true;
+            document.addEventListener("pointerdown", (ev) => {
+              const clusterAberto = st.activeSpiderCluster;
+              if (!clusterAberto || typeof st.cluster?.unspiderfy !== "function") return;
+              const alvo = ev?.target;
+              if (!(alvo instanceof Element)) return;
+
+              // Clique no próprio círculo do cluster não deve fechá-lo imediatamente.
+              if (alvo.closest?.(".marker-cluster")) return;
+
+              // Clique em qualquer marcador que pertença ao cluster aberto também não fecha.
+              const filhos = typeof clusterAberto.getAllChildMarkers === "function"
+                ? clusterAberto.getAllChildMarkers()
+                : [];
+              const clicouEmFilho = filhos.some(marker => {
+                const icon = marker?._icon || marker?.getElement?.();
+                return !!(icon && (icon === alvo || icon.contains?.(alvo)));
+              });
+              if (clicouEmFilho) return;
+
+              try { st.cluster.unspiderfy(); } catch (_) {}
+            }, true);
+          }
         }
         st.cluster.addTo(st.map);
         ativarFallbackCliqueEstadoPainelProgramacao();
@@ -15393,6 +15429,27 @@ return null;
       if(info){ info.classList.remove("painelProgRouteError"); info.textContent = ""; }
     }
 
+    function atualizarMapaAposSelecaoSemFecharClusterPainelProgramacao(chave) {
+      const st = window.__painelProgMapState;
+      if (!st) return;
+
+      // Atualiza somente o ícone do marcador clicado. Não limpa nem recria a camada
+      // MarkerCluster, pois clearLayers()/addLayer() desmontaria o spiderfy aberto.
+      const marker = st.markers?.get?.(chave);
+      const loc = st.localizacoes?.get?.(chave);
+      if (marker && loc?.item) {
+        try { marker.setIcon(criarIconeMarkerPainelProgramacao(loc.item)); } catch (_) {}
+      }
+
+      atualizarResumoMapaPainelProgramacao();
+      limparRotaMapaPainelProgramacao(false);
+      const info = document.getElementById("painelProgRouteInfo");
+      if (info && !st.routeResult) {
+        info.classList.remove("painelProgRouteError");
+        info.textContent = "";
+      }
+    }
+
     function selecionarMarcadorPainelProgramacao(chave){
       chave=String(chave||"").trim(); if(!chave)return;
       if(painelProgCardsSelecionados.has(chave)) painelProgCardsSelecionados.delete(chave); else painelProgCardsSelecionados.add(chave);
@@ -15411,7 +15468,10 @@ return null;
       renderPopupPainelProgramacao();
       sincronizarOrdemRotaPainelProgramacao();
       renderOrdemRotaPainelProgramacao();
-      atualizarMapaComSelecaoPainelProgramacao(false);
+
+      // Importante: não reconstruir o MarkerCluster aqui. Isso mantém o agrupamento
+      // aberto enquanto o usuário seleciona vários vocativos do mesmo cluster.
+      atualizarMapaAposSelecaoSemFecharClusterPainelProgramacao(chave);
     }
 
     function atualizarResumoMapaPainelProgramacao(){
