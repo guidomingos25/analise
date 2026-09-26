@@ -15262,7 +15262,16 @@ return null;
       if (visivel) {
         setTimeout(() => {
           try { window.__painelProgMapState?.map?.invalidateSize?.(); } catch (_) {}
+          // Ao reexibir, aplica exatamente o mesmo enquadramento do botão ◎.
+          try { ajustarMapaAosPontosPainelProgramacao(); } catch (_) {}
           agendarSincronizacaoVisualSelecoesMapaPainelProgramacao();
+          // Segundo passe após o layout/tiles estabilizarem evita enquadramento incorreto
+          // quando o mapa saiu de display:none/altura zero.
+          setTimeout(() => {
+            try { window.__painelProgMapState?.map?.invalidateSize?.(); } catch (_) {}
+            try { ajustarMapaAosPontosPainelProgramacao(); } catch (_) {}
+            agendarSincronizacaoVisualSelecoesMapaPainelProgramacao();
+          }, 120);
         }, 0);
       }
       // A alteração de altura do mapa desloca os cards. Atualiza imediatamente
