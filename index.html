@@ -14961,14 +14961,44 @@ return null;
     function filtrarUfPeloMapaPainelProgramacao(uf) {
       uf = String(uf || "").trim().toUpperCase();
       if (!uf) return;
-      const atual = painelProgUfsSelecionados instanceof Set ? painelProgUfsSelecionados : new Set();
-      const somenteEsta = atual.size === 1 && atual.has(uf);
-      if (somenteEsta) {
-        const opcoes = getPainelProgOpcoesFiltroBase("uf") || [];
-        painelProgUfsSelecionados = new Set(opcoes.map(o => o.value));
+
+      const st = window.__painelProgMapState || (window.__painelProgMapState = {});
+      const opcoes = getPainelProgOpcoesFiltroBase("uf") || [];
+      const todosValores = new Set(opcoes.map(o => String(o.value || "").trim()).filter(Boolean));
+      const valorUf = normalizar(uf);
+      if (!valorUf) return;
+
+      // O mapa possui seu próprio estado de multi-seleção para distinguir
+      // "nenhuma UF escolhida no mapa" de "todas as UFs ativas no filtro".
+      if (!(st.ufsSelecionadasNoMapa instanceof Set)) st.ufsSelecionadasNoMapa = new Set();
+      if (st.filtroUfMapaAtivo !== true) {
+        st.ufsSelecionadasNoMapa.clear();
+        st.ufsSelecionadasNoMapa.add(valorUf);
+        st.filtroUfMapaAtivo = true;
+      } else if (st.ufsSelecionadasNoMapa.has(valorUf)) {
+        st.ufsSelecionadasNoMapa.delete(valorUf);
       } else {
-        painelProgUfsSelecionados = new Set([normalizar(uf)]);
+        st.ufsSelecionadasNoMapa.add(valorUf);
       }
+
+      if (st.ufsSelecionadasNoMapa.size === 0) {
+        // Ao retirar a última UF selecionada pelo mapa, volta ao estado padrão:
+        // todas as UFs selecionadas.
+        painelProgUfsSelecionados = new Set(todosValores);
+        st.filtroUfMapaAtivo = false;
+      } else {
+        // Mantém somente UFs ainda disponíveis na base atual.
+        const selecionadasValidas = Array.from(st.ufsSelecionadasNoMapa).filter(v => !todosValores.size || todosValores.has(v));
+        if (selecionadasValidas.length) {
+          st.ufsSelecionadasNoMapa = new Set(selecionadasValidas);
+          painelProgUfsSelecionados = new Set(selecionadasValidas);
+        } else {
+          painelProgUfsSelecionados = new Set(todosValores);
+          st.ufsSelecionadasNoMapa.clear();
+          st.filtroUfMapaAtivo = false;
+        }
+      }
+
       painelProgUfsFiltroInicializado = true;
       renderPainelProgramacaoComBaseAtual(false);
     }
