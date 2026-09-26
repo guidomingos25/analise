@@ -4021,6 +4021,8 @@
     .painelProgExtraCityChip button { width:20px; height:20px; border:0; border-radius:999px; background:#fff; color:#6d28d9; cursor:pointer; font-weight:900; line-height:20px; padding:0; }
     .painelProgFloatingHover { position:fixed; z-index:12000; display:none; width:min(340px,calc(100vw - 24px)); max-height:min(70vh,520px); overflow:auto; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; box-shadow:0 14px 36px rgba(15,23,42,.28); pointer-events:none; }
     .painelProgFloatingHover.open { display:block; }
+    .painelProgFloatingHover.clusterInteractive { pointer-events:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+    .painelProgFloatingHover.clusterInteractive .painelProgClusterHover { pointer-events:auto; }
     .painelProgClusterHover .clusterSummary { font-size:10px; color:#64748b; margin:2px 0 8px; font-weight:700; }
     .painelProgClusterHover .clusterList { display:flex; flex-direction:column; gap:0; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#fff; }
     .painelProgClusterHover .clusterRow { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:7px 8px; border-bottom:1px solid #eef2f7; font-size:11px; line-height:1.2; }
@@ -4446,13 +4448,15 @@
     const PAINEL_PROG_ORIGEM_SP_CEP = "02174010";
     const PAINEL_PROG_OSRM_BASE = "https://router.project-osrm.org";
     const PAINEL_PROG_NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
+    const PAINEL_PROG_IBGE_ESTADOS_GEOJSON = "https://servicodados.ibge.gov.br/api/v2/malhas/BR?resolucao=2&formato=application/vnd.geo+json&qualidade=4";
     const PAINEL_PROG_CEP_CACHE_KEY = "painelProgCepGeoCache_v2";
     const PAINEL_PROG_CITY_CACHE_KEY = "painelProgCityGeoCache_v1";
 
     window.__painelProgMapState = window.__painelProgMapState || {
       map: null, cluster: null, markers: new Map(), localizacoes: new Map(), pendencias: new Map(),
       routeLayer: null, routeResult: null, renderSeq: 0, cepCache: null, cityCache: null,
-      extraDestinos: [], extraMarkers: new Map(), dadosFiltrados: [], mapFilterSelectedOnly: false
+      extraDestinos: [], extraMarkers: new Map(), dadosFiltrados: [], mapFilterSelectedOnly: false,
+      stateBordersLayer: null, stateBordersLoading: false, stateBordersLoaded: false
     };
 
     window.statusHojeServidor = window.statusHojeServidor || {};
@@ -14853,6 +14857,40 @@ return null;
       setVisibilidadeMapaPainelProgramacao(true);
     }
 
+    async function carregarDivisasEstadosPainelProgramacao() {
+      const st = window.__painelProgMapState;
+      if (!st?.map || st.stateBordersLoaded || st.stateBordersLoading) return;
+      st.stateBordersLoading = true;
+      try {
+        if (!st.map.getPane("painelProgStateBordersPane")) {
+          const pane = st.map.createPane("painelProgStateBordersPane");
+          pane.style.zIndex = "325";
+          pane.style.pointerEvents = "none";
+        }
+        const resp = await fetch(PAINEL_PROG_IBGE_ESTADOS_GEOJSON, { cache:"force-cache" });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const geojson = await resp.json();
+        if (!geojson) throw new Error("Malha estadual vazia");
+
+        const halo = L.geoJSON(geojson, {
+          pane:"painelProgStateBordersPane",
+          interactive:false,
+          style:()=>({ color:"#ffffff", weight:5, opacity:.90, fill:false, lineCap:"round", lineJoin:"round" })
+        });
+        const linha = L.geoJSON(geojson, {
+          pane:"painelProgStateBordersPane",
+          interactive:false,
+          style:()=>({ color:"#1e3a8a", weight:2.2, opacity:.92, fill:false, lineCap:"round", lineJoin:"round" })
+        });
+        st.stateBordersLayer = L.layerGroup([halo, linha]).addTo(st.map);
+        st.stateBordersLoaded = true;
+      } catch (err) {
+        console.warn("Divisas estaduais indisponíveis; mapa segue sem a camada visual do IBGE.", err);
+      } finally {
+        st.stateBordersLoading = false;
+      }
+    }
+
     function garantirEstruturaMapaPainelProgramacao() {
       const host = document.getElementById("painelProgramacaoMapaHost"); if(!host) return null;
       const st = window.__painelProgMapState;
@@ -14893,12 +14931,14 @@ return null;
         if (typeof L.markerClusterGroup === "function" && st.cluster?.on) {
           st.cluster.on("clustermouseover", (ev) => {
             const html = renderTooltipClusterMapaPainelProgramacao(ev?.layer);
-            if (html) mostrarHoverFlutuanteMapaPainelProgramacao(ev?.layer, html);
+            if (html) mostrarHoverClusterMapaPainelProgramacao(ev?.layer, html);
           });
-          st.cluster.on("clustermouseout", () => ocultarHoverFlutuanteMapaPainelProgramacao());
+          st.cluster.on("clustermouseout", () => agendarOcultarHoverClusterMapaPainelProgramacao());
           st.cluster.on("animationend", () => ocultarHoverFlutuanteMapaPainelProgramacao());
         }
-        st.cluster.addTo(st.map); setTimeout(()=>st.map.invalidateSize(),0);
+        st.cluster.addTo(st.map);
+        carregarDivisasEstadosPainelProgramacao();
+        setTimeout(()=>st.map.invalidateSize(),0);
       }
       atualizarMarcadoresDestinosExtrasPainelProgramacao(); renderListaCidadesExtrasPainelProgramacao(); renderOrdemRotaPainelProgramacao(); return st;
     }
@@ -15016,6 +15056,7 @@ return null;
     }
     function mostrarHoverFlutuanteMapaPainelProgramacao(marker, html) {
       const el = garantirHoverFlutuanteMapaPainelProgramacao();
+      el.classList.remove("clusterInteractive");
       el.innerHTML = html;
       el.classList.add("open");
       el.style.visibility = "hidden";
@@ -15032,9 +15073,38 @@ return null;
       el.style.top = `${top}px`;
       el.style.visibility = "visible";
     }
+    function cancelarOcultarHoverClusterMapaPainelProgramacao() {
+      if (window.__painelProgClusterHoverHideTimer) {
+        clearTimeout(window.__painelProgClusterHoverHideTimer);
+        window.__painelProgClusterHoverHideTimer = null;
+      }
+    }
+    function agendarOcultarHoverClusterMapaPainelProgramacao() {
+      cancelarOcultarHoverClusterMapaPainelProgramacao();
+      window.__painelProgClusterHoverHideTimer = setTimeout(() => {
+        const el = document.getElementById("painelProgFloatingHover");
+        if (!el?.matches?.(":hover")) ocultarHoverFlutuanteMapaPainelProgramacao();
+      }, 260);
+    }
+    function mostrarHoverClusterMapaPainelProgramacao(cluster, html) {
+      cancelarOcultarHoverClusterMapaPainelProgramacao();
+      mostrarHoverFlutuanteMapaPainelProgramacao(cluster, html);
+      const el = garantirHoverFlutuanteMapaPainelProgramacao();
+      el.classList.add("clusterInteractive");
+      if (!el.dataset.clusterScrollBound) {
+        el.dataset.clusterScrollBound = "1";
+        el.addEventListener("mouseenter", cancelarOcultarHoverClusterMapaPainelProgramacao);
+        el.addEventListener("mouseleave", () => {
+          if (el.classList.contains("clusterInteractive")) agendarOcultarHoverClusterMapaPainelProgramacao();
+        });
+        el.addEventListener("wheel", ev => ev.stopPropagation(), { passive:true });
+        el.addEventListener("touchmove", ev => ev.stopPropagation(), { passive:true });
+      }
+    }
     function ocultarHoverFlutuanteMapaPainelProgramacao() {
+      cancelarOcultarHoverClusterMapaPainelProgramacao();
       const el = document.getElementById("painelProgFloatingHover");
-      if (el) { el.classList.remove("open"); el.style.visibility = "hidden"; }
+      if (el) { el.classList.remove("open", "clusterInteractive"); el.style.visibility = "hidden"; }
     }
 
     function getTokenOrdemRotaCardPainelProgramacao(chave) { return `card:${String(chave || "").trim()}`; }
