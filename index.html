@@ -14212,7 +14212,50 @@ return null;
         }
       `;
 
-      return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Relatório de Carregamento</title><style>${estilos}</style></head><body>
+      return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Relatório de Carregamento</title><style>${estilos}
+
+    /* Ajuste fino da lista lateral: mais espaço para Copiar vocativo + Peso em uma linha. */
+    .painelProgPopupVocDetail {
+      grid-template-columns: minmax(0, 1.34fr) minmax(116px, .66fr);
+      gap: 4px;
+    }
+    .painelProgPopupVocDetail > div:first-of-type {
+      min-width: 0;
+      white-space: normal;
+    }
+    .painelProgPopupVocDetail > div:nth-of-type(2) {
+      min-width: 116px;
+      margin-left: 2px;
+    }
+    .painelProgPopupVocPeso {
+      font-size: 7px;
+      padding: 2px 3px;
+      margin-left: 2px;
+      letter-spacing: -0.01em;
+    }
+    .painelProgPopupBpTitle {
+      margin-bottom: 2px;
+    }
+    .painelProgPopupBpRow {
+      gap: 2px;
+      padding: 2px 0;
+      width: 100%;
+    }
+    .painelProgPopupBpRow span {
+      white-space: nowrap;
+      overflow-wrap: normal;
+      font-size: 9px;
+      letter-spacing: -0.015em;
+    }
+    .painelProgPopupBpRow .painelProgPopupCopyBtn {
+      margin-left: auto;
+      flex: 0 0 auto;
+    }
+    .painelProgPopupVocDetail > div:first-of-type > .painelProgPopupCopyBtn,
+    .painelProgPopupVocDetail > div:first-of-type > .painelProgPopupVocPeso {
+      vertical-align: middle;
+    }
+</style></head><body>
         <section class="report-wrap"><article class="report-sheet">
           <h1 class="report-title">Relatório de Carregamento - Zona de Entrega: ${escRelatorioCarregamentoPainelProgramacao(zona)}</h1>
           <div class="report-subtitle">Peso Total: ${fmtPesoRelatorioCarregamentoPainelProgramacao(totalKg)} KG - NFs Totais: ${registros.length}</div>
