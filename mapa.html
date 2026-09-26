@@ -15040,6 +15040,15 @@ return null;
     }
 
 
+    function getFiliaisVisiveisPainelProgramacao() {
+      const st = window.__painelProgMapState;
+      if (!(st?.filialLocalizacoes instanceof Map)) return [];
+      const permitidas = getUfsFiliaisPermitidasPelosFiltrosPainelProgramacao();
+      return Array.from(st.filialLocalizacoes.values())
+        .filter(filial => filial?.ok && permitidas.has(normalizar(String(filial.uf || ""))))
+        .filter(filial => coordenadaValidaBrasilPainelProgramacao(filial.lat, filial.lon));
+    }
+
     function getFiliaisSelecionadasPainelProgramacao() {
       const st = window.__painelProgMapState;
       if (!(st?.filiaisSelecionadas instanceof Set)) st.filiaisSelecionadas = new Set();
@@ -15439,7 +15448,7 @@ return null;
         host.innerHTML = `<div class="painelProgMapShell"><div class="painelProgMapToolbar"><div class="painelProgMapToolbarLeft">
           <button class="btn painelProgMapBtn" type="button" onclick="calcularRotaMapaPainelProgramacao()">🛣️ Calcular rota</button>
           <button class="btn painelProgMapBtn" type="button" onclick="calcularRotaMapaPainelProgramacao(true)" title="Calcular a rota partindo de São Paulo — CEP 02174-010">📍 De SP</button>
-          <button class="btn secondary painelProgMapBtn" type="button" onclick="calcularProximidadePainelProgramacao()" title="Distribuir todos os destinos filtrados pelo ponto-base selecionado mais próximo">◎ Mais próximos</button>
+          <button class="btn secondary painelProgMapBtn" type="button" onclick="calcularProximidadePainelProgramacao()" title="Informar a filial/armazém mais próximo dos destinos filtrados ou selecionados">◎ Mais próximos</button>
           <div class="painelProgMapCityBox" title="Adiciona uma cidade ou um CEP como destino extra da rota">
             <input id="painelProgCidadeExtra" class="painelProgMapCityInput" placeholder="Cidade ou CEP (ex.: 01001-000)" type="text" onkeydown="if(event.key==='Enter'){event.preventDefault();geocodificarCidadeExtraPainelProgramacao();}">
             <input id="painelProgUfExtra" class="painelProgMapUfInput" placeholder="UF" maxlength="2" type="text" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,2)" onkeydown="if(event.key==='Enter'){event.preventDefault();geocodificarCidadeExtraPainelProgramacao();}">
@@ -15846,58 +15855,114 @@ return null;
       const el = document.getElementById("painelProgProximidadePanel");
       if(el){ el.classList.remove("open"); el.innerHTML = ""; }
     }
-    function getPontosBaseProximidadePainelProgramacao(){
-      const st = window.__painelProgMapState;
-      const bases = [];
-      Array.from(painelProgCardsSelecionados || []).forEach(chave => {
-        const loc = st?.localizacoes?.get?.(chave);
-        if(loc?.geo?.ok) bases.push({ token:`card:${chave}`, chave, label:String(loc.item?.vocativo || "Vocativo"), lat:Number(loc.geo.lat), lon:Number(loc.geo.lon), tipo:"vocativo" });
-      });
-      getCidadesExtrasSelecionadasPainelProgramacao().forEach(extra => {
-        bases.push({ token:`extra:${extra.id}`, label:String(extra.label || "Destino extra"), lat:Number(extra.lat), lon:Number(extra.lon), tipo:"extra" });
-      });
-      getFiliaisSelecionadasPainelProgramacao().forEach(filial => {
-        bases.push({ token:`filial:${filial.id}`, label:`Filial ${filial.localidade}`, lat:Number(filial.lat), lon:Number(filial.lon), tipo:"filial" });
-      });
-      return bases.filter(b => coordenadaValidaBrasilPainelProgramacao(b.lat,b.lon));
+    function getArmazensBaseProximidadePainelProgramacao(){
+      return getFiliaisVisiveisPainelProgramacao().map(filial => ({
+        token:`filial:${filial.id}`,
+        label:`Filial ${filial.localidade}`,
+        lat:Number(filial.lat),
+        lon:Number(filial.lon),
+        tipo:"filial",
+        filial
+      }));
     }
+
+    function getDestinosCandidatosProximidadePainelProgramacao(){
+      const st = window.__painelProgMapState;
+      const cardsSelecionados = new Set(Array.from(painelProgCardsSelecionados || []));
+      const extrasSelecionados = getCidadesExtrasSelecionadasPainelProgramacao();
+      const haSelecaoDestinos = cardsSelecionados.size > 0 || extrasSelecionados.length > 0;
+      const candidatos = [];
+
+      if (haSelecaoDestinos) {
+        cardsSelecionados.forEach(chave => {
+          const loc = st?.localizacoes?.get?.(chave);
+          if (!loc?.geo?.ok) return;
+          candidatos.push({
+            token:`card:${chave}`,
+            chave,
+            label:String(loc.item?.vocativo || chave),
+            lat:Number(loc.geo.lat),
+            lon:Number(loc.geo.lon),
+            tipo:"vocativo"
+          });
+        });
+        extrasSelecionados.forEach(extra => {
+          if (!extra?.ok) return;
+          candidatos.push({
+            token:`extra:${extra.id}`,
+            label:String(extra.label || "Destino extra"),
+            lat:Number(extra.lat),
+            lon:Number(extra.lon),
+            tipo:"extra"
+          });
+        });
+      } else {
+        st?.localizacoes?.forEach?.((loc,chave) => {
+          if (!loc?.geo?.ok) return;
+          candidatos.push({
+            token:`card:${chave}`,
+            chave,
+            label:String(loc.item?.vocativo || chave),
+            lat:Number(loc.geo.lat),
+            lon:Number(loc.geo.lon),
+            tipo:"vocativo"
+          });
+        });
+      }
+
+      return candidatos.filter(c => coordenadaValidaBrasilPainelProgramacao(c.lat,c.lon));
+    }
+
     function calcularProximidadePainelProgramacao(){
       garantirMapaVisivelPainelProgramacao();
       const st = garantirEstruturaMapaPainelProgramacao();
       const panel = document.getElementById("painelProgProximidadePanel");
       const info = document.getElementById("painelProgRouteInfo");
       if(!st || !panel) return;
-      const bases = getPontosBaseProximidadePainelProgramacao();
-      if(bases.length < 2){
+
+      const armazens = getArmazensBaseProximidadePainelProgramacao();
+      if(!armazens.length){
         limparProximidadePainelProgramacao();
-        if(info){ info.classList.add("painelProgRouteError"); info.textContent="Selecione pelo menos 2 pontos-base (vocativos, destinos extras e/ou filiais amarelas) para comparar proximidade."; }
+        if(info){
+          info.classList.add("painelProgRouteError");
+          info.textContent="Não existe nenhuma filial/armazém disponível dentro dos filtros atuais.";
+        }
         return;
       }
-      const selecionados = new Set(Array.from(painelProgCardsSelecionados || []));
-      const candidatos = [];
-      st.localizacoes?.forEach?.((loc,chave) => {
-        if(!loc?.geo?.ok || selecionados.has(chave)) return;
-        candidatos.push({ chave, label:String(loc.item?.vocativo || chave), lat:Number(loc.geo.lat), lon:Number(loc.geo.lon) });
-      });
+
+      const candidatos = getDestinosCandidatosProximidadePainelProgramacao();
       if(!candidatos.length){
         limparProximidadePainelProgramacao();
-        if(info){ info.classList.add("painelProgRouteError"); info.textContent="Não há outros destinos filtrados e localizados para comparar."; }
+        if(info){
+          info.classList.add("painelProgRouteError");
+          info.textContent="Não há destinos localizados para calcular o armazém mais próximo dentro dos filtros atuais.";
+        }
         return;
       }
-      const grupos = bases.map(base => ({base, itens:[]}));
+
+      const grupos = armazens.map(armazem => ({base:armazem, itens:[]}));
       candidatos.forEach(dest => {
         let melhor = null;
-        bases.forEach((base,idx) => {
-          const km = distanciaGeograficaKmPainelProgramacao(base.lat,base.lon,dest.lat,dest.lon);
+        armazens.forEach((armazem,idx) => {
+          const km = distanciaGeograficaKmPainelProgramacao(armazem.lat,armazem.lon,dest.lat,dest.lon);
           if(!melhor || km < melhor.km) melhor = {idx,km};
         });
         if(melhor) grupos[melhor.idx].itens.push({...dest, km:melhor.km});
       });
+
       grupos.forEach(g => g.itens.sort((a,b)=>a.km-b.km || a.label.localeCompare(b.label,"pt-BR")));
-      const totalDistribuido = grupos.reduce((s,g)=>s+g.itens.length,0);
-      panel.innerHTML = `<div class="painelProgProximidadeTop"><div><div class="painelProgProximidadeTitle">Destinos mais próximos</div><div class="painelProgProximidadeSub">${totalDistribuido} destino(s) filtrado(s) distribuídos por proximidade geográfica. A rota rodoviária continua sendo calculada pelo OSRM.</div></div><button class="painelProgProximidadeClose" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Fechar e limpar todas as seleções">×</button></div><div class="painelProgProximidadeGrid">${grupos.map((g,i)=>`<div class="painelProgProximidadeGrupo"><div class="painelProgProximidadeGrupoHead"><b>${i+1}. ${getTextoPainelProgramacao(g.base.label)}</b><span>${g.itens.length} destino(s)</span></div><div class="painelProgProximidadeLista">${g.itens.length?g.itens.map(it=>`<div class="painelProgProximidadeLinha"><b title="${getTextoPainelProgramacao(it.label)}">${getTextoPainelProgramacao(it.label)}</b><span>${it.km.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km</span></div>`).join(""):`<div class="painelProgProximidadeLinha"><b>Nenhum destino</b><span>—</span></div>`}</div></div>`).join("")}</div>`;
+      const gruposComDestino = grupos.filter(g => g.itens.length > 0);
+      const totalDistribuido = candidatos.length;
+      const haSelecao = (painelProgCardsSelecionados?.size || 0) > 0 || getCidadesExtrasSelecionadasPainelProgramacao().length > 0;
+      const escopo = haSelecao ? "selecionado(s)" : "filtrado(s)";
+
+      panel.innerHTML = `<div class="painelProgProximidadeTop"><div><div class="painelProgProximidadeTitle">Armazém mais próximo</div><div class="painelProgProximidadeSub">${totalDistribuido} destino(s) ${escopo} comparado(s) com ${armazens.length} filial(is) disponível(is) dentro dos filtros. Distância geográfica para classificação; rota rodoviária continua sendo calculada pelo OSRM.</div></div><button class="painelProgProximidadeClose" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Fechar e limpar todas as seleções">×</button></div><div class="painelProgProximidadeGrid">${gruposComDestino.map((g,i)=>`<div class="painelProgProximidadeGrupo"><div class="painelProgProximidadeGrupoHead"><b>${getTextoPainelProgramacao(g.base.label)}</b><span>${g.itens.length} destino(s)</span></div><div class="painelProgProximidadeLista">${g.itens.map(it=>`<div class="painelProgProximidadeLinha"><b title="${getTextoPainelProgramacao(it.label)}">${getTextoPainelProgramacao(it.label)}</b><span>${it.km.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km</span></div>`).join("")}</div></div>`).join("")}</div>`;
       panel.classList.add("open");
-      if(info){ info.classList.remove("painelProgRouteError"); info.textContent=`Proximidade calculada para ${totalDistribuido} destino(s) usando ${bases.length} ponto(s)-base.`; }
+
+      if(info){
+        info.classList.remove("painelProgRouteError");
+        info.textContent=`Armazém mais próximo calculado para ${totalDistribuido} destino(s) usando ${armazens.length} filial(is) do filtro atual.`;
+      }
     }
 
     async function calcularRotaMapaPainelProgramacao(comOrigemSP=false){
@@ -15912,14 +15977,26 @@ return null;
         if(it.extra) return {lat:it.extra.lat,lon:it.extra.lon,label:it.extra.label,extra:true,routeToken:it.token};
         return null;
       }).filter(Boolean);
+
+      // Filiais selecionadas participam da rota como pontos normais.
+      // A ordem entre filiais respeita a ordem em que foram selecionadas.
+      getFiliaisSelecionadasPainelProgramacao().forEach(filial => {
+        pontos.push({
+          lat:Number(filial.lat),
+          lon:Number(filial.lon),
+          label:`Filial ${filial.localidade}`,
+          filial:true,
+          routeToken:`filial:${filial.id}`
+        });
+      });
       if(comOrigemSP){
-        if(!pontos.length){if(info){info.classList.add("painelProgRouteError");info.textContent="Selecione pelo menos 1 destino para calcular a rota partindo de São Paulo.";}return;}
+        if(!pontos.length){if(info){info.classList.add("painelProgRouteError");info.textContent="Selecione pelo menos 1 ponto (vocativo, destino extra ou filial) para calcular a rota partindo de São Paulo.";}return;}
         if(info){info.classList.remove("painelProgRouteError");info.textContent="Localizando origem em São Paulo (CEP 02174-010)...";}
         const origem=await geocodificarCepPainelProgramacao({cepsDestino:[PAINEL_PROG_ORIGEM_SP_CEP],ufs:["SP"]});
         if(!origem?.ok){if(info){info.classList.add("painelProgRouteError");info.textContent=`Não foi possível localizar a origem CEP 02174-010: ${origem?.motivo||"localização indisponível"}.`;}return;}
         pontos.unshift({lat:origem.lat,lon:origem.lon,label:"Origem São Paulo — CEP 02174-010",origem:true});
       } else if(pontos.length<2){
-        if(info){info.classList.add("painelProgRouteError");info.textContent="Selecione pelo menos 2 pontos no total (cards/pontos e/ou destinos extras clicados).";}return;
+        if(info){info.classList.add("painelProgRouteError");info.textContent="Selecione pelo menos 2 pontos no total (vocativos/cards, destinos extras e/ou filiais).";}return;
       }
       const coords=pontos.map(p=>`${Number(p.lon).toFixed(6)},${Number(p.lat).toFixed(6)}`).join(";");
       if(info){info.classList.remove("painelProgRouteError");info.textContent=comOrigemSP?"Calculando rota rodoviária desde São Paulo...":"Calculando rota rodoviária...";}
@@ -15933,8 +16010,9 @@ return null;
         const b=st.routeLayer.getBounds?.();if(b?.isValid?.())st.map.fitBounds(b,{padding:[30,30]});
         if(info){
           const extrasRota=getCidadesExtrasSelecionadasPainelProgramacao();
+          const filiaisRota=getFiliaisSelecionadasPainelProgramacao();
           info.classList.remove("painelProgRouteError");
-          info.innerHTML=`${comOrigemSP?'<b>Origem SP 02174-010</b> | ':''}${pontos.length} paradas | ${formatKmBRMapa(rota.distance)} | ${formatDurationBRMapa(rota.duration)}${extrasRota.length?` | extras: <span class="painelProgRouteExtra">${getTextoPainelProgramacao(extrasRota.map(c=>c.label).join(" → "))}</span>`:""}`;
+          info.innerHTML=`${comOrigemSP?'<b>Origem SP 02174-010</b> | ':''}${pontos.length} paradas | ${formatKmBRMapa(rota.distance)} | ${formatDurationBRMapa(rota.duration)}${filiaisRota.length?` | filial(is): <span class="painelProgRouteExtra">${getTextoPainelProgramacao(filiaisRota.map(f=>f.localidade).join(" → "))}</span>`:""}${extrasRota.length?` | extras: <span class="painelProgRouteExtra">${getTextoPainelProgramacao(extrasRota.map(c=>c.label).join(" → "))}</span>`:""}`;
         }
       }catch(err){
         console.error("Erro OSRM:",err);
