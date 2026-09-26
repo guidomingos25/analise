@@ -14910,7 +14910,7 @@ return null;
         const icon=L.divIcon({className:"painelProgMarkerWrap",html:`<div class="painelProgExtraMarker${cidade.selected ? " selected" : ""}">★</div>`,iconSize:[36,36],iconAnchor:[18,18]});
         const marker=L.marker([cidade.lat,cidade.lon],{icon,title:cidade.label}).addTo(st.map);
         marker.bindTooltip(`<b>Destino extra</b><br>${getTextoPainelProgramacao(cidade.label)}<br><small>${cidade.selected ? "Incluída na rota" : "Clique para incluir na rota"}</small>`,{direction:"top"});
-        marker.on("click",()=>toggleCidadeExtraPainelProgramacao(cidade.id));
+        marker.on("click",()=>{suprimirCliqueEstadoMapaPainelProgramacao(260);toggleCidadeExtraPainelProgramacao(cidade.id);});
         st.extraMarkers.set(cidade.id,marker);
       });
     }
@@ -15003,6 +15003,63 @@ return null;
       renderPainelProgramacaoComBaseAtual(false);
     }
 
+    function pontoNoAnelGeoJsonPainelProgramacao(lon, lat, ring) {
+      if (!Array.isArray(ring) || ring.length < 3) return false;
+      let dentro = false;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const a = ring[i] || [], b = ring[j] || [];
+        const xi = Number(a[0]), yi = Number(a[1]);
+        const xj = Number(b[0]), yj = Number(b[1]);
+        if (![xi, yi, xj, yj].every(Number.isFinite)) continue;
+        const cruza = ((yi > lat) !== (yj > lat)) &&
+          (lon < (xj - xi) * (lat - yi) / ((yj - yi) || Number.EPSILON) + xi);
+        if (cruza) dentro = !dentro;
+      }
+      return dentro;
+    }
+    function pontoNoPoligonoGeoJsonPainelProgramacao(lon, lat, polygon) {
+      if (!Array.isArray(polygon) || !polygon.length) return false;
+      if (!pontoNoAnelGeoJsonPainelProgramacao(lon, lat, polygon[0])) return false;
+      // Anéis posteriores representam furos.
+      for (let i = 1; i < polygon.length; i++) {
+        if (pontoNoAnelGeoJsonPainelProgramacao(lon, lat, polygon[i])) return false;
+      }
+      return true;
+    }
+    function getUfPorCoordenadaPainelProgramacao(lat, lon) {
+      const st = window.__painelProgMapState;
+      const features = st?.stateGeoJson?.features;
+      if (!Array.isArray(features)) return "";
+      for (const feature of features) {
+        const g = feature?.geometry;
+        if (!g || !Array.isArray(g.coordinates)) continue;
+        let dentro = false;
+        if (g.type === "Polygon") {
+          dentro = pontoNoPoligonoGeoJsonPainelProgramacao(Number(lon), Number(lat), g.coordinates);
+        } else if (g.type === "MultiPolygon") {
+          dentro = g.coordinates.some(poly => pontoNoPoligonoGeoJsonPainelProgramacao(Number(lon), Number(lat), poly));
+        }
+        if (dentro) return getUfFeatureEstadoPainelProgramacao(feature);
+      }
+      return "";
+    }
+    function suprimirCliqueEstadoMapaPainelProgramacao(ms = 220) {
+      const st = window.__painelProgMapState;
+      if (st) st.suppressStateMapClickUntil = performance.now() + Number(ms || 0);
+    }
+    function ativarFallbackCliqueEstadoPainelProgramacao() {
+      const st = window.__painelProgMapState;
+      if (!st?.map || st.stateMapClickBound) return;
+      st.stateMapClickBound = true;
+      st.map.on("click", (ev) => {
+        if (performance.now() < Number(st.suppressStateMapClickUntil || 0)) return;
+        const lat = Number(ev?.latlng?.lat), lon = Number(ev?.latlng?.lng);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+        const uf = getUfPorCoordenadaPainelProgramacao(lat, lon);
+        if (uf) filtrarUfPeloMapaPainelProgramacao(uf);
+      });
+    }
+
     async function carregarDivisasEstadosPainelProgramacao() {
       const st = window.__painelProgMapState;
       if (!st?.map || st.stateBordersLoaded || st.stateBordersLoading) return;
@@ -15022,6 +15079,9 @@ return null;
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const geojson = await resp.json();
         if (!geojson) throw new Error("Malha estadual vazia");
+        // Mantém a malha em memória para um fallback de clique robusto diretamente no mapa.
+        // Assim o filtro por UF não depende somente do hit-test da camada SVG invisível.
+        st.stateGeoJson = geojson;
 
         const areasClique = L.geoJSON(geojson, {
           pane:"painelProgStateClickPane",
@@ -15031,6 +15091,7 @@ return null;
             const uf = getUfFeatureEstadoPainelProgramacao(feature);
             if (!uf) return;
             layer.on("click", (ev) => {
+              suprimirCliqueEstadoMapaPainelProgramacao(180);
               try { L.DomEvent.stopPropagation(ev); } catch (_) {}
               filtrarUfPeloMapaPainelProgramacao(uf);
             });
@@ -15061,7 +15122,7 @@ return null;
     function garantirEstruturaMapaPainelProgramacao() {
       const host = document.getElementById("painelProgramacaoMapaHost"); if(!host) return null;
       const st = window.__painelProgMapState;
-      if (!document.getElementById("painelProgMap") && st?.map) { try{st.map.remove()}catch(_){} st.map=null;st.cluster=null;st.markers=new Map();st.localizacoes=new Map();st.pendencias=new Map();st.routeLayer=null;st.routeResult=null;st.extraMarkers=new Map();st.stateBordersLayer=null;st.stateClickLayer=null;st.stateBordersLoaded=false;st.stateBordersLoading=false; }
+      if (!document.getElementById("painelProgMap") && st?.map) { try{st.map.remove()}catch(_){} st.map=null;st.cluster=null;st.markers=new Map();st.localizacoes=new Map();st.pendencias=new Map();st.routeLayer=null;st.routeResult=null;st.extraMarkers=new Map();st.stateBordersLayer=null;st.stateClickLayer=null;st.stateBordersLoaded=false;st.stateBordersLoading=false;st.stateGeoJson=null;st.stateMapClickBound=false;st.suppressStateMapClickUntil=0; }
       if (!document.getElementById("painelProgMap")) {
         host.innerHTML = `<div class="painelProgMapShell"><div class="painelProgMapToolbar"><div class="painelProgMapToolbarLeft">
           <button class="btn painelProgMapBtn" type="button" onclick="calcularRotaMapaPainelProgramacao()">🛣️ Calcular rota</button>
@@ -15096,6 +15157,7 @@ return null;
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(st.map);
         st.cluster=typeof L.markerClusterGroup==="function"?L.markerClusterGroup({chunkedLoading:true,spiderfyOnMaxZoom:true,showCoverageOnHover:false,maxClusterRadius:45}):L.layerGroup();
         if (typeof L.markerClusterGroup === "function" && st.cluster?.on) {
+          st.cluster.on("clusterclick", () => suprimirCliqueEstadoMapaPainelProgramacao(280));
           st.cluster.on("clustermouseover", (ev) => {
             const html = renderTooltipClusterMapaPainelProgramacao(ev?.layer);
             if (html) mostrarHoverClusterMapaPainelProgramacao(ev?.layer, html);
@@ -15104,6 +15166,7 @@ return null;
           st.cluster.on("animationend", () => ocultarHoverFlutuanteMapaPainelProgramacao());
         }
         st.cluster.addTo(st.map);
+        ativarFallbackCliqueEstadoPainelProgramacao();
         carregarDivisasEstadosPainelProgramacao();
         setTimeout(()=>st.map.invalidateSize(),0);
       }
@@ -15375,7 +15438,7 @@ return null;
     async function renderMapaPainelProgramacao(dados,{forcarGeocode=false}={}){
       const st=garantirEstruturaMapaPainelProgramacao(); if(!st)return; const seq=++st.renderSeq; st.dadosFiltrados=[...(dados||[])]; st.cluster.clearLayers();st.markers.clear();st.localizacoes.clear();st.pendencias.clear();st.mapFilterSelectedOnly=painelProgCardsSelecionados.size>0; limparRotaMapaPainelProgramacao(false); atualizarResumoMapaPainelProgramacao();
       const fila=ordenarPainelProgPorVocativo(dados||[]); if(!fila.length){renderPendenciasMapaPainelProgramacao();return;}
-      const worker=async()=>{while(fila.length&&st.renderSeq===seq){const item=fila.shift(),geo=await geocodificarCepPainelProgramacao(item,forcarGeocode);if(st.renderSeq!==seq)return;const chave=String(item?.cardKey||"").trim();if(!chave)continue;if(!geo?.ok){st.pendencias.set(chave,{item,geo});atualizarResumoMapaPainelProgramacao();continue;}st.localizacoes.set(chave,{item,geo});const marker=L.marker([geo.lat,geo.lon],{icon:criarIconeMarkerPainelProgramacao(item),keyboard:true,title:String(item?.vocativo||"")});marker._painelProgKey=chave;const hoverHtml=renderTooltipMapaPainelProgramacao(item,geo);marker.on("mouseover",()=>mostrarHoverFlutuanteMapaPainelProgramacao(marker,hoverHtml));marker.on("mouseout",()=>ocultarHoverFlutuanteMapaPainelProgramacao());marker.on("click",()=>{ocultarHoverFlutuanteMapaPainelProgramacao();selecionarMarcadorPainelProgramacao(chave);});st.markers.set(chave,marker);}};
+      const worker=async()=>{while(fila.length&&st.renderSeq===seq){const item=fila.shift(),geo=await geocodificarCepPainelProgramacao(item,forcarGeocode);if(st.renderSeq!==seq)return;const chave=String(item?.cardKey||"").trim();if(!chave)continue;if(!geo?.ok){st.pendencias.set(chave,{item,geo});atualizarResumoMapaPainelProgramacao();continue;}st.localizacoes.set(chave,{item,geo});const marker=L.marker([geo.lat,geo.lon],{icon:criarIconeMarkerPainelProgramacao(item),keyboard:true,title:String(item?.vocativo||"")});marker._painelProgKey=chave;const hoverHtml=renderTooltipMapaPainelProgramacao(item,geo);marker.on("mouseover",()=>mostrarHoverFlutuanteMapaPainelProgramacao(marker,hoverHtml));marker.on("mouseout",()=>ocultarHoverFlutuanteMapaPainelProgramacao());marker.on("click",()=>{suprimirCliqueEstadoMapaPainelProgramacao(260);ocultarHoverFlutuanteMapaPainelProgramacao();selecionarMarcadorPainelProgramacao(chave);});st.markers.set(chave,marker);}};
       await Promise.all(Array.from({length:Math.min(4,fila.length)},()=>worker())); if(st.renderSeq!==seq)return; renderPendenciasMapaPainelProgramacao(); atualizarMapaComSelecaoPainelProgramacao(false); atualizarMarcadoresDestinosExtrasPainelProgramacao(); renderListaCidadesExtrasPainelProgramacao(); renderOrdemRotaPainelProgramacao(); ajustarMapaAosPontosPainelProgramacao(); setTimeout(()=>st.map?.invalidateSize(),0);
     }
     function ajustarMapaAosPontosPainelProgramacao(){
