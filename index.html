@@ -2724,15 +2724,18 @@
     }
 
     .painelProgPopupVocPeso {
-      font-size: 9px;
-      font-weight: 900;
+      font-size: 7.5px;
+      font-weight: 850;
       color: #475569;
       background: #f8fafc;
       border: 1px solid #e2e8f0;
-      border-radius: 7px;
-      padding: 3px 5px;
+      border-radius: 6px;
+      padding: 2px 4px;
       display: inline-flex;
-      margin-top: 4px;
+      margin-top: 0;
+      margin-left: 3px;
+      vertical-align: middle;
+      white-space: nowrap;
     }
 
     .painelProgPopupBpTitle {
@@ -12591,12 +12594,55 @@ return null;
       return el;
     }
 
+    function sincronizarModoSelecaoPainelProgramacao() {
+      const st = window.__painelProgMapState;
+      if (!st) return "nenhum";
+
+      if (!painelProgCardsSelecionados.size) {
+        st.selectionSource = null;
+        st.mapFilterSelectedOnly = false;
+        st.cardFilterSelectedOnly = false;
+        return "nenhum";
+      }
+
+      // A origem da seleção define somente qual visualização é reduzida.
+      // Filtros do topo/UF nunca trocam essa origem.
+      if (st.selectionSource === "map") {
+        st.cardFilterSelectedOnly = true;
+        st.mapFilterSelectedOnly = false;
+        return "map";
+      }
+      if (st.selectionSource === "card") {
+        st.cardFilterSelectedOnly = false;
+        st.mapFilterSelectedOnly = true;
+        return "card";
+      }
+
+      // Compatibilidade com estado criado por versões anteriores.
+      if (st.cardFilterSelectedOnly && !st.mapFilterSelectedOnly) st.selectionSource = "map";
+      else if (st.mapFilterSelectedOnly && !st.cardFilterSelectedOnly) st.selectionSource = "card";
+      else st.selectionSource = "map";
+      return sincronizarModoSelecaoPainelProgramacao();
+    }
+
+    function getDadosCardsVisiveisPainelProgramacao() {
+      const st = window.__painelProgMapState;
+      sincronizarModoSelecaoPainelProgramacao();
+      if (st?.selectionSource === "map" && painelProgCardsSelecionados.size) {
+        return (painelProgDadosAtuais || []).filter(item =>
+          painelProgCardsSelecionados.has(String(item?.cardKey || "").trim())
+        );
+      }
+      return painelProgDadosAtuais || [];
+    }
+
     function atualizarSelecaoVisualPainelProgramacao() {
       document.querySelectorAll(".painelProgCard[data-painel-prog-key]").forEach(card => {
         const chave = card.getAttribute("data-painel-prog-key") || "";
         card.classList.toggle("isSelected", painelProgCardsSelecionados.has(chave));
       });
-      if (typeof atualizarMapaComSelecaoPainelProgramacao === "function") atualizarMapaComSelecaoPainelProgramacao();
+      // Não reconstrói o MarkerCluster aqui. Reconstruir a camada durante um clique
+      // em marcador filho fecha o spiderfy e pode deixar filhos ausentes ao reabrir.
     }
 
     function fecharPopupPainelProgramacao(ev) {
@@ -12613,6 +12659,7 @@ return null;
       popup.innerHTML = "";
       chavesAfetadas.forEach(chave => atualizarCardPainelProgramacaoNoDOM(chave));
       if (window.__painelProgMapState) {
+        window.__painelProgMapState.selectionSource = null;
         window.__painelProgMapState.mapFilterSelectedOnly = false;
         window.__painelProgMapState.cardFilterSelectedOnly = false;
       }
@@ -12707,8 +12754,11 @@ return null;
          por uma seleção feita no mapa, o clique no card devolve a grade completa:
          card passa novamente a ser a origem da seleção. */
       const stMapaCliqueCard = window.__painelProgMapState;
-      const gradeEstavaFiltradaPeloMapa = !!stMapaCliqueCard?.cardFilterSelectedOnly;
-      if (stMapaCliqueCard) stMapaCliqueCard.cardFilterSelectedOnly = false;
+      const gradeEstavaFiltradaPeloMapa = stMapaCliqueCard?.selectionSource === "map" || !!stMapaCliqueCard?.cardFilterSelectedOnly;
+      if (stMapaCliqueCard) {
+        stMapaCliqueCard.selectionSource = "card";
+        stMapaCliqueCard.cardFilterSelectedOnly = false;
+      }
 
       if (painelProgCardsSelecionados.has(chave)) painelProgCardsSelecionados.delete(chave);
       else painelProgCardsSelecionados.add(chave);
@@ -12730,7 +12780,11 @@ return null;
       renderPopupPainelProgramacao();
       sincronizarOrdemRotaPainelProgramacao();
       renderOrdemRotaPainelProgramacao();
-      if (window.__painelProgMapState) window.__painelProgMapState.mapFilterSelectedOnly = painelProgCardsSelecionados.size > 0;
+      if (window.__painelProgMapState) {
+        const st = window.__painelProgMapState;
+        if (!painelProgCardsSelecionados.size) st.selectionSource = null;
+        sincronizarModoSelecaoPainelProgramacao();
+      }
       if (typeof atualizarMapaComSelecaoPainelProgramacao === "function") atualizarMapaComSelecaoPainelProgramacao(true);
     }
 
@@ -13047,21 +13101,18 @@ return null;
         const removidos = new Set(tokens.map(String));
         st.routeOrder = Array.isArray(st.routeOrder) ? st.routeOrder.filter(token => !removidos.has(String(token))) : [];
         if (!painelProgCardsSelecionados.size) {
+          st.selectionSource = null;
           st.mapFilterSelectedOnly = false;
           st.cardFilterSelectedOnly = false;
         } else {
-          if (st.mapFilterSelectedOnly) st.mapFilterSelectedOnly = true;
-          if (st.cardFilterSelectedOnly) st.cardFilterSelectedOnly = true;
+          sincronizarModoSelecaoPainelProgramacao();
         }
       }
 
       limparRotaMapaPainelProgramacao(false);
       sincronizarOrdemRotaPainelProgramacao();
 
-      const dadosCards = (st?.cardFilterSelectedOnly && painelProgCardsSelecionados.size)
-        ? (painelProgDadosAtuais || []).filter(item => painelProgCardsSelecionados.has(String(item?.cardKey || "")))
-        : (painelProgDadosAtuais || []);
-      renderCardsPainelProgramacao(dadosCards);
+      renderCardsPainelProgramacao(getDadosCardsVisiveisPainelProgramacao());
       atualizarSelecaoVisualPainelProgramacao();
       renderPopupPainelProgramacao();
       atualizarResumoMapaPainelProgramacao();
@@ -15165,38 +15216,18 @@ return null;
           st.cluster.on("clustermouseout", () => ocultarHoverFlutuanteMapaPainelProgramacao());
           st.cluster.on("animationend", () => ocultarHoverFlutuanteMapaPainelProgramacao());
 
-          // Mantém referência do cluster "spiderfied" aberto. Isso permite selecionar
-          // vários vocativos do mesmo agrupamento sem fechá-lo a cada clique.
+          // Guarda somente a referência do spiderfy atual. Não reabre automaticamente
+          // clusters fechados: reabrir um objeto antigo pode produzir filhos ausentes.
           st.cluster.on("spiderfied", (ev) => {
             st.activeSpiderCluster = ev?.cluster || null;
-            // Quando um cluster volta a abrir após clique em um filho, preserva a referência.
-            if (st.keepSpiderOpenCluster && st.activeSpiderCluster === st.keepSpiderOpenCluster) {
-              st.keepSpiderOpenCluster = st.activeSpiderCluster;
-            }
           });
           st.cluster.on("unspiderfied", (ev) => {
-            const clusterFechado = ev?.cluster || null;
-
-            // O MarkerCluster pode disparar unspiderfy internamente ao clicar em um
-            // marcador filho. Se o usuário ainda está trabalhando dentro do mesmo
-            // agrupamento, reabre imediatamente o mesmo spiderfy.
-            if (clusterFechado && st.keepSpiderOpenCluster === clusterFechado && !st.closingSpiderByOutside) {
-              st.activeSpiderCluster = clusterFechado;
-              requestAnimationFrame(() => {
-                if (st.keepSpiderOpenCluster !== clusterFechado || st.closingSpiderByOutside) return;
-                try {
-                  if (typeof clusterFechado.spiderfy === "function") clusterFechado.spiderfy();
-                } catch (_) {}
-              });
-              return;
-            }
-
-            if (!clusterFechado || st.activeSpiderCluster === clusterFechado) st.activeSpiderCluster = null;
-            if (st.keepSpiderOpenCluster === clusterFechado) st.keepSpiderOpenCluster = null;
+            if (!ev?.cluster || st.activeSpiderCluster === ev.cluster) st.activeSpiderCluster = null;
           });
 
-          // Fecha o agrupamento somente quando o usuário clicar fora dos marcadores
-          // pertencentes ao cluster atualmente aberto (inclusive fora do mapa).
+          // O clique em marcador filho é interrompido no próprio marcador. Assim o
+          // MarkerCluster não recebe o clique como clique no mapa e mantém o spiderfy.
+          // Um clique verdadeiramente fora continua fechando o agrupamento normalmente.
           if (!st.spiderOutsideCloseBound) {
             st.spiderOutsideCloseBound = true;
             document.addEventListener("pointerdown", (ev) => {
@@ -15204,25 +15235,14 @@ return null;
               if (!clusterAberto || typeof st.cluster?.unspiderfy !== "function") return;
               const alvo = ev?.target;
               if (!(alvo instanceof Element)) return;
-
-              // Clique no próprio círculo do cluster não deve fechá-lo imediatamente.
               if (alvo.closest?.(".marker-cluster")) return;
-
-              // Clique em qualquer marcador que pertença ao cluster aberto também não fecha.
-              const filhos = typeof clusterAberto.getAllChildMarkers === "function"
-                ? clusterAberto.getAllChildMarkers()
-                : [];
+              const filhos = typeof clusterAberto.getAllChildMarkers === "function" ? clusterAberto.getAllChildMarkers() : [];
               const clicouEmFilho = filhos.some(marker => {
                 const icon = marker?._icon || marker?.getElement?.();
                 return !!(icon && (icon === alvo || icon.contains?.(alvo)));
               });
               if (clicouEmFilho) return;
-
-              // Clique realmente fora do agrupamento: agora o fechamento é permitido.
-              st.keepSpiderOpenCluster = null;
-              st.closingSpiderByOutside = true;
               try { st.cluster.unspiderfy(); } catch (_) {}
-              setTimeout(() => { st.closingSpiderByOutside = false; }, 0);
             }, true);
           }
         }
@@ -15437,6 +15457,7 @@ return null;
       cidades.forEach(cidade => { cidade.selected = false; });
       const st = window.__painelProgMapState;
       if(st) {
+        st.selectionSource = null;
         st.mapFilterSelectedOnly = false;
         st.cardFilterSelectedOnly = false;
         st.routeOrder = [];
@@ -15458,12 +15479,15 @@ return null;
       const st = window.__painelProgMapState;
       if (!st) return;
 
-      // Atualiza somente o ícone do marcador clicado. Não limpa nem recria a camada
-      // MarkerCluster, pois clearLayers()/addLayer() desmontaria o spiderfy aberto.
+      // Atualiza apenas a classe visual do marcador clicado. Evita setIcon(),
+      // clearLayers() ou addLayer() enquanto um spiderfy está aberto.
       const marker = st.markers?.get?.(chave);
-      const loc = st.localizacoes?.get?.(chave);
-      if (marker && loc?.item) {
-        try { marker.setIcon(criarIconeMarkerPainelProgramacao(loc.item)); } catch (_) {}
+      if (marker) {
+        try {
+          const root = marker.getElement?.() || marker._icon;
+          const pin = root?.querySelector?.(".painelProgMarker");
+          if (pin) pin.classList.toggle("selected", painelProgCardsSelecionados.has(chave));
+        } catch (_) {}
       }
 
       atualizarResumoMapaPainelProgramacao();
@@ -15482,13 +15506,10 @@ return null;
       // Clique no mapa mantém todos os pontos visíveis para permitir seleção múltipla,
       // mas a grade de cards passa a exibir somente os vocativos selecionados no mapa.
       if (st) {
-        st.mapFilterSelectedOnly = false;
-        st.cardFilterSelectedOnly = painelProgCardsSelecionados.size > 0;
+        st.selectionSource = painelProgCardsSelecionados.size > 0 ? "map" : null;
+        sincronizarModoSelecaoPainelProgramacao();
       }
-      const dadosCards = (st?.cardFilterSelectedOnly)
-        ? (painelProgDadosAtuais || []).filter(item => painelProgCardsSelecionados.has(String(item?.cardKey || "")))
-        : (painelProgDadosAtuais || []);
-      renderCardsPainelProgramacao(dadosCards);
+      renderCardsPainelProgramacao(getDadosCardsVisiveisPainelProgramacao());
       atualizarSelecaoVisualPainelProgramacao();
       renderPopupPainelProgramacao();
       sincronizarOrdemRotaPainelProgramacao();
@@ -15521,28 +15542,19 @@ return null;
       const info=document.getElementById("painelProgRouteInfo"); if(info && !st.routeResult){info.classList.remove("painelProgRouteError"); info.textContent="";}
     }
     async function renderMapaPainelProgramacao(dados,{forcarGeocode=false}={}){
-      const st=garantirEstruturaMapaPainelProgramacao(); if(!st)return; const seq=++st.renderSeq; st.dadosFiltrados=[...(dados||[])]; st.cluster.clearLayers();st.markers.clear();st.localizacoes.clear();st.pendencias.clear();st.mapFilterSelectedOnly=painelProgCardsSelecionados.size>0; limparRotaMapaPainelProgramacao(false); atualizarResumoMapaPainelProgramacao();
+      const st=garantirEstruturaMapaPainelProgramacao(); if(!st)return; const seq=++st.renderSeq; st.dadosFiltrados=[...(dados||[])]; st.cluster.clearLayers();st.markers.clear();st.localizacoes.clear();st.pendencias.clear();sincronizarModoSelecaoPainelProgramacao(); limparRotaMapaPainelProgramacao(false); atualizarResumoMapaPainelProgramacao();
       const fila=ordenarPainelProgPorVocativo(dados||[]); if(!fila.length){renderPendenciasMapaPainelProgramacao();return;}
       const worker=async()=>{while(fila.length&&st.renderSeq===seq){const item=fila.shift(),geo=await geocodificarCepPainelProgramacao(item,forcarGeocode);if(st.renderSeq!==seq)return;const chave=String(item?.cardKey||"").trim();if(!chave)continue;if(!geo?.ok){st.pendencias.set(chave,{item,geo});atualizarResumoMapaPainelProgramacao();continue;}st.localizacoes.set(chave,{item,geo});const marker=L.marker([geo.lat,geo.lon],{icon:criarIconeMarkerPainelProgramacao(item),keyboard:true,title:String(item?.vocativo||"")});marker._painelProgKey=chave;const hoverHtml=renderTooltipMapaPainelProgramacao(item,geo);marker.on("mouseover",()=>mostrarHoverFlutuanteMapaPainelProgramacao(marker,hoverHtml));marker.on("mouseout",()=>ocultarHoverFlutuanteMapaPainelProgramacao());marker.on("click",(ev)=>{
         suprimirCliqueEstadoMapaPainelProgramacao(260);
         ocultarHoverFlutuanteMapaPainelProgramacao();
 
-        // Se este marcador pertence ao spiderfy atualmente aberto, mantém o mesmo
-        // agrupamento armado para permanecer expandido após a seleção.
-        const stAtual = window.__painelProgMapState;
-        const clusterAberto = stAtual?.activeSpiderCluster;
-        if (clusterAberto && typeof clusterAberto.getAllChildMarkers === "function") {
-          const filhos = clusterAberto.getAllChildMarkers();
-          if (Array.isArray(filhos) && filhos.includes(marker)) {
-            stAtual.keepSpiderOpenCluster = clusterAberto;
-            stAtual.closingSpiderByOutside = false;
-          }
-        }
-
-        // Impede que o clique no marcador filho seja tratado pelo mapa como clique
-        // externo, que é uma das causas do unspiderfy automático do plugin.
+        // Impede que o clique no marcador filho seja tratado como clique no mapa.
+        // Isso mantém o spiderfy aberto até um clique fora do agrupamento.
         try {
-          if (ev?.originalEvent && window.L?.DomEvent) L.DomEvent.stopPropagation(ev.originalEvent);
+          if (ev?.originalEvent && window.L?.DomEvent) {
+            L.DomEvent.stopPropagation(ev.originalEvent);
+            L.DomEvent.preventDefault(ev.originalEvent);
+          }
         } catch (_) {}
 
         selecionarMarcadorPainelProgramacao(chave);
@@ -15676,8 +15688,8 @@ return null;
       }
 
       renderResumoPainelProgramacao(filtrados);
-      if (window.__painelProgMapState) window.__painelProgMapState.cardFilterSelectedOnly = false;
-      renderCardsPainelProgramacao(filtrados);
+      sincronizarModoSelecaoPainelProgramacao();
+      renderCardsPainelProgramacao(getDadosCardsVisiveisPainelProgramacao());
       renderMapaPainelProgramacao(filtrados).catch(err => console.error("Erro ao renderizar mapa:", err));
       renderPopupPainelProgramacao();
       if (rolarTopo) window.scrollTo({ top: 0, behavior: "smooth" });
@@ -15737,7 +15749,8 @@ return null;
           baseEl.textContent = `Base exibida: ${vocativosFiltrados} de ${vocativosBase} vocativo(s) | ${filtrados.length} card(s) | Cards + mapa por CEP Destino | Organização: ${getPainelProgNomeAgrupamento()} | ${getResumoStatusJanelasGoogle()}`;
         }
         renderResumoPainelProgramacao(filtrados);
-        renderCardsPainelProgramacao(filtrados);
+        sincronizarModoSelecaoPainelProgramacao();
+        renderCardsPainelProgramacao(getDadosCardsVisiveisPainelProgramacao());
         renderMapaPainelProgramacao(filtrados).catch(err => console.error("Erro ao renderizar mapa:", err));
         renderPopupPainelProgramacao();
 
