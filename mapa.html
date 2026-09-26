@@ -3938,6 +3938,8 @@
     .painelProgMapToolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:10px 12px; border-bottom:1px solid #e5e7eb; background:#f8fafc; }
     .painelProgMapToolbarLeft,.painelProgMapToolbarRight { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .painelProgMapBtn { padding:8px 10px!important; font-size:11px!important; min-height:34px; }
+    .painelProgMapToggleBtn { width:34px!important; min-width:34px!important; padding:8px 0!important; display:inline-flex; align-items:center; justify-content:center; }
+    .painelProgMapShell.mapaOculto #painelProgMap { display:none!important; }
     .painelProgMapCityBox { display:flex; align-items:center; gap:6px; flex-wrap:nowrap; min-width:0; flex:1 1 auto; padding-left:8px; border-left:1px solid #dbe3ec; }
     .painelProgMapCityInput { height:34px; min-width:190px; max-width:240px; padding:6px 9px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#0f172a; font-size:11px; }
     .painelProgMapUfInput { height:34px; width:64px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#0f172a; font-size:11px; text-transform:uppercase; }
@@ -4067,7 +4069,7 @@
           <option value="destinatario">Agrupar por Destinatário</option>
           <option value="responsavel">Agrupar por Responsável</option>
           <option value="destino">Agrupar por Destino</option>
-          <option value="uf">Agrupar por UF</option>
+          <option value="uf" selected>Agrupar por UF</option>
         </select>
 
         <div class="painelProgMultiFilterBox" id="painelProgClienteFilterBox">
@@ -14638,6 +14640,30 @@ return null;
       });
     }
 
+    function setVisibilidadeMapaPainelProgramacao(visivel = true) {
+      const shell = document.querySelector("#painelProgramacaoMapaHost .painelProgMapShell");
+      const btn = document.getElementById("btnPainelProgToggleMapa");
+      if (!shell) return;
+      shell.classList.toggle("mapaOculto", !visivel);
+      if (btn) {
+        btn.textContent = visivel ? "▣" : "▤";
+        btn.title = visivel ? "Ocultar mapa" : "Reexibir mapa";
+        btn.setAttribute("aria-label", btn.title);
+      }
+      if (visivel) {
+        setTimeout(() => { try { window.__painelProgMapState?.map?.invalidateSize?.(); } catch (_) {} }, 0);
+      }
+    }
+    function toggleVisibilidadeMapaPainelProgramacao(event) {
+      event?.stopPropagation?.();
+      const shell = document.querySelector("#painelProgramacaoMapaHost .painelProgMapShell");
+      if (!shell) return;
+      setVisibilidadeMapaPainelProgramacao(shell.classList.contains("mapaOculto"));
+    }
+    function garantirMapaVisivelPainelProgramacao() {
+      setVisibilidadeMapaPainelProgramacao(true);
+    }
+
     function garantirEstruturaMapaPainelProgramacao() {
       const host = document.getElementById("painelProgramacaoMapaHost"); if(!host) return null;
       const st = window.__painelProgMapState;
@@ -14654,10 +14680,20 @@ return null;
             <input id="painelProgUfExtra" class="painelProgMapUfInput" placeholder="UF" maxlength="2" type="text" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,2)" onkeydown="if(event.key==='Enter'){event.preventDefault();geocodificarCidadeExtraPainelProgramacao();}">
             <button class="btn secondary painelProgMapBtn" type="button" onclick="geocodificarCidadeExtraPainelProgramacao()">+ Adicionar destino</button>
             <button class="btn secondary painelProgMapBtn" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Limpar seleção de todos os cards e pontos" aria-label="Limpar seleção de todos os cards e pontos">⊘</button>
+            <button id="btnPainelProgToggleMapa" class="btn secondary painelProgMapBtn painelProgMapToggleBtn" type="button" onclick="toggleVisibilidadeMapaPainelProgramacao(event)" title="Ocultar mapa" aria-label="Ocultar ou reexibir mapa">▣</button>
             <div id="painelProgExtraCitiesList" class="painelProgExtraCitiesList"></div>
           </div>
         </div><div class="painelProgMapToolbarRight"><span id="painelProgRouteInfo" class="painelProgRouteInfo"></span></div></div>
         <div id="painelProgMap"></div><div id="painelProgMapStatusBar" class="painelProgMapStatusBar"></div><div id="painelProgGeoWarningHost"></div></div>`;
+      }
+      const toolbarMapa = host.querySelector(".painelProgMapToolbar");
+      if (toolbarMapa && !toolbarMapa.dataset.autoShowBound) {
+        toolbarMapa.dataset.autoShowBound = "1";
+        toolbarMapa.addEventListener("click", (ev) => {
+          const btn = ev.target?.closest?.("button");
+          if (!btn || btn.id === "btnPainelProgToggleMapa") return;
+          garantirMapaVisivelPainelProgramacao();
+        }, true);
       }
       if(!window.L){host.innerHTML='<div class="painelProgEmptyState" style="border-color:#fecaca;color:#991b1b;background:#fef2f2;">Não foi possível carregar o Leaflet. Verifique a conexão e recarregue a página.</div>';return null;}
       if(!st.map){
