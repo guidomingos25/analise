@@ -4021,6 +4021,12 @@
     .painelProgExtraCityChip button { width:20px; height:20px; border:0; border-radius:999px; background:#fff; color:#6d28d9; cursor:pointer; font-weight:900; line-height:20px; padding:0; }
     .painelProgFloatingHover { position:fixed; z-index:12000; display:none; width:min(340px,calc(100vw - 24px)); max-height:min(70vh,520px); overflow:auto; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; box-shadow:0 14px 36px rgba(15,23,42,.28); pointer-events:none; }
     .painelProgFloatingHover.open { display:block; }
+    .painelProgClusterHover .clusterSummary { font-size:10px; color:#64748b; margin:2px 0 8px; font-weight:700; }
+    .painelProgClusterHover .clusterList { display:flex; flex-direction:column; gap:0; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; background:#fff; }
+    .painelProgClusterHover .clusterRow { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:7px 8px; border-bottom:1px solid #eef2f7; font-size:11px; line-height:1.2; }
+    .painelProgClusterHover .clusterRow:last-child { border-bottom:0; }
+    .painelProgClusterHover .clusterVoc { font-weight:900; color:#0f172a; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .painelProgClusterHover .clusterNotas { flex:0 0 auto; font-weight:900; color:#1d4ed8; white-space:nowrap; }
     .painelProgRouteResultBar { border-bottom:1px solid #e5e7eb; background:#f8fafc; }
     .painelProgRouteInfo { display:block; font-size:11px; color:#334155; font-weight:700; padding:7px 12px; line-height:1.35; white-space:normal; overflow-wrap:anywhere; }
     .painelProgRouteInfo:empty { display:none; }
@@ -14884,6 +14890,14 @@ return null;
         st.map=L.map("painelProgMap",{preferCanvas:true,zoomControl:true}).setView([-14.235,-51.9253],4);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(st.map);
         st.cluster=typeof L.markerClusterGroup==="function"?L.markerClusterGroup({chunkedLoading:true,spiderfyOnMaxZoom:true,showCoverageOnHover:false,maxClusterRadius:45}):L.layerGroup();
+        if (typeof L.markerClusterGroup === "function" && st.cluster?.on) {
+          st.cluster.on("clustermouseover", (ev) => {
+            const html = renderTooltipClusterMapaPainelProgramacao(ev?.layer);
+            if (html) mostrarHoverFlutuanteMapaPainelProgramacao(ev?.layer, html);
+          });
+          st.cluster.on("clustermouseout", () => ocultarHoverFlutuanteMapaPainelProgramacao());
+          st.cluster.on("animationend", () => ocultarHoverFlutuanteMapaPainelProgramacao());
+        }
         st.cluster.addTo(st.map); setTimeout(()=>st.map.invalidateSize(),0);
       }
       atualizarMarcadoresDestinosExtrasPainelProgramacao(); renderListaCidadesExtrasPainelProgramacao(); renderOrdemRotaPainelProgramacao(); return st;
@@ -14955,6 +14969,41 @@ return null;
       return `<div class="painelProgLeafletTooltip"><div class="ttl">${getTextoPainelProgramacao(item?.vocativo||"-")}</div><div class="row"><b>Status:</b> ${item?.temProgramado?"PROGRAMADO":"NÃO PROGRAMADO"}${item?.temCarregadoHoje?" | CARREGADO HOJE":""}${item?.temCarregadoOntem?" | CARREGADO ONTEM":""}</div><div class="row"><b>Embarque:</b> ${getTextoPainelProgramacao(item?.temProgramado?(item?.tipoEmbarque||"-"):"-")}</div><div class="row"><b>Programador:</b> ${getTextoPainelProgramacao(item?.responsavel||"-")}</div><div class="row"><b>Peso Total PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.pesoTotalPVD,2))}</div><div class="row"><b>Total Notas PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.totalNotasPVD,0))}</div><div class="row"><b>Entrada em atraso:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.entradaAtraso,0))}</div><div class="row"><b>Notas &lt;= D-1:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.notasD1,0))}</div><div class="sep"></div><div class="row"><b>CEP Destino:</b> ${cep}${local?` | ${getTextoPainelProgramacao(local)}`:""}</div><div class="row"><b>Endereço do CEP:</b> ${getTextoPainelProgramacao(enderecoCep)}</div>${zonaSp?`<div class="row"><b>Zona (aprox.):</b> ${getTextoPainelProgramacao(zonaSp)}</div>`:""}<div class="row"><b>Carga:</b> ${getTextoPainelProgramacao(jc)}</div><div class="row"><b>Entrega:</b> ${getTextoPainelProgramacao(je)}</div>${u?`<div class="sep"></div><div class="row"><b>Último veículo:</b> ${getTextoPainelProgramacao(u.id||"-")}</div><div class="row"><b>Previsão:</b> ${getTextoPainelProgramacao(u.previsaoTexto||u.previsao||"-")}</div><div class="row"><b>Destino:</b> ${getTextoPainelProgramacao(u.destinos||"-")}</div>`:""}</div>`;
     }
 
+    function renderTooltipClusterMapaPainelProgramacao(cluster) {
+      const st = window.__painelProgMapState;
+      if (!cluster || !st) return "";
+      const markers = typeof cluster.getAllChildMarkers === "function" ? cluster.getAllChildMarkers() : [];
+      if (!markers.length) return "";
+
+      const porVocativo = new Map();
+      markers.forEach(marker => {
+        let chave = String(marker?._painelProgKey || "").trim();
+        if (!chave && st.markers instanceof Map) {
+          for (const [k, m] of st.markers.entries()) {
+            if (m === marker) { chave = String(k || "").trim(); break; }
+          }
+        }
+        const loc = chave ? st.localizacoes?.get?.(chave) : null;
+        const item = loc?.item;
+        if (!item) return;
+        const vocativo = String(item?.vocativo || chave || "Vocativo").trim();
+        const key = normalizar(vocativo) || vocativo;
+        const notas = Number(item?.totalNotasPVD || 0);
+        if (!porVocativo.has(key)) porVocativo.set(key, { vocativo, notas: 0 });
+        porVocativo.get(key).notas += Number.isFinite(notas) ? notas : 0;
+      });
+
+      const linhas = Array.from(porVocativo.values())
+        .sort((a,b) => String(a.vocativo || "").localeCompare(String(b.vocativo || ""), "pt-BR"));
+      if (!linhas.length) return "";
+      const totalNotas = linhas.reduce((acc, x) => acc + Number(x.notas || 0), 0);
+      return `<div class="painelProgLeafletTooltip painelProgClusterHover">
+        <div class="ttl">${getTextoPainelProgramacao(linhas.length)} vocativo(s) agrupado(s)</div>
+        <div class="clusterSummary">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(totalNotas,0))} nota(s) no agrupamento</div>
+        <div class="clusterList">${linhas.map(x => `<div class="clusterRow"><span class="clusterVoc">${getTextoPainelProgramacao(x.vocativo)}</span><span class="clusterNotas">${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(x.notas,0))} nota(s)</span></div>`).join("")}</div>
+      </div>`;
+    }
+
     function garantirHoverFlutuanteMapaPainelProgramacao() {
       let el = document.getElementById("painelProgFloatingHover");
       if (!el) {
@@ -14970,7 +15019,8 @@ return null;
       el.innerHTML = html;
       el.classList.add("open");
       el.style.visibility = "hidden";
-      const rect = marker?.getElement?.()?.getBoundingClientRect?.();
+      const iconEl = marker?.getElement?.() || marker?._icon || null;
+      const rect = iconEl?.getBoundingClientRect?.();
       const w = Math.min(el.offsetWidth || 340, window.innerWidth - 24);
       const h = Math.min(el.offsetHeight || 260, window.innerHeight - 24);
       let left = rect ? rect.left + rect.width/2 - w/2 : 12;
@@ -15096,7 +15146,7 @@ return null;
     async function renderMapaPainelProgramacao(dados,{forcarGeocode=false}={}){
       const st=garantirEstruturaMapaPainelProgramacao(); if(!st)return; const seq=++st.renderSeq; st.dadosFiltrados=[...(dados||[])]; st.cluster.clearLayers();st.markers.clear();st.localizacoes.clear();st.pendencias.clear();st.mapFilterSelectedOnly=painelProgCardsSelecionados.size>0; limparRotaMapaPainelProgramacao(false); atualizarResumoMapaPainelProgramacao();
       const fila=ordenarPainelProgPorVocativo(dados||[]); if(!fila.length){renderPendenciasMapaPainelProgramacao();return;}
-      const worker=async()=>{while(fila.length&&st.renderSeq===seq){const item=fila.shift(),geo=await geocodificarCepPainelProgramacao(item,forcarGeocode);if(st.renderSeq!==seq)return;const chave=String(item?.cardKey||"").trim();if(!chave)continue;if(!geo?.ok){st.pendencias.set(chave,{item,geo});atualizarResumoMapaPainelProgramacao();continue;}st.localizacoes.set(chave,{item,geo});const marker=L.marker([geo.lat,geo.lon],{icon:criarIconeMarkerPainelProgramacao(item),keyboard:true,title:String(item?.vocativo||"")});const hoverHtml=renderTooltipMapaPainelProgramacao(item,geo);marker.on("mouseover",()=>mostrarHoverFlutuanteMapaPainelProgramacao(marker,hoverHtml));marker.on("mouseout",()=>ocultarHoverFlutuanteMapaPainelProgramacao());marker.on("click",()=>{ocultarHoverFlutuanteMapaPainelProgramacao();selecionarMarcadorPainelProgramacao(chave);});st.markers.set(chave,marker);}};
+      const worker=async()=>{while(fila.length&&st.renderSeq===seq){const item=fila.shift(),geo=await geocodificarCepPainelProgramacao(item,forcarGeocode);if(st.renderSeq!==seq)return;const chave=String(item?.cardKey||"").trim();if(!chave)continue;if(!geo?.ok){st.pendencias.set(chave,{item,geo});atualizarResumoMapaPainelProgramacao();continue;}st.localizacoes.set(chave,{item,geo});const marker=L.marker([geo.lat,geo.lon],{icon:criarIconeMarkerPainelProgramacao(item),keyboard:true,title:String(item?.vocativo||"")});marker._painelProgKey=chave;const hoverHtml=renderTooltipMapaPainelProgramacao(item,geo);marker.on("mouseover",()=>mostrarHoverFlutuanteMapaPainelProgramacao(marker,hoverHtml));marker.on("mouseout",()=>ocultarHoverFlutuanteMapaPainelProgramacao());marker.on("click",()=>{ocultarHoverFlutuanteMapaPainelProgramacao();selecionarMarcadorPainelProgramacao(chave);});st.markers.set(chave,marker);}};
       await Promise.all(Array.from({length:Math.min(4,fila.length)},()=>worker())); if(st.renderSeq!==seq)return; renderPendenciasMapaPainelProgramacao(); atualizarMapaComSelecaoPainelProgramacao(false); atualizarMarcadoresDestinosExtrasPainelProgramacao(); renderListaCidadesExtrasPainelProgramacao(); renderOrdemRotaPainelProgramacao(); ajustarMapaAosPontosPainelProgramacao(); setTimeout(()=>st.map?.invalidateSize(),0);
     }
     function ajustarMapaAosPontosPainelProgramacao(){
