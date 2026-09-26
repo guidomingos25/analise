@@ -3935,13 +3935,15 @@
 
     /* ===== Painel de Programação - Mapa Leaflet sincronizado com cards ===== */
     .painelProgMapShell { background:#fff; border:1px solid rgba(15,23,42,.10); border-radius:16px; box-shadow:var(--shadowSoft); overflow:hidden; min-width:0; margin-bottom:14px; }
-    .painelProgMapToolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:10px 12px; border-bottom:1px solid #e5e7eb; background:#f8fafc; }
-    .painelProgMapToolbarLeft,.painelProgMapToolbarRight { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .painelProgMapBtn { padding:8px 10px!important; font-size:11px!important; min-height:34px; }
+    .painelProgMapToolbar { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:nowrap; padding:10px 12px; border-bottom:1px solid #e5e7eb; background:#f8fafc; }
+    .painelProgMapToolbarLeft,.painelProgMapToolbarRight { display:flex; align-items:center; gap:6px; flex-wrap:nowrap; min-width:0; }
+    .painelProgMapToolbarLeft { flex:1 1 auto; }
+    .painelProgMapToolbarRight { flex:0 0 auto; }
+    .painelProgMapBtn { padding:8px 9px!important; font-size:11px!important; min-height:34px; white-space:nowrap; }
     .painelProgMapToggleBtn { width:34px!important; min-width:34px!important; padding:8px 0!important; display:inline-flex; align-items:center; justify-content:center; }
     .painelProgMapShell.mapaOculto #painelProgMap { display:none!important; }
     .painelProgMapCityBox { display:flex; align-items:center; gap:6px; flex-wrap:nowrap; min-width:0; flex:1 1 auto; padding-left:8px; border-left:1px solid #dbe3ec; }
-    .painelProgMapCityInput { height:34px; min-width:190px; max-width:240px; padding:6px 9px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#0f172a; font-size:11px; }
+    .painelProgMapCityInput { height:34px; min-width:150px; width:185px; max-width:185px; padding:6px 9px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#0f172a; font-size:11px; }
     .painelProgMapUfInput { height:34px; width:64px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#0f172a; font-size:11px; text-transform:uppercase; }
     #painelProgMap { width:100%; height:min(68vh,720px); min-height:520px; background:#e2e8f0; }
     .painelProgMapStatusBar { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; padding:10px 12px; border-top:1px solid #e5e7eb; background:#fff; }
@@ -3968,6 +3970,9 @@
     .painelProgExtraMarker { width:32px; height:32px; border-radius:50%; background:#7c3aed; border:3px solid #fff; box-shadow:0 2px 9px rgba(15,23,42,.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px; font-weight:900; transition:transform .12s ease, box-shadow .12s ease; }
     .painelProgExtraMarker.selected { transform:scale(1.12); box-shadow:0 0 0 4px rgba(124,58,237,.25),0 3px 12px rgba(15,23,42,.45); background:#5b21b6; }
     .painelProgExtraCitiesList { display:flex; align-items:center; flex-wrap:nowrap; gap:6px; width:auto; min-width:0; max-width:min(560px,40vw); padding-top:0; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
+    .painelProgExtraCitiesList:empty { display:none; }
+    .painelProgMapToolbar:has(.painelProgExtraCityChip) { flex-wrap:wrap; }
+    .painelProgMapToolbar:has(.painelProgExtraCityChip) .painelProgMapToolbarLeft { flex-wrap:wrap; }
     .painelProgExtraCityChip { flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; min-height:28px; padding:4px 7px; border:1px solid #ddd6fe; border-radius:999px; background:#faf5ff; color:#5b21b6; font-size:10px; font-weight:800; cursor:pointer; user-select:none; }
     .painelProgExtraCityChip.selected { background:#ede9fe; border-color:#8b5cf6; box-shadow:inset 0 0 0 1px rgba(124,58,237,.15); }
     .painelProgExtraCityChip button { width:20px; height:20px; border:0; border-radius:999px; background:#fff; color:#6d28d9; cursor:pointer; font-weight:900; line-height:20px; padding:0; }
@@ -3976,6 +3981,13 @@
     .painelProgRouteInfo { font-size:11px; color:#334155; font-weight:700; }
     .painelProgRouteError { color:#b91c1c!important; }
     .painelProgRouteExtra { color:#6d28d9; font-weight:900; }
+
+    @media (min-width:901px) and (max-width:1350px) {
+      .painelProgMapToolbar:not(:has(.painelProgExtraCityChip)) .painelProgMapCityInput { min-width:135px; width:155px; max-width:155px; }
+      .painelProgMapToolbar:not(:has(.painelProgExtraCityChip)) .painelProgMapBtn { padding-left:7px!important; padding-right:7px!important; }
+      .painelProgMapToolbar:not(:has(.painelProgExtraCityChip)) .painelProgMapToolbarLeft { gap:5px; }
+      .painelProgMapToolbar:not(:has(.painelProgExtraCityChip)) .painelProgMapCityBox { gap:5px; padding-left:6px; }
+    }
     @media(max-width:900px){ #painelProgMap{height:60vh;min-height:460px}.painelProgMapStatusBar{grid-template-columns:repeat(2,minmax(0,1fr))}.painelProgGeoWarningRow{grid-template-columns:1fr}.painelProgMapToolbar{align-items:flex-start}.painelProgMapCityBox{border-left:0;padding-left:0;width:100%;flex-wrap:wrap}.painelProgMapCityInput{flex:1;max-width:none}.painelProgExtraCitiesList{max-width:100%;width:100%;padding-top:2px} }
 </style>
 </head>
