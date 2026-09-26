@@ -15169,9 +15169,30 @@ return null;
           // vários vocativos do mesmo agrupamento sem fechá-lo a cada clique.
           st.cluster.on("spiderfied", (ev) => {
             st.activeSpiderCluster = ev?.cluster || null;
+            // Quando um cluster volta a abrir após clique em um filho, preserva a referência.
+            if (st.keepSpiderOpenCluster && st.activeSpiderCluster === st.keepSpiderOpenCluster) {
+              st.keepSpiderOpenCluster = st.activeSpiderCluster;
+            }
           });
           st.cluster.on("unspiderfied", (ev) => {
-            if (!ev?.cluster || st.activeSpiderCluster === ev.cluster) st.activeSpiderCluster = null;
+            const clusterFechado = ev?.cluster || null;
+
+            // O MarkerCluster pode disparar unspiderfy internamente ao clicar em um
+            // marcador filho. Se o usuário ainda está trabalhando dentro do mesmo
+            // agrupamento, reabre imediatamente o mesmo spiderfy.
+            if (clusterFechado && st.keepSpiderOpenCluster === clusterFechado && !st.closingSpiderByOutside) {
+              st.activeSpiderCluster = clusterFechado;
+              requestAnimationFrame(() => {
+                if (st.keepSpiderOpenCluster !== clusterFechado || st.closingSpiderByOutside) return;
+                try {
+                  if (typeof clusterFechado.spiderfy === "function") clusterFechado.spiderfy();
+                } catch (_) {}
+              });
+              return;
+            }
+
+            if (!clusterFechado || st.activeSpiderCluster === clusterFechado) st.activeSpiderCluster = null;
+            if (st.keepSpiderOpenCluster === clusterFechado) st.keepSpiderOpenCluster = null;
           });
 
           // Fecha o agrupamento somente quando o usuário clicar fora dos marcadores
@@ -15197,7 +15218,11 @@ return null;
               });
               if (clicouEmFilho) return;
 
+              // Clique realmente fora do agrupamento: agora o fechamento é permitido.
+              st.keepSpiderOpenCluster = null;
+              st.closingSpiderByOutside = true;
               try { st.cluster.unspiderfy(); } catch (_) {}
+              setTimeout(() => { st.closingSpiderByOutside = false; }, 0);
             }, true);
           }
         }
@@ -15498,7 +15523,30 @@ return null;
     async function renderMapaPainelProgramacao(dados,{forcarGeocode=false}={}){
       const st=garantirEstruturaMapaPainelProgramacao(); if(!st)return; const seq=++st.renderSeq; st.dadosFiltrados=[...(dados||[])]; st.cluster.clearLayers();st.markers.clear();st.localizacoes.clear();st.pendencias.clear();st.mapFilterSelectedOnly=painelProgCardsSelecionados.size>0; limparRotaMapaPainelProgramacao(false); atualizarResumoMapaPainelProgramacao();
       const fila=ordenarPainelProgPorVocativo(dados||[]); if(!fila.length){renderPendenciasMapaPainelProgramacao();return;}
-      const worker=async()=>{while(fila.length&&st.renderSeq===seq){const item=fila.shift(),geo=await geocodificarCepPainelProgramacao(item,forcarGeocode);if(st.renderSeq!==seq)return;const chave=String(item?.cardKey||"").trim();if(!chave)continue;if(!geo?.ok){st.pendencias.set(chave,{item,geo});atualizarResumoMapaPainelProgramacao();continue;}st.localizacoes.set(chave,{item,geo});const marker=L.marker([geo.lat,geo.lon],{icon:criarIconeMarkerPainelProgramacao(item),keyboard:true,title:String(item?.vocativo||"")});marker._painelProgKey=chave;const hoverHtml=renderTooltipMapaPainelProgramacao(item,geo);marker.on("mouseover",()=>mostrarHoverFlutuanteMapaPainelProgramacao(marker,hoverHtml));marker.on("mouseout",()=>ocultarHoverFlutuanteMapaPainelProgramacao());marker.on("click",()=>{suprimirCliqueEstadoMapaPainelProgramacao(260);ocultarHoverFlutuanteMapaPainelProgramacao();selecionarMarcadorPainelProgramacao(chave);});st.markers.set(chave,marker);}};
+      const worker=async()=>{while(fila.length&&st.renderSeq===seq){const item=fila.shift(),geo=await geocodificarCepPainelProgramacao(item,forcarGeocode);if(st.renderSeq!==seq)return;const chave=String(item?.cardKey||"").trim();if(!chave)continue;if(!geo?.ok){st.pendencias.set(chave,{item,geo});atualizarResumoMapaPainelProgramacao();continue;}st.localizacoes.set(chave,{item,geo});const marker=L.marker([geo.lat,geo.lon],{icon:criarIconeMarkerPainelProgramacao(item),keyboard:true,title:String(item?.vocativo||"")});marker._painelProgKey=chave;const hoverHtml=renderTooltipMapaPainelProgramacao(item,geo);marker.on("mouseover",()=>mostrarHoverFlutuanteMapaPainelProgramacao(marker,hoverHtml));marker.on("mouseout",()=>ocultarHoverFlutuanteMapaPainelProgramacao());marker.on("click",(ev)=>{
+        suprimirCliqueEstadoMapaPainelProgramacao(260);
+        ocultarHoverFlutuanteMapaPainelProgramacao();
+
+        // Se este marcador pertence ao spiderfy atualmente aberto, mantém o mesmo
+        // agrupamento armado para permanecer expandido após a seleção.
+        const stAtual = window.__painelProgMapState;
+        const clusterAberto = stAtual?.activeSpiderCluster;
+        if (clusterAberto && typeof clusterAberto.getAllChildMarkers === "function") {
+          const filhos = clusterAberto.getAllChildMarkers();
+          if (Array.isArray(filhos) && filhos.includes(marker)) {
+            stAtual.keepSpiderOpenCluster = clusterAberto;
+            stAtual.closingSpiderByOutside = false;
+          }
+        }
+
+        // Impede que o clique no marcador filho seja tratado pelo mapa como clique
+        // externo, que é uma das causas do unspiderfy automático do plugin.
+        try {
+          if (ev?.originalEvent && window.L?.DomEvent) L.DomEvent.stopPropagation(ev.originalEvent);
+        } catch (_) {}
+
+        selecionarMarcadorPainelProgramacao(chave);
+      });st.markers.set(chave,marker);}};
       await Promise.all(Array.from({length:Math.min(4,fila.length)},()=>worker())); if(st.renderSeq!==seq)return; renderPendenciasMapaPainelProgramacao(); atualizarMapaComSelecaoPainelProgramacao(false); atualizarMarcadoresDestinosExtrasPainelProgramacao(); renderListaCidadesExtrasPainelProgramacao(); renderOrdemRotaPainelProgramacao(); ajustarMapaAosPontosPainelProgramacao(); setTimeout(()=>st.map?.invalidateSize(),0);
     }
     function ajustarMapaAosPontosPainelProgramacao(){
