@@ -13016,27 +13016,27 @@ return null;
               ? bpsOrdenadas.map(bp => {
                   const idxBp = addCopy(bp);
                   return `
-                    <div class="painelProgPopupBpRow">
-                      <span>${getTextoPainelProgramacao(bp)}</span>
-                      <button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idxBp}, event)">Copiar</button>
+                    <div class="painelProgPopupBpInlineItem">
+                      <span class="painelProgPopupBpNumero">${getTextoPainelProgramacao(bp)}</span>
+                      <button class="painelProgPopupCopyBtn painelProgPopupBpCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idxBp}, event)">Copiar</button>
                     </div>
                   `;
                 }).join("")
-              : `<div class="painelProgPopupBpRow"><span style="color:#64748b;font-weight:700;">Sem BP</span></div>`;
+              : `<div class="painelProgPopupBpInlineItem"><span class="painelProgPopupBpNumero" style="color:#64748b;font-weight:700;">Sem BP</span></div>`;
 
             const routeTokensJson = getTextoPainelProgramacao(JSON.stringify(item.routeTokens || []));
             return `
               <div class="painelProgPopupVocDetail isRouteSortable" draggable="true" data-route-tokens="${routeTokensJson}" title="Arraste para alterar a ordem de entrega da rota">
                 <button class="painelProgPopupRouteRemove" type="button" title="Retirar este vocativo da seleção e da rota" aria-label="Retirar este vocativo da seleção e da rota" onclick="removerVocativoDaSelecaoRotaPainelProgramacao(this,event)">×</button>
                 <div class="painelProgPopupRouteGrip"><span>⋮⋮</span><span class="painelProgPopupRouteNum">${detalhesPorVocativo.indexOf(item) + 1}</span></div>
-                <div>
+                <div class="painelProgPopupVocConteudo">
                   <div class="painelProgPopupVocName">${getTextoPainelProgramacao(item.vocativo)}</div>
-                  <button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idxVocativo}, event)">Copiar vocativo</button>
-                  <div class="painelProgPopupVocPeso">Peso: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.peso, 2))}</div>
-                </div>
-                <div>
-                  <div class="painelProgPopupBpTitle">BP(s)</div>
-                  ${bpsHtml}
+                  <div class="painelProgPopupVocLinhaUnica">
+                    <button class="painelProgPopupCopyBtn painelProgPopupVocCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idxVocativo}, event)">Copiar vocativo</button>
+                    <div class="painelProgPopupVocPeso">Peso: ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item.peso, 2))}</div>
+                    <span class="painelProgPopupBpTitleInline">BP(s)</span>
+                    <div class="painelProgPopupBpInlineList">${bpsHtml}</div>
+                  </div>
                 </div>
               </div>
             `;
@@ -14313,7 +14313,102 @@ return null;
     .painelProgPopupVocDetail > div:first-of-type > .painelProgPopupVocPeso {
       vertical-align: middle;
     }
-</style></head><body>
+</style>
+<style>
+/* Layout final da lista lateral: uma linha fixa para Copiar vocativo | Peso | BP | Copiar. */
+.painelProgPopupVocDetail {
+  display:block !important;
+  position:relative !important;
+  padding:6px 28px 6px 34px !important;
+  min-width:0 !important;
+}
+.painelProgPopupVocConteudo { min-width:0 !important; width:100% !important; }
+.painelProgPopupVocName {
+  margin:0 0 4px 0 !important;
+  padding-right:2px !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  line-height:1.15 !important;
+}
+.painelProgPopupVocLinhaUnica {
+  display:grid !important;
+  grid-template-columns:max-content max-content max-content minmax(0,1fr) !important;
+  align-items:center !important;
+  column-gap:5px !important;
+  width:100% !important;
+  min-width:0 !important;
+  white-space:nowrap !important;
+}
+.painelProgPopupVocCopyBtn {
+  flex:none !important;
+  margin:0 !important;
+  padding:3px 6px !important;
+  font-size:8px !important;
+}
+.painelProgPopupVocPeso {
+  display:inline-flex !important;
+  align-items:center !important;
+  flex:none !important;
+  margin:0 !important;
+  padding:2px 4px !important;
+  font-size:7.2px !important;
+  line-height:1.1 !important;
+  white-space:nowrap !important;
+}
+.painelProgPopupBpTitleInline {
+  color:#64748b !important;
+  font-size:7px !important;
+  font-weight:1000 !important;
+  text-transform:uppercase !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+}
+.painelProgPopupBpInlineList {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:4px !important;
+  min-width:0 !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  scrollbar-width:none !important;
+  white-space:nowrap !important;
+}
+.painelProgPopupBpInlineList::-webkit-scrollbar { display:none !important; }
+.painelProgPopupBpInlineItem {
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:3px !important;
+  flex:0 0 auto !important;
+  min-width:0 !important;
+}
+.painelProgPopupBpNumero {
+  color:#0f172a !important;
+  font-size:8px !important;
+  font-weight:900 !important;
+  letter-spacing:-.02em !important;
+  white-space:nowrap !important;
+}
+.painelProgPopupBpCopyBtn {
+  margin:0 !important;
+  padding:3px 6px !important;
+  font-size:8px !important;
+  flex:0 0 auto !important;
+}
+.painelProgPopupRouteRemove {
+  top:5px !important;
+  right:5px !important;
+  z-index:5 !important;
+}
+@media (max-width:520px) {
+  .painelProgPopupVocLinhaUnica { column-gap:3px !important; }
+  .painelProgPopupVocCopyBtn,.painelProgPopupBpCopyBtn { padding-left:4px !important; padding-right:4px !important; }
+  .painelProgPopupVocPeso { font-size:6.8px !important; }
+  .painelProgPopupBpNumero { font-size:7.5px !important; }
+}
+</style>
+</head><body>
         <section class="report-wrap"><article class="report-sheet">
           <h1 class="report-title">Relatório de Carregamento - Zona de Entrega: ${escRelatorioCarregamentoPainelProgramacao(zona)}</h1>
           <div class="report-subtitle">Peso Total: ${fmtPesoRelatorioCarregamentoPainelProgramacao(totalKg)} KG - NFs Totais: ${registros.length}</div>
