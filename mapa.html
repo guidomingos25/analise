@@ -14227,6 +14227,7 @@ return null;
     let painelProgSelosOverlayRaf = 0;
     let painelProgSelosOverlayObserver = null;
     let painelProgSelosOverlayResizeObserver = null;
+    let painelProgSelosOverlayMapaResizeObserver = null;
 
     function getOrCreatePainelProgSelosOverlayLayer() {
       let layer = document.getElementById("painelProgSelosOverlayLayer");
@@ -14283,6 +14284,25 @@ return null;
       painelProgSelosOverlayRaf = requestAnimationFrame(sincronizarSelosOverlayPainelProgramacao);
     }
 
+    // Mudanças de altura em elementos que ficam acima dos cards (principalmente
+    // ocultar/reexibir o mapa) alteram a posição dos cards sem necessariamente
+    // disparar scroll ou resize da janela. Recalcula os selos em mais de um frame
+    // para garantir que o layout já tenha estabilizado antes de exibi-los.
+    function resincronizarSelosAposMudancaLayoutPainelProgramacao() {
+      const layer = document.getElementById("painelProgSelosOverlayLayer");
+      if (layer) layer.style.visibility = "hidden";
+
+      const executar = () => {
+        sincronizarSelosOverlayPainelProgramacao();
+        const atual = document.getElementById("painelProgSelosOverlayLayer");
+        if (atual) atual.style.visibility = "visible";
+      };
+
+      requestAnimationFrame(() => requestAnimationFrame(executar));
+      setTimeout(executar, 90);
+      setTimeout(executar, 220);
+    }
+
     function iniciarSelosOverlayPainelProgramacao() {
       if (window.__painelProgSelosOverlayIniciado) return;
       window.__painelProgSelosOverlayIniciado = true;
@@ -14307,6 +14327,15 @@ return null;
       if (cardsArea && typeof ResizeObserver !== "undefined") {
         painelProgSelosOverlayResizeObserver = new ResizeObserver(agendarSincronizacaoSelosOverlayPainelProgramacao);
         painelProgSelosOverlayResizeObserver.observe(cardsArea);
+      }
+
+      // O mapa está acima dos cards. Quando sua altura muda, os cards se deslocam
+      // verticalmente, mas o próprio cardsArea pode continuar com o mesmo tamanho.
+      // Observar o host do mapa garante que SPOT/EXPRESSO acompanhem esse deslocamento.
+      const mapaHost = document.getElementById("painelProgramacaoMapaHost");
+      if (mapaHost && typeof ResizeObserver !== "undefined") {
+        painelProgSelosOverlayMapaResizeObserver = new ResizeObserver(resincronizarSelosAposMudancaLayoutPainelProgramacao);
+        painelProgSelosOverlayMapaResizeObserver.observe(mapaHost);
       }
 
       agendarSincronizacaoSelosOverlayPainelProgramacao();
@@ -14664,6 +14693,11 @@ return null;
       }
       if (visivel) {
         setTimeout(() => { try { window.__painelProgMapState?.map?.invalidateSize?.(); } catch (_) {} }, 0);
+      }
+      // A alteração de altura do mapa desloca os cards. Atualiza imediatamente
+      // a camada global de selos SPOT/EXPRESSO, sem depender de o usuário rolar a página.
+      if (typeof resincronizarSelosAposMudancaLayoutPainelProgramacao === "function") {
+        resincronizarSelosAposMudancaLayoutPainelProgramacao();
       }
     }
     function toggleVisibilidadeMapaPainelProgramacao(event) {
