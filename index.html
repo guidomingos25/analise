@@ -4097,6 +4097,64 @@
     }
     @media(max-width:900px){ #painelProgMap{height:57vh;min-height:440px}.painelProgMapStatusBar{grid-template-columns:repeat(2,minmax(0,1fr))}.painelProgGeoWarningRow{grid-template-columns:1fr}.painelProgMapToolbar{align-items:flex-start}.painelProgMapCityBox{border-left:0;padding-left:0;width:100%;flex-wrap:wrap}.painelProgMapCityInput{flex:1;max-width:none}.painelProgExtraCitiesList{max-width:100%;width:100%;padding-top:2px} }
 </style>
+
+<style>
+/* Ajuste final da lista lateral: BP compacto à direita e peso na mesma linha. */
+.painelProgPopupVocDetail.isRouteSortable {
+  padding-right: 5px !important;
+}
+.painelProgPopupVocDetail {
+  grid-template-columns: minmax(0, 1fr) 128px !important;
+  column-gap: 4px !important;
+}
+.painelProgPopupVocDetail > div:first-of-type {
+  min-width: 0 !important;
+  white-space: nowrap;
+}
+.painelProgPopupVocDetail > div:first-of-type .painelProgPopupVocName {
+  white-space: normal;
+}
+.painelProgPopupVocDetail > div:nth-of-type(2) {
+  width: 128px !important;
+  min-width: 128px !important;
+  margin-left: 0 !important;
+}
+.painelProgPopupBpTitle {
+  margin-bottom: 2px !important;
+  padding-right: 42px;
+}
+.painelProgPopupBpRow {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 4px !important;
+  padding: 2px 0 !important;
+}
+.painelProgPopupBpRow span {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+  font-size: 8.5px !important;
+  letter-spacing: -0.02em !important;
+}
+.painelProgPopupBpRow .painelProgPopupCopyBtn {
+  flex: 0 0 auto !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+.painelProgPopupVocPeso {
+  font-size: 7px !important;
+  padding: 2px 3px !important;
+  margin-left: 2px !important;
+  margin-top: 0 !important;
+  white-space: nowrap !important;
+}
+.painelProgPopupVocDetail > div:first-of-type > .painelProgPopupCopyBtn,
+.painelProgPopupVocDetail > div:first-of-type > .painelProgPopupVocPeso {
+  display: inline-flex !important;
+  vertical-align: middle !important;
+}
+</style>
 </head>
 
 <body>
