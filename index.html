@@ -4038,6 +4038,15 @@
     .painelProgMarker.selected { outline:4px solid rgba(37,99,235,.35); box-shadow:0 0 0 3px #1d4ed8,0 4px 12px rgba(15,23,42,.4); }
     .painelProgMarker.spot:after { content:'S'; position:absolute; right:-8px; top:-9px; width:15px; height:15px; border-radius:999px; background:#f59e0b; color:#fff; font-size:8px; font-weight:1000; display:flex; align-items:center; justify-content:center; transform:rotate(45deg); border:1px solid #fff; }
     .painelProgMarker.expresso:before { content:'EX'; position:absolute; left:-10px; top:-9px; min-width:18px; height:15px; border-radius:999px; background:#7c3aed; color:#fff; font-size:7px; font-weight:1000; display:flex; align-items:center; justify-content:center; transform:rotate(45deg); border:1px solid #fff; padding:0 2px; }
+
+    /* Mapa mais limpo: pins e clusters um pouco menores, sem alterar a lógica. */
+    .painelProgMarker { width:24px; height:24px; border-width:2px; box-shadow:0 2px 6px rgba(15,23,42,.32); }
+    .painelProgMarker>span { font-size:8px; }
+    .painelProgMarker.selected { outline:3px solid rgba(37,99,235,.32); box-shadow:0 0 0 2px #1d4ed8,0 3px 9px rgba(15,23,42,.38); }
+    .painelProgMarker.spot:after { right:-7px; top:-8px; width:13px; height:13px; font-size:7px; }
+    .painelProgMarker.expresso:before { left:-9px; top:-8px; min-width:16px; height:13px; font-size:6px; }
+    .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large { width:32px !important; height:32px !important; }
+    .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div { width:24px !important; height:24px !important; margin-left:4px !important; margin-top:4px !important; font-size:10px !important; line-height:24px !important; }
     .painelProgExtraMarker { width:32px; height:32px; border-radius:50%; background:#7c3aed; border:3px solid #fff; box-shadow:0 2px 9px rgba(15,23,42,.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px; font-weight:900; transition:transform .12s ease, box-shadow .12s ease; }
     .painelProgExtraMarker.selected { transform:scale(1.12); box-shadow:0 0 0 4px rgba(124,58,237,.25),0 3px 12px rgba(15,23,42,.45); background:#5b21b6; }
     .painelProgExtraCitiesList { display:flex; align-items:center; flex-wrap:nowrap; gap:6px; flex:1 0 100%; width:100%; min-width:0; max-width:none; padding-top:2px; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; order:20; }
@@ -14935,6 +14944,35 @@ return null;
       setVisibilidadeMapaPainelProgramacao(true);
     }
 
+    const PAINEL_PROG_CODIGO_UF_IBGE = {
+      "11":"RO","12":"AC","13":"AM","14":"RR","15":"PA","16":"AP","17":"TO",
+      "21":"MA","22":"PI","23":"CE","24":"RN","25":"PB","26":"PE","27":"AL","28":"SE","29":"BA",
+      "31":"MG","32":"ES","33":"RJ","35":"SP",
+      "41":"PR","42":"SC","43":"RS","50":"MS","51":"MT","52":"GO","53":"DF"
+    };
+    function getUfFeatureEstadoPainelProgramacao(feature) {
+      const p = feature?.properties || {};
+      const direta = String(p.sigla || p.SIGLA_UF || p.uf || p.UF || "").trim().toUpperCase();
+      if (/^[A-Z]{2}$/.test(direta)) return direta;
+      const codigoRaw = String(p.codarea || p.CD_UF || p.codigo || p.code || feature?.id || "").replace(/\D/g, "");
+      const codigo = codigoRaw.slice(0,2);
+      return PAINEL_PROG_CODIGO_UF_IBGE[codigo] || "";
+    }
+    function filtrarUfPeloMapaPainelProgramacao(uf) {
+      uf = String(uf || "").trim().toUpperCase();
+      if (!uf) return;
+      const atual = painelProgUfsSelecionados instanceof Set ? painelProgUfsSelecionados : new Set();
+      const somenteEsta = atual.size === 1 && atual.has(uf);
+      if (somenteEsta) {
+        const opcoes = getPainelProgOpcoesFiltroBase("uf") || [];
+        painelProgUfsSelecionados = new Set(opcoes.map(o => o.value));
+      } else {
+        painelProgUfsSelecionados = new Set([normalizar(uf)]);
+      }
+      painelProgUfsFiltroInicializado = true;
+      renderPainelProgramacaoComBaseAtual(false);
+    }
+
     async function carregarDivisasEstadosPainelProgramacao() {
       const st = window.__painelProgMapState;
       if (!st?.map || st.stateBordersLoaded || st.stateBordersLoading) return;
@@ -14945,11 +14983,31 @@ return null;
           pane.style.zIndex = "325";
           pane.style.pointerEvents = "none";
         }
+        if (!st.map.getPane("painelProgStateClickPane")) {
+          const paneClick = st.map.createPane("painelProgStateClickPane");
+          paneClick.style.zIndex = "324";
+          paneClick.style.pointerEvents = "auto";
+        }
         const resp = await fetch(PAINEL_PROG_IBGE_ESTADOS_GEOJSON, { cache:"force-cache" });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const geojson = await resp.json();
         if (!geojson) throw new Error("Malha estadual vazia");
 
+        const areasClique = L.geoJSON(geojson, {
+          pane:"painelProgStateClickPane",
+          interactive:true,
+          style:()=>({ color:"transparent", weight:0, opacity:0, fillColor:"#ffffff", fillOpacity:.001 }),
+          onEachFeature:(feature, layer)=>{
+            const uf = getUfFeatureEstadoPainelProgramacao(feature);
+            if (!uf) return;
+            layer.on("click", (ev) => {
+              try { L.DomEvent.stopPropagation(ev); } catch (_) {}
+              filtrarUfPeloMapaPainelProgramacao(uf);
+            });
+            layer.on("mouseover", ()=>{ try { layer.setStyle({fillOpacity:.025}); } catch(_){} });
+            layer.on("mouseout", ()=>{ try { layer.setStyle({fillOpacity:.001}); } catch(_){} });
+          }
+        });
         const halo = L.geoJSON(geojson, {
           pane:"painelProgStateBordersPane",
           interactive:false,
@@ -14960,10 +15018,11 @@ return null;
           interactive:false,
           style:()=>({ color:"#475569", weight:2.2, opacity:.94, fill:false, lineCap:"round", lineJoin:"round" })
         });
+        st.stateClickLayer = areasClique.addTo(st.map);
         st.stateBordersLayer = L.layerGroup([halo, linha]).addTo(st.map);
         st.stateBordersLoaded = true;
       } catch (err) {
-        console.warn("Divisas estaduais indisponíveis; mapa segue sem a camada visual do IBGE.", err);
+        console.warn("Divisas estaduais indisponíveis; mapa segue sem a camada visual/filtro do IBGE.", err);
       } finally {
         st.stateBordersLoading = false;
       }
@@ -14972,7 +15031,7 @@ return null;
     function garantirEstruturaMapaPainelProgramacao() {
       const host = document.getElementById("painelProgramacaoMapaHost"); if(!host) return null;
       const st = window.__painelProgMapState;
-      if (!document.getElementById("painelProgMap") && st?.map) { try{st.map.remove()}catch(_){} st.map=null;st.cluster=null;st.markers=new Map();st.localizacoes=new Map();st.pendencias=new Map();st.routeLayer=null;st.routeResult=null;st.extraMarkers=new Map(); }
+      if (!document.getElementById("painelProgMap") && st?.map) { try{st.map.remove()}catch(_){} st.map=null;st.cluster=null;st.markers=new Map();st.localizacoes=new Map();st.pendencias=new Map();st.routeLayer=null;st.routeResult=null;st.extraMarkers=new Map();st.stateBordersLayer=null;st.stateClickLayer=null;st.stateBordersLoaded=false;st.stateBordersLoading=false; }
       if (!document.getElementById("painelProgMap")) {
         host.innerHTML = `<div class="painelProgMapShell"><div class="painelProgMapToolbar"><div class="painelProgMapToolbarLeft">
           <button class="btn painelProgMapBtn" type="button" onclick="calcularRotaMapaPainelProgramacao()">🛣️ Calcular rota</button>
@@ -15024,7 +15083,7 @@ return null;
     function getClasseMarkerPainelProgramacao(item){ if(item?.temCarregadoHoje)return"carregadoHoje";if(item?.temCarregadoOntem)return"carregadoOntem";return item?.temProgramado?"programado":"naoProgramado"; }
     function criarIconeMarkerPainelProgramacao(item){
       const chave=String(item?.cardKey||""),sel=painelProgCardsSelecionados.has(chave)?" selected":"",spot=item?.temSpot?" spot":"",ex=item?.temExpresso?" expresso":"",letra=String(item?.vocativo||"?").trim().slice(0,2).toUpperCase();
-      return L.divIcon({className:"painelProgMarkerWrap",html:`<div class="painelProgMarker ${getClasseMarkerPainelProgramacao(item)}${sel}${spot}${ex}"><span>${getTextoPainelProgramacao(letra)}</span></div>`,iconSize:[34,42],iconAnchor:[17,38],tooltipAnchor:[0,-30]});
+      return L.divIcon({className:"painelProgMarkerWrap",html:`<div class="painelProgMarker ${getClasseMarkerPainelProgramacao(item)}${sel}${spot}${ex}"><span>${getTextoPainelProgramacao(letra)}</span></div>`,iconSize:[28,34],iconAnchor:[14,30],tooltipAnchor:[0,-24]});
     }
     function getZonaSaoPauloPainelProgramacao(geo) {
       const cidadeNorm = normalizar(String(geo?.cidade || ""));
