@@ -15098,7 +15098,7 @@ return null;
       if (st.filiaisSelecionadas.has(id)) st.filiaisSelecionadas.delete(id);
       else st.filiaisSelecionadas.add(id);
       atualizarIconesFiliaisPainelProgramacao();
-      atualizarDestaqueClustersSelecionadosPainelProgramacao();
+      sincronizarEstadoVisualSelecoesMapaPainelProgramacao();
       limparProximidadePainelProgramacao();
       const info = document.getElementById("painelProgRouteInfo");
       if(info){ info.classList.remove("painelProgRouteError"); info.textContent=""; }
@@ -15260,7 +15260,10 @@ return null;
         btn.setAttribute("aria-label", btn.title);
       }
       if (visivel) {
-        setTimeout(() => { try { window.__painelProgMapState?.map?.invalidateSize?.(); } catch (_) {} }, 0);
+        setTimeout(() => {
+          try { window.__painelProgMapState?.map?.invalidateSize?.(); } catch (_) {}
+          agendarSincronizacaoVisualSelecoesMapaPainelProgramacao();
+        }, 0);
       }
       // A alteração de altura do mapa desloca os cards. Atualiza imediatamente
       // a camada global de selos SPOT/EXPRESSO, sem depender de o usuário rolar a página.
@@ -15496,12 +15499,45 @@ return null;
       } catch (_) {}
     }
 
+    function sincronizarEstadoVisualSelecoesMapaPainelProgramacao() {
+      const st = window.__painelProgMapState;
+      if (!st) return;
+
+      // O MarkerCluster pode recriar o DOM dos pins durante zoom/spiderfy.
+      // Reaplica a classe de seleção a partir do estado real, sem alterar camadas.
+      st.markers?.forEach?.((marker, chave) => {
+        try {
+          const root = marker?.getElement?.() || marker?._icon;
+          const pin = root?.querySelector?.(".painelProgMarker");
+          if (pin) pin.classList.toggle("selected", painelProgCardsSelecionados.has(chave));
+        } catch (_) {}
+      });
+
+      st.filialMarkers?.forEach?.((marker, filialId) => {
+        try {
+          const root = marker?.getElement?.() || marker?._icon;
+          const pin = root?.querySelector?.(".painelProgFilialMarker");
+          if (pin) pin.classList.toggle("selected", !!st.filiaisSelecionadas?.has?.(filialId));
+        } catch (_) {}
+      });
+
+      atualizarDestaqueClustersSelecionadosPainelProgramacao();
+    }
+
+    function agendarSincronizacaoVisualSelecoesMapaPainelProgramacao() {
+      requestAnimationFrame(() => {
+        sincronizarEstadoVisualSelecoesMapaPainelProgramacao();
+        setTimeout(sincronizarEstadoVisualSelecoesMapaPainelProgramacao, 35);
+        setTimeout(sincronizarEstadoVisualSelecoesMapaPainelProgramacao, 140);
+      });
+    }
+
     function garantirEstruturaMapaPainelProgramacao() {
       const host = document.getElementById("painelProgramacaoMapaHost"); if(!host) return null;
       const st = window.__painelProgMapState;
       if (!document.getElementById("painelProgMap") && st?.map) { try{st.map.remove()}catch(_){} st.map=null;st.cluster=null;st.markers=new Map();st.localizacoes=new Map();st.pendencias=new Map();st.routeLayer=null;st.routeResult=null;st.extraMarkers=new Map();st.filialMarkers=new Map();st.filialLocalizacoes=new Map();st.filiaisSelecionadas=new Set();st.filiaisCarregando=false;st.stateBordersLayer=null;st.stateClickLayer=null;st.stateBordersLoaded=false;st.stateBordersLoading=false;st.stateGeoJson=null;st.stateMapClickBound=false;st.suppressStateMapClickUntil=0;st.activeSpiderCluster=null;st.spiderOutsideCloseBound=false; }
       if (!document.getElementById("painelProgMap")) {
-        host.innerHTML = `<div class="painelProgMapShell"><div class="painelProgMapToolbar"><div class="painelProgMapToolbarLeft">
+        host.innerHTML = `<div class="painelProgMapShell mapaOculto"><div class="painelProgMapToolbar"><div class="painelProgMapToolbarLeft">
           <button class="btn painelProgMapBtn" type="button" onclick="calcularRotaMapaPainelProgramacao()">🛣️ Calcular rota</button>
           <button class="btn painelProgMapBtn" type="button" onclick="calcularRotaMapaPainelProgramacao(true)" title="Calcular a rota partindo de São Paulo — CEP 02174-010">📍 De SP</button>
           <button class="btn secondary painelProgMapBtn" type="button" onclick="calcularProximidadePainelProgramacao()" title="Informar a filial/armazém mais próximo dos destinos filtrados ou selecionados">◎ Mais próximos</button>
@@ -15511,7 +15547,7 @@ return null;
             <button class="btn secondary painelProgMapBtn" type="button" onclick="geocodificarCidadeExtraPainelProgramacao()">+ Adicionar destino</button>
             <button class="btn secondary painelProgMapBtn painelProgMapToggleBtn" type="button" onclick="ajustarMapaAosPontosPainelProgramacao()" title="Enquadrar pontos" aria-label="Enquadrar pontos">◎</button>
             <button class="btn secondary painelProgMapBtn" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Limpar seleção de cards, pontos, destinos e filiais" aria-label="Limpar seleção de cards, pontos, destinos e filiais">⊘</button>
-            <button id="btnPainelProgToggleMapa" class="btn secondary painelProgMapBtn painelProgMapToggleBtn" type="button" onclick="toggleVisibilidadeMapaPainelProgramacao(event)" title="Ocultar mapa" aria-label="Ocultar ou reexibir mapa">▣</button>
+            <button id="btnPainelProgToggleMapa" class="btn secondary painelProgMapBtn painelProgMapToggleBtn" type="button" onclick="toggleVisibilidadeMapaPainelProgramacao(event)" title="Reexibir mapa" aria-label="Reexibir mapa">▤</button>
             <div id="painelProgExtraCitiesList" class="painelProgExtraCitiesList"></div>
           </div>
         </div></div>
@@ -15546,15 +15582,20 @@ return null;
             if (html) mostrarHoverClusterMapaPainelProgramacao(ev?.layer, html);
           });
           st.cluster.on("clustermouseout", () => ocultarHoverFlutuanteMapaPainelProgramacao());
-          st.cluster.on("animationend", () => ocultarHoverFlutuanteMapaPainelProgramacao());
+          st.cluster.on("animationend", () => {
+            ocultarHoverFlutuanteMapaPainelProgramacao();
+            agendarSincronizacaoVisualSelecoesMapaPainelProgramacao();
+          });
 
           // Guarda somente a referência do spiderfy atual. Não reabre automaticamente
           // clusters fechados: reabrir um objeto antigo pode produzir filhos ausentes.
           st.cluster.on("spiderfied", (ev) => {
             st.activeSpiderCluster = ev?.cluster || null;
+            agendarSincronizacaoVisualSelecoesMapaPainelProgramacao();
           });
           st.cluster.on("unspiderfied", (ev) => {
             if (!ev?.cluster || st.activeSpiderCluster === ev.cluster) st.activeSpiderCluster = null;
+            agendarSincronizacaoVisualSelecoesMapaPainelProgramacao();
           });
 
           // O clique em marcador filho é interrompido no próprio marcador. Assim o
@@ -15579,10 +15620,19 @@ return null;
           }
         }
         st.cluster.addTo(st.map);
+
+        // Zoom e movimentação podem recriar/reutilizar nós dos pins do cluster.
+        // Reaplica a seleção real sempre que a visualização estabiliza.
+        st.map.on("zoomend moveend", () => {
+          agendarSincronizacaoVisualSelecoesMapaPainelProgramacao();
+        });
+
         ativarFallbackCliqueEstadoPainelProgramacao();
         carregarDivisasEstadosPainelProgramacao();
         carregarFiliaisDellaVolpePainelProgramacao();
-        setTimeout(()=>st.map.invalidateSize(),0);
+
+        // Estado inicial obrigatório: mapa recolhido e botão oferecendo "Reexibir mapa".
+        setVisibilidadeMapaPainelProgramacao(false);
       }
       atualizarMarcadoresDestinosExtrasPainelProgramacao(); renderListaCidadesExtrasPainelProgramacao(); renderOrdemRotaPainelProgramacao(); carregarFiliaisDellaVolpePainelProgramacao(); return st;
     }
@@ -15828,7 +15878,7 @@ return null;
       }
 
       atualizarResumoMapaPainelProgramacao();
-      atualizarDestaqueClustersSelecionadosPainelProgramacao();
+      sincronizarEstadoVisualSelecoesMapaPainelProgramacao();
       limparRotaMapaPainelProgramacao(false);
       const info = document.getElementById("painelProgRouteInfo");
       if (info && !st.routeResult) {
@@ -15899,7 +15949,7 @@ return null;
 
         selecionarMarcadorPainelProgramacao(chave);
       });st.markers.set(chave,marker);}};
-      await Promise.all(Array.from({length:Math.min(4,fila.length)},()=>worker())); if(st.renderSeq!==seq)return; renderPendenciasMapaPainelProgramacao(); atualizarMapaComSelecaoPainelProgramacao(false); atualizarMarcadoresDestinosExtrasPainelProgramacao(); renderListaCidadesExtrasPainelProgramacao(); renderOrdemRotaPainelProgramacao(); ajustarMapaAosPontosPainelProgramacao(); setTimeout(()=>st.map?.invalidateSize(),0);
+      await Promise.all(Array.from({length:Math.min(4,fila.length)},()=>worker())); if(st.renderSeq!==seq)return; renderPendenciasMapaPainelProgramacao(); atualizarMapaComSelecaoPainelProgramacao(false); atualizarMarcadoresDestinosExtrasPainelProgramacao(); renderListaCidadesExtrasPainelProgramacao(); renderOrdemRotaPainelProgramacao(); ajustarMapaAosPontosPainelProgramacao(); agendarSincronizacaoVisualSelecoesMapaPainelProgramacao(); setTimeout(()=>st.map?.invalidateSize(),0);
     }
     function ajustarMapaAosPontosPainelProgramacao(){
       const st=window.__painelProgMapState;if(!st?.map)return;const pts=[];st.cluster?.eachLayer?.(m=>{if(m?._painelProgTipo==="filial")return;const ll=m.getLatLng?.();if(ll)pts.push(ll)});getCidadesExtrasPainelProgramacao().forEach(c=>{if(c?.ok)pts.push(L.latLng(c.lat,c.lon));});if(!pts.length && st.filialLocalizacoes instanceof Map){st.filialLocalizacoes.forEach(f=>{if(f?.ok)pts.push(L.latLng(f.lat,f.lon));});}if(!pts.length)return;if(pts.length===1)st.map.setView(pts[0],12);else st.map.fitBounds(L.latLngBounds(pts),{padding:[28,28],maxZoom:12});
