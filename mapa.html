@@ -4049,6 +4049,7 @@
     .painelProgMarker { width:30px; height:30px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:3px solid #fff; box-shadow:0 2px 8px rgba(15,23,42,.35); display:flex; align-items:center; justify-content:center; position:relative; }
     .painelProgMarker>span { transform:rotate(45deg); font-size:10px; font-weight:1000; color:#fff; }
     .painelProgMarker.programado { background:#16a34a; } .painelProgMarker.naoProgramado { background:#dc2626; } .painelProgMarker.carregadoHoje { background:#2563eb; } .painelProgMarker.carregadoOntem { background:#ea580c; }
+    .painelProgMarker.destinoManual { background:#7c3aed; }
     .painelProgMarker.selected { outline:4px solid rgba(37,99,235,.35); box-shadow:0 0 0 3px #1d4ed8,0 4px 12px rgba(15,23,42,.4); }
     .painelProgMarker.spot:after { content:'S'; position:absolute; right:-8px; top:-9px; width:15px; height:15px; border-radius:999px; background:#f59e0b; color:#fff; font-size:8px; font-weight:1000; display:flex; align-items:center; justify-content:center; transform:rotate(45deg); border:1px solid #fff; }
     .painelProgMarker.expresso:before { content:'EX'; position:absolute; left:-10px; top:-9px; min-width:18px; height:15px; border-radius:999px; background:#7c3aed; color:#fff; font-size:7px; font-weight:1000; display:flex; align-items:center; justify-content:center; transform:rotate(45deg); border:1px solid #fff; padding:0 2px; }
@@ -15488,13 +15489,36 @@ return null;
       atualizarResumoMapaPainelProgramacao();
       ajustarMapaAosPontosPainelProgramacao();
     }
+    function getIniciaisDestinoExtraPainelProgramacao(cidade) {
+      const nome = String(cidade?.nomePersonalizado || cidade?.label || "").trim();
+      if (!nome) return "D";
+      const palavras = nome
+        .replace(/[^\p{L}\p{N}\s-]/gu," ")
+        .split(/[\s-]+/)
+        .map(x=>x.trim())
+        .filter(Boolean);
+
+      if (palavras.length >= 2) {
+        return `${palavras[0].charAt(0)}${palavras[1].charAt(0)}`.toUpperCase();
+      }
+      const unica = palavras[0] || nome;
+      return unica.slice(0,2).toUpperCase();
+    }
+
     function atualizarMarcadoresDestinosExtrasPainelProgramacao(){
       const st=window.__painelProgMapState; if(!st?.map) return;
       if (!(st.extraMarkers instanceof Map)) st.extraMarkers = new Map();
       st.extraMarkers.forEach(marker=>{try{st.map.removeLayer(marker)}catch(_){}}); st.extraMarkers.clear();
       getCidadesExtrasPainelProgramacao().forEach(cidade => {
         if(!cidade?.ok) return;
-        const icon=L.divIcon({className:"painelProgMarkerWrap",html:`<div class="painelProgExtraMarker${cidade.selected ? " selected" : ""}">★</div>`,iconSize:[36,36],iconAnchor:[18,18]});
+        const iniciais = getIniciaisDestinoExtraPainelProgramacao(cidade);
+        const icon=L.divIcon({
+          className:"painelProgMarkerWrap",
+          html:`<div class="painelProgMarker destinoManual${cidade.selected ? " selected" : ""}"><span>${getTextoPainelProgramacao(iniciais)}</span></div>`,
+          iconSize:[28,34],
+          iconAnchor:[14,30],
+          tooltipAnchor:[0,-24]
+        });
         const marker=L.marker([cidade.lat,cidade.lon],{icon,title:cidade.label}).addTo(st.map);
         const localExtra = cidade.localLabel && cidade.localLabel !== cidade.label
           ? `<br><span>${getTextoPainelProgramacao(cidade.localLabel)}</span>`
