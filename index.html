@@ -2181,6 +2181,15 @@
       flex-direction: column;
     }
 
+    /* AJUSTE 2026-09-28: dropdown aberto sempre acima de cards/selos SPOT/EXPRESSO. */
+    .painelProgMultiFilterBox:has(.painelProgMultiDropdown.open) {
+      z-index: 2147483647;
+    }
+
+    .painelProgMultiDropdown.open {
+      z-index: 2147483647 !important;
+    }
+
     .painelProgMultiHead {
       padding: 10px;
       border-bottom: 1px solid #e5e7eb;
