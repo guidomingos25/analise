@@ -17592,9 +17592,61 @@ return null;
       if (!rotas.length) return;
       const jsPDFCtor = window.jspdf?.jsPDF;
       if (!jsPDFCtor) { alert("Biblioteca PDF indisponível."); return; }
+
       const doc = new jsPDFCtor({orientation:"landscape",unit:"mm",format:"a4"});
+      const pageW = doc.internal.pageSize.getWidth();
       const pageH = doc.internal.pageSize.getHeight();
+      const margemX = 9;
+      const larguraBloco = pageW - (margemX * 2);
+      const margemInferior = 10;
       let y = 12;
+
+      const limparItinerarioPdf = (nome) => String(nome || "")
+        .replace(/\s*→\s*/g," > ")
+        .replace(/\s*!\s*/g," > ")
+        .replace(/\s{2,}/g," ")
+        .trim();
+
+      const desenharCabecalhoRota = (rota, indice, cards, peso, nome, yInicio) => {
+        const temTransferencia = getLinhasOperacionaisRotaPainelProgramacao(rota).some(l=>l.grupo==="TRANSFERENCIA");
+        const corBarra = temTransferencia ? [245,158,11] : [37,99,235];
+
+        doc.setFillColor(248,250,252);
+        doc.setDrawColor(203,213,225);
+        doc.roundedRect(margemX,yInicio,larguraBloco,22,2.5,2.5,"FD");
+
+        doc.setFillColor(...corBarra);
+        doc.roundedRect(margemX,yInicio,2.8,22,1.4,1.4,"F");
+
+        doc.setTextColor(15,23,42);
+        doc.setFont(undefined,"bold");
+        doc.setFontSize(9.5);
+        doc.text(`ROTA ${indice+1}`,margemX+6,yInicio+6);
+
+        doc.setFont(undefined,"normal");
+        doc.setFontSize(7.6);
+        doc.setTextColor(51,65,85);
+        doc.text(`ITINERÁRIO:`,margemX+6,yInicio+11.5);
+
+        doc.setFont(undefined,"bold");
+        const itinerario = limparItinerarioPdf(nome);
+        const linhasTitulo = doc.splitTextToSize(itinerario,larguraBloco-48);
+        doc.text(linhasTitulo.slice(0,2),margemX+27,yInicio+11.5);
+
+        doc.setFont(undefined,"normal");
+        doc.setFontSize(6.8);
+        doc.setTextColor(71,85,105);
+        const resumo = [
+          rota?.status==="liberada" ? "LIBERADA" : "ATIVA",
+          formatarDataRotaPainelProgramacao(rota?.criadaEm),
+          `${cards.length} vocativo(s)`,
+          `${formatarNumeroPainelProgramacao(peso,2)} kg`,
+          rota?.distancia ? formatKmBRMapa(rota.distancia) : "",
+          rota?.duracao ? formatDurationBRMapa(rota.duracao) : ""
+        ].filter(Boolean).join("  |  ");
+        doc.text(resumo,margemX+6,yInicio+18.3);
+        doc.setTextColor(0,0,0);
+      };
 
       rotas.forEach((rota,i)=>{
         const cards = Array.isArray(rota?.cards) ? rota.cards : [];
@@ -17602,49 +17654,101 @@ return null;
         const peso = cards.reduce((s,c)=>s+Number(c?.peso||0),0);
         const nome = getNomeExibicaoRotaPainelProgramacao(rota);
 
-        // Só abre nova página quando não existe espaço razoável para iniciar a próxima rota.
-        if (i>0 && y > pageH - 42) {
+        // Estimativa conservadora para não iniciar no final da página quando a
+        // rota inteira provavelmente cabe na página seguinte.
+        const alturaEstimada = 22 + 10 + 8 + (Math.max(1,linhas.length) * 7.0) + 8;
+        const alturaUtilPagina = pageH - 22;
+        if (i > 0 && (y + Math.min(alturaEstimada,alturaUtilPagina)) > (pageH - margemInferior)) {
           doc.addPage("a4","landscape");
           y = 12;
         }
 
-        doc.setDrawColor(203,213,225);
-        doc.setFillColor(248,250,252);
-        doc.roundedRect(9,y-5,279,13,2,2,"FD");
-        doc.setFontSize(10);
-        doc.setFont(undefined,"bold");
-        doc.text(doc.splitTextToSize(`ROTA ${i+1} — ${nome}`,265),14,y);
-        doc.setFont(undefined,"normal");
-        doc.setFontSize(7);
-        doc.text(
-          `${rota?.status==="liberada"?"LIBERADA":"ATIVA"} | ${formatarDataRotaPainelProgramacao(rota?.criadaEm)} | ${cards.length} vocativo(s) | ${formatarNumeroPainelProgramacao(peso,2)} kg${rota?.distancia?` | ${formatKmBRMapa(rota.distancia)} | ${formatDurationBRMapa(rota.duracao||0)}`:""}`,
-          14,y+5
-        );
+        const paginaInicio = doc.internal.getNumberOfPages();
+        const yBlocoInicio = y;
+        desenharCabecalhoRota(rota,i,cards,peso,nome,yBlocoInicio);
 
         doc.autoTable({
-          startY:y+10,
+          startY:yBlocoInicio+25,
           pageBreak:"auto",
           rowPageBreak:"avoid",
-          styles:{fontSize:6.1,cellPadding:1.35,overflow:"linebreak",valign:"middle"},
-          headStyles:{fontSize:6.2,fillColor:[238,242,247],textColor:[15,23,42]},
-          head:[["Ordem","Tipo","Armazém","BP Arm.","Vocativo","Peso","Notas","BP(s) Carga","CEP(s)","Destino/UF"]],
+          theme:"grid",
+          styles:{
+            fontSize:6.2,
+            cellPadding:{top:1.6,right:1.5,bottom:1.6,left:1.5},
+            overflow:"linebreak",
+            valign:"middle",
+            lineColor:[226,232,240],
+            lineWidth:.15,
+            textColor:[51,65,85]
+          },
+          headStyles:{
+            fontSize:6.2,
+            fontStyle:"bold",
+            fillColor:[241,245,249],
+            textColor:[15,23,42],
+            lineColor:[203,213,225],
+            lineWidth:.2,
+            halign:"left"
+          },
+          alternateRowStyles:{fillColor:[250,252,254]},
+          head:[["#","Tipo","Armazém","BP Arm.","Vocativo","Peso","Notas","BP(s) Carga","CEP(s)","Destino / UF"]],
           body:linhas.map((l,idx)=>[
-            idx+1,l.tipo,l.armazemLabel||"",l.armazemBp||"",l.vocativo||"",
+            idx+1,
+            l.tipo,
+            l.armazemLabel||"",
+            l.armazemBp||"",
+            l.vocativo||"",
             l.pesoLinha ? Number(l.pesoLinha).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) : "",
             l.notasLinha || "",
             (Array.isArray(l.bps)?l.bps:[]).join(" / "),
             (Array.isArray(l.ceps)?l.ceps:[]).join(" / "),
             `${(Array.isArray(l.destinos)?l.destinos:[]).join(" / ")}${Array.isArray(l.ufs)&&l.ufs.length?" / "+l.ufs.join(" / "):""}`
           ]),
-          margin:{left:8,right:8,top:10,bottom:10},
+          columnStyles:{
+            0:{cellWidth:10,halign:"center"},
+            1:{cellWidth:30},
+            2:{cellWidth:31},
+            3:{cellWidth:15,halign:"center"},
+            4:{cellWidth:48},
+            5:{cellWidth:19,halign:"right"},
+            6:{cellWidth:13,halign:"center"},
+            7:{cellWidth:35},
+            8:{cellWidth:27},
+            9:{cellWidth:48}
+          },
+          margin:{left:margemX+2,right:margemX+2,top:10,bottom:12},
           didParseCell:function(data){
             if(data.section==="body" && String(data.row.raw?.[1]||"")==="TRANSFERÊNCIA"){
               data.cell.styles.fillColor=[255,251,235];
+              if (data.column.index === 1 || data.column.index === 2 || data.column.index === 3) {
+                data.cell.styles.textColor=[120,53,15];
+                data.cell.styles.fontStyle="bold";
+              }
             }
           }
         });
 
-        y = Number(doc.lastAutoTable?.finalY || y+25) + 10;
+        const paginaFim = doc.internal.getNumberOfPages();
+        const finalY = Number(doc.lastAutoTable?.finalY || yBlocoInicio+35);
+
+        // Quando a rota coube em uma única página, envolve cabeçalho+tabela
+        // em uma borda única, deixando visualmente clara a separação.
+        if (paginaFim === paginaInicio) {
+          doc.setPage(paginaInicio);
+          doc.setDrawColor(148,163,184);
+          doc.setLineWidth(.28);
+          doc.roundedRect(margemX-1,yBlocoInicio-1,larguraBloco+2,(finalY-yBlocoInicio)+5,3,3,"S");
+        }
+
+        doc.setPage(paginaFim);
+        y = finalY + 11;
+
+        // Garante um respiro maior entre duas rotas e não deixa apenas o título
+        // da próxima rota espremido no final da página.
+        if (i < rotas.length-1 && y > pageH-36) {
+          doc.addPage("a4","landscape");
+          y = 12;
+        }
       });
 
       doc.save(`Rotas_Criadas_${new Date().toISOString().slice(0,10)}.pdf`);
