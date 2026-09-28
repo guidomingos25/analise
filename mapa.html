@@ -4175,6 +4175,32 @@
     .painelProgWarehouseGroupHint { font-size:8px; font-weight:900; color:#92400e; }
     .painelProgWarehouseCardsGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(205px,1fr)); gap:8px; padding:8px; }
     .painelProgWarehouseCard { position:relative; border:1px solid #fbbf24; border-left:4px solid #f59e0b; border-radius:10px; background:#fffbeb; padding:9px 10px; min-height:96px; cursor:pointer; box-shadow:0 2px 6px rgba(120,53,15,.08); transition:.12s ease; }
+    .painelProgWarehouseCardNormal {
+      background:linear-gradient(180deg,#fef3c7 0%,#fffbeb 52%,#ffffff 100%)!important;
+      border:1px solid #f59e0b!important;
+      border-left:4px solid #f59e0b!important;
+      color:#713f12;
+    }
+    .painelProgWarehouseCardNormal:hover {
+      box-shadow:0 12px 24px rgba(146,64,14,.16)!important;
+    }
+    .painelProgWarehouseCardNormal .painelProgVocativo { color:#713f12; }
+    .painelProgWarehouseCardNormal .painelProgLine { color:#78350f; }
+    .painelProgWarehouseCardNormal .painelProgWarehouseCardBp {
+      margin-top:auto;
+      border-top:1px solid #fde68a;
+      padding-top:7px;
+    }
+    .painelProgWarehouseCardNormal .painelProgWarehouseBadge {
+      position:static;
+      margin-left:auto;
+      flex:0 0 auto;
+    }
+
+    /* Selos SPOT/EXPRESSO nunca podem atravessar os modais de rota. */
+    body.painelProgModalRotasAberto #painelProgSelosOverlayLayer {
+      display:none!important;
+    }
     .painelProgWarehouseCard:hover { transform:translateY(-1px); box-shadow:0 5px 12px rgba(120,53,15,.14); }
     .painelProgWarehouseCard.isSelected { box-shadow:0 0 0 3px #2563eb,0 5px 13px rgba(37,99,235,.18); border-color:#f59e0b; }
     .painelProgWarehouseCardTitle { padding-right:28px; font-size:10px; line-height:1.15; font-weight:1000; color:#713f12; }
@@ -4200,6 +4226,13 @@
     .painelProgProximidadeWarehouseBp { display:inline-flex!important; align-items:center; gap:4px; padding:2px 5px; border-radius:999px; background:#facc15; color:#713f12!important; border:1px solid #eab308; font-size:7px!important; }
 
     .painelProgTransferVocBlock { border-top:1px solid #eef2f7; background:#fff; }
+    .painelProgTransferVocSimple {
+      display:grid; grid-template-columns:22px minmax(180px,1fr) minmax(220px,.95fr) auto;
+      gap:9px; align-items:center; padding:8px 10px; border-top:1px solid #eef2f7; background:#fff;
+    }
+    .painelProgTransferVocSimple:first-child { border-top:0; }
+    .painelProgTransferVocSimple.isTransfer { background:#fffbeb; }
+    .painelProgTransferVocSimple .painelProgTransferVoc { font-size:9px;font-weight:1000;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
     .painelProgTransferVocBlock:first-child { border-top:0; }
     .painelProgTransferVocHead { padding:7px 9px 5px; font-size:9px; font-weight:1000; color:#0f172a; background:#f8fafc; }
     .painelProgTransferBpRow { display:grid; grid-template-columns:22px minmax(110px,.65fr) minmax(170px,1fr) auto; gap:7px; align-items:center; padding:6px 9px; border-top:1px solid #f1f5f9; }
@@ -13210,21 +13243,6 @@ return null;
 
       const idxVocativos = addCopy(vocativosTexto);
 
-      const armazensHtml = armazensSelecionados.length ? `
-        <div class="painelProgPopupSection painelProgPopupWarehouseSection" style="margin-top:0;">
-          <div class="painelProgPopupSectionHead"><span>Armazéns selecionados</span></div>
-          <div>
-            ${armazensSelecionados.map((filial,idx) => {
-              const idxBpArm = addCopy(filial.bp || "");
-              const token = getTokenOrdemRotaFilialPainelProgramacao(filial.id);
-              return `<div class="painelProgPopupWarehouseRow isRouteSortable" draggable="true" data-route-tokens="${getTextoPainelProgramacao(JSON.stringify([token]))}" title="Arraste para alterar a ordem da rota">
-                <div class="painelProgPopupRouteGrip"><span>⋮⋮</span><span class="painelProgPopupRouteNum">${idx+1}</span></div>
-                <div><div class="painelProgPopupWarehouseName">${getTextoPainelProgramacao(filial.localidade)}</div><div class="painelProgPopupWarehouseMeta">ARMAZÉM · CEP ${getTextoPainelProgramacao(String(filial.cep||"").replace(/(\d{5})(\d{3})/,"$1-$2"))}</div></div>
-                <div><div class="painelProgPopupWarehouseBp">BP ${getTextoPainelProgramacao(filial.bp || "-")}</div><button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idxBpArm},event)">Copiar BP</button></div>
-              </div>`;
-            }).join("")}
-          </div>
-        </div>` : "";
 
       const alertaMercadoriaHtml = linhasAlertasMercadoria.map(linha =>
         `• Existe ${getTextoPainelProgramacao(linha.label)}: ${formatarNumeroPainelProgramacao(linha.qtd, 0)} registro(s).<br>`
@@ -13275,6 +13293,31 @@ return null;
             `;
           }).join("")
         : `<div class="painelProgPopupTextBox" style="color:#64748b;font-weight:700;">Nenhum vocativo selecionado.</div>`;
+
+      const detalhesArmazensHtml = armazensSelecionados.length
+        ? armazensSelecionados
+            .slice()
+            .sort((a,b)=>{
+              const pa = posicoesRota.has(getTokenOrdemRotaFilialPainelProgramacao(a.id)) ? posicoesRota.get(getTokenOrdemRotaFilialPainelProgramacao(a.id)) : Number.MAX_SAFE_INTEGER;
+              const pb = posicoesRota.has(getTokenOrdemRotaFilialPainelProgramacao(b.id)) ? posicoesRota.get(getTokenOrdemRotaFilialPainelProgramacao(b.id)) : Number.MAX_SAFE_INTEGER;
+              return pa-pb || String(a.localidade||"").localeCompare(String(b.localidade||""),"pt-BR");
+            })
+            .map((filial,idx)=>{
+              const idxBpArm = addCopy(filial.bp || "");
+              const token = getTokenOrdemRotaFilialPainelProgramacao(filial.id);
+              return `<div class="painelProgPopupVocDetail isRouteSortable" style="background:#fffbeb;border-color:#fde68a;" draggable="true" data-route-tokens="${getTextoPainelProgramacao(JSON.stringify([token]))}" title="Arraste para alterar a ordem da rota">
+                <div class="painelProgPopupRouteGrip"><span>⋮⋮</span><span class="painelProgPopupRouteNum">A</span></div>
+                <div>
+                  <div class="painelProgPopupVocName" style="color:#713f12;">${getTextoPainelProgramacao(filial.localidade)}</div>
+                  <div class="painelProgPopupVocPeso" style="color:#92400e;">ARMAZÉM / TRANSFERÊNCIA</div>
+                </div>
+                <div>
+                  <div class="painelProgPopupBpTitle">BP</div>
+                  <div class="painelProgPopupBpRow"><span>${getTextoPainelProgramacao(filial.bp || "-")}</span><button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idxBpArm},event)">Copiar</button></div>
+                </div>
+              </div>`;
+            }).join("")
+        : "";
 
       const categoriasPlacasVirtuais = [
         { categoria: "PLACAS PARA ANÚNCIO (PADRÃO)", rotulo: "Padrão" },
@@ -13344,8 +13387,7 @@ return null;
           </div>
         </div>
         <div class="painelProgPopupBody">
-          ${armazensHtml}
-          <div class="painelProgPopupSection"${armazensSelecionados.length ? "" : ' style="margin-top:0;"'}>
+          <div class="painelProgPopupSection" style="margin-top:0;">
             <div class="painelProgPopupSectionHead">
               <span>Placas virtuais</span>
             </div>
@@ -13367,7 +13409,7 @@ return null;
             <div class="painelProgPopupSectionHead">
               <span>Vocativo, peso e BP(s)</span>
             </div>
-            <div class="painelProgPopupDetailList">${detalhesHtml}</div>
+            <div class="painelProgPopupDetailList">${detalhesHtml}${detalhesArmazensHtml}</div>
           </div>
         </div>
       `;
@@ -16634,46 +16676,59 @@ return null;
       const selecionado = !!st?.filiaisSelecionadas?.has?.(filial.id);
       const cep = String(filial.cep || "");
       const cepFmt = cep.length === 8 ? `${cep.slice(0,5)}-${cep.slice(5)}` : cep;
-      return `<div class="painelProgWarehouseCard${selecionado ? " isSelected" : ""}" data-filial-card-id="${getTextoPainelProgramacao(filial.id)}" onclick="event.stopPropagation();toggleFilialPainelProgramacao('${getTextoPainelProgramacao(filial.id)}')">
-        <div class="painelProgWarehouseBadge">A</div>
-        <div class="painelProgWarehouseCardTitle">${getTextoPainelProgramacao(filial.localidade)}</div>
-        <div class="painelProgWarehouseCardLine">ARMAZÉM / TRANSFERÊNCIA</div>
-        <div class="painelProgWarehouseCardLine">CEP: ${getTextoPainelProgramacao(cepFmt)} · CNPJ: ${getTextoPainelProgramacao(filial.cnpj || "")}</div>
-        <div class="painelProgWarehouseCardBp"><span>BP: ${getTextoPainelProgramacao(filial.bp || "-")}</span><button class="painelProgPopupCopyBtn" type="button" onclick="event.stopPropagation();copiarBpArmazemPainelProgramacao('${getTextoPainelProgramacao(filial.bp || "")}',event)">Copiar BP</button></div>
-      </div>`;
+      return `
+        <div class="painelProgCard painelProgWarehouseCardNormal${selecionado ? " isSelected" : ""}" data-filial-card-id="${getTextoPainelProgramacao(filial.id)}" onclick="event.stopPropagation();toggleFilialPainelProgramacao('${getTextoPainelProgramacao(filial.id)}')">
+          <div class="painelProgCardTop">
+            <div class="painelProgVocativo" title="${getTextoPainelProgramacao(filial.localidade)}">${getTextoPainelProgramacao(filial.localidade)}</div>
+            <span class="painelProgWarehouseBadge" title="Armazém / transferência">A</span>
+          </div>
+          <div class="painelProgStatusRow">
+            <div class="painelProgStatusLeft"></div>
+            <div class="painelProgStatusRight"><span class="painelProgBadge" style="background:#facc15;color:#713f12;border-color:#eab308;">ARMAZÉM</span></div>
+          </div>
+          <div class="painelProgCardDynamicBody">
+            <div class="painelProgLine"><strong>TRANSFERÊNCIA</strong></div>
+            <div class="painelProgLine">UF: ${getTextoPainelProgramacao(filial.uf || "")}</div>
+            <div class="painelProgLine">CEP: ${getTextoPainelProgramacao(cepFmt)}</div>
+            <div class="painelProgLine">CNPJ: ${getTextoPainelProgramacao(filial.cnpj || "")}</div>
+          </div>
+          <div class="painelProgWarehouseCardBp">
+            <span><strong>BP:</strong> ${getTextoPainelProgramacao(filial.bp || "-")}</span>
+            <button class="painelProgPopupCopyBtn" type="button" onclick="event.stopPropagation();copiarBpArmazemPainelProgramacao('${getTextoPainelProgramacao(filial.bp || "")}',event)">Copiar</button>
+          </div>
+        </div>`;
     }
 
-    function renderBlocoArmazensPainelProgramacao() {
-      const filiais = getFiliaisPermitidasPainelProgramacao();
-      if (!filiais.length) return "";
-      return `<div class="painelProgWarehouseGroup">
-        <div class="painelProgWarehouseGroupHead"><div class="painelProgWarehouseGroupTitle">Armazéns / Transferência</div><div class="painelProgWarehouseGroupHint">${filiais.length} disponível(is) nos filtros atuais</div></div>
-        <div class="painelProgWarehouseCardsGrid">${filiais.map(renderCardArmazemPainelProgramacao).join("")}</div>
-      </div>`;
+    function getGrupoArmazemPainelProgramacao(filial, modo) {
+      if (modo === "uf") return { icon:"🗺️", label:String(filial.uf || "SEM UF"), chave:normalizar(filial.uf || "SEM UF") };
+      return { icon:"🏭", label:"ARMAZÉNS / TRANSFERÊNCIA", chave:"__ARMAZENS__", armazens:true };
     }
+
+    function renderBlocoArmazensPainelProgramacao() { return ""; }
 
     function renderCardsPainelProgramacao(dados) {
       const cardsEl = document.getElementById("painelProgramacaoCards");
       if (!cardsEl) return;
-      const armazensHtml = renderBlocoArmazensPainelProgramacao();
-      if (!dados.length) {
+
+      const filiais = getFiliaisPermitidasPainelProgramacao();
+      const modoAgrupamento = getPainelProgAgrupamentoAtual();
+      const ordenados = ordenarPainelProgPorVocativo(dados || []);
+
+      if (!ordenados.length && !filiais.length) {
         painelProgCardsSelecionados.clear();
         renderPopupPainelProgramacao();
-        cardsEl.innerHTML = `${armazensHtml}<div class="painelProgEmptyState">Nenhum vocativo encontrado para os filtros selecionados.</div>`;
+        cardsEl.innerHTML = `<div class="painelProgEmptyState">Nenhum vocativo encontrado para os filtros selecionados.</div>`;
         iniciarSelosOverlayPainelProgramacao();
         agendarSincronizacaoSelosOverlayPainelProgramacao();
         return;
       }
 
-      const modoAgrupamento = getPainelProgAgrupamentoAtual();
-      const ordenados = ordenarPainelProgPorVocativo(dados);
-
       if (modoAgrupamento === "nenhum") {
-        cardsEl.innerHTML = `${armazensHtml}
+        cardsEl.innerHTML = `
           <div class="painelProgCardsGrid">
+            ${filiais.map(renderCardArmazemPainelProgramacao).join("")}
             ${ordenados.map(renderCardPainelProgramacao).join("")}
-          </div>
-        `;
+          </div>`;
         iniciarSelosOverlayPainelProgramacao();
         agendarSincronizacaoSelosOverlayPainelProgramacao();
         return;
@@ -16683,33 +16738,46 @@ return null;
       ordenados.forEach(item => {
         const grupo = getGrupoPainelProgramacao(item, modoAgrupamento);
         const chave = normalizar(grupo.label) || grupo.label;
-        if (!grupos.has(chave)) grupos.set(chave, { ...grupo, itens: [] });
+        if (!grupos.has(chave)) grupos.set(chave, { ...grupo, itens: [], filiais: [] });
         grupos.get(chave).itens.push(item);
       });
 
-      const ordemResponsavel = { julio: 1, lucas: 2, igor: 3 };
-      const html = Array.from(grupos.values())
-        .sort((a, b) => {
-          if (modoAgrupamento === "responsavel") {
-            const ao = ordemResponsavel[String(a.responsavelKey || "")] || 99;
-            const bo = ordemResponsavel[String(b.responsavelKey || "")] || 99;
-            if (ao !== bo) return ao - bo;
-          }
-          return String(a.label || "").localeCompare(String(b.label || ""), "pt-BR");
-        })
-        .map(grupo => `
+      filiais.forEach(filial => {
+        const gf = getGrupoArmazemPainelProgramacao(filial, modoAgrupamento);
+        const chave = gf.chave || normalizar(gf.label) || gf.label;
+        if (!grupos.has(chave)) grupos.set(chave, { ...gf, itens: [], filiais: [] });
+        grupos.get(chave).filiais.push(filial);
+      });
+
+      const ordemResponsavel = { julio:1, lucas:2, igor:3 };
+      const gruposOrdenados = Array.from(grupos.values()).sort((a,b)=>{
+        if (a.armazens && !b.armazens) return -1;
+        if (!a.armazens && b.armazens) return 1;
+        if (modoAgrupamento === "responsavel") {
+          const ao = ordemResponsavel[String(a.responsavelKey || "")] || 99;
+          const bo = ordemResponsavel[String(b.responsavelKey || "")] || 99;
+          if (ao !== bo) return ao-bo;
+        }
+        return String(a.label || "").localeCompare(String(b.label || ""),"pt-BR");
+      });
+
+      const html = gruposOrdenados.map(grupo => {
+        const filiaisGrupo = Array.isArray(grupo.filiais) ? grupo.filiais : [];
+        const totalCards = filiaisGrupo.length + grupo.itens.length;
+        return `
           <div class="painelProgClienteGrupo">
-            <div class="painelProgClienteHeader">
+            <div class="painelProgClienteHeader"${grupo.armazens ? ' style="background:#fef3c7;border-color:#fde68a;"' : ""}>
               <div class="painelProgClienteTitle">${grupo.icon} ${getTextoPainelProgramacao(grupo.label)}</div>
-              <div class="painelProgHint">${grupo.itens.length} card(s) | ${new Set(grupo.itens.map(i => i.vocNorm)).size} vocativo(s)</div>
+              <div class="painelProgHint">${totalCards} card(s)${grupo.itens.length ? ` | ${new Set(grupo.itens.map(i=>i.vocNorm)).size} vocativo(s)` : ""}${filiaisGrupo.length ? ` | ${filiaisGrupo.length} armazém(ns)` : ""}</div>
             </div>
             <div class="painelProgCardsGrid">
+              ${filiaisGrupo.map(renderCardArmazemPainelProgramacao).join("")}
               ${grupo.itens.map(renderCardPainelProgramacao).join("")}
             </div>
-          </div>
-        `).join("");
+          </div>`;
+      }).join("");
 
-      cardsEl.innerHTML = `${armazensHtml}${html}`;
+      cardsEl.innerHTML = html;
       iniciarSelosOverlayPainelProgramacao();
       agendarSincronizacaoSelosOverlayPainelProgramacao();
     }
@@ -16802,6 +16870,8 @@ return null;
     function fecharModalRotasPainelProgramacao() {
       const el = document.getElementById("painelProgRouteModalBackdrop");
       if (el) el.remove();
+      document.body.classList.remove("painelProgModalRotasAberto");
+      setTimeout(()=>agendarSincronizacaoSelosOverlayPainelProgramacao?.(),0);
     }
 
     function criarBackdropRotasPainelProgramacao() {
@@ -16811,6 +16881,7 @@ return null;
       back.className = "painelProgRouteModalBackdrop open";
       back.addEventListener("click", ev => { if (ev.target === back) fecharModalRotasPainelProgramacao(); });
       document.body.appendChild(back);
+      document.body.classList.add("painelProgModalRotasAberto");
       return back;
     }
 
@@ -17008,25 +17079,22 @@ return null;
       const back = criarBackdropRotasPainelProgramacao();
       const opts = filiais.map(f => `<option value="${escRotaPainelProgramacao(f.id)}">${escRotaPainelProgramacao(f.localidade)} · BP ${escRotaPainelProgramacao(f.bp||"-")}</option>`).join("");
 
-      back.innerHTML = `<div class="painelProgRouteModal" role="dialog" aria-modal="true" aria-label="Definir BPs de transferência">
+      back.innerHTML = `<div class="painelProgRouteModal" role="dialog" aria-modal="true" aria-label="Definir transferências">
         <div class="painelProgRouteModalHead">
-          <div><div class="painelProgRouteModalTitle">Definir BPs de transferência</div><div class="painelProgSavedRouteMeta">Marque somente os BPs que serão descarregados no armazém. BPs não marcados permanecem como ENTREGA DIRETA.</div></div>
+          <div>
+            <div class="painelProgRouteModalTitle">Definir transferências</div>
+            <div class="painelProgSavedRouteMeta">Marque os vocativos que serão descarregados no armazém. Vocativos não marcados permanecem como ENTREGA DIRETA.</div>
+          </div>
           <button class="btn secondary painelProgBaseMiniBtn" type="button" onclick="fecharModalRotasPainelProgramacao()">×</button>
         </div>
         <div class="painelProgSaveRouteForm">
           <div class="painelProgTransferList">
-            ${itens.map(({chave,item}) => {
-              const bpsItem = Array.from(new Set((Array.isArray(item?.bpDestinos)?item.bpDestinos:[]).map(x=>String(x||"").trim()).filter(Boolean)));
-              return `<div class="painelProgTransferVocBlock" data-transfer-voc data-card-key="${escRotaPainelProgramacao(chave)}">
-                <div class="painelProgTransferVocHead">${escRotaPainelProgramacao(item.vocativo || chave)}</div>
-                ${bpsItem.length ? bpsItem.map(bp=>`<div class="painelProgTransferBpRow" data-transfer-bp-row data-bp="${escRotaPainelProgramacao(bp)}">
-                  <input type="checkbox" data-transfer-bp-check onchange="atualizarLinhaTransferenciaBpPainelProgramacao(this)">
-                  <div class="painelProgTransferBpCode">BP ${escRotaPainelProgramacao(bp)}</div>
-                  <select class="painelProgTransferSelect" data-transfer-armazem ${filiais.length===1?"disabled":""}>${opts}</select>
-                  <span class="painelProgTransferBpState">ENTREGA DIRETA</span>
-                </div>`).join("") : `<div style="padding:7px 9px;color:#64748b;font-size:8px;font-weight:800;">Sem BP disponível — permanece como entrega direta.</div>`}
-              </div>`;
-            }).join("")}
+            ${itens.map(({chave,item}) => `<div class="painelProgTransferVocSimple" data-transfer-voc data-card-key="${escRotaPainelProgramacao(chave)}">
+              <input type="checkbox" data-transfer-voc-check onchange="atualizarLinhaTransferenciaVocativoPainelProgramacao(this)">
+              <div class="painelProgTransferVoc">${escRotaPainelProgramacao(item.vocativo || chave)}</div>
+              <select class="painelProgTransferSelect" data-transfer-armazem ${filiais.length===1?"disabled":""}>${opts}</select>
+              <span class="painelProgTransferBpState">ENTREGA DIRETA</span>
+            </div>`).join("")}
           </div>
         </div>
         <div class="painelProgModalFooter">
@@ -17036,8 +17104,8 @@ return null;
       </div>`;
     }
 
-    function atualizarLinhaTransferenciaBpPainelProgramacao(input) {
-      const row = input?.closest?.("[data-transfer-bp-row]");
+    function atualizarLinhaTransferenciaVocativoPainelProgramacao(input) {
+      const row = input?.closest?.("[data-transfer-voc]");
       if (!row) return;
       row.classList.toggle("isTransfer",!!input.checked);
       const sel = row.querySelector("[data-transfer-armazem]");
@@ -17051,25 +17119,25 @@ return null;
       const mapaFiliais = new Map(filiais.map(f => [String(f.id),f]));
       const transferencias = {};
 
-      document.querySelectorAll("#painelProgRouteModalBackdrop [data-transfer-voc]").forEach(voc => {
-        const chave = String(voc.dataset.cardKey || "");
-        const lista = [];
-        voc.querySelectorAll("[data-transfer-bp-row]").forEach(row => {
-          const check = row.querySelector("[data-transfer-bp-check]");
-          if (!check?.checked) return;
-          const bp = String(row.dataset.bp || "");
-          const sel = row.querySelector("[data-transfer-armazem]");
-          const id = String(sel?.value || filiais[0]?.id || "");
-          const filial = mapaFiliais.get(id) || filiais[0];
-          if (!bp || !filial) return;
-          lista.push({
-            bp,
-            armazemId:String(filial.id||""),
-            armazemLabel:String(filial.localidade||filial.label||"Armazém"),
-            armazemBp:String(filial.bp||"")
-          });
-        });
-        if (chave && lista.length) transferencias[chave] = lista;
+      document.querySelectorAll("#painelProgRouteModalBackdrop [data-transfer-voc]").forEach(row => {
+        const check = row.querySelector("[data-transfer-voc-check]");
+        if (!check?.checked) return;
+        const chave = String(row.dataset.cardKey || "");
+        const item = painelProgDadosAtuaisPorKey.get(chave);
+        const bps = Array.from(new Set((Array.isArray(item?.bpDestinos)?item.bpDestinos:[]).map(x=>String(x||"").trim()).filter(Boolean)));
+        const sel = row.querySelector("[data-transfer-armazem]");
+        const id = String(sel?.value || filiais[0]?.id || "");
+        const filial = mapaFiliais.get(id) || filiais[0];
+        if (!chave || !filial) return;
+
+        // Ao selecionar o vocativo, todos os BPs dele seguem para o armazém.
+        // Se não houver BP na base, mantém uma transferência sem BP explícito.
+        transferencias[chave] = (bps.length ? bps : [""]).map(bp => ({
+          bp,
+          armazemId:String(filial.id||""),
+          armazemLabel:String(filial.localidade||filial.label||"Armazém"),
+          armazemBp:String(filial.bp||"")
+        }));
       });
 
       fecharModalRotasPainelProgramacao();
