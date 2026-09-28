@@ -15132,34 +15132,88 @@ return null;
     }
 
     function getCidadeUfFallbackPainelProgramacao(item) {
-      const ufLista = Array.from(new Set((Array.isArray(item?.ufs) ? item.ufs : [])
+      let ufLista = Array.from(new Set((Array.isArray(item?.ufs) ? item.ufs : [])
         .map(v => String(v || "").trim().toUpperCase())
         .filter(Boolean)));
+
+      // Se a PVD não trouxe UF separada, tenta aproveitar o sufixo do vocativo
+      // (ex.: TRA-PRIMAVERADOLESTE-MT -> MT).
+      const vocativo = String(item?.vocativo || "").trim();
+      if (ufLista.length !== 1 && vocativo) {
+        const mUf = vocativo.match(/(?:^|[-/|_\s])([A-Z]{2})\s*$/i);
+        if (mUf) ufLista = [String(mUf[1] || "").toUpperCase()];
+      }
       if (ufLista.length !== 1) return null;
       const uf = ufLista[0];
 
       const destinosBrutos = Array.from(new Set((Array.isArray(item?.destinos) ? item.destinos : [])
         .map(v => String(v || "").trim())
         .filter(Boolean)));
-      if (!destinosBrutos.length) return null;
 
       // A coluna Destino normalmente já contém a cidade. Se vier como
       // "CIDADE-UF" ou "CIDADE / UF", remove somente o sufixo da UF.
       const limparCidade = (valor) => String(valor || "")
         .replace(new RegExp(`\\s*[-/|]\\s*${uf}\\s*$`, "i"), "")
         .trim();
-      const cidades = Array.from(new Map(destinosBrutos
+      let cidades = Array.from(new Map(destinosBrutos
         .map(limparCidade)
         .filter(Boolean)
         .map(c => [normalizar(c), c])).values());
-      if (cidades.length !== 1) return null;
-      return { cidade:cidades[0], uf };
+
+      if (cidades.length === 1) return { cidade:cidades[0], uf, origemCidade:"destino" };
+      if (cidades.length > 1) return null;
+
+      // Último fallback: quando o registro não tem CEP nem Destino preenchido,
+      // extrai a cidade do próprio vocativo. O nome pode vir sem espaços
+      // (PRIMAVERADOLESTE); ele será reconciliado com a lista oficial do IBGE.
+      if (vocativo) {
+        let cidadeVoc = vocativo
+          .replace(new RegExp(`[-/|_\\s]*${uf}\\s*$`, "i"), "")
+          .trim();
+        const partes = cidadeVoc.split(/[-/|_]+/).map(v => v.trim()).filter(Boolean);
+        if (partes.length >= 2) partes.shift(); // remove prefixos como TRA, CSN, INF etc.
+        cidadeVoc = partes.join(" ").trim();
+        if (cidadeVoc) return { cidade:cidadeVoc, uf, origemCidade:"vocativo" };
+      }
+      return null;
+    }
+
+    async function resolverNomeMunicipioIbgePainelProgramacao(cidade, uf) {
+      const compactar = (v) => normalizar(v).replace(/[^A-Z0-9]/g, "");
+      const alvo = compactar(cidade);
+      if (!alvo || !uf) return cidade;
+
+      window.__painelProgMunicipiosUfCache = window.__painelProgMunicipiosUfCache || new Map();
+      const cache = window.__painelProgMunicipiosUfCache;
+      let lista = cache.get(uf);
+      if (!Array.isArray(lista)) {
+        try {
+          const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+          const timer = ctrl ? setTimeout(() => ctrl.abort(), 9000) : null;
+          try {
+            const resp = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${encodeURIComponent(uf)}/municipios`, {
+              signal:ctrl?.signal,
+              cache:"force-cache"
+            });
+            if (resp.ok) {
+              const json = await resp.json().catch(() => []);
+              lista = Array.isArray(json) ? json.map(x => String(x?.nome || "").trim()).filter(Boolean) : [];
+              cache.set(uf, lista);
+            }
+          } finally {
+            if (timer) clearTimeout(timer);
+          }
+        } catch (_) {}
+      }
+      if (!Array.isArray(lista) || !lista.length) return cidade;
+      return lista.find(nome => compactar(nome) === alvo) || cidade;
     }
 
     async function geocodificarCidadeFallbackPainelProgramacao(item, motivoCep = "") {
       const alvo = getCidadeUfFallbackPainelProgramacao(item);
       if (!alvo) return null;
-      const { cidade, uf } = alvo;
+      let { cidade, uf } = alvo;
+      cidade = await resolverNomeMunicipioIbgePainelProgramacao(cidade, uf);
       const cache = carregarCacheMapaPainelProgramacao(PAINEL_PROG_CITY_CACHE_KEY, "cityCache");
       const queryKey = `fallback|${normalizar(cidade)}|${uf}|BRASIL`;
       const salvo = cache.get(queryKey);
