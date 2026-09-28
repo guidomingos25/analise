@@ -15131,10 +15131,109 @@ return null;
       return Number.isFinite(lat) && Number.isFinite(lon) && lat >= -34.5 && lat <= 6.5 && lon >= -74.5 && lon <= -32;
     }
 
+    function getCidadeUfFallbackPainelProgramacao(item) {
+      const ufLista = Array.from(new Set((Array.isArray(item?.ufs) ? item.ufs : [])
+        .map(v => String(v || "").trim().toUpperCase())
+        .filter(Boolean)));
+      if (ufLista.length !== 1) return null;
+      const uf = ufLista[0];
+
+      const destinosBrutos = Array.from(new Set((Array.isArray(item?.destinos) ? item.destinos : [])
+        .map(v => String(v || "").trim())
+        .filter(Boolean)));
+      if (!destinosBrutos.length) return null;
+
+      // A coluna Destino normalmente já contém a cidade. Se vier como
+      // "CIDADE-UF" ou "CIDADE / UF", remove somente o sufixo da UF.
+      const limparCidade = (valor) => String(valor || "")
+        .replace(new RegExp(`\\s*[-/|]\\s*${uf}\\s*$`, "i"), "")
+        .trim();
+      const cidades = Array.from(new Map(destinosBrutos
+        .map(limparCidade)
+        .filter(Boolean)
+        .map(c => [normalizar(c), c])).values());
+      if (cidades.length !== 1) return null;
+      return { cidade:cidades[0], uf };
+    }
+
+    async function geocodificarCidadeFallbackPainelProgramacao(item, motivoCep = "") {
+      const alvo = getCidadeUfFallbackPainelProgramacao(item);
+      if (!alvo) return null;
+      const { cidade, uf } = alvo;
+      const cache = carregarCacheMapaPainelProgramacao(PAINEL_PROG_CITY_CACHE_KEY, "cityCache");
+      const queryKey = `fallback|${normalizar(cidade)}|${uf}|BRASIL`;
+      const salvo = cache.get(queryKey);
+      if (salvo?.ok && coordenadaValidaBrasilPainelProgramacao(salvo.lat, salvo.lon)) {
+        return { ...salvo, aproximadaCidade:true, motivoCepOriginal:motivoCep, cacheCidade:true };
+      }
+
+      const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+      const timer = ctrl ? setTimeout(() => ctrl.abort(), 9000) : null;
+      try {
+        const q = [cidade, uf, "Brasil"].filter(Boolean).join(", ");
+        const url = `${PAINEL_PROG_NOMINATIM_BASE}?format=jsonv2&limit=5&countrycodes=br&addressdetails=1&q=${encodeURIComponent(q)}`;
+        const resp = await fetch(url, {
+          signal:ctrl?.signal,
+          headers:{"Accept":"application/json","Accept-Language":"pt-BR,pt;q=0.9"},
+          cache:"force-cache"
+        });
+        if (!resp.ok) return null;
+        const arr = await resp.json().catch(() => []);
+        if (!Array.isArray(arr) || !arr.length) return null;
+
+        const cidadeNorm = normalizar(cidade);
+        const candidatos = arr.map(r => {
+          const a = r?.address || {};
+          const cidadeRet = String(a.city || a.town || a.municipality || a.village || a.county || "").trim();
+          const ufRet = String(a.state_code || a["ISO3166-2-lvl4"] || a["ISO3166-2-lvl6"] || "")
+            .replace(/^BR-/i, "").split("-").pop().toUpperCase();
+          return { raw:r, lat:Number(r?.lat), lon:Number(r?.lon), cidadeRet, ufRet };
+        }).filter(c => coordenadaValidaBrasilPainelProgramacao(c.lat,c.lon));
+        if (!candidatos.length) return null;
+
+        let escolhido = candidatos.find(c => normalizar(c.cidadeRet) === cidadeNorm && (!c.ufRet || c.ufRet === uf));
+        if (!escolhido) escolhido = candidatos.find(c => !c.ufRet || c.ufRet === uf);
+        if (!escolhido) return null;
+
+        const r = {
+          ok:true,
+          cep:"",
+          cepOriginal:(Array.isArray(item?.cepsDestino) ? item.cepsDestino.map(normalizarCepPainelProgramacao).filter(Boolean).join(" / ") : ""),
+          lat:escolhido.lat,
+          lon:escolhido.lon,
+          cidade:escolhido.cidadeRet || cidade,
+          uf,
+          bairro:"",
+          rua:"",
+          provider:"Nominatim / OpenStreetMap (fallback por cidade)",
+          precisao:"cidade_aproximada",
+          aproximadaCidade:true,
+          display:String(escolhido.raw?.display_name || q),
+          motivoCepOriginal:motivoCep
+        };
+        cache.set(queryKey,r);
+        salvarCacheMapaPainelProgramacao(PAINEL_PROG_CITY_CACHE_KEY,cache);
+        return r;
+      } catch (_) {
+        return null;
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    }
+
+    async function retornarFallbackCidadeOuFalhaPainelProgramacao(item, falha) {
+      const fallback = await geocodificarCidadeFallbackPainelProgramacao(item, falha?.motivo || "");
+      return fallback?.ok ? fallback : falha;
+    }
+
     async function geocodificarCepPainelProgramacao(item, forcar = false) {
       const ceps = Array.isArray(item?.cepsDestino) ? Array.from(new Set(item.cepsDestino.map(normalizarCepPainelProgramacao).filter(Boolean))) : [];
-      if (!ceps.length) return { ok:false, motivo:"CEP Destino ausente ou inválido na PVD", tipo:"sem_cep" };
-      if (ceps.length > 1) return { ok:false, motivo:`Mais de um CEP Destino no mesmo vocativo/destinatário: ${ceps.join(" / ")}`, tipo:"multiplos_ceps" };
+      if (!ceps.length) {
+        return await retornarFallbackCidadeOuFalhaPainelProgramacao(item, { ok:false, motivo:"CEP Destino ausente ou inválido na PVD", tipo:"sem_cep" });
+      }
+      if (ceps.length > 1) {
+        return await retornarFallbackCidadeOuFalhaPainelProgramacao(item, { ok:false, motivo:`Mais de um CEP Destino no mesmo vocativo/destinatário: ${ceps.join(" / ")}`, tipo:"multiplos_ceps" });
+      }
       const cep = ceps[0];
       const cache = carregarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY, "cepCache");
       if (!forcar && cache.has(cep)) {
@@ -15142,6 +15241,9 @@ return null;
         if (cached?.ok && coordenadaValidaBrasilPainelProgramacao(cached.lat, cached.lon)) {
           const ufEsperada = (Array.isArray(item?.ufs) && item.ufs.length === 1) ? String(item.ufs[0] || "").toUpperCase() : "";
           if (!ufEsperada || !cached.uf || cached.uf === ufEsperada) return { ...cached, cache:true };
+        } else if (cached && cached.ok === false) {
+          const fallbackCache = await geocodificarCidadeFallbackPainelProgramacao(item, cached?.motivo || "CEP não localizado");
+          if (fallbackCache?.ok) return fallbackCache;
         }
       }
       const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
@@ -15150,25 +15252,29 @@ return null;
         const resp = await fetch(`${PAINEL_PROG_CEP_API_BASE}/${encodeURIComponent(cep)}`, { signal: ctrl?.signal, cache:"force-cache" });
         if (!resp.ok) {
           const r = { ok:false, cep, motivo: resp.status === 404 ? "CEP não encontrado pela BrasilAPI" : `Falha ao consultar CEP (HTTP ${resp.status})`, tipo:"api_cep" };
-          cache.set(cep,r); salvarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,cache); return r;
+          cache.set(cep,r); salvarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,cache);
+          return await retornarFallbackCidadeOuFalhaPainelProgramacao(item,r);
         }
         const json = await resp.json();
         const coords = json?.location?.coordinates || {};
         const lat = Number(coords.latitude), lon = Number(coords.longitude);
         if (!coordenadaValidaBrasilPainelProgramacao(lat, lon)) {
           const r = { ok:false, cep, motivo:"CEP encontrado, mas sem coordenada geográfica válida", tipo:"sem_coordenada" };
-          cache.set(cep,r); salvarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,cache); return r;
+          cache.set(cep,r); salvarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,cache);
+          return await retornarFallbackCidadeOuFalhaPainelProgramacao(item,r);
         }
         const uf = String(json?.state || "").trim().toUpperCase();
         const ufEsperada = (Array.isArray(item?.ufs) && item.ufs.length === 1) ? String(item.ufs[0] || "").toUpperCase() : "";
         if (ufEsperada && uf && uf !== ufEsperada) {
           const r = { ok:false, cep, motivo:`UF do CEP (${uf}) diverge da UF Destino da PVD (${ufEsperada})`, tipo:"uf_divergente" };
-          cache.set(cep,r); salvarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,cache); return r;
+          cache.set(cep,r); salvarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,cache);
+          return await retornarFallbackCidadeOuFalhaPainelProgramacao(item,r);
         }
         const r = { ok:true, cep, lat, lon, uf, cidade:String(json?.city || ""), bairro:String(json?.neighborhood || ""), rua:String(json?.street || ""), provider:String(json?.service || "") };
         cache.set(cep,r); salvarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,cache); return r;
       } catch (err) {
-        return { ok:false, cep, motivo: err?.name === "AbortError" ? "Tempo excedido ao consultar o CEP" : "Falha de rede ao consultar o CEP", tipo:"rede" };
+        const r = { ok:false, cep, motivo: err?.name === "AbortError" ? "Tempo excedido ao consultar o CEP" : "Falha de rede ao consultar o CEP", tipo:"rede" };
+        return await retornarFallbackCidadeOuFalhaPainelProgramacao(item,r);
       } finally { if (timer) clearTimeout(timer); }
     }
 
@@ -16099,15 +16205,9 @@ return null;
         <div id="painelProgProximidadePanel" class="painelProgProximidadePanel"></div>
         <div id="painelProgMap"></div><div id="painelProgMapStatusBar" class="painelProgMapStatusBar"></div><div id="painelProgGeoWarningHost"></div></div>`;
       }
-      const toolbarMapa = host.querySelector(".painelProgMapToolbar");
-      if (toolbarMapa && !toolbarMapa.dataset.autoShowBound) {
-        toolbarMapa.dataset.autoShowBound = "1";
-        toolbarMapa.addEventListener("click", (ev) => {
-          const btn = ev.target?.closest?.("button");
-          if (!btn || btn.id === "btnPainelProgToggleMapa" || btn.id === "btnPainelProgResetRotas") return;
-          garantirMapaVisivelPainelProgramacao();
-        }, true);
-      }
+      // O mapa só pode ser exibido/ocultado pelo botão dedicado
+      // #btnPainelProgToggleMapa. Os demais comandos do cabeçalho executam
+      // suas ações sem alterar a visibilidade atual do mapa.
       if(!window.L){host.innerHTML='<div class="painelProgEmptyState" style="border-color:#fecaca;color:#991b1b;background:#fef2f2;">Não foi possível carregar o Leaflet. Verifique a conexão e recarregue a página.</div>';return null;}
       if(!st.map){
         st.map=L.map("painelProgMap",{preferCanvas:true,zoomControl:true}).setView([-14.235,-51.9253],4);
@@ -16242,9 +16342,12 @@ return null;
     function renderTooltipMapaPainelProgramacao(item,geo){
       const jc=normalizar(item?.janelaCarregamentoTexto)==="NAO CADASTRADO"?"":(item?.janelaCarregamentoTexto||"-"),je=normalizar(item?.janelaEntregaTexto)==="NAO CADASTRADO"?"":(item?.janelaEntregaTexto||"-"),u=item?.ultimoVeiculo,cep=geo?.cep?`${geo.cep.slice(0,5)}-${geo.cep.slice(5)}`:"-",local=[geo?.cidade,geo?.uf].filter(Boolean).join(" - ");
       const enderecoPartes=[geo?.rua,geo?.bairro].map(v=>String(v||"").trim()).filter(Boolean);
-      const enderecoCep=enderecoPartes.length?`${enderecoPartes.join(" — ")}${local?` | ${local}`:""}`:(local||"Endereço detalhado não retornado para este CEP");
+      const enderecoCep=geo?.aproximadaCidade
+        ? `Localização aproximada pelo município${local?`: ${local}`:""}`
+        : (enderecoPartes.length?`${enderecoPartes.join(" — ")}${local?` | ${local}`:""}`:(local||"Endereço detalhado não retornado para este CEP"));
       const zonaSp=getZonaSaoPauloPainelProgramacao(geo);
-      return `<div class="painelProgLeafletTooltip"><div class="ttl">${getTextoPainelProgramacao(item?.vocativo||"-")}</div><div class="row"><b>Status:</b> ${item?.temProgramado?"PROGRAMADO":"NÃO PROGRAMADO"}${item?.temCarregadoHoje?" | CARREGADO HOJE":""}${item?.temCarregadoOntem?" | CARREGADO ONTEM":""}</div><div class="row"><b>Embarque:</b> ${getTextoPainelProgramacao(item?.temProgramado?(item?.tipoEmbarque||"-"):"-")}</div><div class="row"><b>Programador:</b> ${getTextoPainelProgramacao(item?.responsavel||"-")}</div><div class="row"><b>Peso Total PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.pesoTotalPVD,2))}</div><div class="row"><b>Total Notas PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.totalNotasPVD,0))}</div><div class="row"><b>Entrada em atraso:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.entradaAtraso,0))}</div><div class="row"><b>Notas &lt;= D-1:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.notasD1,0))}</div><div class="sep"></div><div class="row"><b>CEP Destino:</b> ${cep}${local?` | ${getTextoPainelProgramacao(local)}`:""}</div><div class="row"><b>Endereço do CEP:</b> ${getTextoPainelProgramacao(enderecoCep)}</div>${zonaSp?`<div class="row"><b>Zona (aprox.):</b> ${getTextoPainelProgramacao(zonaSp)}</div>`:""}<div class="row"><b>Carga:</b> ${getTextoPainelProgramacao(jc)}</div><div class="row"><b>Entrega:</b> ${getTextoPainelProgramacao(je)}</div>${u?`<div class="sep"></div><div class="row"><b>Último veículo:</b> ${getTextoPainelProgramacao(u.id||"-")}</div><div class="row"><b>Previsão:</b> ${getTextoPainelProgramacao(u.previsaoTexto||u.previsao||"-")}</div><div class="row"><b>Destino:</b> ${getTextoPainelProgramacao(u.destinos||"-")}</div>`:""}</div>`;
+      const avisoAprox=geo?.aproximadaCidade ? `<div class="row"><b>Localização:</b> Aproximada pela cidade (CEP não localizado com segurança)</div>` : "";
+      return `<div class="painelProgLeafletTooltip"><div class="ttl">${getTextoPainelProgramacao(item?.vocativo||"-")}</div><div class="row"><b>Status:</b> ${item?.temProgramado?"PROGRAMADO":"NÃO PROGRAMADO"}${item?.temCarregadoHoje?" | CARREGADO HOJE":""}${item?.temCarregadoOntem?" | CARREGADO ONTEM":""}</div><div class="row"><b>Embarque:</b> ${getTextoPainelProgramacao(item?.temProgramado?(item?.tipoEmbarque||"-"):"-")}</div><div class="row"><b>Programador:</b> ${getTextoPainelProgramacao(item?.responsavel||"-")}</div><div class="row"><b>Peso Total PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.pesoTotalPVD,2))}</div><div class="row"><b>Total Notas PVD:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.totalNotasPVD,0))}</div><div class="row"><b>Entrada em atraso:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.entradaAtraso,0))}</div><div class="row"><b>Notas &lt;= D-1:</b> ${getTextoPainelProgramacao(formatarNumeroPainelProgramacao(item?.notasD1,0))}</div><div class="sep"></div><div class="row"><b>CEP Destino:</b> ${cep}${local?` | ${getTextoPainelProgramacao(local)}`:""}</div><div class="row"><b>Endereço do CEP:</b> ${getTextoPainelProgramacao(enderecoCep)}</div>${zonaSp?`<div class="row"><b>Zona (aprox.):</b> ${getTextoPainelProgramacao(zonaSp)}</div>`:""}${avisoAprox}<div class="row"><b>Carga:</b> ${getTextoPainelProgramacao(jc)}</div><div class="row"><b>Entrega:</b> ${getTextoPainelProgramacao(je)}</div>${u?`<div class="sep"></div><div class="row"><b>Último veículo:</b> ${getTextoPainelProgramacao(u.id||"-")}</div><div class="row"><b>Previsão:</b> ${getTextoPainelProgramacao(u.previsaoTexto||u.previsao||"-")}</div><div class="row"><b>Destino:</b> ${getTextoPainelProgramacao(u.destinos||"-")}</div>`:""}</div>`;
     }
 
     function renderTooltipClusterMapaPainelProgramacao(cluster) {
@@ -16621,7 +16724,6 @@ return null;
     }
 
     function calcularProximidadePainelProgramacao(){
-      garantirMapaVisivelPainelProgramacao();
       const st = garantirEstruturaMapaPainelProgramacao();
       const panel = document.getElementById("painelProgProximidadePanel");
       const info = document.getElementById("painelProgRouteInfo");
@@ -18013,7 +18115,6 @@ return null;
       const rota = getRotasSalvasPainelProgramacao().find(r => r?.id === id);
       if (!rota) return;
       fecharModalRotasPainelProgramacao();
-      garantirMapaVisivelPainelProgramacao();
       const st = garantirEstruturaMapaPainelProgramacao();
       if (!st?.map) return;
       limparRotaMapaPainelProgramacao(false);
