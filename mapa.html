@@ -15545,35 +15545,51 @@ return null;
       });
     }
 
-    function toggleFilialSemMoverTelaPainelProgramacao(id) {
-      const x = window.scrollX || window.pageXOffset || 0;
-      const y = window.scrollY || window.pageYOffset || 0;
-      const cardsHost = document.getElementById("painelProgramacaoCards");
-      const hostScrollTop = cardsHost?.scrollTop || 0;
-      toggleFilialPainelProgramacao(id);
-      requestAnimationFrame(() => {
-        window.scrollTo(x,y);
-        if (cardsHost) cardsHost.scrollTop = hostScrollTop;
-        setTimeout(() => {
-          window.scrollTo(x,y);
-          if (cardsHost) cardsHost.scrollTop = hostScrollTop;
-        }, 40);
+    function atualizarCardFilialPainelProgramacaoNoDOM(id) {
+      const st = window.__painelProgMapState;
+      const selecionado = !!st?.filiaisSelecionadas?.has?.(id);
+      document.querySelectorAll(".painelProgCard[data-filial-card-id]").forEach(card => {
+        if (String(card.getAttribute("data-filial-card-id") || "") !== String(id || "")) return;
+        card.classList.toggle("isSelected", selecionado);
+        card.setAttribute("aria-pressed", selecionado ? "true" : "false");
       });
+    }
+
+    function toggleFilialSemMoverTelaPainelProgramacao(id) {
+      // Mesmo comportamento dos cards normais:
+      // não recria a grade; atualiza apenas o card clicado e os painéis dependentes.
+      toggleFilialPainelProgramacao(id, { semRenderCards:true, origemCard:true });
     }
 
     function toggleFilialPainelProgramacao(id, opcoes = {}) {
       const st = window.__painelProgMapState;
       if (!st || !getFilialCadastroPainelProgramacao(id)) return;
       if (!(st.filiaisSelecionadas instanceof Set)) st.filiaisSelecionadas = new Set();
+
+      if (opcoes?.origemCard) {
+        st.selectionSource = "card";
+        st.cardFilterSelectedOnly = false;
+      }
+
       if (st.filiaisSelecionadas.has(id)) st.filiaisSelecionadas.delete(id);
       else st.filiaisSelecionadas.add(id);
+
       sincronizarOrdemRotaPainelProgramacao();
       atualizarIconesFiliaisPainelProgramacao();
       sincronizarEstadoVisualSelecoesMapaPainelProgramacao();
+
       if (!opcoes?.manterProximidade) limparProximidadePainelProgramacao();
-      renderCardsPainelProgramacao(getDadosCardsVisiveisPainelProgramacao());
+
+      if (opcoes?.semRenderCards) {
+        atualizarCardFilialPainelProgramacaoNoDOM(id);
+      } else {
+        renderCardsPainelProgramacao(getDadosCardsVisiveisPainelProgramacao());
+      }
+
       renderPopupPainelProgramacao();
+      renderOrdemRotaPainelProgramacao();
       atualizarSelecaoListaProximidadePainelProgramacao();
+
       const info = document.getElementById("painelProgRouteInfo");
       if(info){ info.classList.remove("painelProgRouteError"); info.textContent=""; }
     }
@@ -16698,7 +16714,7 @@ return null;
       const cep = String(filial.cep || "");
       const cepFmt = cep.length === 8 ? `${cep.slice(0,5)}-${cep.slice(5)}` : cep;
       return `
-        <div class="painelProgCard painelProgWarehouseCardNormal${selecionado ? " isSelected" : ""}" data-filial-card-id="${getTextoPainelProgramacao(filial.id)}" onclick="event.preventDefault();event.stopPropagation();toggleFilialSemMoverTelaPainelProgramacao('${getTextoPainelProgramacao(filial.id)}')">
+        <div class="painelProgCard painelProgWarehouseCardNormal${selecionado ? " isSelected" : ""}" data-filial-card-id="${getTextoPainelProgramacao(filial.id)}" aria-pressed="${selecionado ? "true" : "false"}" onclick="event.preventDefault();event.stopPropagation();toggleFilialSemMoverTelaPainelProgramacao('${getTextoPainelProgramacao(filial.id)}')">
           <div class="painelProgCardTop">
             <div class="painelProgVocativo" title="${getTextoPainelProgramacao(filial.localidade)}">${getTextoPainelProgramacao(filial.localidade)}</div>
             <span class="painelProgWarehouseBadge" title="Armazém / transferência">A</span>
