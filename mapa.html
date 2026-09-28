@@ -4168,6 +4168,45 @@
     .painelProgProximidadeStatus.programado { background:#dcfce7; color:#166534; border-color:#86efac; }
     .painelProgProximidadeStatus.naoProgramado { background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
 
+    /* Armazéns / filiais: amarelo em todas as visualizações. */
+    .painelProgWarehouseGroup { margin-bottom:12px; border:1px solid #fde68a; border-radius:13px; background:#fffbeb; overflow:hidden; }
+    .painelProgWarehouseGroupHead { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; background:#fef3c7; border-bottom:1px solid #fde68a; }
+    .painelProgWarehouseGroupTitle { font-size:10px; font-weight:1000; color:#713f12; text-transform:uppercase; letter-spacing:.04em; }
+    .painelProgWarehouseGroupHint { font-size:8px; font-weight:900; color:#92400e; }
+    .painelProgWarehouseCardsGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(205px,1fr)); gap:8px; padding:8px; }
+    .painelProgWarehouseCard { position:relative; border:1px solid #fbbf24; border-left:4px solid #f59e0b; border-radius:10px; background:#fffbeb; padding:9px 10px; min-height:96px; cursor:pointer; box-shadow:0 2px 6px rgba(120,53,15,.08); transition:.12s ease; }
+    .painelProgWarehouseCard:hover { transform:translateY(-1px); box-shadow:0 5px 12px rgba(120,53,15,.14); }
+    .painelProgWarehouseCard.isSelected { box-shadow:0 0 0 3px #2563eb,0 5px 13px rgba(37,99,235,.18); border-color:#f59e0b; }
+    .painelProgWarehouseCardTitle { padding-right:28px; font-size:10px; line-height:1.15; font-weight:1000; color:#713f12; }
+    .painelProgWarehouseBadge { position:absolute; right:7px; top:7px; display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; border-radius:999px; background:#facc15; color:#713f12; border:1px solid #eab308; font-size:9px; font-weight:1000; }
+    .painelProgWarehouseCardLine { margin-top:5px; font-size:8.5px; color:#78350f; font-weight:800; }
+    .painelProgWarehouseCardBp { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:7px; padding-top:6px; border-top:1px solid #fde68a; font-size:8.5px; font-weight:1000; color:#713f12; }
+
+    .painelProgPopupWarehouseSection { border-color:#fde68a!important; background:#fffbeb!important; }
+    .painelProgPopupWarehouseSection .painelProgPopupSectionHead { background:#fef3c7!important; color:#713f12!important; }
+    .painelProgPopupWarehouseRow { display:grid; grid-template-columns:25px minmax(0,1fr) minmax(100px,.55fr); gap:7px; align-items:center; padding:7px 8px; border-top:1px solid #fde68a; background:#fffbeb; }
+    .painelProgPopupWarehouseRow:first-child { border-top:0; }
+    .painelProgPopupWarehouseName { font-size:9px; font-weight:1000; color:#713f12; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .painelProgPopupWarehouseMeta { margin-top:3px; font-size:7.5px; color:#92400e; font-weight:800; }
+    .painelProgPopupWarehouseBp { font-size:8px; font-weight:1000; color:#713f12; }
+    .painelProgPopupRouteCreateMini { min-width:38px; height:26px; padding:0 8px; border:1px solid #93c5fd; border-radius:8px; background:#eff6ff; color:#1d4ed8; font-size:8px; font-weight:1000; cursor:pointer; }
+
+    .painelProgProximidadeGrupo.isWarehouse { border-color:#fde68a; background:#fffbeb; }
+    .painelProgProximidadeGrupo.isWarehouse .painelProgProximidadeGrupoHead { background:#fef3c7; border-bottom-color:#fde68a; cursor:pointer; }
+    .painelProgProximidadeGrupo.isWarehouse .painelProgProximidadeGrupoHead:hover { background:#fde68a; }
+    .painelProgProximidadeGrupo.isWarehouse .painelProgProximidadeGrupoHead.isSelected { box-shadow:inset 0 0 0 2px #2563eb; }
+    .painelProgProximidadeGrupo.isWarehouse .painelProgProximidadeGrupoHead b { color:#713f12; }
+    .painelProgProximidadeGrupo.isWarehouse .painelProgProximidadeGrupoHead span { color:#92400e; }
+    .painelProgProximidadeWarehouseBp { display:inline-flex!important; align-items:center; gap:4px; padding:2px 5px; border-radius:999px; background:#facc15; color:#713f12!important; border:1px solid #eab308; font-size:7px!important; }
+
+    .painelProgTransferVocBlock { border-top:1px solid #eef2f7; background:#fff; }
+    .painelProgTransferVocBlock:first-child { border-top:0; }
+    .painelProgTransferVocHead { padding:7px 9px 5px; font-size:9px; font-weight:1000; color:#0f172a; background:#f8fafc; }
+    .painelProgTransferBpRow { display:grid; grid-template-columns:22px minmax(110px,.65fr) minmax(170px,1fr) auto; gap:7px; align-items:center; padding:6px 9px; border-top:1px solid #f1f5f9; }
+    .painelProgTransferBpCode { font-size:8.5px; font-weight:1000; color:#0f172a; }
+    .painelProgTransferBpState { min-width:88px; text-align:center; font-size:7px; font-weight:1000; border-radius:999px; padding:4px 6px; white-space:nowrap; background:#eff6ff; color:#1e3a8a; border:1px solid #bfdbfe; }
+    .painelProgTransferBpRow.isTransfer .painelProgTransferBpState { background:#fef3c7; color:#713f12; border-color:#fbbf24; }
+
     /* Upload das bases direto no painel, sem ocupar espaço permanente. */
     .painelProgBasesWrap { position:relative; display:inline-flex; }
     .painelProgBasesPopover {
@@ -4696,24 +4735,24 @@
     const PAINEL_PROG_CEP_PRECISO_CACHE_KEY = "painelProgCepPrecisoCache_v1";
 
     const PAINEL_PROG_FILIAIS_DELLA_VOLPE = [
-      { id:"acailandia_ma", localidade:"Açailândia - MA", cep:"65930000", uf:"MA", cnpj:"61.139.432/0134-01" },
-      { id:"ananindeua_pa", localidade:"Ananindeua - PA", cep:"67033000", uf:"PA", cnpj:"61.139.432/0131-50" },
-      { id:"aparecida_go", localidade:"Aparecida de Goiânia - GO", cep:"74923225", uf:"GO", cnpj:"61.139.432/0141-22" },
-      { id:"araquari_sc", localidade:"Araquari - SC", cep:"89245000", uf:"SC", cnpj:"61.139.432/0122-60" },
-      { id:"camacari_ba", localidade:"Camaçari - BA", cep:"42801609", uf:"BA", cnpj:"61.139.432/0145-56" },
-      { id:"canoas_rs", localidade:"Canoas - RS", cep:"92420360", uf:"RS", cnpj:"61.139.432/0111-07" },
-      { id:"contagem_mg", localidade:"Contagem - MG", cep:"32184010", uf:"MG", cnpj:"61.139.432/0159-51" },
-      { id:"corumba_ms", localidade:"Corumbá - MS", cep:"79321856", uf:"MS", cnpj:"61.139.432/0150-13" },
-      { id:"curitiba_pr", localidade:"Curitiba - PR", cep:"81170230", uf:"PR", cnpj:"61.139.432/0055-65" },
-      { id:"cabo_pe", localidade:"Cabo de Santo Agostinho - PE", cep:"54503410", uf:"PE", cnpj:"61.139.432/0025-40" },
-      { id:"parauapebas_pa", localidade:"Parauapebas - PA", cep:"68515000", uf:"PA", cnpj:"61.139.432/0127-74" },
-      { id:"primavera_mt", localidade:"Primavera do Leste - MT", cep:"78850000", uf:"MT", cnpj:"61.139.432/0169-23" },
-      { id:"ribeirao_sp", localidade:"Ribeirão Preto - SP", cep:"14061280", uf:"SP", cnpj:"61.139.432/0155-28" },
-      { id:"rio_rj", localidade:"Rio de Janeiro - RJ", cep:"21535000", uf:"RJ", cnpj:"61.139.432/0002-53" },
-      { id:"sao_luis_ma", localidade:"São Luís - MA", cep:"65095601", uf:"MA", cnpj:"61.139.432/0125-02" },
-      { id:"sao_paulo_sp", localidade:"São Paulo - SP", cep:"02177010", uf:"SP", cnpj:"61.139.432/0001-72" },
-      { id:"tres_lagoas_ms", localidade:"Três Lagoas - MS", cep:"79610102", uf:"MS", cnpj:"61.139.432/0163-38" },
-      { id:"serra_es", localidade:"Serra - ES", cep:"29168080", uf:"ES", cnpj:"61.139.432/0044-02" }
+      { id:"acailandia_ma", localidade:"Açailândia - MA", cep:"65930000", uf:"MA", cnpj:"61.139.432/0134-01", bp:"0134" },
+      { id:"ananindeua_pa", localidade:"Ananindeua - PA", cep:"67033000", uf:"PA", cnpj:"61.139.432/0131-50", bp:"0131" },
+      { id:"aparecida_go", localidade:"Aparecida de Goiânia - GO", cep:"74923225", uf:"GO", cnpj:"61.139.432/0141-22", bp:"0141" },
+      { id:"araquari_sc", localidade:"Araquari - SC", cep:"89245000", uf:"SC", cnpj:"61.139.432/0122-60", bp:"0122" },
+      { id:"camacari_ba", localidade:"Camaçari - BA", cep:"42801609", uf:"BA", cnpj:"61.139.432/0145-56", bp:"0145" },
+      { id:"canoas_rs", localidade:"Canoas - RS", cep:"92420360", uf:"RS", cnpj:"61.139.432/0111-07", bp:"0111" },
+      { id:"contagem_mg", localidade:"Contagem - MG", cep:"32184010", uf:"MG", cnpj:"61.139.432/0159-51", bp:"0159" },
+      { id:"corumba_ms", localidade:"Corumbá - MS", cep:"79321856", uf:"MS", cnpj:"61.139.432/0150-13", bp:"0150" },
+      { id:"curitiba_pr", localidade:"Curitiba - PR", cep:"81170230", uf:"PR", cnpj:"61.139.432/0055-65", bp:"0055" },
+      { id:"cabo_pe", localidade:"Cabo de Santo Agostinho - PE", cep:"54503410", uf:"PE", cnpj:"61.139.432/0025-40", bp:"0025" },
+      { id:"parauapebas_pa", localidade:"Parauapebas - PA", cep:"68515000", uf:"PA", cnpj:"61.139.432/0127-74", bp:"0127" },
+      { id:"primavera_mt", localidade:"Primavera do Leste - MT", cep:"78850000", uf:"MT", cnpj:"61.139.432/0169-23", bp:"0169" },
+      { id:"ribeirao_sp", localidade:"Ribeirão Preto - SP", cep:"14061280", uf:"SP", cnpj:"61.139.432/0155-28", bp:"0155" },
+      { id:"rio_rj", localidade:"Rio de Janeiro - RJ", cep:"21535000", uf:"RJ", cnpj:"61.139.432/0002-53", bp:"0002" },
+      { id:"sao_luis_ma", localidade:"São Luís - MA", cep:"65095601", uf:"MA", cnpj:"61.139.432/0125-02", bp:"0125" },
+      { id:"sao_paulo_sp", localidade:"São Paulo - SP", cep:"02177010", uf:"SP", cnpj:"61.139.432/0001-72", bp:"0001" },
+      { id:"tres_lagoas_ms", localidade:"Três Lagoas - MS", cep:"79610102", uf:"MS", cnpj:"61.139.432/0163-38", bp:"0163" },
+      { id:"serra_es", localidade:"Serra - ES", cep:"29168080", uf:"ES", cnpj:"61.139.432/0044-02", bp:"0044" }
     ];
 
     window.__painelProgMapState = window.__painelProgMapState || {
@@ -13097,8 +13136,9 @@ return null;
       const selecionados = Array.from(painelProgCardsSelecionados)
         .map(chave => painelProgDadosAtuaisPorKey.get(chave))
         .filter(Boolean);
+      const armazensSelecionados = getFiliaisSelecionadasPainelProgramacao();
 
-      if (!selecionados.length) {
+      if (!selecionados.length && !armazensSelecionados.length) {
         popup.classList.remove("open");
         popup.innerHTML = "";
         return;
@@ -13169,6 +13209,22 @@ return null;
       };
 
       const idxVocativos = addCopy(vocativosTexto);
+
+      const armazensHtml = armazensSelecionados.length ? `
+        <div class="painelProgPopupSection painelProgPopupWarehouseSection" style="margin-top:0;">
+          <div class="painelProgPopupSectionHead"><span>Armazéns selecionados</span></div>
+          <div>
+            ${armazensSelecionados.map((filial,idx) => {
+              const idxBpArm = addCopy(filial.bp || "");
+              const token = getTokenOrdemRotaFilialPainelProgramacao(filial.id);
+              return `<div class="painelProgPopupWarehouseRow isRouteSortable" draggable="true" data-route-tokens="${getTextoPainelProgramacao(JSON.stringify([token]))}" title="Arraste para alterar a ordem da rota">
+                <div class="painelProgPopupRouteGrip"><span>⋮⋮</span><span class="painelProgPopupRouteNum">${idx+1}</span></div>
+                <div><div class="painelProgPopupWarehouseName">${getTextoPainelProgramacao(filial.localidade)}</div><div class="painelProgPopupWarehouseMeta">ARMAZÉM · CEP ${getTextoPainelProgramacao(String(filial.cep||"").replace(/(\d{5})(\d{3})/,"$1-$2"))}</div></div>
+                <div><div class="painelProgPopupWarehouseBp">BP ${getTextoPainelProgramacao(filial.bp || "-")}</div><button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoPainelProgramacaoPorIndice(${idxBpArm},event)">Copiar BP</button></div>
+              </div>`;
+            }).join("")}
+          </div>
+        </div>` : "";
 
       const alertaMercadoriaHtml = linhasAlertasMercadoria.map(linha =>
         `• Existe ${getTextoPainelProgramacao(linha.label)}: ${formatarNumeroPainelProgramacao(linha.qtd, 0)} registro(s).<br>`
@@ -13262,7 +13318,7 @@ return null;
         <div class="painelProgPopupHeader">
           <div>
             <div class="painelProgPopupTitle">Resumo do(s) card(s)</div>
-            <div class="painelProgPopupSub">${formatarNumeroPainelProgramacao(vocativos.length, 0)} vocativo(s) selecionado(s)</div>
+            <div class="painelProgPopupSub">${formatarNumeroPainelProgramacao(vocativos.length, 0)} vocativo(s) · ${formatarNumeroPainelProgramacao(armazensSelecionados.length,0)} armazém(ns)</div>
           </div>
           <div class="painelProgPopupHeaderActions">
             <button
@@ -13271,6 +13327,12 @@ return null;
               title="Gerar PDF dos cards selecionados"
               onclick="event.preventDefault(); event.stopPropagation(); gerarRelatorioPDFCardsSelecionadosPainelProgramacao()"
             >PDF</button>
+            <button
+              class="painelProgPopupRouteCreateMini"
+              type="button"
+              title="Criar rota com a seleção atual"
+              onclick="event.preventDefault();event.stopPropagation();abrirSalvarRotaPainelProgramacao()"
+            >Rota</button>
             <button
               class="painelProgPopupMapMini"
               type="button"
@@ -13282,7 +13344,8 @@ return null;
           </div>
         </div>
         <div class="painelProgPopupBody">
-          <div class="painelProgPopupSection" style="margin-top:0;">
+          ${armazensHtml}
+          <div class="painelProgPopupSection"${armazensSelecionados.length ? "" : ' style="margin-top:0;"'}>
             <div class="painelProgPopupSectionHead">
               <span>Placas virtuais</span>
             </div>
@@ -15395,12 +15458,23 @@ return null;
         .filter(filial => coordenadaValidaBrasilPainelProgramacao(filial.lat, filial.lon));
     }
 
+    function getFilialCadastroPainelProgramacao(id) {
+      return PAINEL_PROG_FILIAIS_DELLA_VOLPE.find(f => String(f?.id || "") === String(id || "")) || null;
+    }
+
     function getFiliaisSelecionadasPainelProgramacao() {
       const st = window.__painelProgMapState;
       if (!(st?.filiaisSelecionadas instanceof Set)) st.filiaisSelecionadas = new Set();
       return Array.from(st.filiaisSelecionadas)
-        .map(id => st.filialLocalizacoes?.get?.(id))
+        .map(id => st.filialLocalizacoes?.get?.(id) || getFilialCadastroPainelProgramacao(id))
         .filter(Boolean);
+    }
+
+    function getFiliaisPermitidasPainelProgramacao() {
+      const permitidas = getUfsFiliaisPermitidasPelosFiltrosPainelProgramacao();
+      return PAINEL_PROG_FILIAIS_DELLA_VOLPE
+        .filter(f => permitidas.has(normalizar(String(f?.uf || ""))))
+        .map(f => window.__painelProgMapState?.filialLocalizacoes?.get?.(f.id) || f);
     }
 
     function criarIconeFilialPainelProgramacao(filial) {
@@ -15425,15 +15499,19 @@ return null;
       });
     }
 
-    function toggleFilialPainelProgramacao(id) {
+    function toggleFilialPainelProgramacao(id, opcoes = {}) {
       const st = window.__painelProgMapState;
-      if (!st?.filialLocalizacoes?.has?.(id)) return;
+      if (!st || !getFilialCadastroPainelProgramacao(id)) return;
       if (!(st.filiaisSelecionadas instanceof Set)) st.filiaisSelecionadas = new Set();
       if (st.filiaisSelecionadas.has(id)) st.filiaisSelecionadas.delete(id);
       else st.filiaisSelecionadas.add(id);
+      sincronizarOrdemRotaPainelProgramacao();
       atualizarIconesFiliaisPainelProgramacao();
       sincronizarEstadoVisualSelecoesMapaPainelProgramacao();
-      limparProximidadePainelProgramacao();
+      if (!opcoes?.manterProximidade) limparProximidadePainelProgramacao();
+      renderCardsPainelProgramacao(getDadosCardsVisiveisPainelProgramacao());
+      renderPopupPainelProgramacao();
+      atualizarSelecaoListaProximidadePainelProgramacao();
       const info = document.getElementById("painelProgRouteInfo");
       if(info){ info.classList.remove("painelProgRouteError"); info.textContent=""; }
     }
@@ -16145,12 +16223,14 @@ return null;
 
     function getTokenOrdemRotaCardPainelProgramacao(chave) { return `card:${String(chave || "").trim()}`; }
     function getTokenOrdemRotaExtraPainelProgramacao(id) { return `extra:${String(id || "").trim()}`; }
+    function getTokenOrdemRotaFilialPainelProgramacao(id) { return `filial:${String(id || "").trim()}`; }
     function sincronizarOrdemRotaPainelProgramacao() {
       const st = window.__painelProgMapState;
       if (!st) return [];
       if (!Array.isArray(st.routeOrder)) st.routeOrder = [];
       const atuais = [];
       Array.from(painelProgCardsSelecionados || []).forEach(chave => atuais.push(getTokenOrdemRotaCardPainelProgramacao(chave)));
+      getFiliaisSelecionadasPainelProgramacao().forEach(f => atuais.push(getTokenOrdemRotaFilialPainelProgramacao(f.id)));
       getCidadesExtrasSelecionadasPainelProgramacao().forEach(c => atuais.push(getTokenOrdemRotaExtraPainelProgramacao(c.id)));
       const permitidos = new Set(atuais);
       const nova = st.routeOrder.filter(t => permitidos.has(t));
@@ -16166,6 +16246,13 @@ return null;
         const loc = st?.localizacoes?.get?.(chave);
         const item = loc?.item || painelProgDadosAtuaisPorKey.get(chave);
         return { token, tipo:"Vocativo", label:String(item?.vocativo || chave || "Vocativo"), chave, loc, missing:!loc };
+      }
+      if (token.startsWith("filial:")) {
+        const id = token.slice(7);
+        const filial = getFiliaisSelecionadasPainelProgramacao().find(x => String(x?.id || "") === id);
+        if (!filial) return null;
+        const geo = st?.filialLocalizacoes?.get?.(id) || filial;
+        return { token, tipo:"Armazém", label:String(filial?.localidade || id), filial:geo, missing:!coordenadaValidaBrasilPainelProgramacao(geo?.lat,geo?.lon) };
       }
       if (token.startsWith("extra:")) {
         const id = token.slice(6);
@@ -16333,6 +16420,13 @@ return null;
         row.setAttribute("aria-pressed", selecionado ? "true" : "false");
         row.title = selecionado ? "Vocativo selecionado — clique para retirar da seleção" : "Clique para selecionar este vocativo";
       });
+      const st = window.__painelProgMapState;
+      panel.querySelectorAll(".painelProgProximidadeGrupoHead[data-filial-id]").forEach(head => {
+        const id = String(head.getAttribute("data-filial-id") || "");
+        const sel = !!st?.filiaisSelecionadas?.has?.(id);
+        head.classList.toggle("isSelected",sel);
+        head.setAttribute("aria-pressed",sel?"true":"false");
+      });
     }
 
     function selecionarVocativoListaProximidadePainelProgramacao(chave){
@@ -16450,16 +16544,29 @@ return null;
       const haSelecao = (painelProgCardsSelecionados?.size || 0) > 0 || getCidadesExtrasSelecionadasPainelProgramacao().length > 0;
       const escopo = haSelecao ? "selecionado(s)" : "filtrado(s)";
 
-      panel.innerHTML = `<div class="painelProgProximidadeTop"><div><div class="painelProgProximidadeTitle">Armazém mais próximo</div><div class="painelProgProximidadeSub">${totalDistribuido} destino(s) ${escopo} comparado(s) com ${armazens.length} filial(is) disponível(is) dentro dos filtros. Clique em um vocativo para selecionar/desmarcar exatamente como no mapa. Distância geográfica para classificação; rota rodoviária continua sendo calculada pelo OSRM.</div></div><button class="painelProgProximidadeClose" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Fechar e limpar todas as seleções">×</button></div><div class="painelProgProximidadeGrid">${gruposComDestino.map((g,i)=>`<div class="painelProgProximidadeGrupo"><div class="painelProgProximidadeGrupoHead"><b>${getTextoPainelProgramacao(g.base.label)}</b><span>${g.itens.length} destino(s)</span></div><div class="painelProgProximidadeLista">${g.itens.map(it=>`<div class="painelProgProximidadeLinha${it.chave && painelProgCardsSelecionados?.has?.(it.chave) ? " isSelected" : ""}"${it.chave ? ` data-card-key="${escapeHtmlAttr(it.chave)}" role="button" tabindex="0" aria-pressed="${painelProgCardsSelecionados?.has?.(it.chave) ? "true" : "false"}"` : ""}><b title="${getTextoPainelProgramacao(it.label)}">${getTextoPainelProgramacao(it.label)}</b>${it.tipo === "vocativo" ? `<span class="painelProgProximidadeStatus ${it.programado ? "programado" : "naoProgramado"}">${it.programado ? "Programado" : "Não programado"}</span>` : `<span></span>`}<span>${it.km.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km</span></div>`).join("")}</div></div>`).join("")}</div>`;
+      panel.innerHTML = `<div class="painelProgProximidadeTop"><div><div class="painelProgProximidadeTitle">Armazém mais próximo</div><div class="painelProgProximidadeSub">${totalDistribuido} destino(s) ${escopo} comparado(s) com ${armazens.length} filial(is) disponível(is) dentro dos filtros. Clique no cabeçalho amarelo do armazém ou em um vocativo para selecionar/desmarcar.</div></div><button class="painelProgProximidadeClose" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Fechar e limpar todas as seleções">×</button></div><div class="painelProgProximidadeGrid">${gruposComDestino.map((g,i)=>`<div class="painelProgProximidadeGrupo isWarehouse"><div class="painelProgProximidadeGrupoHead${window.__painelProgMapState?.filiaisSelecionadas?.has?.(g.base.filial?.id) ? " isSelected" : ""}" data-filial-id="${getTextoPainelProgramacao(g.base.filial?.id || "")}" role="button" tabindex="0"><b>${getTextoPainelProgramacao(g.base.label)}</b><span class="painelProgProximidadeWarehouseBp">BP ${getTextoPainelProgramacao(g.base.filial?.bp || "-")}</span><span>${g.itens.length} destino(s)</span></div><div class="painelProgProximidadeLista">${g.itens.map(it=>`<div class="painelProgProximidadeLinha${it.chave && painelProgCardsSelecionados?.has?.(it.chave) ? " isSelected" : ""}"${it.chave ? ` data-card-key="${escapeHtmlAttr(it.chave)}" role="button" tabindex="0" aria-pressed="${painelProgCardsSelecionados?.has?.(it.chave) ? "true" : "false"}"` : ""}><b title="${getTextoPainelProgramacao(it.label)}">${getTextoPainelProgramacao(it.label)}</b>${it.tipo === "vocativo" ? `<span class="painelProgProximidadeStatus ${it.programado ? "programado" : "naoProgramado"}">${it.programado ? "Programado" : "Não programado"}</span>` : `<span></span>`}<span>${it.km.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})} km</span></div>`).join("")}</div></div>`).join("")}</div>`;
       panel.classList.add("open");
 
       panel.onclick = (ev) => {
+        const head = ev.target?.closest?.(".painelProgProximidadeGrupoHead[data-filial-id]");
+        if (head && panel.contains(head)) {
+          toggleFilialPainelProgramacao(head.getAttribute("data-filial-id"),{manterProximidade:true});
+          atualizarSelecaoListaProximidadePainelProgramacao();
+          return;
+        }
         const row = ev.target?.closest?.(".painelProgProximidadeLinha[data-card-key]");
         if(!row || !panel.contains(row)) return;
         selecionarVocativoListaProximidadePainelProgramacao(row.getAttribute("data-card-key"));
       };
       panel.onkeydown = (ev) => {
         if(ev.key !== "Enter" && ev.key !== " ") return;
+        const head = ev.target?.closest?.(".painelProgProximidadeGrupoHead[data-filial-id]");
+        if (head && panel.contains(head)) {
+          ev.preventDefault();
+          toggleFilialPainelProgramacao(head.getAttribute("data-filial-id"),{manterProximidade:true});
+          atualizarSelecaoListaProximidadePainelProgramacao();
+          return;
+        }
         const row = ev.target?.closest?.(".painelProgProximidadeLinha[data-card-key]");
         if(!row || !panel.contains(row)) return;
         ev.preventDefault();
@@ -16482,21 +16589,10 @@ return null;
       const itensOrdenados=getItensOrdemRotaPainelProgramacao();
       const pontos=itensOrdenados.map(it=>{
         if(it.loc) return {lat:it.loc.geo.lat,lon:it.loc.geo.lon,label:it.loc.item?.vocativo||it.label,routeToken:it.token};
+        if(it.filial) return {lat:Number(it.filial.lat),lon:Number(it.filial.lon),label:`Armazém ${it.filial.localidade || it.label}`,filial:true,routeToken:it.token};
         if(it.extra) return {lat:it.extra.lat,lon:it.extra.lon,label:it.extra.label,extra:true,routeToken:it.token};
         return null;
-      }).filter(Boolean);
-
-      // Filiais selecionadas participam da rota como pontos normais.
-      // A ordem entre filiais respeita a ordem em que foram selecionadas.
-      getFiliaisSelecionadasPainelProgramacao().forEach(filial => {
-        pontos.push({
-          lat:Number(filial.lat),
-          lon:Number(filial.lon),
-          label:`Filial ${filial.localidade}`,
-          filial:true,
-          routeToken:`filial:${filial.id}`
-        });
-      });
+      }).filter(p=>p && coordenadaValidaBrasilPainelProgramacao(p.lat,p.lon));
       if(comOrigemSP){
         if(!pontos.length){if(info){info.classList.add("painelProgRouteError");info.textContent="Selecione pelo menos 1 ponto (vocativo, destino extra ou filial) para calcular a rota partindo de São Paulo.";}return;}
         if(info){info.classList.remove("painelProgRouteError");info.textContent="Localizando origem em São Paulo (CEP 02174-010)...";}
@@ -16529,13 +16625,41 @@ return null;
     }
     async function reprocessarCepsPendentesPainelProgramacao(){const cache=carregarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,"cepCache");Array.from(window.__painelProgMapState?.pendencias?.values?.()||[]).forEach(p=>(p?.item?.cepsDestino||[]).map(normalizarCepPainelProgramacao).filter(Boolean).forEach(cep=>cache.delete(cep)));salvarCacheMapaPainelProgramacao(PAINEL_PROG_CEP_CACHE_KEY,cache);await renderMapaPainelProgramacao(painelProgDadosAtuais||[],{forcarGeocode:true});}
 
+    function copiarBpArmazemPainelProgramacao(bp, ev) {
+      copiarTextoPainelProgramacao(String(bp || ""), ev);
+    }
+
+    function renderCardArmazemPainelProgramacao(filial) {
+      const st = window.__painelProgMapState;
+      const selecionado = !!st?.filiaisSelecionadas?.has?.(filial.id);
+      const cep = String(filial.cep || "");
+      const cepFmt = cep.length === 8 ? `${cep.slice(0,5)}-${cep.slice(5)}` : cep;
+      return `<div class="painelProgWarehouseCard${selecionado ? " isSelected" : ""}" data-filial-card-id="${getTextoPainelProgramacao(filial.id)}" onclick="event.stopPropagation();toggleFilialPainelProgramacao('${getTextoPainelProgramacao(filial.id)}')">
+        <div class="painelProgWarehouseBadge">A</div>
+        <div class="painelProgWarehouseCardTitle">${getTextoPainelProgramacao(filial.localidade)}</div>
+        <div class="painelProgWarehouseCardLine">ARMAZÉM / TRANSFERÊNCIA</div>
+        <div class="painelProgWarehouseCardLine">CEP: ${getTextoPainelProgramacao(cepFmt)} · CNPJ: ${getTextoPainelProgramacao(filial.cnpj || "")}</div>
+        <div class="painelProgWarehouseCardBp"><span>BP: ${getTextoPainelProgramacao(filial.bp || "-")}</span><button class="painelProgPopupCopyBtn" type="button" onclick="event.stopPropagation();copiarBpArmazemPainelProgramacao('${getTextoPainelProgramacao(filial.bp || "")}',event)">Copiar BP</button></div>
+      </div>`;
+    }
+
+    function renderBlocoArmazensPainelProgramacao() {
+      const filiais = getFiliaisPermitidasPainelProgramacao();
+      if (!filiais.length) return "";
+      return `<div class="painelProgWarehouseGroup">
+        <div class="painelProgWarehouseGroupHead"><div class="painelProgWarehouseGroupTitle">Armazéns / Transferência</div><div class="painelProgWarehouseGroupHint">${filiais.length} disponível(is) nos filtros atuais</div></div>
+        <div class="painelProgWarehouseCardsGrid">${filiais.map(renderCardArmazemPainelProgramacao).join("")}</div>
+      </div>`;
+    }
+
     function renderCardsPainelProgramacao(dados) {
       const cardsEl = document.getElementById("painelProgramacaoCards");
       if (!cardsEl) return;
+      const armazensHtml = renderBlocoArmazensPainelProgramacao();
       if (!dados.length) {
         painelProgCardsSelecionados.clear();
         renderPopupPainelProgramacao();
-        cardsEl.innerHTML = `<div class="painelProgEmptyState">Nenhum vocativo encontrado para os filtros selecionados.</div>`;
+        cardsEl.innerHTML = `${armazensHtml}<div class="painelProgEmptyState">Nenhum vocativo encontrado para os filtros selecionados.</div>`;
         iniciarSelosOverlayPainelProgramacao();
         agendarSincronizacaoSelosOverlayPainelProgramacao();
         return;
@@ -16545,7 +16669,7 @@ return null;
       const ordenados = ordenarPainelProgPorVocativo(dados);
 
       if (modoAgrupamento === "nenhum") {
-        cardsEl.innerHTML = `
+        cardsEl.innerHTML = `${armazensHtml}
           <div class="painelProgCardsGrid">
             ${ordenados.map(renderCardPainelProgramacao).join("")}
           </div>
@@ -16585,7 +16709,7 @@ return null;
           </div>
         `).join("");
 
-      cardsEl.innerHTML = html;
+      cardsEl.innerHTML = `${armazensHtml}${html}`;
       iniciarSelosOverlayPainelProgramacao();
       agendarSincronizacaoSelosOverlayPainelProgramacao();
     }
@@ -16706,35 +16830,108 @@ return null;
       return `ROTA ${String(maior + 1).padStart(3,"0")}`;
     }
 
-    function getNomeExibicaoRotaPainelProgramacao(rota) {
+    function getPosicaoTokenRotaPainelProgramacao(rota, token) {
+      const arr = Array.isArray(rota?.routeOrder) ? rota.routeOrder : [];
+      const p = arr.indexOf(String(token || ""));
+      return p >= 0 ? p : Number.MAX_SAFE_INTEGER;
+    }
+
+    function getLinhasOperacionaisRotaPainelProgramacao(rota) {
       const cards = Array.isArray(rota?.cards) ? rota.cards : [];
-      const diretas = cards.filter(c => c?.tipoEntrega !== "TRANSFERENCIA").map(c => String(c?.vocativo || "").trim()).filter(Boolean);
-      const transferidas = cards.filter(c => c?.tipoEntrega === "TRANSFERENCIA");
-      const armazens = [];
-      transferidas.forEach(c => {
-        const nome = String(c?.armazemLabel || "").trim();
-        if (nome && !armazens.includes(nome)) armazens.push(nome);
+      const linhasDiretas = [];
+      const linhasTransfer = [];
+
+      cards.forEach(card => {
+        const bps = Array.isArray(card?.bps) ? card.bps.map(String).filter(Boolean) : [];
+        let transferencias = Array.isArray(card?.transferencias) ? card.transferencias : [];
+
+        // Compatibilidade com rotas antigas salvas antes da transferência por BP.
+        if (!transferencias.length && card?.tipoEntrega === "TRANSFERENCIA") {
+          transferencias = bps.map(bp => ({
+            bp,
+            armazemId:String(card?.armazemId || ""),
+            armazemLabel:String(card?.armazemLabel || ""),
+            armazemBp:String(card?.armazemBp || getFilialCadastroPainelProgramacao(card?.armazemId)?.bp || "")
+          }));
+        }
+
+        const transferBps = new Set(transferencias.map(t => String(t?.bp || "")).filter(Boolean));
+        const diretos = Array.isArray(card?.directBps)
+          ? card.directBps.map(String).filter(Boolean)
+          : bps.filter(bp => !transferBps.has(bp));
+
+        if (diretos.length || !bps.length) {
+          linhasDiretas.push({
+            grupo:"DIRETA", tipo:"ENTREGA DIRETA", cardKey:card.cardKey, vocativo:card.vocativo,
+            bps:diretos.length ? diretos : bps, peso:Number(card.peso||0), notas:Number(card.notas||0),
+            ceps:card.ceps||[], destinos:card.destinos||[], ufs:card.ufs||[],
+            ordemCard:getPosicaoTokenRotaPainelProgramacao(rota,`card:${card.cardKey}`)
+          });
+        }
+
+        const porArm = new Map();
+        transferencias.forEach(t => {
+          const key = String(t?.armazemId || t?.armazemLabel || "");
+          if (!porArm.has(key)) porArm.set(key,{...t,bps:[]});
+          if (t?.bp) porArm.get(key).bps.push(String(t.bp));
+        });
+        porArm.forEach(t => linhasTransfer.push({
+          grupo:"TRANSFERENCIA", tipo:"TRANSFERÊNCIA", cardKey:card.cardKey, vocativo:card.vocativo,
+          bps:Array.from(new Set(t.bps)), peso:Number(card.peso||0), notas:Number(card.notas||0),
+          ceps:card.ceps||[], destinos:card.destinos||[], ufs:card.ufs||[],
+          armazemId:String(t.armazemId||""), armazemLabel:String(t.armazemLabel||""),
+          armazemBp:String(t.armazemBp || getFilialCadastroPainelProgramacao(t.armazemId)?.bp || ""),
+          ordemCard:getPosicaoTokenRotaPainelProgramacao(rota,`card:${card.cardKey}`),
+          ordemArmazem:getPosicaoTokenRotaPainelProgramacao(rota,`filial:${t.armazemId}`)
+        }));
       });
 
-      let partes = [];
-      if (transferidas.length) {
-        partes = [
-          ...armazens.map(a => `ARMAZÉM ${a}`),
-          ...diretas
-        ];
-      } else {
-        partes = cards.map(c => String(c?.vocativo || "").trim()).filter(Boolean);
+      linhasDiretas.sort((a,b)=>a.ordemCard-b.ordemCard || String(a.vocativo).localeCompare(String(b.vocativo),"pt-BR"));
+      linhasTransfer.sort((a,b)=>a.ordemArmazem-b.ordemArmazem || a.ordemCard-b.ordemCard || String(a.vocativo).localeCompare(String(b.vocativo),"pt-BR"));
+
+      const primeiraDireta = linhasDiretas.length ? Math.min(...linhasDiretas.map(x=>x.ordemCard)) : Number.MAX_SAFE_INTEGER;
+      const primeiraTransfer = linhasTransfer.length ? Math.min(...linhasTransfer.map(x=>x.ordemArmazem)) : Number.MAX_SAFE_INTEGER;
+      const transferPrimeiro = primeiraTransfer < primeiraDireta;
+      let linhas = transferPrimeiro ? [...linhasTransfer,...linhasDiretas] : [...linhasDiretas,...linhasTransfer];
+
+      // Peso/nota aparece somente na primeira linha de cada vocativo, evitando duplicar totais quando há divisão por BP.
+      const vistos = new Set();
+      linhas = linhas.map(l => {
+        const k = String(l.cardKey||l.vocativo||"");
+        const primeiro = !vistos.has(k);
+        vistos.add(k);
+        return {...l, pesoLinha:primeiro?Number(l.peso||0):0, notasLinha:primeiro?Number(l.notas||0):0};
+      });
+      return linhas;
+    }
+
+    function getNomeExibicaoRotaPainelProgramacao(rota) {
+      const linhas = getLinhasOperacionaisRotaPainelProgramacao(rota);
+      if (!linhas.length) {
+        const extras = (Array.isArray(rota?.extras)?rota.extras:[]).map(x=>String(x?.label||"").trim()).filter(Boolean);
+        return extras.join(" → ") || String(rota?.nome || "Rota");
       }
 
-      if (!partes.length) {
-        partes = (Array.isArray(rota?.extras) ? rota.extras : []).map(x => String(x?.label || "").trim()).filter(Boolean);
-      }
+      const partes = [];
+      let grupoAnterior = "";
+      const armazensUsados = new Set();
+      const vocDiretosUsados = new Set();
+
+      linhas.forEach(l => {
+        if (l.grupo !== grupoAnterior) grupoAnterior = l.grupo;
+        if (l.grupo === "TRANSFERENCIA") {
+          const arm = String(l.armazemLabel || "").trim();
+          if (arm && !armazensUsados.has(arm)) { partes.push(`ARMAZÉM ${arm}`); armazensUsados.add(arm); }
+        } else {
+          const voc = String(l.vocativo || "").trim();
+          if (voc && !vocDiretosUsados.has(voc)) { partes.push(voc); vocDiretosUsados.add(voc); }
+        }
+      });
       return partes.join(" → ") || String(rota?.nome || "Rota");
     }
 
     function montarSnapshotRotaPainelProgramacao(transferencias = {}) {
       const st = window.__painelProgMapState;
-      sincronizarOrdemRotaPainelProgramacao();
       const ordemTokens = sincronizarOrdemRotaPainelProgramacao();
       const selecionadosSet = new Set(Array.from(painelProgCardsSelecionados || []));
       const cardKeys = ordemTokens
@@ -16742,33 +16939,42 @@ return null;
         .map(t => String(t).slice(5))
         .filter(k => selecionadosSet.has(k));
       Array.from(selecionadosSet).forEach(k => { if (!cardKeys.includes(k)) cardKeys.push(k); });
+
       const cards = cardKeys.map(k => {
         const item = painelProgDadosAtuaisPorKey.get(k);
         const loc = st?.localizacoes?.get?.(k);
-        const transf = transferencias?.[k] || null;
+        const bps = Array.from(new Set((Array.isArray(item?.bpDestinos)?item.bpDestinos:[]).map(x=>String(x||"").trim()).filter(Boolean)));
+        const transfs = Array.isArray(transferencias?.[k]) ? transferencias[k] : [];
+        const transferSet = new Set(transfs.map(t=>String(t?.bp||"")));
+        const directBps = bps.filter(bp=>!transferSet.has(bp));
+        const tipoEntrega = transfs.length && directBps.length ? "MISTA" : (transfs.length ? "TRANSFERENCIA" : "DIRETA");
         return {
           cardKey:k,
           vocativo:String(item?.vocativo || k),
           peso:Number(item?.pesoTotalPVD || 0),
           notas:Number(item?.totalNotasPVD || 0),
-          bps:Array.isArray(item?.bpDestinos) ? item.bpDestinos.slice() : [],
+          bps,
+          directBps,
+          transferencias:transfs,
           ceps:Array.isArray(item?.cepsDestino) ? item.cepsDestino.slice() : [],
           destinos:Array.isArray(item?.destinos) ? item.destinos.slice() : [],
           ufs:Array.isArray(item?.ufs) ? item.ufs.slice() : [],
           lat:Number(loc?.geo?.lat),
           lon:Number(loc?.geo?.lon),
-          tipoEntrega:transf?.tipo === "TRANSFERENCIA" ? "TRANSFERENCIA" : "DIRETA",
-          armazemId:transf?.tipo === "TRANSFERENCIA" ? String(transf?.armazemId || "") : "",
-          armazemLabel:transf?.tipo === "TRANSFERENCIA" ? String(transf?.armazemLabel || "") : ""
+          tipoEntrega
         };
       }).filter(x => x.cardKey);
 
       const extras = getCidadesExtrasSelecionadasPainelProgramacao().map(x => ({
         id:x.id,label:x.label,lat:Number(x.lat),lon:Number(x.lon),tipo:x.tipo || "extra"
       }));
-      const filiais = getFiliaisSelecionadasPainelProgramacao().map(x => ({
-        id:x.id,localidade:x.localidade,label:`Filial ${x.localidade}`,lat:Number(x.lat),lon:Number(x.lon)
-      }));
+      const filiais = getFiliaisSelecionadasPainelProgramacao().map(x => {
+        const geo = st?.filialLocalizacoes?.get?.(x.id) || x;
+        return {
+          id:x.id,localidade:x.localidade,label:`Filial ${x.localidade}`,bp:x.bp||"",
+          lat:Number(geo?.lat),lon:Number(geo?.lon)
+        };
+      });
       const rr = st?.routeResult || null;
       let geojson = null;
       try { geojson = st?.routeLayer?.toGeoJSON?.() || null; } catch (_) {}
@@ -16793,29 +16999,34 @@ return null;
         return;
       }
 
-      // Sem armazém selecionado, salvar é uma ação direta: tudo é ENTREGA DIRETA.
       if (!filiais.length || !cards.length) {
         salvarRotaSelecionadaPainelProgramacao({});
         return;
       }
 
-      // Com armazém selecionado, única etapa adicional: definir quais vocativos são transferência.
       const itens = cards.map(k => ({chave:k,item:painelProgDadosAtuaisPorKey.get(k)})).filter(x => x.item);
       const back = criarBackdropRotasPainelProgramacao();
-      const opts = filiais.map(f => `<option value="${escRotaPainelProgramacao(f.id)}">${escRotaPainelProgramacao(f.localidade)}</option>`).join("");
-      back.innerHTML = `<div class="painelProgRouteModal" role="dialog" aria-modal="true" aria-label="Definir entregas e transferências">
+      const opts = filiais.map(f => `<option value="${escRotaPainelProgramacao(f.id)}">${escRotaPainelProgramacao(f.localidade)} · BP ${escRotaPainelProgramacao(f.bp||"-")}</option>`).join("");
+
+      back.innerHTML = `<div class="painelProgRouteModal" role="dialog" aria-modal="true" aria-label="Definir BPs de transferência">
         <div class="painelProgRouteModalHead">
-          <div><div class="painelProgRouteModalTitle">Definir transferência</div><div class="painelProgSavedRouteMeta">Marque somente os vocativos que serão transferidos para um armazém. Os demais serão salvos como ENTREGA DIRETA.</div></div>
+          <div><div class="painelProgRouteModalTitle">Definir BPs de transferência</div><div class="painelProgSavedRouteMeta">Marque somente os BPs que serão descarregados no armazém. BPs não marcados permanecem como ENTREGA DIRETA.</div></div>
           <button class="btn secondary painelProgBaseMiniBtn" type="button" onclick="fecharModalRotasPainelProgramacao()">×</button>
         </div>
         <div class="painelProgSaveRouteForm">
           <div class="painelProgTransferList">
-            ${itens.map(({chave,item}) => `<div class="painelProgTransferRow" data-transfer-row data-card-key="${escRotaPainelProgramacao(chave)}">
-              <input type="checkbox" data-transfer-check onchange="atualizarLinhaTransferenciaPainelProgramacao(this)">
-              <div class="painelProgTransferVoc">${escRotaPainelProgramacao(item.vocativo || chave)}</div>
-              <select class="painelProgTransferSelect" data-transfer-armazem ${filiais.length === 1 ? "disabled" : ""}>${opts}</select>
-              <span class="painelProgTransferState">ENTREGA DIRETA</span>
-            </div>`).join("")}
+            ${itens.map(({chave,item}) => {
+              const bpsItem = Array.from(new Set((Array.isArray(item?.bpDestinos)?item.bpDestinos:[]).map(x=>String(x||"").trim()).filter(Boolean)));
+              return `<div class="painelProgTransferVocBlock" data-transfer-voc data-card-key="${escRotaPainelProgramacao(chave)}">
+                <div class="painelProgTransferVocHead">${escRotaPainelProgramacao(item.vocativo || chave)}</div>
+                ${bpsItem.length ? bpsItem.map(bp=>`<div class="painelProgTransferBpRow" data-transfer-bp-row data-bp="${escRotaPainelProgramacao(bp)}">
+                  <input type="checkbox" data-transfer-bp-check onchange="atualizarLinhaTransferenciaBpPainelProgramacao(this)">
+                  <div class="painelProgTransferBpCode">BP ${escRotaPainelProgramacao(bp)}</div>
+                  <select class="painelProgTransferSelect" data-transfer-armazem ${filiais.length===1?"disabled":""}>${opts}</select>
+                  <span class="painelProgTransferBpState">ENTREGA DIRETA</span>
+                </div>`).join("") : `<div style="padding:7px 9px;color:#64748b;font-size:8px;font-weight:800;">Sem BP disponível — permanece como entrega direta.</div>`}
+              </div>`;
+            }).join("")}
           </div>
         </div>
         <div class="painelProgModalFooter">
@@ -16825,34 +17036,42 @@ return null;
       </div>`;
     }
 
-    function atualizarLinhaTransferenciaPainelProgramacao(input) {
-      const row = input?.closest?.("[data-transfer-row]");
+    function atualizarLinhaTransferenciaBpPainelProgramacao(input) {
+      const row = input?.closest?.("[data-transfer-bp-row]");
       if (!row) return;
-      row.classList.toggle("isTransfer", !!input.checked);
+      row.classList.toggle("isTransfer",!!input.checked);
       const sel = row.querySelector("[data-transfer-armazem]");
       if (sel && getFiliaisSelecionadasPainelProgramacao().length > 1) sel.disabled = !input.checked;
-      const st = row.querySelector(".painelProgTransferState");
-      if (st) st.textContent = input.checked ? "TRANSFERÊNCIA" : "ENTREGA DIRETA";
+      const badge = row.querySelector(".painelProgTransferBpState");
+      if (badge) badge.textContent = input.checked ? "TRANSFERÊNCIA" : "ENTREGA DIRETA";
     }
 
     function confirmarSelecaoTransferenciasRotaPainelProgramacao() {
       const filiais = getFiliaisSelecionadasPainelProgramacao();
       const mapaFiliais = new Map(filiais.map(f => [String(f.id),f]));
       const transferencias = {};
-      document.querySelectorAll("#painelProgRouteModalBackdrop [data-transfer-row]").forEach(row => {
-        const check = row.querySelector("[data-transfer-check]");
-        if (!check?.checked) return;
-        const chave = String(row.dataset.cardKey || "");
-        const select = row.querySelector("[data-transfer-armazem]");
-        const id = String(select?.value || filiais[0]?.id || "");
-        const filial = mapaFiliais.get(id) || filiais[0];
-        if (!chave || !filial) return;
-        transferencias[chave] = {
-          tipo:"TRANSFERENCIA",
-          armazemId:String(filial.id || ""),
-          armazemLabel:String(filial.localidade || filial.label || "Armazém")
-        };
+
+      document.querySelectorAll("#painelProgRouteModalBackdrop [data-transfer-voc]").forEach(voc => {
+        const chave = String(voc.dataset.cardKey || "");
+        const lista = [];
+        voc.querySelectorAll("[data-transfer-bp-row]").forEach(row => {
+          const check = row.querySelector("[data-transfer-bp-check]");
+          if (!check?.checked) return;
+          const bp = String(row.dataset.bp || "");
+          const sel = row.querySelector("[data-transfer-armazem]");
+          const id = String(sel?.value || filiais[0]?.id || "");
+          const filial = mapaFiliais.get(id) || filiais[0];
+          if (!bp || !filial) return;
+          lista.push({
+            bp,
+            armazemId:String(filial.id||""),
+            armazemLabel:String(filial.localidade||filial.label||"Armazém"),
+            armazemBp:String(filial.bp||"")
+          });
+        });
+        if (chave && lista.length) transferencias[chave] = lista;
       });
+
       fecharModalRotasPainelProgramacao();
       salvarRotaSelecionadaPainelProgramacao(transferencias);
     }
@@ -16875,11 +17094,11 @@ return null;
       limparSelecaoMapaPainelProgramacao();
       atualizarAposMudancaRotasPainelProgramacao();
 
-      const qtdTransf = snap.cards.filter(c => c.tipoEntrega === "TRANSFERENCIA").length;
+      const qtdBpsTransf = snap.cards.reduce((s,c)=>s+(Array.isArray(c.transferencias)?c.transferencias.length:0),0);
       const info = document.getElementById("painelProgRouteInfo");
       if (info) {
         info.classList.remove("painelProgRouteError");
-        info.textContent = `${nome} salva — ${snap.cardKeys.length} vocativo(s), ${qtdTransf} transferência(s) e ${snap.cardKeys.length-qtdTransf} entrega(s) direta(s).`;
+        info.textContent = `${nome} salva — ${snap.cardKeys.length} vocativo(s) · ${qtdBpsTransf} BP(s) para transferência.`;
       }
     }
 
@@ -17001,6 +17220,7 @@ return null;
     function renderRotaSalvaPainelProgramacao(rota) {
       const liberada = rota?.status === "liberada";
       const cards = Array.isArray(rota?.cards) ? rota.cards : [];
+      const linhas = getLinhasOperacionaisRotaPainelProgramacao(rota);
       const peso = cards.reduce((s,x)=>s+Number(x?.peso||0),0);
       const notas = cards.reduce((s,x)=>s+Number(x?.notas||0),0);
       const voc = cards.map(x=>x.vocativo).filter(Boolean).join(" / ");
@@ -17008,30 +17228,31 @@ return null;
       const dist = Number(rota?.distancia||0);
       const dur = Number(rota?.duracao||0);
       const idxVocList = addTextoCopiaRotaSalvaPainelProgramacao(voc);
-      const qtdTransf = cards.filter(c=>c?.tipoEntrega==="TRANSFERENCIA").length;
-      const qtdDireta = cards.length - qtdTransf;
+      const qtdTransf = linhas.filter(l=>l.grupo==="TRANSFERENCIA").length;
+      const qtdDireta = linhas.filter(l=>l.grupo==="DIRETA").length;
 
-      const detalhes = cards.map((c,idx)=>{
-        const idxVoc = addTextoCopiaRotaSalvaPainelProgramacao(c.vocativo);
-        const bps = Array.isArray(c.bps) ? c.bps.filter(Boolean) : [];
+      const detalhes = linhas.map((l,idx)=>{
+        const idxVoc = addTextoCopiaRotaSalvaPainelProgramacao(l.vocativo);
+        const bps = Array.isArray(l.bps) ? l.bps.filter(Boolean) : [];
         const bpsHtml = bps.length ? bps.map(bp=>{
           const ib = addTextoCopiaRotaSalvaPainelProgramacao(bp);
           return `<div class="painelProgSavedBpLine"><span>${escRotaPainelProgramacao(bp)}</span><button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoRotaSalvaPainelProgramacaoPorIndice(${ib},event)">Copiar</button></div>`;
         }).join("") : `<div class="painelProgSavedBpLine" style="color:#64748b;">Sem BP</div>`;
-        const transf = c.tipoEntrega === "TRANSFERENCIA";
-        return `<div class="painelProgSavedVocRow">
+        const transf = l.grupo === "TRANSFERENCIA";
+        const idxBpArm = transf ? addTextoCopiaRotaSalvaPainelProgramacao(l.armazemBp||"") : -1;
+        return `<div class="painelProgSavedVocRow"${transf?' style="background:#fffbeb;"':""}>
           <div>
-            <div class="painelProgSavedVocName">${idx+1}. ${escRotaPainelProgramacao(c.vocativo)}</div>
+            <div class="painelProgSavedVocName">${idx+1}. ${escRotaPainelProgramacao(l.vocativo)}</div>
             <div class="painelProgSavedVocMeta">
               <button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoRotaSalvaPainelProgramacaoPorIndice(${idxVoc},event)">Copiar vocativo</button>
-              <span style="font-size:7.5px;font-weight:900;color:#475569;">Peso: ${escRotaPainelProgramacao(formatarNumeroPainelProgramacao(c.peso,2))}</span>
+              ${l.pesoLinha ? `<span style="font-size:7.5px;font-weight:900;color:#475569;">Peso: ${escRotaPainelProgramacao(formatarNumeroPainelProgramacao(l.pesoLinha,2))}</span>` : ""}
             </div>
           </div>
           <div>
             <span class="painelProgSavedTypeBadge ${transf?"transfer":"direct"}">${transf?"TRANSFERÊNCIA":"ENTREGA DIRETA"}</span>
-            ${transf ? `<div class="painelProgSavedWarehouse">→ ${escRotaPainelProgramacao(c.armazemLabel || "Armazém")}</div>` : ""}
+            ${transf ? `<div class="painelProgSavedWarehouse">→ ${escRotaPainelProgramacao(l.armazemLabel || "Armazém")} · BP ${escRotaPainelProgramacao(l.armazemBp||"-")} <button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoRotaSalvaPainelProgramacaoPorIndice(${idxBpArm},event)">Copiar BP armazém</button></div>` : ""}
           </div>
-          <div><div class="painelProgSavedBpTitle">BP(s)</div>${bpsHtml}</div>
+          <div><div class="painelProgSavedBpTitle">BP(s) da carga</div>${bpsHtml}</div>
         </div>`;
       }).join("");
 
@@ -17133,21 +17354,21 @@ return null;
     function getLinhasRelatorioRotasPainelProgramacao() {
       const out = [];
       getRotasSalvasPainelProgramacao().forEach(rota => {
-        const cards = Array.isArray(rota?.cards) ? rota.cards : [];
-        cards.forEach((c,idx) => out.push({
+        getLinhasOperacionaisRotaPainelProgramacao(rota).forEach((l,idx) => out.push({
           "Rota":getNomeExibicaoRotaPainelProgramacao(rota),
           "Status Rota":rota?.status === "liberada" ? "LIBERADA" : "ATIVA",
           "Data Criação":formatarDataRotaPainelProgramacao(rota?.criadaEm),
           "Ordem":idx+1,
-          "Tipo":c?.tipoEntrega === "TRANSFERENCIA" ? "TRANSFERÊNCIA" : "ENTREGA DIRETA",
-          "Armazém Transferência":String(c?.armazemLabel || ""),
-          "Vocativo":String(c?.vocativo || ""),
-          "Peso":Number(c?.peso || 0),
-          "Notas":Number(c?.notas || 0),
-          "BP(s)":(Array.isArray(c?.bps)?c.bps:[]).join(" / "),
-          "CEP(s)":(Array.isArray(c?.ceps)?c.ceps:[]).join(" / "),
-          "Destino(s)":(Array.isArray(c?.destinos)?c.destinos:[]).join(" / "),
-          "UF(s)":(Array.isArray(c?.ufs)?c.ufs:[]).join(" / "),
+          "Tipo":l.tipo,
+          "Armazém Transferência":String(l.armazemLabel || ""),
+          "BP Armazém":String(l.armazemBp || ""),
+          "Vocativo":String(l.vocativo || ""),
+          "Peso":Number(l.pesoLinha || 0),
+          "Notas":Number(l.notasLinha || 0),
+          "BP(s) Carga":(Array.isArray(l.bps)?l.bps:[]).join(" / "),
+          "CEP(s)":(Array.isArray(l.ceps)?l.ceps:[]).join(" / "),
+          "Destino(s)":(Array.isArray(l.destinos)?l.destinos:[]).join(" / "),
+          "UF(s)":(Array.isArray(l.ufs)?l.ufs:[]).join(" / "),
           "Distância Rota (km)":Number(rota?.distancia||0)/1000,
           "Duração Rota (min)":Number(rota?.duracao||0)/60
         }));
@@ -17175,14 +17396,15 @@ return null;
       const wb = XLSX.utils.book_new();
       const resumo = rotas.map((r,i)=>{
         const cards = Array.isArray(r?.cards) ? r.cards : [];
+        const linhas = getLinhasOperacionaisRotaPainelProgramacao(r);
         return {
           "Nº":i+1,
           "Rota":getNomeExibicaoRotaPainelProgramacao(r),
           "Status":r?.status === "liberada" ? "LIBERADA" : "ATIVA",
           "Criada em":formatarDataRotaPainelProgramacao(r?.criadaEm),
           "Vocativos":cards.length,
-          "Entrega Direta":cards.filter(c=>c?.tipoEntrega!=="TRANSFERENCIA").length,
-          "Transferência":cards.filter(c=>c?.tipoEntrega==="TRANSFERENCIA").length,
+          "Entrega Direta":linhas.filter(x=>x.grupo==="DIRETA").length,
+          "Transferência":linhas.filter(x=>x.grupo==="TRANSFERENCIA").length,
           "Peso":cards.reduce((s,c)=>s+Number(c?.peso||0),0),
           "Notas":cards.reduce((s,c)=>s+Number(c?.notas||0),0),
           "Distância (km)":Number(r?.distancia||0)/1000,
@@ -17190,31 +17412,30 @@ return null;
         };
       });
       const wsResumo = XLSX.utils.json_to_sheet(resumo);
-      wsResumo["!cols"] = [6,55,12,20,10,14,14,14,10,16,16].map(w=>({wch:w}));
+      wsResumo["!cols"] = [6,60,12,20,10,14,14,14,10,16,16].map(w=>({wch:w}));
       XLSX.utils.book_append_sheet(wb,wsResumo,"Resumo Rotas");
 
       const usados = new Set(["Resumo Rotas"]);
       rotas.forEach((rota,i)=>{
-        const cards = Array.isArray(rota?.cards) ? rota.cards : [];
-        const linhas = cards.map((c,idx)=>({
+        const linhas = getLinhasOperacionaisRotaPainelProgramacao(rota).map((l,idx)=>({
           "Rota":getNomeExibicaoRotaPainelProgramacao(rota),
           "Status":rota?.status === "liberada" ? "LIBERADA" : "ATIVA",
           "Ordem":idx+1,
-          "Tipo":c?.tipoEntrega === "TRANSFERENCIA" ? "TRANSFERÊNCIA" : "ENTREGA DIRETA",
-          "Armazém":String(c?.armazemLabel || ""),
-          "Vocativo":String(c?.vocativo || ""),
-          "Peso":Number(c?.peso || 0),
-          "Notas":Number(c?.notas || 0),
-          "BP(s)":(Array.isArray(c?.bps)?c.bps:[]).join(" / "),
-          "CEP(s)":(Array.isArray(c?.ceps)?c.ceps:[]).join(" / "),
-          "Destino(s)":(Array.isArray(c?.destinos)?c.destinos:[]).join(" / "),
-          "UF(s)":(Array.isArray(c?.ufs)?c.ufs:[]).join(" / ")
+          "Tipo":l.tipo,
+          "Armazém":String(l.armazemLabel || ""),
+          "BP Armazém":String(l.armazemBp || ""),
+          "Vocativo":String(l.vocativo || ""),
+          "Peso":Number(l.pesoLinha || 0),
+          "Notas":Number(l.notasLinha || 0),
+          "BP(s) Carga":(Array.isArray(l.bps)?l.bps:[]).join(" / "),
+          "CEP(s)":(Array.isArray(l.ceps)?l.ceps:[]).join(" / "),
+          "Destino(s)":(Array.isArray(l.destinos)?l.destinos:[]).join(" / "),
+          "UF(s)":(Array.isArray(l.ufs)?l.ufs:[]).join(" / ")
         }));
         const ws = XLSX.utils.json_to_sheet(linhas);
-        ws["!cols"] = [55,12,8,18,24,28,12,10,20,18,28,10].map(w=>({wch:w}));
+        ws["!cols"] = [60,12,8,18,24,12,28,12,10,20,18,28,10].map(w=>({wch:w}));
         XLSX.utils.book_append_sheet(wb,ws,nomeAbaExcelRotaPainelProgramacao(i,getNomeExibicaoRotaPainelProgramacao(rota),usados));
       });
-
       XLSX.writeFile(wb,`Rotas_Criadas_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
@@ -17224,42 +17445,58 @@ return null;
       const jsPDFCtor = window.jspdf?.jsPDF;
       if (!jsPDFCtor) { alert("Biblioteca PDF indisponível."); return; }
       const doc = new jsPDFCtor({orientation:"landscape",unit:"mm",format:"a4"});
+      const pageH = doc.internal.pageSize.getHeight();
+      let y = 12;
 
       rotas.forEach((rota,i)=>{
-        if (i>0) doc.addPage("a4","landscape");
         const cards = Array.isArray(rota?.cards) ? rota.cards : [];
+        const linhas = getLinhasOperacionaisRotaPainelProgramacao(rota);
         const peso = cards.reduce((s,c)=>s+Number(c?.peso||0),0);
         const nome = getNomeExibicaoRotaPainelProgramacao(rota);
 
-        doc.setFontSize(12);
+        // Só abre nova página quando não existe espaço razoável para iniciar a próxima rota.
+        if (i>0 && y > pageH - 42) {
+          doc.addPage("a4","landscape");
+          y = 12;
+        }
+
+        doc.setDrawColor(203,213,225);
+        doc.setFillColor(248,250,252);
+        doc.roundedRect(9,y-5,279,13,2,2,"FD");
+        doc.setFontSize(10);
         doc.setFont(undefined,"bold");
-        const titulo = `ROTA ${i+1} — ${nome}`;
-        doc.text(doc.splitTextToSize(titulo,270),14,12);
+        doc.text(doc.splitTextToSize(`ROTA ${i+1} — ${nome}`,265),14,y);
         doc.setFont(undefined,"normal");
-        doc.setFontSize(7.5);
+        doc.setFontSize(7);
         doc.text(
           `${rota?.status==="liberada"?"LIBERADA":"ATIVA"} | ${formatarDataRotaPainelProgramacao(rota?.criadaEm)} | ${cards.length} vocativo(s) | ${formatarNumeroPainelProgramacao(peso,2)} kg${rota?.distancia?` | ${formatKmBRMapa(rota.distancia)} | ${formatDurationBRMapa(rota.duracao||0)}`:""}`,
-          14,20
+          14,y+5
         );
 
         doc.autoTable({
-          startY:24,
-          styles:{fontSize:6.3,cellPadding:1.5,overflow:"linebreak",valign:"middle"},
-          headStyles:{fontSize:6.5,fillColor:[238,242,247],textColor:[15,23,42]},
-          head:[["Ordem","Tipo","Armazém","Vocativo","Peso","Notas","BP(s)","CEP(s)","Destino/UF"]],
-          body:cards.map((c,idx)=>[
-            idx+1,
-            c?.tipoEntrega==="TRANSFERENCIA"?"TRANSFERÊNCIA":"ENTREGA DIRETA",
-            c?.armazemLabel||"",
-            c?.vocativo||"",
-            Number(c?.peso||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}),
-            Number(c?.notas||0),
-            (Array.isArray(c?.bps)?c.bps:[]).join(" / "),
-            (Array.isArray(c?.ceps)?c.ceps:[]).join(" / "),
-            `${(Array.isArray(c?.destinos)?c.destinos:[]).join(" / ")}${Array.isArray(c?.ufs)&&c.ufs.length?" / "+c.ufs.join(" / "):""}`
+          startY:y+10,
+          pageBreak:"auto",
+          rowPageBreak:"avoid",
+          styles:{fontSize:6.1,cellPadding:1.35,overflow:"linebreak",valign:"middle"},
+          headStyles:{fontSize:6.2,fillColor:[238,242,247],textColor:[15,23,42]},
+          head:[["Ordem","Tipo","Armazém","BP Arm.","Vocativo","Peso","Notas","BP(s) Carga","CEP(s)","Destino/UF"]],
+          body:linhas.map((l,idx)=>[
+            idx+1,l.tipo,l.armazemLabel||"",l.armazemBp||"",l.vocativo||"",
+            l.pesoLinha ? Number(l.pesoLinha).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) : "",
+            l.notasLinha || "",
+            (Array.isArray(l.bps)?l.bps:[]).join(" / "),
+            (Array.isArray(l.ceps)?l.ceps:[]).join(" / "),
+            `${(Array.isArray(l.destinos)?l.destinos:[]).join(" / ")}${Array.isArray(l.ufs)&&l.ufs.length?" / "+l.ufs.join(" / "):""}`
           ]),
-          margin:{left:8,right:8}
+          margin:{left:8,right:8,top:10,bottom:10},
+          didParseCell:function(data){
+            if(data.section==="body" && String(data.row.raw?.[1]||"")==="TRANSFERÊNCIA"){
+              data.cell.styles.fillColor=[255,251,235];
+            }
+          }
         });
+
+        y = Number(doc.lastAutoTable?.finalY || y+25) + 10;
       });
 
       doc.save(`Rotas_Criadas_${new Date().toISOString().slice(0,10)}.pdf`);
