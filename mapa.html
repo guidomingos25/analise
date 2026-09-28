@@ -4191,7 +4191,7 @@
     }
     .painelProgRouteModalBackdrop.open { display:flex; }
     .painelProgRouteModal {
-      width:min(940px,97vw); max-height:min(82vh,760px); overflow:hidden;
+      width:min(1180px,98vw); height:min(88vh,820px); max-height:88vh; overflow:hidden;
       background:#fff; border:1px solid #dbe3ec; border-radius:16px; box-shadow:0 24px 60px rgba(15,23,42,.28);
       display:flex; flex-direction:column;
     }
@@ -4215,6 +4215,35 @@
     .painelProgSavedRouteBtns .btn { padding:5px 8px!important; min-height:27px!important; font-size:8.5px!important; box-shadow:none!important; }
     .painelProgSavedRouteBtns .dangerMini { color:#b91c1c; border-color:#fecaca; background:#fff7f7; }
     .painelProgSavedRouteBtns .releaseMini { color:#92400e; border-color:#fde68a; background:#fffbeb; }
+
+    .painelProgRouteModalBody.routesMode { overflow:hidden; flex:1; min-height:0; padding:10px; }
+    .painelProgRoutesWorkspace { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:10px; height:100%; min-height:0; }
+    .painelProgRoutesList { min-height:0; overflow:auto; padding:1px 4px 8px 1px; }
+    .painelProgRoutesAside { align-self:start; position:sticky; top:0; border:1px solid #dbe3ec; border-radius:13px; background:#f8fafc; padding:9px; max-height:100%; overflow:auto; }
+    .painelProgRoutesAsideTitle { font-size:9px; font-weight:1000; color:#0f172a; text-transform:uppercase; letter-spacing:.04em; margin-bottom:7px; }
+    .painelProgRoutesAsideActions { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:9px; }
+    .painelProgRoutesAsideActions .btn { padding:6px 8px!important; min-height:29px!important; font-size:8.5px!important; box-shadow:none!important; }
+    .painelProgRoutesAsideBox { border:1px solid #e2e8f0; border-radius:10px; background:#fff; padding:7px; }
+    .painelProgRoutesAsideHint { margin-top:7px; color:#64748b; font-size:7.5px; line-height:1.35; }
+
+    .painelProgSavedRoute {
+      border:1px solid #d9e2ec; border-left:4px solid #64748b; border-radius:11px; background:#fff; overflow:hidden; margin-bottom:9px;
+      box-shadow:0 3px 9px rgba(15,23,42,.05);
+    }
+    .painelProgSavedRoute:not(.isReleased) { border-left-color:#2563eb; }
+    .painelProgSavedRoute.isReleased { border-left-color:#94a3b8; }
+    .painelProgSavedRouteCompactHead { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; padding:9px 10px; cursor:pointer; user-select:none; }
+    .painelProgSavedRouteCompactHead:hover { background:#f8fafc; }
+    .painelProgSavedRouteName { font-size:10px; font-weight:1000; color:#0f172a; line-height:1.25; overflow-wrap:anywhere; }
+    .painelProgSavedRouteMetaCompact { margin-top:3px; color:#64748b; font-size:7.8px; line-height:1.35; }
+    .painelProgSavedRouteCompactRight { display:flex; align-items:center; gap:5px; flex-wrap:nowrap; }
+    .painelProgRouteChevron { width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #dbe3ec; border-radius:8px; background:#fff; font-size:10px; color:#475569; transition:transform .12s ease; }
+    .painelProgSavedRoute.expanded .painelProgRouteChevron { transform:rotate(180deg); }
+    .painelProgSavedRouteDetails { display:none; border-top:1px solid #e5e7eb; background:#fff; }
+    .painelProgSavedRoute.expanded .painelProgSavedRouteDetails { display:block; }
+    .painelProgSavedRouteQuick { display:flex; align-items:center; gap:5px; flex-wrap:wrap; padding:6px 8px; border-bottom:1px solid #eef2f7; background:#fbfdff; }
+    .painelProgSavedRouteQuick .btn { padding:4px 7px!important; min-height:25px!important; font-size:7.8px!important; box-shadow:none!important; }
+    .painelProgSavedRouteStats { margin-left:auto; font-size:7.8px; font-weight:900; color:#475569; white-space:nowrap; }
 
     .painelProgSavedRouteTools { padding:8px 10px 10px; border-top:1px solid #eef2f7; background:#fff; }
     .painelProgSavedRouteSection { border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; margin-top:7px; }
@@ -4250,7 +4279,11 @@
     .painelProgSaveRouteSummary { padding:8px 10px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0; color:#475569; font-size:9px; line-height:1.4; }
     .painelProgModalFooter { display:flex; justify-content:flex-end; gap:7px; padding:10px 14px; border-top:1px solid #e5e7eb; background:#f8fafc; }
 
-    @media(max-width:900px){ #painelProgMap{height:57vh;min-height:440px}.painelProgMapStatusBar{grid-template-columns:repeat(2,minmax(0,1fr))}.painelProgGeoWarningRow{grid-template-columns:1fr}.painelProgMapToolbar{align-items:flex-start}.painelProgMapCityBox{border-left:0;padding-left:0;width:100%;flex-wrap:wrap}.painelProgMapCityInput,.painelProgMapNameInput{flex:1;max-width:none}.painelProgExtraCitiesList{max-width:100%;width:100%;padding-top:2px} }
+    @media(max-width:900px){
+      .painelProgRoutesWorkspace{grid-template-columns:1fr;}
+      .painelProgRoutesAside{position:static;order:-1;max-height:none;}
+      .painelProgRouteModal{width:98vw;height:92vh;max-height:92vh;}
+      #painelProgMap{height:57vh;min-height:440px}.painelProgMapStatusBar{grid-template-columns:repeat(2,minmax(0,1fr))}.painelProgGeoWarningRow{grid-template-columns:1fr}.painelProgMapToolbar{align-items:flex-start}.painelProgMapCityBox{border-left:0;padding-left:0;width:100%;flex-wrap:wrap}.painelProgMapCityInput,.painelProgMapNameInput{flex:1;max-width:none}.painelProgExtraCitiesList{max-width:100%;width:100%;padding-top:2px} }
 </style>
 </head>
 
@@ -15853,6 +15886,7 @@ return null;
           <button class="btn secondary painelProgMapBtn" type="button" onclick="calcularProximidadePainelProgramacao()" title="Informar a filial/armazém mais próximo dos destinos filtrados ou selecionados">◎ Próximos</button>
           <button class="btn secondary painelProgMapBtn" id="btnPainelProgSalvarRota" type="button" onclick="abrirSalvarRotaPainelProgramacao()" title="Salvar os pontos atualmente selecionados como uma rota">💾 Salvar rota</button>
           <button class="btn secondary painelProgMapBtn" id="btnPainelProgRotas" type="button" onclick="abrirRotasSalvasPainelProgramacao()" title="Visualizar as rotas salvas">📋 Rotas <span id="painelProgRotasCount">0</span></button>
+          <button class="btn secondary painelProgMapBtn painelProgMapToggleBtn" id="btnPainelProgResetRotas" type="button" onclick="resetarTodasRotasPainelProgramacao()" title="Resetar rotas: excluir todas e devolver todos os vocativos à programação" aria-label="Resetar todas as rotas">↺</button>
           <div class="painelProgMapCityBox" title="Adiciona uma cidade ou um CEP como destino extra da rota, com nome livre opcional">
             <input id="painelProgNomeExtra" class="painelProgMapNameInput" placeholder="Vocativo / Almox." type="text" maxlength="80" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('painelProgCidadeExtra')?.focus();}">
             <input id="painelProgCidadeExtra" class="painelProgMapCityInput" placeholder="Cidade ou CEP (ex.: 01001-000)" type="text" onkeydown="if(event.key==='Enter'){event.preventDefault();geocodificarCidadeExtraPainelProgramacao();}">
@@ -16579,6 +16613,11 @@ return null;
       if (el) el.textContent = String(rotas.length || 0);
       const btn = document.getElementById("btnPainelProgRotas");
       if (btn) btn.title = `${rotas.length} rota(s) salva(s) — ${ativos} ativa(s)`;
+      const resetBtn = document.getElementById("btnPainelProgResetRotas");
+      if (resetBtn) {
+        resetBtn.disabled = rotas.length === 0;
+        resetBtn.title = rotas.length ? `Resetar ${rotas.length} rota(s): excluir tudo e devolver os vocativos` : "Não existem rotas para resetar";
+      }
     }
 
     function getChavesCardsRoteirizadosAtivosPainelProgramacao() {
@@ -16667,10 +16706,42 @@ return null;
       return `ROTA ${String(maior + 1).padStart(3,"0")}`;
     }
 
+    function getNomeExibicaoRotaPainelProgramacao(rota) {
+      const cards = Array.isArray(rota?.cards) ? rota.cards : [];
+      const diretas = cards.filter(c => c?.tipoEntrega !== "TRANSFERENCIA").map(c => String(c?.vocativo || "").trim()).filter(Boolean);
+      const transferidas = cards.filter(c => c?.tipoEntrega === "TRANSFERENCIA");
+      const armazens = [];
+      transferidas.forEach(c => {
+        const nome = String(c?.armazemLabel || "").trim();
+        if (nome && !armazens.includes(nome)) armazens.push(nome);
+      });
+
+      let partes = [];
+      if (transferidas.length) {
+        partes = [
+          ...armazens.map(a => `ARMAZÉM ${a}`),
+          ...diretas
+        ];
+      } else {
+        partes = cards.map(c => String(c?.vocativo || "").trim()).filter(Boolean);
+      }
+
+      if (!partes.length) {
+        partes = (Array.isArray(rota?.extras) ? rota.extras : []).map(x => String(x?.label || "").trim()).filter(Boolean);
+      }
+      return partes.join(" → ") || String(rota?.nome || "Rota");
+    }
+
     function montarSnapshotRotaPainelProgramacao(transferencias = {}) {
       const st = window.__painelProgMapState;
       sincronizarOrdemRotaPainelProgramacao();
-      const cardKeys = Array.from(painelProgCardsSelecionados || []);
+      const ordemTokens = sincronizarOrdemRotaPainelProgramacao();
+      const selecionadosSet = new Set(Array.from(painelProgCardsSelecionados || []));
+      const cardKeys = ordemTokens
+        .filter(t => String(t || "").startsWith("card:"))
+        .map(t => String(t).slice(5))
+        .filter(k => selecionadosSet.has(k));
+      Array.from(selecionadosSet).forEach(k => { if (!cardKeys.includes(k)) cardKeys.push(k); });
       const cards = cardKeys.map(k => {
         const item = painelProgDadosAtuaisPorKey.get(k);
         const loc = st?.localizacoes?.get?.(k);
@@ -16790,7 +16861,8 @@ return null;
       const snap = montarSnapshotRotaPainelProgramacao(transferencias);
       if (!snap.cardKeys.length && !snap.extras.length) return;
       const now = new Date().toISOString();
-      const nome = getProximoNomeRotaPainelProgramacao();
+      const rotaTemp = { ...snap };
+      const nome = getNomeExibicaoRotaPainelProgramacao(rotaTemp);
       const rota = {
         id:`rota_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
         nome,status:"ativa",criadaEm:now,atualizadaEm:now,
@@ -16829,6 +16901,39 @@ return null;
       copiarTextoPainelProgramacao(texto, ev);
     }
 
+    function selecionarCategoriaPlacasRotasGlobalPainelProgramacao(indice, ev) {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      const host = document.getElementById("painelProgRotasAsideVehicles");
+      if (!host) return;
+      const ativo = Number(indice) || 0;
+      host.querySelectorAll(".painelProgPopupVehicleTab").forEach((x,i)=>x.classList.toggle("active",i===ativo));
+      host.querySelectorAll(".painelProgPopupVehiclePanel").forEach((x,i)=>x.classList.toggle("active",i===ativo));
+    }
+
+    function renderPlacasVirtuaisRotasGlobalPainelProgramacao() {
+      const cats = [
+        { categoria:"PLACAS PARA ANÚNCIO (PADRÃO)", rotulo:"Padrão" },
+        { categoria:"PLACAS DEDICADOS TERCEIROS", rotulo:"Dedicados" },
+        { categoria:"PLACAS FROTAS", rotulo:"Frotas" },
+        { categoria:"PLACAS SUPLEMENTAR", rotulo:"Suplementares" }
+      ];
+      const tabs = cats.map((c,i)=>`<button class="painelProgPopupVehicleTab${i===0?" active":""}" type="button" onclick="selecionarCategoriaPlacasRotasGlobalPainelProgramacao(${i},event)">${escRotaPainelProgramacao(c.rotulo)}</button>`).join("");
+      const panels = cats.map((c,i)=>{
+        const btns = PAINEL_PROG_PLACAS_VIRTUAIS.filter(x=>x.categoria===c.categoria).map(x=>{
+          const idx = addTextoCopiaRotaSalvaPainelProgramacao(x.placa);
+          return `<button class="painelProgPopupVehicleBtn" type="button" title="Copiar ${escRotaPainelProgramacao(x.placa)}" onclick="copiarTextoRotaSalvaPainelProgramacaoPorIndice(${idx},event)">${escRotaPainelProgramacao(x.veiculo)}</button>`;
+        }).join("");
+        return `<div class="painelProgPopupVehiclePanel${i===0?" active":""}">${btns}</div>`;
+      }).join("");
+      return `<div id="painelProgRotasAsideVehicles"><div class="painelProgPopupVehicleTabs">${tabs}</div>${panels}</div>`;
+    }
+
+    function toggleDetalhesRotaSalvaPainelProgramacao(id, ev) {
+      if (ev?.target?.closest?.("button")) return;
+      const el = document.querySelector(`[data-saved-route-id="${CSS.escape(String(id))}"]`);
+      if (el) el.classList.toggle("expanded");
+    }
+
     function selecionarCategoriaPlacasRotaSalvaPainelProgramacao(id, indice, ev) {
       if (ev) { ev.preventDefault(); ev.stopPropagation(); }
       const host = document.querySelector(`[data-saved-route-id="${CSS.escape(String(id))}"]`);
@@ -16863,16 +16968,33 @@ return null;
       const ativas = rotas.filter(r => r?.status !== "liberada").length;
       back.innerHTML = `<div class="painelProgRouteModal" role="dialog" aria-modal="true" aria-label="Rotas salvas">
         <div class="painelProgRouteModalHead">
-          <div><div class="painelProgRouteModalTitle">Rotas criadas</div><div class="painelProgSavedRouteMeta">${rotas.length} rota(s) salva(s) · ${ativas} ativa(s)</div></div>
+          <div>
+            <div class="painelProgRouteModalTitle">Rotas criadas</div>
+            <div class="painelProgSavedRouteMeta">${rotas.length} rota(s) salva(s) · ${ativas} ativa(s) · clique em uma rota para abrir os detalhes</div>
+          </div>
           <div class="painelProgRouteModalActions">
-            <button class="btn secondary painelProgBaseMiniBtn" type="button" onclick="gerarExcelRotasSalvasPainelProgramacao()" ${rotas.length?"":"disabled"}>Excel</button>
-            <button class="btn secondary painelProgBaseMiniBtn" type="button" onclick="gerarPdfRotasSalvasPainelProgramacao()" ${rotas.length?"":"disabled"}>PDF</button>
             <button class="btn secondary painelProgBaseMiniBtn" type="button" onclick="liberarTodasRotasPainelProgramacao()" ${ativas ? "" : "disabled"}>↩ Liberar todos</button>
             <button class="btn secondary painelProgBaseMiniBtn dangerMini" type="button" onclick="excluirTodasRotasPainelProgramacao()" ${rotas.length?"":"disabled"}>Excluir todos</button>
             <button class="btn secondary painelProgBaseMiniBtn" type="button" onclick="fecharModalRotasPainelProgramacao()">×</button>
           </div>
         </div>
-        <div class="painelProgRouteModalBody">${rotas.length ? rotas.map(rota => renderRotaSalvaPainelProgramacao(rota)).join("") : `<div class="painelProgRouteEmpty">Nenhuma rota salva.</div>`}</div>
+        <div class="painelProgRouteModalBody routesMode">
+          <div class="painelProgRoutesWorkspace">
+            <div class="painelProgRoutesList">
+              ${rotas.length ? rotas.map(rota => renderRotaSalvaPainelProgramacao(rota)).join("") : `<div class="painelProgRouteEmpty">Nenhuma rota salva.</div>`}
+            </div>
+            <aside class="painelProgRoutesAside">
+              <div class="painelProgRoutesAsideTitle">Relatórios</div>
+              <div class="painelProgRoutesAsideActions">
+                <button class="btn secondary" type="button" onclick="gerarExcelRotasSalvasPainelProgramacao()" ${rotas.length?"":"disabled"}>📊 Excel</button>
+                <button class="btn secondary" type="button" onclick="gerarPdfRotasSalvasPainelProgramacao()" ${rotas.length?"":"disabled"}>📄 PDF</button>
+              </div>
+              <div class="painelProgRoutesAsideTitle">Placas virtuais</div>
+              <div class="painelProgRoutesAsideBox">${renderPlacasVirtuaisRotasGlobalPainelProgramacao()}</div>
+              <div class="painelProgRoutesAsideHint">Os botões de veículo ficam disponíveis para todas as rotas. Clique em um veículo para copiar a placa virtual correspondente.</div>
+            </aside>
+          </div>
+        </div>
       </div>`;
     }
 
@@ -16882,9 +17004,12 @@ return null;
       const peso = cards.reduce((s,x)=>s+Number(x?.peso||0),0);
       const notas = cards.reduce((s,x)=>s+Number(x?.notas||0),0);
       const voc = cards.map(x=>x.vocativo).filter(Boolean).join(" / ");
+      const nomeRota = getNomeExibicaoRotaPainelProgramacao(rota);
       const dist = Number(rota?.distancia||0);
       const dur = Number(rota?.duracao||0);
       const idxVocList = addTextoCopiaRotaSalvaPainelProgramacao(voc);
+      const qtdTransf = cards.filter(c=>c?.tipoEntrega==="TRANSFERENCIA").length;
+      const qtdDireta = cards.length - qtdTransf;
 
       const detalhes = cards.map((c,idx)=>{
         const idxVoc = addTextoCopiaRotaSalvaPainelProgramacao(c.vocativo);
@@ -16911,32 +17036,27 @@ return null;
       }).join("");
 
       return `<div class="painelProgSavedRoute${liberada ? " isReleased" : ""}" data-saved-route-id="${escRotaPainelProgramacao(rota.id)}">
-        <div class="painelProgSavedRouteHead">
-          <div><div class="painelProgSavedRouteName">${escRotaPainelProgramacao(rota?.nome || "Rota")}</div>
-          <div class="painelProgSavedRouteMeta">${formatarDataRotaPainelProgramacao(rota?.criadaEm)} · ${cards.length} vocativo(s) · ${formatarNumeroPainelProgramacao(peso,2)} kg · ${notas} nota(s)${dist ? ` · ${formatKmBRMapa(dist)}${dur ? ` · ${formatDurationBRMapa(dur)}` : ""}` : ""}</div></div>
-          <span class="painelProgSavedRouteStatus ${liberada ? "released" : "active"}">${liberada ? "Liberada" : "Ativa"}</span>
-        </div>
-        <div class="painelProgSavedRouteTools">
-          <div class="painelProgSavedRouteSection" style="margin-top:0;">
-            <div class="painelProgSavedRouteSectionHead"><span>Placas virtuais</span></div>
-            <div style="padding:7px 8px;">${renderPlacasVirtuaisRotaSalvaPainelProgramacao(rota.id)}</div>
+        <div class="painelProgSavedRouteCompactHead" onclick="toggleDetalhesRotaSalvaPainelProgramacao('${escRotaPainelProgramacao(rota.id)}',event)">
+          <div>
+            <div class="painelProgSavedRouteName">${escRotaPainelProgramacao(nomeRota)}</div>
+            <div class="painelProgSavedRouteMetaCompact">${formatarDataRotaPainelProgramacao(rota?.criadaEm)} · ${cards.length} vocativo(s) · ${formatarNumeroPainelProgramacao(peso,2)} kg · ${notas} nota(s) · ${qtdDireta} direta(s)${qtdTransf ? ` · ${qtdTransf} transferência(s)` : ""}${dist ? ` · ${formatKmBRMapa(dist)}${dur ? ` · ${formatDurationBRMapa(dur)}` : ""}` : ""}</div>
           </div>
-          <div style="margin-top:7px;padding:7px 8px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;font-size:9px;font-weight:1000;">⚖ Peso total: ${escRotaPainelProgramacao(formatarNumeroPainelProgramacao(peso,2))}</div>
-          <div class="painelProgSavedRouteSection">
-            <div class="painelProgSavedRouteSectionHead"><span>Vocativos</span><button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoRotaSalvaPainelProgramacaoPorIndice(${idxVocList},event)">Copiar lista</button></div>
-            <div style="padding:7px 8px;font-size:8.5px;font-weight:900;color:#0f172a;">${escRotaPainelProgramacao(voc || "-")}</div>
-          </div>
-          <div class="painelProgSavedRouteSection">
-            <div class="painelProgSavedRouteSectionHead"><span>Vocativo, peso e BP(s)</span></div>
-            <div class="painelProgSavedVocList">${detalhes || `<div class="painelProgRouteEmpty">Sem vocativos.</div>`}</div>
+          <div class="painelProgSavedRouteCompactRight">
+            <span class="painelProgSavedRouteStatus ${liberada ? "released" : "active"}">${liberada ? "Liberada" : "Ativa"}</span>
+            <span class="painelProgRouteChevron">⌄</span>
           </div>
         </div>
-        <div class="painelProgSavedRouteBtns">
-          <button class="btn secondary" type="button" onclick="verRotaSalvaNoMapaPainelProgramacao('${escRotaPainelProgramacao(rota.id)}')">🗺 Ver no mapa</button>
-          ${liberada
-            ? `<button class="btn secondary" type="button" onclick="reativarRotaPainelProgramacao('${escRotaPainelProgramacao(rota.id)}')">Ativar novamente</button>`
-            : `<button class="btn secondary releaseMini" type="button" onclick="liberarRotaPainelProgramacao('${escRotaPainelProgramacao(rota.id)}')">↩ Liberar rota</button>`}
-          <button class="btn secondary dangerMini" type="button" onclick="excluirRotaPainelProgramacao('${escRotaPainelProgramacao(rota.id)}')">Excluir</button>
+        <div class="painelProgSavedRouteDetails">
+          <div class="painelProgSavedRouteQuick">
+            <button class="btn secondary" type="button" onclick="copiarTextoRotaSalvaPainelProgramacaoPorIndice(${idxVocList},event)">Copiar lista</button>
+            <button class="btn secondary" type="button" onclick="verRotaSalvaNoMapaPainelProgramacao('${escRotaPainelProgramacao(rota.id)}')">🗺 Ver no mapa</button>
+            ${liberada
+              ? `<button class="btn secondary" type="button" onclick="reativarRotaPainelProgramacao('${escRotaPainelProgramacao(rota.id)}')">Ativar novamente</button>`
+              : `<button class="btn secondary releaseMini" type="button" onclick="liberarRotaPainelProgramacao('${escRotaPainelProgramacao(rota.id)}')">↩ Liberar</button>`}
+            <button class="btn secondary dangerMini" type="button" onclick="excluirRotaPainelProgramacao('${escRotaPainelProgramacao(rota.id)}')">Excluir</button>
+            <span class="painelProgSavedRouteStats">Peso ${escRotaPainelProgramacao(formatarNumeroPainelProgramacao(peso,2))}</span>
+          </div>
+          <div class="painelProgSavedVocList">${detalhes || `<div class="painelProgRouteEmpty">Sem vocativos.</div>`}</div>
         </div>
       </div>`;
     }
@@ -16977,17 +17097,33 @@ return null;
       const rotas = getRotasSalvasPainelProgramacao();
       const rota = rotas.find(r => r?.id === id);
       if (!rota) return;
-      if (!confirm(`Excluir ${rota.nome || "a rota"}? O registro será apagado e seus vocativos ficarão disponíveis para programação.`)) return;
+      if (!confirm(`Excluir "${getNomeExibicaoRotaPainelProgramacao(rota)}"? O registro será apagado e seus vocativos ficarão disponíveis para programação.`)) return;
       salvarRotasSalvasPainelProgramacao(rotas.filter(r => r?.id !== id));
       limparSelecaoMapaPainelProgramacao();
       atualizarAposMudancaRotasPainelProgramacao();
       abrirRotasSalvasPainelProgramacao();
     }
 
+    function resetarTodasRotasPainelProgramacao() {
+      const rotas = getRotasSalvasPainelProgramacao();
+      if (!rotas.length) {
+        const info = document.getElementById("painelProgRouteInfo");
+        if (info) { info.classList.remove("painelProgRouteError"); info.textContent = "Não existem rotas salvas para resetar."; }
+        return;
+      }
+      if (!confirm(`Resetar todas as ${rotas.length} rota(s)? Todas serão excluídas e todos os vocativos voltarão para a programação.`)) return;
+      salvarRotasSalvasPainelProgramacao([]);
+      limparSelecaoMapaPainelProgramacao();
+      atualizarAposMudancaRotasPainelProgramacao();
+      fecharModalRotasPainelProgramacao();
+      const info = document.getElementById("painelProgRouteInfo");
+      if (info) { info.classList.remove("painelProgRouteError"); info.textContent = "Rotas resetadas. Todos os vocativos voltaram para a programação."; }
+    }
+
     function excluirTodasRotasPainelProgramacao() {
       const rotas = getRotasSalvasPainelProgramacao();
       if (!rotas.length) return;
-      if (!confirm(`Excluir todas as ${rotas.length} rota(s) salvas? Todos os vocativos voltarão para a programação e o histórico de rotas será apagado.`)) return;
+      if (!confirm(`Excluir todas as ${rotas.length} rota(s) salvas? Todos os vocativos voltarão para a programação e o histórico será apagado.`)) return;
       salvarRotasSalvasPainelProgramacao([]);
       limparSelecaoMapaPainelProgramacao();
       atualizarAposMudancaRotasPainelProgramacao();
@@ -16999,7 +17135,7 @@ return null;
       getRotasSalvasPainelProgramacao().forEach(rota => {
         const cards = Array.isArray(rota?.cards) ? rota.cards : [];
         cards.forEach((c,idx) => out.push({
-          "Rota":String(rota?.nome || ""),
+          "Rota":getNomeExibicaoRotaPainelProgramacao(rota),
           "Status Rota":rota?.status === "liberada" ? "LIBERADA" : "ATIVA",
           "Data Criação":formatarDataRotaPainelProgramacao(rota?.criadaEm),
           "Ordem":idx+1,
@@ -17019,37 +17155,113 @@ return null;
       return out;
     }
 
+    function nomeAbaExcelRotaPainelProgramacao(indice, nome, usados) {
+      const prefixo = `R${String(indice+1).padStart(2,"0")}`;
+      let base = `${prefixo} ${String(nome || "Rota").replace(/[\\/?*:[\]]/g," ").replace(/\s+/g," ").trim()}`.slice(0,31).trim() || prefixo;
+      let nomeFinal = base, n = 2;
+      while (usados.has(nomeFinal)) {
+        const suf = ` ${n++}`;
+        nomeFinal = `${base.slice(0,31-suf.length)}${suf}`;
+      }
+      usados.add(nomeFinal);
+      return nomeFinal;
+    }
+
     function gerarExcelRotasSalvasPainelProgramacao() {
-      const linhas = getLinhasRelatorioRotasPainelProgramacao();
-      if (!linhas.length) return;
+      const rotas = getRotasSalvasPainelProgramacao();
+      if (!rotas.length) return;
       if (!window.XLSX) { alert("Biblioteca XLSX indisponível."); return; }
-      const ws = XLSX.utils.json_to_sheet(linhas);
-      ws["!cols"] = [16,12,20,8,18,24,28,12,10,18,18,24,10,18,18].map(w=>({wch:w}));
+
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb,ws,"Rotas");
+      const resumo = rotas.map((r,i)=>{
+        const cards = Array.isArray(r?.cards) ? r.cards : [];
+        return {
+          "Nº":i+1,
+          "Rota":getNomeExibicaoRotaPainelProgramacao(r),
+          "Status":r?.status === "liberada" ? "LIBERADA" : "ATIVA",
+          "Criada em":formatarDataRotaPainelProgramacao(r?.criadaEm),
+          "Vocativos":cards.length,
+          "Entrega Direta":cards.filter(c=>c?.tipoEntrega!=="TRANSFERENCIA").length,
+          "Transferência":cards.filter(c=>c?.tipoEntrega==="TRANSFERENCIA").length,
+          "Peso":cards.reduce((s,c)=>s+Number(c?.peso||0),0),
+          "Notas":cards.reduce((s,c)=>s+Number(c?.notas||0),0),
+          "Distância (km)":Number(r?.distancia||0)/1000,
+          "Duração (min)":Number(r?.duracao||0)/60
+        };
+      });
+      const wsResumo = XLSX.utils.json_to_sheet(resumo);
+      wsResumo["!cols"] = [6,55,12,20,10,14,14,14,10,16,16].map(w=>({wch:w}));
+      XLSX.utils.book_append_sheet(wb,wsResumo,"Resumo Rotas");
+
+      const usados = new Set(["Resumo Rotas"]);
+      rotas.forEach((rota,i)=>{
+        const cards = Array.isArray(rota?.cards) ? rota.cards : [];
+        const linhas = cards.map((c,idx)=>({
+          "Rota":getNomeExibicaoRotaPainelProgramacao(rota),
+          "Status":rota?.status === "liberada" ? "LIBERADA" : "ATIVA",
+          "Ordem":idx+1,
+          "Tipo":c?.tipoEntrega === "TRANSFERENCIA" ? "TRANSFERÊNCIA" : "ENTREGA DIRETA",
+          "Armazém":String(c?.armazemLabel || ""),
+          "Vocativo":String(c?.vocativo || ""),
+          "Peso":Number(c?.peso || 0),
+          "Notas":Number(c?.notas || 0),
+          "BP(s)":(Array.isArray(c?.bps)?c.bps:[]).join(" / "),
+          "CEP(s)":(Array.isArray(c?.ceps)?c.ceps:[]).join(" / "),
+          "Destino(s)":(Array.isArray(c?.destinos)?c.destinos:[]).join(" / "),
+          "UF(s)":(Array.isArray(c?.ufs)?c.ufs:[]).join(" / ")
+        }));
+        const ws = XLSX.utils.json_to_sheet(linhas);
+        ws["!cols"] = [55,12,8,18,24,28,12,10,20,18,28,10].map(w=>({wch:w}));
+        XLSX.utils.book_append_sheet(wb,ws,nomeAbaExcelRotaPainelProgramacao(i,getNomeExibicaoRotaPainelProgramacao(rota),usados));
+      });
+
       XLSX.writeFile(wb,`Rotas_Criadas_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
     function gerarPdfRotasSalvasPainelProgramacao() {
-      const linhas = getLinhasRelatorioRotasPainelProgramacao();
-      if (!linhas.length) return;
+      const rotas = getRotasSalvasPainelProgramacao();
+      if (!rotas.length) return;
       const jsPDFCtor = window.jspdf?.jsPDF;
       if (!jsPDFCtor) { alert("Biblioteca PDF indisponível."); return; }
       const doc = new jsPDFCtor({orientation:"landscape",unit:"mm",format:"a4"});
-      doc.setFontSize(12); doc.text("ROTAS CRIADAS",14,12);
-      doc.setFontSize(8); doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")}`,14,17);
-      doc.autoTable({
-        startY:21,
-        styles:{fontSize:6,cellPadding:1.4,overflow:"linebreak"},
-        headStyles:{fontSize:6.5},
-        head:[["Rota","Status","Ordem","Tipo","Armazém","Vocativo","Peso","Notas","BP(s)","Destino/UF"]],
-        body:linhas.map(x=>[
-          x["Rota"],x["Status Rota"],x["Ordem"],x["Tipo"],x["Armazém Transferência"],
-          x["Vocativo"],Number(x["Peso"]||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}),
-          x["Notas"],x["BP(s)"],`${x["Destino(s)"]}${x["UF(s)"] ? " / "+x["UF(s)"] : ""}`
-        ]),
-        margin:{left:8,right:8}
+
+      rotas.forEach((rota,i)=>{
+        if (i>0) doc.addPage("a4","landscape");
+        const cards = Array.isArray(rota?.cards) ? rota.cards : [];
+        const peso = cards.reduce((s,c)=>s+Number(c?.peso||0),0);
+        const nome = getNomeExibicaoRotaPainelProgramacao(rota);
+
+        doc.setFontSize(12);
+        doc.setFont(undefined,"bold");
+        const titulo = `ROTA ${i+1} — ${nome}`;
+        doc.text(doc.splitTextToSize(titulo,270),14,12);
+        doc.setFont(undefined,"normal");
+        doc.setFontSize(7.5);
+        doc.text(
+          `${rota?.status==="liberada"?"LIBERADA":"ATIVA"} | ${formatarDataRotaPainelProgramacao(rota?.criadaEm)} | ${cards.length} vocativo(s) | ${formatarNumeroPainelProgramacao(peso,2)} kg${rota?.distancia?` | ${formatKmBRMapa(rota.distancia)} | ${formatDurationBRMapa(rota.duracao||0)}`:""}`,
+          14,20
+        );
+
+        doc.autoTable({
+          startY:24,
+          styles:{fontSize:6.3,cellPadding:1.5,overflow:"linebreak",valign:"middle"},
+          headStyles:{fontSize:6.5,fillColor:[238,242,247],textColor:[15,23,42]},
+          head:[["Ordem","Tipo","Armazém","Vocativo","Peso","Notas","BP(s)","CEP(s)","Destino/UF"]],
+          body:cards.map((c,idx)=>[
+            idx+1,
+            c?.tipoEntrega==="TRANSFERENCIA"?"TRANSFERÊNCIA":"ENTREGA DIRETA",
+            c?.armazemLabel||"",
+            c?.vocativo||"",
+            Number(c?.peso||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}),
+            Number(c?.notas||0),
+            (Array.isArray(c?.bps)?c.bps:[]).join(" / "),
+            (Array.isArray(c?.ceps)?c.ceps:[]).join(" / "),
+            `${(Array.isArray(c?.destinos)?c.destinos:[]).join(" / ")}${Array.isArray(c?.ufs)&&c.ufs.length?" / "+c.ufs.join(" / "):""}`
+          ]),
+          margin:{left:8,right:8}
+        });
       });
+
       doc.save(`Rotas_Criadas_${new Date().toISOString().slice(0,10)}.pdf`);
     }
 
@@ -17088,7 +17300,7 @@ return null;
         const b = L.latLngBounds(bounds); if (b.isValid()) st.map.fitBounds(b,{padding:[30,30],maxZoom:12});
       }
       const info = document.getElementById("painelProgRouteInfo");
-      if (info) info.innerHTML = `<b>${escRotaPainelProgramacao(rota.nome || "Rota salva")}</b> · ${todosPontos.length} ponto(s)${rota.distancia ? ` · ${formatKmBRMapa(rota.distancia)} · ${formatDurationBRMapa(rota.duracao || 0)}` : ""}`;
+      if (info) info.innerHTML = `<b>${escRotaPainelProgramacao(getNomeExibicaoRotaPainelProgramacao(rota))}</b> · ${todosPontos.length} ponto(s)${rota.distancia ? ` · ${formatKmBRMapa(rota.distancia)} · ${formatDurationBRMapa(rota.duracao || 0)}` : ""}`;
     }
 
     document.addEventListener("click", ev => {
