@@ -15495,8 +15495,10 @@ return null;
       const st = window.__painelProgMapState;
       if (!(st?.filialLocalizacoes instanceof Map)) return [];
       const permitidas = getUfsFiliaisPermitidasPelosFiltrosPainelProgramacao();
+      const roteirizadas = getIdsFiliaisRoteirizadasAtivasPainelProgramacao();
       return Array.from(st.filialLocalizacoes.values())
         .filter(filial => filial?.ok && permitidas.has(normalizar(String(filial.uf || ""))))
+        .filter(filial => !roteirizadas.has(String(filial?.id || "")))
         .filter(filial => coordenadaValidaBrasilPainelProgramacao(filial.lat, filial.lon));
     }
 
@@ -15514,8 +15516,10 @@ return null;
 
     function getFiliaisPermitidasPainelProgramacao() {
       const permitidas = getUfsFiliaisPermitidasPelosFiltrosPainelProgramacao();
+      const roteirizadas = getIdsFiliaisRoteirizadasAtivasPainelProgramacao();
       return PAINEL_PROG_FILIAIS_DELLA_VOLPE
         .filter(f => permitidas.has(normalizar(String(f?.uf || ""))))
+        .filter(f => !roteirizadas.has(String(f?.id || "")))
         .map(f => window.__painelProgMapState?.filialLocalizacoes?.get?.(f.id) || f);
     }
 
@@ -15640,12 +15644,13 @@ return null;
       if (!(st.filiaisSelecionadas instanceof Set)) st.filiaisSelecionadas = new Set();
 
       const permitidas = getUfsFiliaisPermitidasPelosFiltrosPainelProgramacao();
+      const roteirizadas = getIdsFiliaisRoteirizadasAtivasPainelProgramacao();
       const idsVisiveis = new Set();
 
       st.filialMarkers.forEach((marker,id) => {
         const filial = st.filialLocalizacoes?.get?.(id);
         const ufNorm = normalizar(String(filial?.uf || ""));
-        const visivel = !!filial && permitidas.has(ufNorm);
+        const visivel = !!filial && permitidas.has(ufNorm) && !roteirizadas.has(String(id || ""));
         try {
           const noCluster = typeof st.cluster.hasLayer === "function" && st.cluster.hasLayer(marker);
           if (visivel) {
@@ -16043,7 +16048,7 @@ return null;
         toolbarMapa.dataset.autoShowBound = "1";
         toolbarMapa.addEventListener("click", (ev) => {
           const btn = ev.target?.closest?.("button");
-          if (!btn || btn.id === "btnPainelProgToggleMapa") return;
+          if (!btn || btn.id === "btnPainelProgToggleMapa" || btn.id === "btnPainelProgResetRotas") return;
           garantirMapaVisivelPainelProgramacao();
         }, true);
       }
@@ -16839,6 +16844,29 @@ return null;
       return set;
     }
 
+    function getIdsFiliaisRoteirizadasAtivasPainelProgramacao() {
+      const set = new Set();
+      getRotasSalvasPainelProgramacao().forEach(rota => {
+        if (!rota || rota.status === "liberada") return;
+
+        (Array.isArray(rota.filiais) ? rota.filiais : []).forEach(f => {
+          const id = String(f?.id || "").trim();
+          if (id) set.add(id);
+        });
+
+        // Compatibilidade com rotas gravadas a partir de transferências.
+        (Array.isArray(rota.cards) ? rota.cards : []).forEach(card => {
+          (Array.isArray(card?.transferencias) ? card.transferencias : []).forEach(t => {
+            const id = String(t?.armazemId || "").trim();
+            if (id) set.add(id);
+          });
+          const antigo = String(card?.armazemId || "").trim();
+          if (antigo) set.add(antigo);
+        });
+      });
+      return set;
+    }
+
     function filtrarDisponiveisRotasPainelProgramacao(dados) {
       const bloqueados = getChavesCardsRoteirizadosAtivosPainelProgramacao();
       if (!bloqueados.size) return Array.isArray(dados) ? dados.slice() : [];
@@ -17213,6 +17241,10 @@ return null;
       const disponiveis = filtrarDisponiveisRotasPainelProgramacao(painelProgDadosBase || []);
       if (disponiveis.length || painelProgDadosBase?.length) sincronizarFiltrosDinamicosPainelProgramacao(disponiveis);
       renderPainelProgramacaoComBaseAtual(false);
+      setTimeout(() => {
+        garantirFiliaisNoClusterPainelProgramacao();
+        atualizarDestaqueClustersSelecionadosPainelProgramacao?.();
+      }, 0);
     }
 
     function addTextoCopiaRotaSalvaPainelProgramacao(texto) {
@@ -17439,12 +17471,22 @@ return null;
         return;
       }
       if (!confirm(`Resetar todas as ${rotas.length} rota(s)? Todas serão excluídas e todos os vocativos voltarão para a programação.`)) return;
+
+      const shellAntes = document.querySelector("#painelProgramacaoMapaHost .painelProgMapShell");
+      const mapaEstavaVisivel = shellAntes ? !shellAntes.classList.contains("mapaOculto") : false;
+
       salvarRotasSalvasPainelProgramacao([]);
       limparSelecaoMapaPainelProgramacao();
       atualizarAposMudancaRotasPainelProgramacao();
       fecharModalRotasPainelProgramacao();
+
+      requestAnimationFrame(() => {
+        const shellDepois = document.querySelector("#painelProgramacaoMapaHost .painelProgMapShell");
+        if (shellDepois) setVisibilidadeMapaPainelProgramacao(mapaEstavaVisivel);
+      });
+
       const info = document.getElementById("painelProgRouteInfo");
-      if (info) { info.classList.remove("painelProgRouteError"); info.textContent = "Rotas resetadas. Todos os vocativos voltaram para a programação."; }
+      if (info) { info.classList.remove("painelProgRouteError"); info.textContent = "Rotas resetadas. Todos os vocativos e armazéns voltaram para a programação."; }
     }
 
     function excluirTodasRotasPainelProgramacao() {
