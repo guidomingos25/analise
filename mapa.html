@@ -15541,6 +15541,22 @@ return null;
       });
     }
 
+    function toggleFilialSemMoverTelaPainelProgramacao(id) {
+      const x = window.scrollX || window.pageXOffset || 0;
+      const y = window.scrollY || window.pageYOffset || 0;
+      const cardsHost = document.getElementById("painelProgramacaoCards");
+      const hostScrollTop = cardsHost?.scrollTop || 0;
+      toggleFilialPainelProgramacao(id);
+      requestAnimationFrame(() => {
+        window.scrollTo(x,y);
+        if (cardsHost) cardsHost.scrollTop = hostScrollTop;
+        setTimeout(() => {
+          window.scrollTo(x,y);
+          if (cardsHost) cardsHost.scrollTop = hostScrollTop;
+        }, 40);
+      });
+    }
+
     function toggleFilialPainelProgramacao(id, opcoes = {}) {
       const st = window.__painelProgMapState;
       if (!st || !getFilialCadastroPainelProgramacao(id)) return;
@@ -16677,7 +16693,7 @@ return null;
       const cep = String(filial.cep || "");
       const cepFmt = cep.length === 8 ? `${cep.slice(0,5)}-${cep.slice(5)}` : cep;
       return `
-        <div class="painelProgCard painelProgWarehouseCardNormal${selecionado ? " isSelected" : ""}" data-filial-card-id="${getTextoPainelProgramacao(filial.id)}" onclick="event.stopPropagation();toggleFilialPainelProgramacao('${getTextoPainelProgramacao(filial.id)}')">
+        <div class="painelProgCard painelProgWarehouseCardNormal${selecionado ? " isSelected" : ""}" data-filial-card-id="${getTextoPainelProgramacao(filial.id)}" onclick="event.preventDefault();event.stopPropagation();toggleFilialSemMoverTelaPainelProgramacao('${getTextoPainelProgramacao(filial.id)}')">
           <div class="painelProgCardTop">
             <div class="painelProgVocativo" title="${getTextoPainelProgramacao(filial.localidade)}">${getTextoPainelProgramacao(filial.localidade)}</div>
             <span class="painelProgWarehouseBadge" title="Armazém / transferência">A</span>
@@ -16694,7 +16710,6 @@ return null;
           </div>
           <div class="painelProgWarehouseCardBp">
             <span><strong>BP:</strong> ${getTextoPainelProgramacao(filial.bp || "-")}</span>
-            <button class="painelProgPopupCopyBtn" type="button" onclick="event.stopPropagation();copiarBpArmazemPainelProgramacao('${getTextoPainelProgramacao(filial.bp || "")}',event)">Copiar</button>
           </div>
         </div>`;
     }
@@ -17085,7 +17100,10 @@ return null;
             <div class="painelProgRouteModalTitle">Definir transferências</div>
             <div class="painelProgSavedRouteMeta">Marque os vocativos que serão descarregados no armazém. Vocativos não marcados permanecem como ENTREGA DIRETA.</div>
           </div>
-          <button class="btn secondary painelProgBaseMiniBtn" type="button" onclick="fecharModalRotasPainelProgramacao()">×</button>
+          <div class="painelProgRouteModalActions">
+            <button class="btn secondary painelProgBaseMiniBtn" id="btnPainelProgSelecionarTodosTransferencia" type="button" onclick="toggleSelecionarTodosTransferenciaPainelProgramacao()">Selecionar todos</button>
+            <button class="btn secondary painelProgBaseMiniBtn" type="button" onclick="fecharModalRotasPainelProgramacao()">×</button>
+          </div>
         </div>
         <div class="painelProgSaveRouteForm">
           <div class="painelProgTransferList">
@@ -17104,6 +17122,25 @@ return null;
       </div>`;
     }
 
+    function atualizarTextoSelecionarTodosTransferenciaPainelProgramacao() {
+      const checks = Array.from(document.querySelectorAll("#painelProgRouteModalBackdrop [data-transfer-voc-check]"));
+      const btn = document.getElementById("btnPainelProgSelecionarTodosTransferencia");
+      if (!btn || !checks.length) return;
+      const todos = checks.every(c => c.checked);
+      btn.textContent = todos ? "Desmarcar todos" : "Selecionar todos";
+    }
+
+    function toggleSelecionarTodosTransferenciaPainelProgramacao() {
+      const checks = Array.from(document.querySelectorAll("#painelProgRouteModalBackdrop [data-transfer-voc-check]"));
+      if (!checks.length) return;
+      const selecionar = !checks.every(c => c.checked);
+      checks.forEach(c => {
+        c.checked = selecionar;
+        atualizarLinhaTransferenciaVocativoPainelProgramacao(c);
+      });
+      atualizarTextoSelecionarTodosTransferenciaPainelProgramacao();
+    }
+
     function atualizarLinhaTransferenciaVocativoPainelProgramacao(input) {
       const row = input?.closest?.("[data-transfer-voc]");
       if (!row) return;
@@ -17112,6 +17149,7 @@ return null;
       if (sel && getFiliaisSelecionadasPainelProgramacao().length > 1) sel.disabled = !input.checked;
       const badge = row.querySelector(".painelProgTransferBpState");
       if (badge) badge.textContent = input.checked ? "TRANSFERÊNCIA" : "ENTREGA DIRETA";
+      atualizarTextoSelecionarTodosTransferenciaPainelProgramacao();
     }
 
     function confirmarSelecaoTransferenciasRotaPainelProgramacao() {
