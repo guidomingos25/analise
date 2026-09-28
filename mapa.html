@@ -4027,6 +4027,13 @@
     .painelProgMapCityBox:has(.painelProgExtraCityChip) {
       flex-wrap:wrap;
     }
+    .painelProgMapToolbarLeft:has(.painelProgExtraCityChip) {
+      align-items:flex-start;
+    }
+    .painelProgMapTogglePinned {
+      flex:0 0 34px;
+      align-self:flex-start;
+    }
     .painelProgMapCityBox:has(.painelProgExtraCityChip) > .painelProgExtraCitiesList {
       flex:1 0 100%;
       width:100%;
@@ -4325,6 +4332,11 @@
     .painelProgSavedRouteCompactHead:hover { background:#f8fafc; }
     .painelProgSavedRouteName { font-size:10px; font-weight:1000; color:#0f172a; line-height:1.25; overflow-wrap:anywhere; }
     .painelProgSavedRouteMetaCompact { margin-top:3px; color:#64748b; font-size:7.8px; line-height:1.35; }
+    .painelProgSavedRouteAlertStrip { display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin-top:5px; }
+    .painelProgSavedRouteAlertTag { display:inline-flex; align-items:center; min-height:18px; padding:2px 6px; border-radius:999px; border:1px solid #fed7aa; background:#fff7ed; color:#9a3412; font-size:6.8px; font-weight:1000; white-space:nowrap; letter-spacing:.01em; }
+    .painelProgSavedRouteAlertTag.peso { border-color:#fecaca; background:#fef2f2; color:#991b1b; }
+    .painelProgSavedRouteAlertTag.quimico,.painelProgSavedRouteAlertTag.mopp { border-color:#fde68a; background:#fffbeb; color:#854d0e; }
+    .painelProgSavedRouteAlertTag.mercadoria { border-color:#fdba74; background:#fff7ed; color:#9a3412; }
     .painelProgSavedRouteCompactRight { display:flex; align-items:center; gap:5px; flex-wrap:nowrap; }
     .painelProgRouteChevron { width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #dbe3ec; border-radius:8px; background:#fff; font-size:10px; color:#475569; transition:transform .12s ease; }
     .painelProgSavedRoute.expanded .painelProgRouteChevron { transform:rotate(180deg); }
@@ -16068,9 +16080,9 @@ return null;
             <button class="btn secondary painelProgMapBtn" type="button" onclick="geocodificarCidadeExtraPainelProgramacao()">+ Adicionar</button>
             <button class="btn secondary painelProgMapBtn painelProgMapToggleBtn" type="button" onclick="ajustarMapaAosPontosPainelProgramacao()" title="Enquadrar pontos" aria-label="Enquadrar pontos">◎</button>
             <button class="btn secondary painelProgMapBtn" type="button" onclick="limparSelecaoMapaPainelProgramacao()" title="Limpar seleção de cards, pontos, destinos e filiais" aria-label="Limpar seleção de cards, pontos, destinos e filiais">⊘</button>
-            <button id="btnPainelProgToggleMapa" class="btn secondary painelProgMapBtn painelProgMapToggleBtn" type="button" onclick="toggleVisibilidadeMapaPainelProgramacao(event)" title="Reexibir mapa" aria-label="Reexibir mapa">▤</button>
             <div id="painelProgExtraCitiesList" class="painelProgExtraCitiesList"></div>
           </div>
+          <button id="btnPainelProgToggleMapa" class="btn secondary painelProgMapBtn painelProgMapToggleBtn painelProgMapTogglePinned" type="button" onclick="toggleVisibilidadeMapaPainelProgramacao(event)" title="Reexibir mapa" aria-label="Reexibir mapa">▤</button>
         </div></div>
         <div class="painelProgRouteResultBar"><span id="painelProgRouteInfo" class="painelProgRouteInfo"></span></div>
         <div id="painelProgProximidadePanel" class="painelProgProximidadePanel"></div>
@@ -17152,7 +17164,13 @@ return null;
           ufs:Array.isArray(item?.ufs) ? item.ufs.slice() : [],
           lat:Number(loc?.geo?.lat),
           lon:Number(loc?.geo?.lon),
-          tipoEntrega
+          tipoEntrega,
+          alertasMercadoria:clonarAlertasMercadoriaPainelProgramacao(item?.alertasMercadoria || {}),
+          qtdAlertaPeso:Number(item?.qtdAlertaPeso || 0),
+          qtdQuimico:Number(item?.qtdQuimico || 0),
+          onuNumeros:Array.isArray(item?.onuNumeros) ? item.onuNumeros.slice() : [],
+          temMopp:item?.temMopp === true,
+          temQuimico:item?.temQuimico === true
         };
       }).filter(x => x.cardKey);
 
@@ -17442,6 +17460,54 @@ return null;
       </div>`;
     }
 
+    function getFonteAlertaCardRotaPainelProgramacao(card) {
+      if (!card) return null;
+      const temSnapshot = card.alertasMercadoria || card.qtdAlertaPeso || card.qtdQuimico || (Array.isArray(card.onuNumeros) && card.onuNumeros.length);
+      if (temSnapshot) return card;
+      const chave = String(card.cardKey || "").trim();
+      if (!chave) return card;
+      const fontes = [
+        ...(Array.isArray(painelProgDadosBase) ? painelProgDadosBase : []),
+        ...(Array.isArray(painelProgDadosBaseCompleta) ? painelProgDadosBaseCompleta : [])
+      ];
+      return fontes.find(item => String(item?.cardKey || "").trim() === chave) || card;
+    }
+
+    function getResumoAlertasRotaPainelProgramacao(rota) {
+      const alertas = criarAlertasMercadoriaPainelProgramacao();
+      let peso = 0;
+      let quimico = 0;
+      const onus = new Set();
+
+      (Array.isArray(rota?.cards) ? rota.cards : []).forEach(card => {
+        const fonte = getFonteAlertaCardRotaPainelProgramacao(card) || {};
+        somarAlertasMercadoriaPainelProgramacao(alertas, fonte.alertasMercadoria || {});
+        peso += Number(fonte.qtdAlertaPeso || 0);
+        quimico += Number(fonte.qtdQuimico || 0);
+        (Array.isArray(fonte.onuNumeros) ? fonte.onuNumeros : [])
+          .map(x => String(x || "").trim()).filter(Boolean).forEach(x => onus.add(x));
+      });
+
+      const itens = getLinhasAlertasMercadoriaPainelProgramacao(alertas).map(x => ({
+        tipo:"mercadoria", label:x.label, valor:Number(x.qtd || 0)
+      }));
+      if (peso > 0) itens.push({tipo:"peso",label:"PESO > 2.000 KG",valor:peso});
+      if (quimico > 0) itens.push({tipo:"quimico",label:"QUÍMICO",valor:quimico});
+      if (onus.size > 0) {
+        const lista = Array.from(onus).sort((a,b)=>a.localeCompare(b,"pt-BR"));
+        itens.push({tipo:"mopp",label:lista.length > 1 ? "MOPP · ONU DIVERSOS" : `MOPP · ONU ${lista[0]}`,valor:0});
+      }
+      return itens;
+    }
+
+    function renderResumoAlertasRotaPainelProgramacao(rota) {
+      const itens = getResumoAlertasRotaPainelProgramacao(rota);
+      if (!itens.length) return "";
+      return `<div class="painelProgSavedRouteAlertStrip">${itens.map(item =>
+        `<span class="painelProgSavedRouteAlertTag ${escRotaPainelProgramacao(item.tipo)}">${escRotaPainelProgramacao(item.label)}${item.valor ? ` ${formatarNumeroPainelProgramacao(item.valor,0)}` : ""}</span>`
+      ).join("")}</div>`;
+    }
+
     function renderRotaSalvaPainelProgramacao(rota) {
       const liberada = rota?.status === "liberada";
       const cards = Array.isArray(rota?.cards) ? rota.cards : [];
@@ -17512,6 +17578,7 @@ return null;
           <div>
             <div class="painelProgSavedRouteName">${escRotaPainelProgramacao(nomeRota)}</div>
             <div class="painelProgSavedRouteMetaCompact">${formatarDataRotaPainelProgramacao(rota?.criadaEm)} · ${cards.length} vocativo(s)${extrasRota.length ? ` · ${extrasRota.length} destino(s) adicionado(s)` : ""} · ${formatarNumeroPainelProgramacao(peso,2)} kg · ${notas} nota(s) · ${qtdDireta} direta(s)${qtdTransf ? ` · ${qtdTransf} transferência(s)` : ""}${dist ? ` · ${formatKmBRMapa(dist)}${dur ? ` · ${formatDurationBRMapa(dur)}` : ""}` : ""}</div>
+            ${renderResumoAlertasRotaPainelProgramacao(rota)}
           </div>
           <div class="painelProgSavedRouteCompactRight">
             <span class="painelProgSavedRouteStatus ${liberada ? "released" : "active"}">${liberada ? "Liberada" : "Ativa"}</span>
