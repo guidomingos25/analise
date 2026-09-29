@@ -14327,12 +14327,55 @@ return null;
       return true;
     }
 
+    function getMetaOrdenacaoPdfPainelProgramacao(item, modo = getPainelProgAgrupamentoAtual()) {
+      const modoAtual = String(modo || "nenhum");
+      if (modoAtual === "nenhum") {
+        return { modo: modoAtual, label: "", responsavelKey: "" };
+      }
+      const grupo = getGrupoPainelProgramacao(item || {}, modoAtual) || {};
+      return {
+        modo: modoAtual,
+        label: String(grupo.label || "").trim(),
+        responsavelKey: String(grupo.responsavelKey || item?.responsavelKey || "").trim()
+      };
+    }
+
+    function anotarOrdenacaoPdfRegistroPainelProgramacao(registro, item, modo) {
+      const meta = getMetaOrdenacaoPdfPainelProgramacao(item, modo);
+      Object.defineProperties(registro, {
+        "__painelProgPdfGrupoModo": { value: meta.modo, enumerable: false, configurable: true },
+        "__painelProgPdfGrupoLabel": { value: meta.label, enumerable: false, configurable: true },
+        "__painelProgPdfResponsavelKey": { value: meta.responsavelKey, enumerable: false, configurable: true }
+      });
+      return registro;
+    }
+
+    function getMetaOrdenacaoPdfRegistroPainelProgramacao(registro) {
+      return {
+        modo: String(registro?.__painelProgPdfGrupoModo || getPainelProgAgrupamentoAtual() || "nenhum"),
+        label: String(registro?.__painelProgPdfGrupoLabel || "").trim(),
+        responsavelKey: String(registro?.__painelProgPdfResponsavelKey || "").trim()
+      };
+    }
+
+    function compararGruposOrdenacaoPdfPainelProgramacao(a, b) {
+      const modo = String(a?.modo || b?.modo || "nenhum");
+      if (modo === "responsavel") {
+        const ordemResponsavel = { julio: 1, lucas: 2, igor: 3 };
+        const ao = ordemResponsavel[String(a?.responsavelKey || "")] || 99;
+        const bo = ordemResponsavel[String(b?.responsavelKey || "")] || 99;
+        if (ao !== bo) return ao - bo;
+      }
+      return String(a?.label || "").localeCompare(String(b?.label || ""), "pt-BR", { sensitivity: "base" });
+    }
+
     function getRegistrosSelecionadosRelatorioCarregamentoPainelProgramacao() {
       const itensAtuais = Array.isArray(painelProgDadosAtuais) ? painelProgDadosAtuais : [];
       const temCardsSelecionados = (painelProgCardsSelecionados?.size || 0) > 0;
       const itensSelecionados = temCardsSelecionados
         ? itensAtuais.filter(item => painelProgCardsSelecionados.has(String(item?.cardKey || "")))
         : itensAtuais;
+      const modoAgrupamento = getPainelProgAgrupamentoAtual();
 
       const vistosNotas = new Set();
       const vistosFallback = new Set();
@@ -14345,7 +14388,8 @@ return null;
             if (!notaPassaFiltrosRelatorioCardsPainelProgramacao(nota, item)) return;
             if (vistosNotas.has(nota)) return;
             vistosNotas.add(nota);
-            registros.push(montarRegistroRelatorioPainelProgramacao(item.vocativo || item.vocNorm || "", nota));
+            const registro = montarRegistroRelatorioPainelProgramacao(item.vocativo || item.vocNorm || "", nota);
+            registros.push(anotarOrdenacaoPdfRegistroPainelProgramacao(registro, item, modoAgrupamento));
           });
           return;
         }
@@ -14363,7 +14407,7 @@ return null;
           ].join("||");
           if (vistosFallback.has(chave)) return;
           vistosFallback.add(chave);
-          registros.push({ ...registro });
+          registros.push(anotarOrdenacaoPdfRegistroPainelProgramacao({ ...registro }, item, modoAgrupamento));
         });
       });
 
@@ -14390,16 +14434,30 @@ return null;
     }
 
     function getVocativosOrdemRelatorioCarregamentoPainelProgramacao(registros) {
-      const out = [];
-      const seen = new Set();
-      (registros || []).forEach(r => {
+      const porVocativo = new Map();
+      (registros || []).forEach((r, idx) => {
         const v = getVocRelatorioCarregamentoPainelProgramacao(r);
-        if (v && !seen.has(v)) {
-          seen.add(v);
-          out.push(v);
+        if (!v) return;
+        const meta = getMetaOrdenacaoPdfRegistroPainelProgramacao(r);
+        const atual = porVocativo.get(v);
+        if (!atual) {
+          porVocativo.set(v, { v, meta, idx });
+          return;
+        }
+        if (compararGruposOrdenacaoPdfPainelProgramacao(meta, atual.meta) < 0) {
+          atual.meta = meta;
         }
       });
-      return out;
+
+      return Array.from(porVocativo.values())
+        .sort((a, b) => {
+          const cmpGrupo = compararGruposOrdenacaoPdfPainelProgramacao(a.meta, b.meta);
+          if (cmpGrupo !== 0) return cmpGrupo;
+          const cmpVocativo = String(a.v || "").localeCompare(String(b.v || ""), "pt-BR", { sensitivity: "base" });
+          if (cmpVocativo !== 0) return cmpVocativo;
+          return a.idx - b.idx;
+        })
+        .map(item => item.v);
     }
 
     function getZonaEntregaRelatorioCarregamentoPainelProgramacao(registros) {
@@ -14527,11 +14585,7 @@ return null;
 
       const sorted = ordenarRegistrosRelatorioCarregamentoPainelProgramacao(registros);
       const vocOrder = getVocativosOrdemRelatorioCarregamentoPainelProgramacao(registros);
-      const blocosOrdem = vocOrder.map((v, i) => ({
-        v,
-        i,
-        count: registros.filter(r => getVocRelatorioCarregamentoPainelProgramacao(r) === v).length
-      })).sort((a, b) => b.count - a.count || a.i - b.i);
+      const blocosOrdem = vocOrder.map(v => ({ v }));
       const larguras = getLargurasColunasRelatorioCarregamentoPainelProgramacao(registros);
       const blocos = blocosOrdem.map(({ v }) => {
         const data = sorted.filter(r => getVocRelatorioCarregamentoPainelProgramacao(r) === v);
