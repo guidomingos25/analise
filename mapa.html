@@ -2701,6 +2701,20 @@
       cursor: grabbing;
       background: #eff6ff;
     }
+    .painelProgPopupVocDetail.isManualExtra {
+      min-height: 58px;
+      align-items: center;
+      background: #faf5ff;
+      border-color: #ddd6fe;
+    }
+    .painelProgPopupManualHint {
+      margin-top: 4px;
+      font-size: 8px;
+      font-weight: 850;
+      color: #7c3aed;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
     .painelProgPopupRouteGrip {
       position: absolute;
       left: 7px;
@@ -4399,14 +4413,20 @@
     .painelProgRouteSummaryBox { border:1px solid #e2e8f0; border-radius:12px; background:#f8fafc; padding:10px 12px; min-width:0; }
     .painelProgRouteSummaryLabel { font-size:8px; font-weight:1000; color:#64748b; text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px; }
     .painelProgRouteSummaryValue { font-size:20px; font-weight:1000; line-height:1.05; color:#0f172a; }
-    .painelProgRouteVehicleSelect { width:100%; min-height:38px; padding:8px 10px; border:1px solid #cbd5e1; border-radius:10px; background:#fff; color:#0f172a; font-size:11px; font-weight:900; outline:none; }
-    .painelProgRouteVehicleSelect.isInvalid { border-color:#dc2626; box-shadow:0 0 0 3px rgba(220,38,38,.10); }
+    .painelProgRouteVehicleGrid { display:flex; flex-wrap:wrap; gap:6px; }
+    .painelProgRouteVehicleGrid.isInvalid { padding:6px; border:1px solid #dc2626; border-radius:10px; box-shadow:0 0 0 3px rgba(220,38,38,.10); }
+    .painelProgRouteVehicleOption {
+      border:1px solid #cbd5e1; background:#fff; color:#0f172a; border-radius:999px; min-height:34px; padding:6px 10px;
+      font-size:10px; font-weight:900; cursor:pointer; white-space:nowrap;
+    }
+    .painelProgRouteVehicleOption:hover { background:#f8fafc; border-color:#94a3b8; }
+    .painelProgRouteVehicleOption.isSelected { background:#dbeafe; color:#1e3a8a; border-color:#93c5fd; box-shadow:inset 0 0 0 1px rgba(37,99,235,.08); }
     .painelProgRouteSectionTitle { font-size:9px; font-weight:1000; color:#334155; text-transform:uppercase; letter-spacing:.04em; margin-top:2px; }
     .painelProgRouteParticularidades { display:flex; flex-wrap:wrap; gap:6px; }
     .painelProgRouteParticularidadeChip { display:inline-flex; align-items:center; min-height:25px; padding:4px 8px; border-radius:999px; background:#fff7ed; color:#9a3412; border:1px solid #fdba74; font-size:8.5px; font-weight:1000; }
     .painelProgRouteParticularidadeChip.none { background:#f8fafc; color:#64748b; border-color:#e2e8f0; }
     .painelProgRouteSaveError { min-height:16px; color:#b91c1c; font-size:9px; font-weight:900; }
-    .painelProgSavedRouteVehicle { display:inline-flex; align-items:center; padding:3px 7px; border-radius:999px; background:#ede9fe; color:#5b21b6; border:1px solid #c4b5fd; font-size:7.5px; font-weight:1000; white-space:nowrap; }
+    .painelProgSavedRouteVehicle { display:inline-flex; align-items:center; color:#0f172a; font-size:8px; font-weight:1000; white-space:nowrap; }
     .painelProgModalFooter { display:flex; justify-content:flex-end; gap:7px; padding:10px 14px; border-top:1px solid #e5e7eb; background:#f8fafc; }
 
     @media(max-width:900px){
@@ -13370,11 +13390,20 @@ return null;
             })
             .map(extra => {
               const token = getTokenOrdemRotaExtraPainelProgramacao(extra.id);
-              return `<div class="painelProgPopupVocDetail isRouteSortable" style="background:#faf5ff;border-color:#c4b5fd;" draggable="true" data-route-tokens="${getTextoPainelProgramacao(JSON.stringify([token]))}" title="Arraste para alterar a ordem da rota">
+              const localExtra = String(extra.localLabel || extra.display || extra.cidade || "").trim();
+              const hintExtra = localExtra && localExtra !== String(extra.label || "").trim() ? localExtra : "Destino incluído manualmente";
+              return `<div class="painelProgPopupVocDetail isRouteSortable isManualExtra" draggable="true" data-route-tokens="${getTextoPainelProgramacao(JSON.stringify([token]))}" title="Arraste para alterar a ordem da rota">
                 <button class="painelProgPopupRouteRemove" type="button" title="Retirar este destino da seleção e da rota" aria-label="Retirar este destino da seleção e da rota" onclick="removerVocativoDaSelecaoRotaPainelProgramacao(this,event)">×</button>
                 <div class="painelProgPopupRouteGrip"><span>⋮⋮</span><span class="painelProgPopupRouteNum">1</span></div>
-                <div><div class="painelProgPopupVocName" style="color:#6d28d9;">${getTextoPainelProgramacao(extra.label || "Destino adicionado")}</div></div>
-                <div></div>
+                <div>
+                  <div class="painelProgPopupVocName" style="color:#6d28d9;">${getTextoPainelProgramacao(extra.label || "Destino adicionado")}</div>
+                  <div class="painelProgPopupVocPeso" style="color:#6d28d9;background:#f3e8ff;border-color:#ddd6fe;">DESTINO INCLUÍDO MANUALMENTE</div>
+                  <div class="painelProgPopupManualHint">${getTextoPainelProgramacao(hintExtra)}</div>
+                </div>
+                <div>
+                  <div class="painelProgPopupBpTitle">Origem</div>
+                  <div class="painelProgPopupBpRow"><span style="color:#6d28d9;font-weight:800;">Manual / Mapa</span></div>
+                </div>
               </div>`;
             }).join("")
         : "";
@@ -17132,7 +17161,7 @@ return null;
         const label = String(extra?.cidade || extra?.localLabel || "DESTINOS ADICIONADOS");
         return { icon:"📍", label, chave:normalizar(label) || label };
       }
-      return { icon:"🟣", label:"DESTINOS ADICIONADOS", chave:"__DESTINOS_ADICIONADOS__", extras:true };
+      return { icon:"🟣", label:"DESTINOS ADICIONADOS", chave:"__DESTINOS_ADICIONADOS__", extras:true, manualGroup:true };
     }
 
     function renderBlocoArmazensPainelProgramacao() { return ""; }
@@ -17214,7 +17243,7 @@ return null;
         const totalCards = filiaisGrupo.length + destinosGrupo.length;
         return `
           <div class="painelProgClienteGrupo">
-            <div class="painelProgClienteHeader"${grupo.armazens ? ' style="background:#fef3c7;border-color:#fde68a;"' : (grupo.extras ? ' style="background:#f3e8ff;border-color:#ddd6fe;"' : "")}>
+            <div class="painelProgClienteHeader"${grupo.armazens ? ' style="background:#fef3c7;border-color:#fde68a;"' : (grupo.manualGroup ? ' style="background:#f3e8ff;border-color:#ddd6fe;"' : "")}>
               <div class="painelProgClienteTitle">${grupo.icon} ${getTextoPainelProgramacao(grupo.label)}</div>
               <div class="painelProgHint">${totalCards} card(s)${grupo.itens.length ? ` | ${new Set(grupo.itens.map(i=>i.vocNorm)).size} vocativo(s)` : ""}${extrasGrupo.length ? ` | ${extrasGrupo.length} destino(s) inserido(s)` : ""}${filiaisGrupo.length ? ` | ${filiaisGrupo.length} armazém(ns)` : ""}</div>
             </div>
@@ -17629,7 +17658,7 @@ return null;
       const back = criarBackdropRotasPainelProgramacao();
       const opts = filiais.map(f => `<option value="${escRotaPainelProgramacao(f.id)}">${escRotaPainelProgramacao(f.localidade)} · BP ${escRotaPainelProgramacao(f.bp||"-")}</option>`).join("");
       const temTransferenciaConfiguravel = filiais.length > 0 && itens.length > 0;
-      const veiculosHtml = PAINEL_PROG_TIPOS_VEICULO_ROTA.map(v=>`<option value="${escRotaPainelProgramacao(v)}">${escRotaPainelProgramacao(v)}</option>`).join("");
+      const veiculosHtml = PAINEL_PROG_TIPOS_VEICULO_ROTA.map(v=>`<button type="button" class="painelProgRouteVehicleOption" data-veiculo-opcao="${escRotaPainelProgramacao(v)}" onclick="selecionarTipoVeiculoRotaPainelProgramacao('${escRotaPainelProgramacao(v)}', this)">${escRotaPainelProgramacao(v)}</button>`).join("");
 
       back.innerHTML = `<div class="painelProgRouteModal" role="dialog" aria-modal="true" aria-label="Salvar rota">
         <div class="painelProgRouteModalHead">
@@ -17651,10 +17680,10 @@ return null;
             </div>
             <div class="painelProgRouteSummaryBox">
               <div class="painelProgRouteSummaryLabel">Tipo de veículo</div>
-              <select id="painelProgVeiculoRota" class="painelProgRouteVehicleSelect" onchange="this.classList.remove('isInvalid');document.getElementById('painelProgRouteSaveError').textContent='';">
-                <option value="">Selecione o veículo...</option>
+              <input id="painelProgVeiculoRota" type="hidden" value="">
+              <div id="painelProgVeiculoGrid" class="painelProgRouteVehicleGrid" aria-label="Selecionar tipo de veículo">
                 ${veiculosHtml}
-              </select>
+              </div>
             </div>
           </div>
 
@@ -17679,6 +17708,18 @@ return null;
           <button class="btn painelProgBaseMiniBtn" type="button" onclick="confirmarSelecaoTransferenciasRotaPainelProgramacao()">💾 Salvar rota</button>
         </div>
       </div>`;
+    }
+
+    function selecionarTipoVeiculoRotaPainelProgramacao(value, btn) {
+      const hidden = document.getElementById("painelProgVeiculoRota");
+      const grid = document.getElementById("painelProgVeiculoGrid");
+      if (hidden) hidden.value = String(value || "");
+      if (grid) grid.classList.remove("isInvalid");
+      document.querySelectorAll("#painelProgVeiculoGrid [data-veiculo-opcao]").forEach(op => {
+        op.classList.toggle("isSelected", String(op.dataset.veiculoOpcao || "") === String(value || ""));
+      });
+      const erro = document.getElementById("painelProgRouteSaveError");
+      if (erro) erro.textContent = "";
     }
 
     function atualizarTextoSelecionarTodosTransferenciaPainelProgramacao() {
@@ -17712,10 +17753,11 @@ return null;
     }
 
     function confirmarSelecaoTransferenciasRotaPainelProgramacao() {
-      const veiculoSelect = document.getElementById("painelProgVeiculoRota");
-      const veiculoTipo = String(veiculoSelect?.value || "").trim();
+      const veiculoInput = document.getElementById("painelProgVeiculoRota");
+      const veiculoGrid = document.getElementById("painelProgVeiculoGrid");
+      const veiculoTipo = String(veiculoInput?.value || "").trim();
       if (!veiculoTipo) {
-        veiculoSelect?.classList.add("isInvalid");
+        veiculoGrid?.classList.add("isInvalid");
         const erro = document.getElementById("painelProgRouteSaveError");
         if (erro) erro.textContent = "Selecione o tipo de veículo antes de salvar a rota.";
         return;
@@ -18030,7 +18072,7 @@ return null;
             ${renderResumoAlertasRotaPainelProgramacao(rota)}
           </div>
           <div class="painelProgSavedRouteCompactRight">
-            <span class="painelProgSavedRouteVehicle">${escRotaPainelProgramacao(veiculoRota)}</span>
+            <span class="painelProgSavedRouteVehicle">Veículo: ${escRotaPainelProgramacao(veiculoRota)}</span>
             <span class="painelProgSavedRouteStatus ${liberada ? "released" : "active"}">${liberada ? "Liberada" : "Ativa"}</span>
             <span class="painelProgRouteChevron">⌄</span>
           </div>
