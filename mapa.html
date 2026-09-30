@@ -4429,46 +4429,49 @@
     .painelProgSavedRouteVehicle { display:inline-flex; align-items:center; color:#0f172a; font-size:8px; font-weight:1000; white-space:nowrap; margin-right:5px; }
     .painelProgModalFooter { display:flex; justify-content:flex-end; gap:7px; padding:10px 14px; border-top:1px solid #e5e7eb; background:#f8fafc; }
 
-    /* Rotas criadas: somente ganho de área útil e legibilidade. */
+    /* Rotas criadas: somente ganho adicional de área útil e legibilidade. */
+    .painelProgRouteModalBackdrop.rotasCriadasBackdrop { padding:6px; }
     .painelProgRouteModal.painelProgRotasCriadasModal {
-      width:min(1420px,99vw);
-      height:min(94vh,900px);
-      max-height:94vh;
+      width:calc(100vw - 12px);
+      height:calc(100vh - 12px);
+      max-height:calc(100vh - 12px);
+      border-radius:14px;
     }
-    .painelProgRotasCriadasModal .painelProgRouteModalHead { padding:14px 16px; }
-    .painelProgRotasCriadasModal .painelProgRouteModalTitle { font-size:13.5px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteMeta { font-size:9.5px; }
-    .painelProgRotasCriadasModal .painelProgRouteModalActions .painelProgBaseMiniBtn { font-size:10px!important; min-height:31px!important; padding:6px 10px!important; }
-    .painelProgRotasCriadasModal .painelProgRouteModalBody.routesMode { padding:12px; }
-    .painelProgRotasCriadasModal .painelProgRoutesWorkspace { grid-template-columns:minmax(0,1fr) 340px; gap:12px; }
-    .painelProgRotasCriadasModal .painelProgRoutesAside { padding:11px; }
-    .painelProgRotasCriadasModal .painelProgRoutesAsideTitle { font-size:10px; margin-bottom:8px; }
-    .painelProgRotasCriadasModal .painelProgRoutesAsideActions .btn { font-size:9.5px!important; min-height:32px!important; }
-    .painelProgRotasCriadasModal .painelProgRoutesAsideHint { font-size:8.5px; line-height:1.4; }
-    .painelProgRotasCriadasModal .painelProgPopupVehicleTab { min-height:30px; font-size:9px; }
-    .painelProgRotasCriadasModal .painelProgPopupVehicleTab.active::before { font-size:9px; }
-    .painelProgRotasCriadasModal .painelProgPopupVehicleBtn { min-height:24px; font-size:8.1px; padding:4px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteCompactHead { padding:11px 12px; gap:10px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteName { font-size:11.5px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteMetaCompact { font-size:9px; line-height:1.4; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteAlertStrip { font-size:8.2px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteCompactRight { gap:7px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteVehicle { font-size:9.2px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteStatus { font-size:8.5px; padding:4px 7px; }
-    .painelProgRotasCriadasModal .painelProgRouteChevron { width:28px; height:28px; font-size:11px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteQuick { padding:8px 10px; gap:6px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteQuick .btn { font-size:8.8px!important; min-height:28px!important; padding:5px 8px!important; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteStats { font-size:9px; }
-    .painelProgRotasCriadasModal .painelProgSavedVocRow { padding:9px 10px; gap:10px; }
-    .painelProgRotasCriadasModal .painelProgSavedVocName { font-size:10.3px; }
-    .painelProgRotasCriadasModal .painelProgSavedVocMeta { gap:6px; margin-top:5px; }
+    .painelProgRotasCriadasModal .painelProgRouteModalHead { padding:16px 18px; }
+    .painelProgRotasCriadasModal .painelProgRouteModalTitle { font-size:16px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteMeta { font-size:11px; }
+    .painelProgRotasCriadasModal .painelProgRouteModalActions .painelProgBaseMiniBtn { font-size:11.5px!important; min-height:36px!important; padding:7px 12px!important; }
+    .painelProgRotasCriadasModal .painelProgRouteModalBody.routesMode { padding:14px; }
+    .painelProgRotasCriadasModal .painelProgRoutesWorkspace { grid-template-columns:minmax(0,1fr) 370px; gap:14px; }
+    .painelProgRotasCriadasModal .painelProgRoutesAside { padding:13px; }
+    .painelProgRotasCriadasModal .painelProgRoutesAsideTitle { font-size:12px; margin-bottom:9px; }
+    .painelProgRotasCriadasModal .painelProgRoutesAsideActions .btn { font-size:11px!important; min-height:36px!important; }
+    .painelProgRotasCriadasModal .painelProgRoutesAsideHint { font-size:10px; line-height:1.45; }
+    .painelProgRotasCriadasModal .painelProgPopupVehicleTab { min-height:34px; font-size:10.5px; }
+    .painelProgRotasCriadasModal .painelProgPopupVehicleTab.active::before { font-size:10px; }
+    .painelProgRotasCriadasModal .painelProgPopupVehicleBtn { min-height:29px; font-size:9.5px; padding:5px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteCompactHead { padding:13px 14px; gap:12px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteName { font-size:13.5px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteMetaCompact { font-size:10.5px; line-height:1.45; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteAlertStrip { font-size:9.5px; line-height:1.35; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteCompactRight { gap:9px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteVehicle { font-size:11px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteStatus { font-size:10px; padding:5px 9px; }
+    .painelProgRotasCriadasModal .painelProgRouteChevron { width:32px; height:32px; font-size:13px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteQuick { padding:10px 12px; gap:8px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteQuick .btn { font-size:10.5px!important; min-height:32px!important; padding:6px 10px!important; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteStats { font-size:10.5px; }
+    .painelProgRotasCriadasModal .painelProgSavedVocRow { padding:11px 12px; gap:12px; }
+    .painelProgRotasCriadasModal .painelProgSavedVocName { font-size:12px; }
+    .painelProgRotasCriadasModal .painelProgSavedVocMeta { gap:7px; margin-top:6px; }
     .painelProgRotasCriadasModal .painelProgSavedVocMeta .painelProgPopupCopyBtn,
-    .painelProgRotasCriadasModal .painelProgSavedBpLine .painelProgPopupCopyBtn { font-size:8.5px; padding:4px 7px; }
-    .painelProgRotasCriadasModal .painelProgSavedTypeBadge { font-size:8px; padding:4px 7px; }
-    .painelProgRotasCriadasModal .painelProgSavedWarehouse { font-size:8.5px; }
-    .painelProgRotasCriadasModal .painelProgSavedBpTitle { font-size:8px; margin-bottom:3px; }
-    .painelProgRotasCriadasModal .painelProgSavedBpLine { font-size:9.5px; }
-    .painelProgRotasCriadasModal .painelProgRouteEmpty { font-size:12px; }
+    .painelProgRotasCriadasModal .painelProgSavedBpLine .painelProgPopupCopyBtn { font-size:10px; padding:5px 8px; }
+    .painelProgRotasCriadasModal .painelProgSavedVocMeta span { font-size:10px!important; }
+    .painelProgRotasCriadasModal .painelProgSavedTypeBadge { font-size:9.5px; padding:5px 8px; }
+    .painelProgRotasCriadasModal .painelProgSavedWarehouse { font-size:10px; }
+    .painelProgRotasCriadasModal .painelProgSavedBpTitle { font-size:9.5px; margin-bottom:4px; }
+    .painelProgRotasCriadasModal .painelProgSavedBpLine { font-size:11px; }
+    .painelProgRotasCriadasModal .painelProgRouteEmpty { font-size:13px; }
 
     @media(max-width:900px){
       .painelProgRouteSaveSummaryGrid{grid-template-columns:1fr;}
@@ -17945,6 +17948,7 @@ return null;
       const rotas = getRotasSalvasPainelProgramacao();
       window.__painelProgRouteCopyStore = [];
       const back = criarBackdropRotasPainelProgramacao();
+      back.classList.add("rotasCriadasBackdrop");
       const ativas = rotas.filter(r => r?.status !== "liberada").length;
       back.innerHTML = `<div class="painelProgRouteModal painelProgRotasCriadasModal" role="dialog" aria-modal="true" aria-label="Rotas salvas">
         <div class="painelProgRouteModalHead">
