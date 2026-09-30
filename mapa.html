@@ -4426,7 +4426,7 @@
     .painelProgRouteParticularidadeChip { display:inline-flex; align-items:center; min-height:25px; padding:4px 8px; border-radius:999px; background:#fff7ed; color:#9a3412; border:1px solid #fdba74; font-size:8.5px; font-weight:1000; }
     .painelProgRouteParticularidadeChip.none { background:#f8fafc; color:#64748b; border-color:#e2e8f0; }
     .painelProgRouteSaveError { min-height:16px; color:#b91c1c; font-size:9px; font-weight:900; }
-    .painelProgSavedRouteVehicle { display:inline-flex; align-items:center; color:#0f172a; font-size:8px; font-weight:1000; white-space:nowrap; }
+    .painelProgSavedRouteVehicle { display:inline-flex; align-items:center; color:#0f172a; font-size:8px; font-weight:1000; white-space:nowrap; margin-right:5px; }
     .painelProgModalFooter { display:flex; justify-content:flex-end; gap:7px; padding:10px 14px; border-top:1px solid #e5e7eb; background:#f8fafc; }
 
     @media(max-width:900px){
@@ -13391,14 +13391,13 @@ return null;
             .map(extra => {
               const token = getTokenOrdemRotaExtraPainelProgramacao(extra.id);
               const localExtra = String(extra.localLabel || extra.display || extra.cidade || "").trim();
-              const hintExtra = localExtra && localExtra !== String(extra.label || "").trim() ? localExtra : "Destino incluído manualmente";
+              const hintExtra = localExtra && localExtra !== String(extra.label || "").trim() ? localExtra : "";
               return `<div class="painelProgPopupVocDetail isRouteSortable isManualExtra" draggable="true" data-route-tokens="${getTextoPainelProgramacao(JSON.stringify([token]))}" title="Arraste para alterar a ordem da rota">
                 <button class="painelProgPopupRouteRemove" type="button" title="Retirar este destino da seleção e da rota" aria-label="Retirar este destino da seleção e da rota" onclick="removerVocativoDaSelecaoRotaPainelProgramacao(this,event)">×</button>
                 <div class="painelProgPopupRouteGrip"><span>⋮⋮</span><span class="painelProgPopupRouteNum">1</span></div>
                 <div>
                   <div class="painelProgPopupVocName" style="color:#6d28d9;">${getTextoPainelProgramacao(extra.label || "Destino adicionado")}</div>
-                  <div class="painelProgPopupVocPeso" style="color:#6d28d9;background:#f3e8ff;border-color:#ddd6fe;">DESTINO INCLUÍDO MANUALMENTE</div>
-                  <div class="painelProgPopupManualHint">${getTextoPainelProgramacao(hintExtra)}</div>
+                  ${hintExtra ? `<div class="painelProgPopupManualHint">${getTextoPainelProgramacao(hintExtra)}</div>` : ""}
                 </div>
                 <div>
                   <div class="painelProgPopupBpTitle">Origem</div>
@@ -18072,7 +18071,7 @@ return null;
             ${renderResumoAlertasRotaPainelProgramacao(rota)}
           </div>
           <div class="painelProgSavedRouteCompactRight">
-            <span class="painelProgSavedRouteVehicle">Veículo: ${escRotaPainelProgramacao(veiculoRota)}</span>
+            <span class="painelProgSavedRouteVehicle">${escRotaPainelProgramacao(veiculoRota)}</span>
             <span class="painelProgSavedRouteStatus ${liberada ? "released" : "active"}">${liberada ? "Liberada" : "Ativa"}</span>
             <span class="painelProgRouteChevron">⌄</span>
           </div>
