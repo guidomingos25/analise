@@ -4368,6 +4368,16 @@
       line-height:1.25;
       white-space:normal;
     }
+    .painelProgSavedRouteObservationStrip {
+      margin-top:3px;
+      color:#334155;
+      font-size:7.4px;
+      font-weight:800;
+      line-height:1.25;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
     .painelProgSavedRouteCompactRight { display:flex; align-items:center; gap:5px; flex-wrap:nowrap; }
     .painelProgRouteChevron { width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #dbe3ec; border-radius:8px; background:#fff; font-size:10px; color:#475569; transition:transform .12s ease; }
     .painelProgSavedRoute.expanded .painelProgRouteChevron { transform:rotate(180deg); }
@@ -4408,7 +4418,17 @@
       width:100%; border:1px solid #cbd5e1; border-radius:10px; padding:8px 10px; font-size:11px; color:#0f172a; background:#fff; outline:none;
     }
     .painelProgSaveRouteField textarea { min-height:66px; resize:vertical; }
+    .painelProgRoutePartObsRow { display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,.95fr); gap:12px; align-items:end; }
+    .painelProgRoutePartObsLeft { min-width:0; }
+    .painelProgRouteObsCompact { min-width:0; }
+    .painelProgRouteObsCompact input {
+      width:100%; height:38px; border:1px solid #cbd5e1; border-radius:10px; padding:7px 10px; font-size:11px; color:#0f172a; background:#fff; outline:none;
+    }
+    .painelProgRouteObsCompact input:focus { border-color:#93c5fd; box-shadow:0 0 0 3px rgba(59,130,246,.10); }
     .painelProgSaveRouteSummary { padding:8px 10px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0; color:#475569; font-size:9px; line-height:1.4; }
+    .painelProgTransferSummaryRow { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .painelProgTransferSummaryText { min-width:0; flex:1 1 auto; }
+    .painelProgTransferSummaryRow .painelProgBaseMiniBtn { flex:0 0 auto; }
     .painelProgRouteSaveSummaryGrid { display:grid; grid-template-columns:minmax(180px,.7fr) minmax(240px,1fr); gap:10px; }
     .painelProgRouteSummaryBox { border:1px solid #e2e8f0; border-radius:12px; background:#f8fafc; padding:10px 12px; min-width:0; }
     .painelProgRouteSummaryLabel { font-size:8px; font-weight:1000; color:#64748b; text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px; }
@@ -4429,49 +4449,101 @@
     .painelProgSavedRouteVehicle { display:inline-flex; align-items:center; color:#0f172a; font-size:8px; font-weight:1000; white-space:nowrap; margin-right:5px; }
     .painelProgModalFooter { display:flex; justify-content:flex-end; gap:7px; padding:10px 14px; border-top:1px solid #e5e7eb; background:#f8fafc; }
 
-    /* Rotas criadas: somente ganho de área útil e legibilidade. */
+    /* Rotas criadas: somente ganho adicional de área útil e legibilidade. */
+    .painelProgRouteModalBackdrop.rotasCriadasBackdrop { padding:6px; }
     .painelProgRouteModal.painelProgRotasCriadasModal {
-      width:min(1420px,99vw);
-      height:min(94vh,900px);
-      max-height:94vh;
+      width:calc(100vw - 12px);
+      height:calc(100vh - 12px);
+      max-height:calc(100vh - 12px);
+      border-radius:14px;
     }
-    .painelProgRotasCriadasModal .painelProgRouteModalHead { padding:14px 16px; }
-    .painelProgRotasCriadasModal .painelProgRouteModalTitle { font-size:13.5px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteMeta { font-size:9.5px; }
-    .painelProgRotasCriadasModal .painelProgRouteModalActions .painelProgBaseMiniBtn { font-size:10px!important; min-height:31px!important; padding:6px 10px!important; }
-    .painelProgRotasCriadasModal .painelProgRouteModalBody.routesMode { padding:12px; }
-    .painelProgRotasCriadasModal .painelProgRoutesWorkspace { grid-template-columns:minmax(0,1fr) 340px; gap:12px; }
-    .painelProgRotasCriadasModal .painelProgRoutesAside { padding:11px; }
-    .painelProgRotasCriadasModal .painelProgRoutesAsideTitle { font-size:10px; margin-bottom:8px; }
-    .painelProgRotasCriadasModal .painelProgRoutesAsideActions .btn { font-size:9.5px!important; min-height:32px!important; }
-    .painelProgRotasCriadasModal .painelProgRoutesAsideHint { font-size:8.5px; line-height:1.4; }
-    .painelProgRotasCriadasModal .painelProgPopupVehicleTab { min-height:30px; font-size:9px; }
-    .painelProgRotasCriadasModal .painelProgPopupVehicleTab.active::before { font-size:9px; }
-    .painelProgRotasCriadasModal .painelProgPopupVehicleBtn { min-height:24px; font-size:8.1px; padding:4px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteCompactHead { padding:11px 12px; gap:10px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteName { font-size:11.5px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteMetaCompact { font-size:9px; line-height:1.4; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteAlertStrip { font-size:8.2px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteCompactRight { gap:7px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteVehicle { font-size:9.2px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteStatus { font-size:8.5px; padding:4px 7px; }
-    .painelProgRotasCriadasModal .painelProgRouteChevron { width:28px; height:28px; font-size:11px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteQuick { padding:8px 10px; gap:6px; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteQuick .btn { font-size:8.8px!important; min-height:28px!important; padding:5px 8px!important; }
-    .painelProgRotasCriadasModal .painelProgSavedRouteStats { font-size:9px; }
-    .painelProgRotasCriadasModal .painelProgSavedVocRow { padding:9px 10px; gap:10px; }
-    .painelProgRotasCriadasModal .painelProgSavedVocName { font-size:10.3px; }
-    .painelProgRotasCriadasModal .painelProgSavedVocMeta { gap:6px; margin-top:5px; }
+    .painelProgRotasCriadasModal .painelProgRouteModalHead { padding:16px 18px; }
+    .painelProgRotasCriadasModal .painelProgRouteModalTitle { font-size:16px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteMeta { font-size:11px; }
+    .painelProgRotasCriadasModal .painelProgRouteModalActions .painelProgBaseMiniBtn { font-size:11.5px!important; min-height:36px!important; padding:7px 12px!important; }
+    .painelProgRotasCriadasModal .painelProgRouteModalBody.routesMode { padding:14px; }
+    .painelProgRotasCriadasModal .painelProgRoutesWorkspace { grid-template-columns:minmax(0,1fr) 370px; gap:14px; }
+    .painelProgRotasCriadasModal .painelProgRoutesAside { padding:13px; }
+    .painelProgRotasCriadasModal .painelProgRoutesAsideTitle { font-size:12px; margin-bottom:9px; }
+    .painelProgRotasCriadasModal .painelProgRoutesAsideActions .btn { font-size:11px!important; min-height:36px!important; }
+    .painelProgRotasCriadasModal .painelProgRoutesAsideHint { font-size:10px; line-height:1.45; }
+    .painelProgRotasCriadasModal .painelProgPopupVehicleTab { min-height:34px; font-size:10.5px; }
+    .painelProgRotasCriadasModal .painelProgPopupVehicleTab.active::before { font-size:10px; }
+    .painelProgRotasCriadasModal .painelProgPopupVehicleBtn { min-height:29px; font-size:9.5px; padding:5px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteCompactHead { padding:13px 14px; gap:12px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteName { font-size:13.5px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteMetaCompact { font-size:10.5px; line-height:1.45; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteAlertStrip { font-size:9.5px; line-height:1.35; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteObservationStrip { font-size:9.5px; line-height:1.35; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteCompactRight { gap:9px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteVehicle { font-size:11px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteStatus { font-size:10px; padding:5px 9px; }
+    .painelProgRotasCriadasModal .painelProgRouteChevron { width:32px; height:32px; font-size:13px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteQuick { padding:10px 12px; gap:8px; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteQuick .btn { font-size:10.5px!important; min-height:32px!important; padding:6px 10px!important; }
+    .painelProgRotasCriadasModal .painelProgSavedRouteStats { font-size:10.5px; }
+    .painelProgRotasCriadasModal .painelProgSavedVocRow { padding:11px 12px; gap:12px; }
+    .painelProgRotasCriadasModal .painelProgSavedVocName { font-size:12px; }
+    .painelProgRotasCriadasModal .painelProgSavedVocMeta { gap:7px; margin-top:6px; }
     .painelProgRotasCriadasModal .painelProgSavedVocMeta .painelProgPopupCopyBtn,
-    .painelProgRotasCriadasModal .painelProgSavedBpLine .painelProgPopupCopyBtn { font-size:8.5px; padding:4px 7px; }
-    .painelProgRotasCriadasModal .painelProgSavedTypeBadge { font-size:8px; padding:4px 7px; }
-    .painelProgRotasCriadasModal .painelProgSavedWarehouse { font-size:8.5px; }
-    .painelProgRotasCriadasModal .painelProgSavedBpTitle { font-size:8px; margin-bottom:3px; }
-    .painelProgRotasCriadasModal .painelProgSavedBpLine { font-size:9.5px; }
-    .painelProgRotasCriadasModal .painelProgRouteEmpty { font-size:12px; }
+    .painelProgRotasCriadasModal .painelProgSavedBpLine .painelProgPopupCopyBtn { font-size:10px; padding:5px 8px; }
+    .painelProgRotasCriadasModal .painelProgSavedVocMeta span { font-size:10px!important; }
+    .painelProgRotasCriadasModal .painelProgSavedTypeBadge { font-size:9.5px; padding:5px 8px; }
+    .painelProgRotasCriadasModal .painelProgSavedWarehouse { font-size:10px; }
+    .painelProgRotasCriadasModal .painelProgSavedBpTitle { font-size:9.5px; margin-bottom:4px; }
+    .painelProgRotasCriadasModal .painelProgSavedBpLine { font-size:11px; }
+    .painelProgRotasCriadasModal .painelProgRouteEmpty { font-size:13px; }
+
+
+    /* Rotas criadas: altura uniforme e separação visual mais nítida. */
+    .painelProgRotasCriadasModal .painelProgSavedRoute {
+      background:#f4f7fb;
+      border-color:#cbd5e1;
+      border-left-width:5px;
+      margin-bottom:12px;
+      box-shadow:0 4px 10px rgba(15,23,42,.08);
+    }
+    .painelProgRotasCriadasModal .painelProgSavedRouteCompactHead {
+      height:104px;
+      min-height:104px;
+      max-height:104px;
+      background:#f4f7fb;
+      overflow:hidden;
+    }
+    .painelProgRotasCriadasModal .painelProgSavedRouteCompactHead:hover {
+      background:#edf2f7;
+    }
+    .painelProgRotasCriadasModal .painelProgSavedRouteName {
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .painelProgRotasCriadasModal .painelProgSavedRouteMetaCompact {
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .painelProgRotasCriadasModal .painelProgSavedRouteAlertStrip {
+      min-height:13px;
+      max-height:13px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .painelProgRotasCriadasModal .painelProgSavedRouteObservationStrip {
+      min-height:13px;
+      max-height:13px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .painelProgRotasCriadasModal .painelProgSavedRouteDetails {
+      background:#fff;
+    }
 
     @media(max-width:900px){
       .painelProgRouteSaveSummaryGrid{grid-template-columns:1fr;}
+      .painelProgRoutePartObsRow{grid-template-columns:1fr;}
       .painelProgRoutesWorkspace{grid-template-columns:1fr;}
       .painelProgRoutesAside{position:static;order:-1;max-height:none;}
       .painelProgRouteModal{width:98vw;height:92vh;max-height:92vh;}
@@ -17707,7 +17779,6 @@ return null;
             <div class="painelProgSavedRouteMeta">Revise peso, particularidades e veículo. ${temTransferenciaConfiguravel ? "Se houver transferência, marque abaixo os vocativos que descarregarão no armazém." : ""}</div>
           </div>
           <div class="painelProgRouteModalActions">
-            ${temTransferenciaConfiguravel ? `<button class="btn secondary painelProgBaseMiniBtn" id="btnPainelProgSelecionarTodosTransferencia" type="button" onclick="toggleSelecionarTodosTransferenciaPainelProgramacao()">Selecionar todos</button>` : ""}
             <button class="btn secondary painelProgBaseMiniBtn" type="button" onclick="fecharModalRotasPainelProgramacao()">×</button>
           </div>
         </div>
@@ -17727,12 +17798,22 @@ return null;
             </div>
           </div>
 
-          <div class="painelProgRouteSectionTitle">Particularidades identificadas</div>
-          <div class="painelProgRouteParticularidades">${particularidadesHtml}</div>
+          <div class="painelProgRoutePartObsRow">
+            <div class="painelProgRoutePartObsLeft">
+              <div class="painelProgRouteSectionTitle">Particularidades identificadas</div>
+              <div class="painelProgRouteParticularidades">${particularidadesHtml}</div>
+            </div>
+            <div class="painelProgRouteObsCompact">
+              <input id="painelProgObservacaoRota" maxlength="1000" placeholder="Observação" type="text">
+            </div>
+          </div>
 
           ${temTransferenciaConfiguravel ? `
             <div class="painelProgRouteSectionTitle">Transferências</div>
-            <div class="painelProgSaveRouteSummary">Marque os vocativos que serão descarregados no armazém. Vocativos não marcados permanecem como ENTREGA DIRETA.</div>
+            <div class="painelProgSaveRouteSummary painelProgTransferSummaryRow">
+              <div class="painelProgTransferSummaryText">Marque os vocativos que serão descarregados no armazém. Vocativos não marcados permanecem como ENTREGA DIRETA.</div>
+              <button class="btn secondary painelProgBaseMiniBtn" id="btnPainelProgSelecionarTodosTransferencia" type="button" onclick="toggleSelecionarTodosTransferenciaPainelProgramacao()">Selecionar todos</button>
+            </div>
             <div class="painelProgTransferList">
               ${itens.map(({chave,item}) => `<div class="painelProgTransferVocSimple" data-transfer-voc data-card-key="${escRotaPainelProgramacao(chave)}">
                 <input type="checkbox" data-transfer-voc-check onchange="atualizarLinhaTransferenciaVocativoPainelProgramacao(this)">
@@ -17796,6 +17877,7 @@ return null;
       const veiculoInput = document.getElementById("painelProgVeiculoRota");
       const veiculoGrid = document.getElementById("painelProgVeiculoGrid");
       const veiculoTipo = String(veiculoInput?.value || "").trim();
+      const observacaoRota = String(document.getElementById("painelProgObservacaoRota")?.value || "").trim();
       if (!veiculoTipo) {
         veiculoGrid?.classList.add("isInvalid");
         const erro = document.getElementById("painelProgRouteSaveError");
@@ -17829,10 +17911,10 @@ return null;
       });
 
       fecharModalRotasPainelProgramacao();
-      salvarRotaSelecionadaPainelProgramacao(transferencias, veiculoTipo);
+      salvarRotaSelecionadaPainelProgramacao(transferencias, veiculoTipo, observacaoRota);
     }
 
-    function salvarRotaSelecionadaPainelProgramacao(transferencias = {}, veiculoTipo = "") {
+    function salvarRotaSelecionadaPainelProgramacao(transferencias = {}, veiculoTipo = "", observacaoRota = "") {
       const snap = montarSnapshotRotaPainelProgramacao(transferencias);
       if (!snap.cardKeys.length && !snap.extras.length) return;
       const now = new Date().toISOString();
@@ -17842,6 +17924,7 @@ return null;
         id:`rota_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
         nome,status:"ativa",criadaEm:now,atualizadaEm:now,
         veiculoTipo:String(veiculoTipo || ""),
+        observacao:String(observacaoRota || ""),
         ...snap
       };
       const rotas = getRotasSalvasPainelProgramacao();
@@ -17945,6 +18028,7 @@ return null;
       const rotas = getRotasSalvasPainelProgramacao();
       window.__painelProgRouteCopyStore = [];
       const back = criarBackdropRotasPainelProgramacao();
+      back.classList.add("rotasCriadasBackdrop");
       const ativas = rotas.filter(r => r?.status !== "liberada").length;
       back.innerHTML = `<div class="painelProgRouteModal painelProgRotasCriadasModal" role="dialog" aria-modal="true" aria-label="Rotas salvas">
         <div class="painelProgRouteModalHead">
@@ -18057,6 +18141,7 @@ return null;
       const qtdTransf = linhas.filter(l=>l.grupo==="TRANSFERENCIA").length;
       const qtdDireta = linhas.filter(l=>l.grupo==="DIRETA").length;
       const veiculoRota = String(rota?.veiculoTipo || "Não informado");
+      const observacaoRota = String(rota?.observacao || "").trim();
 
       const detalhes = linhas.map((l,idx)=>{
         const idxVoc = addTextoCopiaRotaSalvaPainelProgramacao(l.vocativo);
@@ -18110,6 +18195,7 @@ return null;
             <div class="painelProgSavedRouteName">${escRotaPainelProgramacao(nomeRota)}</div>
             <div class="painelProgSavedRouteMetaCompact">${formatarDataRotaPainelProgramacao(rota?.criadaEm)} · ${cards.length} vocativo(s)${extrasRota.length ? ` · ${extrasRota.length} destino(s) adicionado(s)` : ""} · ${formatarNumeroPainelProgramacao(peso,2)} kg · Veículo: ${escRotaPainelProgramacao(veiculoRota)} · ${notas} nota(s) · ${qtdDireta} direta(s)${qtdTransf ? ` · ${qtdTransf} transferência(s)` : ""}${dist ? ` · ${formatKmBRMapa(dist)}${dur ? ` · ${formatDurationBRMapa(dur)}` : ""}` : ""}</div>
             ${renderResumoAlertasRotaPainelProgramacao(rota)}
+            <div class="painelProgSavedRouteObservationStrip" title="${escRotaPainelProgramacao(observacaoRota)}">${observacaoRota ? `Observação: ${escRotaPainelProgramacao(observacaoRota)}` : ""}</div>
           </div>
           <div class="painelProgSavedRouteCompactRight">
             <span class="painelProgSavedRouteVehicle">${escRotaPainelProgramacao(veiculoRota)}</span>
@@ -18240,6 +18326,7 @@ return null;
           "Status Rota":rota?.status === "liberada" ? "LIBERADA" : "ATIVA",
           "Data Criação":formatarDataRotaPainelProgramacao(rota?.criadaEm),
           "Veículo":String(rota?.veiculoTipo || "Não informado"),
+          "Observação":String(rota?.observacao || ""),
           "Ordem":idx+1,
           "Tipo":l.tipo,
           "Armazém Transferência":String(l.armazemLabel || ""),
@@ -18285,6 +18372,7 @@ return null;
           "Status":r?.status === "liberada" ? "LIBERADA" : "ATIVA",
           "Criada em":formatarDataRotaPainelProgramacao(r?.criadaEm),
           "Veículo":String(r?.veiculoTipo || "Não informado"),
+          "Observação":String(r?.observacao || ""),
           "Vocativos":cards.length,
           "Entrega Direta":linhas.filter(x=>x.grupo==="DIRETA").length,
           "Transferência":linhas.filter(x=>x.grupo==="TRANSFERENCIA").length,
@@ -18296,7 +18384,7 @@ return null;
         };
       });
       const wsResumo = XLSX.utils.json_to_sheet(resumo);
-      wsResumo["!cols"] = [6,60,12,20,16,10,14,14,14,10,16,16,55].map(w=>({wch:w}));
+      wsResumo["!cols"] = [6,60,12,20,16,45,10,14,14,14,10,16,16,55].map(w=>({wch:w}));
       XLSX.utils.book_append_sheet(wb,wsResumo,"Resumo Rotas");
 
       const usados = new Set(["Resumo Rotas"]);
@@ -18308,6 +18396,7 @@ return null;
           "Rota":getNomeExibicaoRotaPainelProgramacao(rota),
           "Status":rota?.status === "liberada" ? "LIBERADA" : "ATIVA",
           "Veículo":String(rota?.veiculoTipo || "Não informado"),
+          "Observação":String(rota?.observacao || ""),
           "Ordem":idx+1,
           "Tipo":l.tipo,
           "Armazém":String(l.armazemLabel || ""),
@@ -18327,7 +18416,7 @@ return null;
           "Alertas":getTextoResumoAlertasRotaPainelProgramacao(rota)
         }));
         const ws = XLSX.utils.json_to_sheet(linhas);
-        ws["!cols"] = [60,12,16,8,18,24,12,28,12,10,20,18,28,10,20,12,16,16,16,55].map(w=>({wch:w}));
+        ws["!cols"] = [60,12,16,45,8,18,24,12,28,12,10,20,18,28,10,20,12,16,16,16,55].map(w=>({wch:w}));
         XLSX.utils.book_append_sheet(wb,ws,nomeAbaExcelRotaPainelProgramacao(i,getNomeExibicaoRotaPainelProgramacao(rota),usados));
       });
       XLSX.writeFile(wb,`Rotas_Criadas_${new Date().toISOString().slice(0,10)}.xlsx`);
@@ -18353,16 +18442,24 @@ return null;
         .replace(/\s{2,}/g," ")
         .trim();
 
+      const getAlturaCabecalhoRotaPdf = (rota) => {
+        const textoAlertas = getTextoResumoAlertasRotaPainelProgramacao(rota);
+        const observacao = String(rota?.observacao || "").trim();
+        const linhasObs = observacao ? doc.splitTextToSize(`OBSERVAÇÃO: ${observacao}`,larguraBloco-12) : [];
+        return 28 + (textoAlertas ? 4.5 : 0) + (linhasObs.length ? Math.min(3,linhasObs.length)*3.6 + 2 : 0);
+      };
+
       const desenharCabecalhoRota = (rota, indice, cards, peso, nome, yInicio) => {
         const temTransferencia = getLinhasOperacionaisRotaPainelProgramacao(rota).some(l=>l.grupo==="TRANSFERENCIA");
         const corBarra = temTransferencia ? [245,158,11] : [37,99,235];
+        const alturaCabecalho = getAlturaCabecalhoRotaPdf(rota);
 
         doc.setFillColor(248,250,252);
         doc.setDrawColor(203,213,225);
-        doc.roundedRect(margemX,yInicio,larguraBloco,28,2.5,2.5,"FD");
+        doc.roundedRect(margemX,yInicio,larguraBloco,alturaCabecalho,2.5,2.5,"FD");
 
         doc.setFillColor(...corBarra);
-        doc.roundedRect(margemX,yInicio,2.8,28,1.4,1.4,"F");
+        doc.roundedRect(margemX,yInicio,2.8,alturaCabecalho,1.4,1.4,"F");
 
         doc.setTextColor(15,23,42);
         doc.setFont(undefined,"bold");
@@ -18393,17 +18490,29 @@ return null;
         ].filter(Boolean).join("  |  ");
         doc.text(resumo,margemX+6,yInicio+18.3);
 
+        let yExtra = yInicio + 23.2;
         const textoAlertas = getTextoResumoAlertasRotaPainelProgramacao(rota);
         if (textoAlertas) {
           doc.setFont(undefined,"bold");
           doc.setFontSize(6.3);
           doc.setTextColor(154,52,18);
           const alertasPdf = doc.splitTextToSize(textoAlertas,larguraBloco-12);
-          doc.text(alertasPdf.slice(0,2),margemX+6,yInicio+23.2);
+          doc.text(alertasPdf.slice(0,2),margemX+6,yExtra);
+          yExtra += 4.5;
+        }
+
+        const observacao = String(rota?.observacao || "").trim();
+        if (observacao) {
+          doc.setFont(undefined,"normal");
+          doc.setFontSize(6.5);
+          doc.setTextColor(51,65,85);
+          const linhasObs = doc.splitTextToSize(`OBSERVAÇÃO: ${observacao}`,larguraBloco-12);
+          doc.text(linhasObs.slice(0,3),margemX+6,yExtra);
         }
 
         doc.setTextColor(0,0,0);
         doc.setFont(undefined,"normal");
+        return alturaCabecalho;
       };
 
       rotas.forEach((rota,i)=>{
@@ -18417,7 +18526,8 @@ return null;
 
         // Estimativa conservadora para não iniciar no final da página quando a
         // rota inteira provavelmente cabe na página seguinte.
-        const alturaEstimada = 28 + 10 + 8 + (Math.max(1,linhas.length) * 7.0) + 8;
+        const alturaCabecalho = getAlturaCabecalhoRotaPdf(rota);
+        const alturaEstimada = alturaCabecalho + 10 + 8 + (Math.max(1,linhas.length) * 7.0) + 8;
         const alturaUtilPagina = pageH - 22;
         if (i > 0 && (y + Math.min(alturaEstimada,alturaUtilPagina)) > (pageH - margemInferior)) {
           doc.addPage("a4","landscape");
@@ -18426,10 +18536,10 @@ return null;
 
         const paginaInicio = doc.internal.getNumberOfPages();
         const yBlocoInicio = y;
-        desenharCabecalhoRota(rota,i,cards,peso,nome,yBlocoInicio);
+        const alturaCabecalhoDesenhado = desenharCabecalhoRota(rota,i,cards,peso,nome,yBlocoInicio);
 
         doc.autoTable({
-          startY:yBlocoInicio+31,
+          startY:yBlocoInicio+alturaCabecalhoDesenhado+3,
           pageBreak:"auto",
           rowPageBreak:"avoid",
           theme:"grid",
@@ -18497,7 +18607,7 @@ return null;
         });
 
         const paginaFim = doc.internal.getNumberOfPages();
-        const finalY = Number(doc.lastAutoTable?.finalY || yBlocoInicio+35);
+        const finalY = Number(doc.lastAutoTable?.finalY || yBlocoInicio+alturaCabecalhoDesenhado+7);
 
         // Quando a rota coube em uma única página, envolve cabeçalho+tabela
         // em uma borda única, deixando visualmente clara a separação.
