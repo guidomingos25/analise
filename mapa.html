@@ -18031,7 +18031,7 @@ return null;
             <div class="painelProgSavedVocName">${idx+1}. ${escRotaPainelProgramacao(l.vocativo)}</div>
             <div class="painelProgSavedVocMeta">
               <button class="painelProgPopupCopyBtn" type="button" onclick="copiarTextoRotaSalvaPainelProgramacaoPorIndice(${idxVoc},event)">Copiar vocativo</button>
-              ${l.pesoLinha ? `<span style="font-size:7.5px;font-weight:900;color:#475569;">Peso: ${escRotaPainelProgramacao(formatarNumeroPainelProgramacao(l.pesoLinha,2))}</span>` : ""}
+              ${(l.pesoLinha || l.notasLinha) ? `<span style="font-size:7.5px;font-weight:900;color:#475569;">Peso: ${escRotaPainelProgramacao(formatarNumeroPainelProgramacao(l.pesoLinha,2))} · Notas: ${escRotaPainelProgramacao(formatarNumeroPainelProgramacao(l.notasLinha,0))}</span>` : ""}
             </div>
           </div>
           <div>
